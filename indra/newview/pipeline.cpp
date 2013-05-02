@@ -1017,6 +1017,11 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		mDeferredScreen.shareDepthBuffer(mScreen);
 	}
 
+	U32 oculus_res_x = 640*1.25f;
+	U32 oculus_res_y = 800*1.25f;
+	mLeftEye.allocate(oculus_res_x, oculus_res_y, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true);
+	mRightEye.allocate(oculus_res_x, oculus_res_y, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true);
+
 	gGL.getTexUnit(0)->disable();
 
 	stop_glerror();
@@ -7071,6 +7076,29 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 
+	if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
+	{
+		mLeftEye.bindTarget();
+	}
+	else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+	{
+		mRightEye.bindTarget();
+	}
+
+
+	U32 viewport_left = gViewerWindow->getWorldViewRectRaw().mLeft;
+	U32 viewport_bottom = gViewerWindow->getWorldViewRectRaw().mBottom;
+	U32 viewport_width = gViewerWindow->getWorldViewRectRaw().getWidth();
+	U32 viewport_height = gViewerWindow->getWorldViewRectRaw().getHeight();
+
+	if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
+	{
+		viewport_left = 0;
+		viewport_bottom = 0;
+		viewport_width = mLeftEye.getWidth();
+		viewport_height = mLeftEye.getHeight();
+	}
+
 	assertInitialized();
 
 	if (gUseWireframe)
@@ -7218,10 +7246,11 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}*/
 
-	gGLViewport[0] = gViewerWindow->getWorldViewRectRaw().mLeft;
-	gGLViewport[1] = gViewerWindow->getWorldViewRectRaw().mBottom;
-	gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
-	gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
+
+	gGLViewport[0] = viewport_left;
+	gGLViewport[1] = viewport_bottom;
+	gGLViewport[2] = viewport_width;
+	gGLViewport[3] = viewport_height;
 	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 
 	tc2.setVec((F32) mScreen.getWidth(),
@@ -7241,7 +7270,12 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 		bool multisample = RenderFSAASamples > 1 && mFXAABuffer.isComplete();
 
-		gViewerWindow->setup3DViewport();
+		gGLViewport[0] = viewport_left;
+		gGLViewport[1] = viewport_bottom;
+		gGLViewport[2] = viewport_width;
+		gGLViewport[3] = viewport_height;
+		glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+
 				
 		if (dof_enabled)
 		{
@@ -7427,10 +7461,10 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				}
 				else
 				{
-					gGLViewport[0] = gViewerWindow->getWorldViewRectRaw().mLeft;
-					gGLViewport[1] = gViewerWindow->getWorldViewRectRaw().mBottom;
-					gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
-					gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
+					gGLViewport[0] = viewport_left;
+					gGLViewport[1] = viewport_bottom;
+					gGLViewport[2] = viewport_width;
+					gGLViewport[3] = viewport_height;
 					glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 				}
 
@@ -7548,10 +7582,10 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
 			}
 			
-			gGLViewport[0] = gViewerWindow->getWorldViewRectRaw().mLeft;
-			gGLViewport[1] = gViewerWindow->getWorldViewRectRaw().mBottom;
-			gGLViewport[2] = gViewerWindow->getWorldViewRectRaw().getWidth();
-			gGLViewport[3] = gViewerWindow->getWorldViewRectRaw().getHeight();
+			gGLViewport[0] = viewport_left;
+			gGLViewport[1] = viewport_bottom;
+			gGLViewport[2] = viewport_width;
+			gGLViewport[3] = viewport_height;
 			glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 
 			F32 scale_x = (F32) width/mFXAABuffer.getWidth();
@@ -7675,7 +7709,91 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		}
 	}
 
-	
+	if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
+	{
+		mLeftEye.flush();
+	}
+	else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+	{
+		mRightEye.flush();
+		gViewerWindow->setup3DViewport();
+
+		gBarrelDistortProgram.bind();
+
+		static LLStaticHashedString ScaleIn("ScaleIn");
+		static LLStaticHashedString LensCenter("LensCenter");
+		static LLStaticHashedString Scale("Scale");
+		static LLStaticHashedString HmdWarpParam("HmdWarpParam");
+
+		LLVector3 OculusLensCenter = gSavedSettings.getVector3("OculusLensCenter");
+		LLVector3 OculusScaleIn = gSavedSettings.getVector3("OculusScaleIn");
+		LLVector3 OculusScale = gSavedSettings.getVector3("OculusScale");
+		LLVector3 OculusWarpParam = gSavedSettings.getVector3("OculusWarpParam");
+		F32 OculusWarpW = gSavedSettings.getF32("OculusWarpParamW");
+
+
+		gBarrelDistortProgram.uniform2f(ScaleIn, OculusScaleIn.mV[0], OculusScaleIn.mV[1]);
+		gBarrelDistortProgram.uniform2f(LensCenter, OculusLensCenter.mV[0], OculusLensCenter.mV[1]);
+		gBarrelDistortProgram.uniform2f(Scale, OculusScale.mV[0], OculusScale.mV[1]);
+
+		LLVector4 hmd_param(OculusWarpParam.mV[0], OculusWarpParam.mV[1], OculusWarpParam.mV[2], OculusWarpW);
+		gBarrelDistortProgram.uniform4fv(HmdWarpParam, 1, hmd_param.mV);
+		gGL.setColorMask(true, false);
+
+
+		gGL.color4f(1,1,1,1);
+
+		gGL.getTexUnit(0)->bind(&mLeftEye);
+
+		gGL.begin(LLRender::TRIANGLE_STRIP);
+
+		//bottom left
+		gGL.texCoord2f(0, 0);
+		gGL.vertex2f(-1, -1);
+
+		//bottom right
+		gGL.texCoord2f(1, 0);
+		gGL.vertex2f(0, -1);
+
+		//top left
+		gGL.texCoord2f(0, 1);
+		gGL.vertex2f(-1,1);
+
+		//top right
+		gGL.texCoord2f(1, 1);
+		gGL.vertex2f(0,1);
+
+		gGL.end();
+
+		gGL.getTexUnit(0)->bind(&mRightEye);
+
+		gGL.begin(LLRender::TRIANGLE_STRIP);
+
+		//bottom left
+		gGL.texCoord2f(0, 0);
+		gGL.vertex2f(0, -1);
+
+		//bottom right
+		gGL.texCoord2f(1, 0);
+		gGL.vertex2f(1, -1);
+
+		//top left
+		gGL.texCoord2f(0, 1);
+		gGL.vertex2f(0,1);
+
+		//top right
+		gGL.texCoord2f(1, 1);
+		gGL.vertex2f(1,1);
+
+		gGL.end();
+				
+		gGL.flush();
+
+		gBarrelDistortProgram.unbind();
+	}
+
+
+
 	if (LLRenderTarget::sUseFBO)
 	{ //copy depth buffer from mScreen to framebuffer
 		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 

@@ -54,6 +54,7 @@
 #include <iomanip> // for setprecision
 
 U32 LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
+U32 LLViewerCamera::sCurrentEye = LLViewerCamera::CENTER_EYE;
 
 //glu pick matrix implementation borrowed from Mesa3D
 glh::matrix4f gl_pick_matrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height, GLint* viewport)

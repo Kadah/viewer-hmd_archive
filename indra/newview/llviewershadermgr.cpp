@@ -89,6 +89,7 @@ LLGLSLShader	gOneTextureNoColorProgram;
 LLGLSLShader	gDebugProgram;
 LLGLSLShader	gClipProgram;
 LLGLSLShader	gAlphaMaskProgram;
+LLGLSLShader	gBarrelDistortProgram;
 
 //object shaders
 LLGLSLShader		gObjectSimpleProgram;
@@ -636,6 +637,7 @@ void LLViewerShaderMgr::unloadShaders()
 	gCustomAlphaProgram.unload();
 	gGlowCombineProgram.unload();
 	gSplatTextureRectProgram.unload();
+	gBarrelDistortProgram.unload();
 	gGlowCombineFXAAProgram.unload();
 	gTwoTextureAddProgram.unload();
 	gOneTextureNoColorProgram.unload();
@@ -2618,6 +2620,22 @@ BOOL LLViewerShaderMgr::loadShadersInterface()
 			gSplatTextureRectProgram.bind();
 			gSplatTextureRectProgram.uniform1i(sScreenMap, 0);
 			gSplatTextureRectProgram.unbind();
+		}
+	}
+
+	if (success)
+	{
+		gBarrelDistortProgram.mName = "Barrel Distort Shader";
+		gBarrelDistortProgram.mShaderFiles.clear();
+		gBarrelDistortProgram.mShaderFiles.push_back(make_pair("interface/barreldistortV.glsl", GL_VERTEX_SHADER_ARB));
+		gBarrelDistortProgram.mShaderFiles.push_back(make_pair("interface/barreldistortF.glsl", GL_FRAGMENT_SHADER_ARB));
+		gBarrelDistortProgram.mShaderLevel = mVertexShaderLevel[SHADER_INTERFACE];
+		success = gBarrelDistortProgram.createShader(NULL, NULL);
+		if (success)
+		{
+			gBarrelDistortProgram.bind();
+			gBarrelDistortProgram.uniform1i(sScreenMap, 0);
+			gBarrelDistortProgram.unbind();
 		}
 	}
 

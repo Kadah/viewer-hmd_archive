@@ -214,7 +214,7 @@
 //
 // Globals
 //
-void render_ui(F32 zoom_factor = 1.f, int subfield = 0);
+void render_ui(F32 zoom_factor = 1.f, int subfield = 0, bool swap = true);
 
 extern BOOL gDebugClicks;
 extern BOOL gDisplaySwapBuffers;
@@ -4676,6 +4676,7 @@ void LLViewerWindow::setup3DViewport(S32 x_offset, S32 y_offset)
 	gGLViewport[1] = mWorldViewRectRaw.mBottom + y_offset;
 	gGLViewport[2] = mWorldViewRectRaw.getWidth();
 	gGLViewport[3] = mWorldViewRectRaw.getHeight();
+	
 	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 

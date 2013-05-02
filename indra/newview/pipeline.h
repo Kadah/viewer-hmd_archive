@@ -575,6 +575,9 @@ public:
 	U32 					mScreenWidth;
 	U32 					mScreenHeight;
 	
+	LLRenderTarget			mLeftEye;
+	LLRenderTarget			mRightEye;
+
 	LLRenderTarget			mScreen;
 	LLRenderTarget			mUIScreen;
 	LLRenderTarget			mDeferredScreen;
