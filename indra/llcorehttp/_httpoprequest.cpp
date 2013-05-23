@@ -4,7 +4,7 @@
  *
  * $LicenseInfo:firstyear=2012&license=viewerlgpl$
  * Second Life Viewer Source Code
- * Copyright (C) 2012, Linden Research, Inc.
+ * Copyright (C) 2012-2013, Linden Research, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -186,9 +186,11 @@ void HttpOpRequest::stageFromActive(HttpService * service)
 	if (mReplyLength)
 	{
 		// If non-zero, we received and processed a Content-Range
-		// header with the response.  Verify that what it says
-		// is consistent with the received data.
-		if (mReplyLength != mReplyBody->size())
+		// header with the response.  If there is received data
+		// (and there may not be due to protocol violations,
+		// HEAD requests, etc., see BUG-2295) Verify that what it
+		// says is consistent with the received data.
+		if (mReplyBody && mReplyBody->size() && mReplyLength != mReplyBody->size())
 		{
 			// Not as expected, fail the request
 			mStatus = HttpStatus(HttpStatus::LLCORE, HE_INV_CONTENT_RANGE_HDR);
@@ -667,7 +669,7 @@ int HttpOpRequest::debugCallback(CURL * handle, curl_infotype info, char * buffe
 	std::string safe_line;
 	std::string tag;
 	bool logit(false);
-	len = (std::min)(len, size_t(256));					// Keep things reasonable in all cases
+	const size_t log_len((std::min)(len, size_t(256)));		// Keep things reasonable in all cases
 	
 	switch (info)
 	{
@@ -675,7 +677,7 @@ int HttpOpRequest::debugCallback(CURL * handle, curl_infotype info, char * buffe
 		if (op->mTracing >= HTTP_TRACE_CURL_HEADERS)
 		{
 			tag = "TEXT";
-			escape_libcurl_debug_data(buffer, len, true, safe_line);
+			escape_libcurl_debug_data(buffer, log_len, true, safe_line);
 			logit = true;
 		}
 		break;
@@ -684,7 +686,7 @@ int HttpOpRequest::debugCallback(CURL * handle, curl_infotype info, char * buffe
 		if (op->mTracing >= HTTP_TRACE_CURL_HEADERS)
 		{
 			tag = "HEADERIN";
-			escape_libcurl_debug_data(buffer, len, true, safe_line);
+			escape_libcurl_debug_data(buffer, log_len, true, safe_line);
 			logit = true;
 		}
 		break;
@@ -693,7 +695,7 @@ int HttpOpRequest::debugCallback(CURL * handle, curl_infotype info, char * buffe
 		if (op->mTracing >= HTTP_TRACE_CURL_HEADERS)
 		{
 			tag = "HEADEROUT";
-			escape_libcurl_debug_data(buffer, 2 * len, true, safe_line);		// Goes out as one line
+			escape_libcurl_debug_data(buffer, log_len, true, safe_line);	// Goes out as one line unlike header_in
 			logit = true;
 		}
 		break;
@@ -705,7 +707,7 @@ int HttpOpRequest::debugCallback(CURL * handle, curl_infotype info, char * buffe
 			logit = true;
 			if (op->mTracing >= HTTP_TRACE_CURL_BODIES)
 			{
-				escape_libcurl_debug_data(buffer, len, false, safe_line);
+				escape_libcurl_debug_data(buffer, log_len, false, safe_line);
 			}
 			else
 			{
@@ -723,7 +725,7 @@ int HttpOpRequest::debugCallback(CURL * handle, curl_infotype info, char * buffe
 			logit = true;
 			if (op->mTracing >= HTTP_TRACE_CURL_BODIES)
 			{
-				escape_libcurl_debug_data(buffer, len, false, safe_line);
+				escape_libcurl_debug_data(buffer, log_len, false, safe_line);
 			}
 			else
 			{

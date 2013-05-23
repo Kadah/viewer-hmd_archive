@@ -4520,7 +4520,11 @@ LLVolumeFace& LLVolumeFace::operator=(const LLVolumeFace& src)
 		S32 tc_size = (mNumVertices*sizeof(LLVector2)+0xF) & ~0xF;
 			
 		LLVector4a::memcpyNonAliased16((F32*) mPositions, (F32*) src.mPositions, vert_size);
-		LLVector4a::memcpyNonAliased16((F32*) mNormals, (F32*) src.mNormals, vert_size);
+
+		if (src.mNormals)
+		{
+			LLVector4a::memcpyNonAliased16((F32*) mNormals, (F32*) src.mNormals, vert_size);
+		}
 
 		if(src.mTexCoords)
 		{
@@ -5600,16 +5604,16 @@ BOOL LLVolumeFace::createCap(LLVolume* volume, BOOL partial_build)
 	LLVector4a binormal;
 	calc_binormal_from_triangle(binormal,
 		*mCenter, cuv,
-		pos[0], tc[0],
-		pos[1], tc[1]);
+		mPositions[0], mTexCoords[0],
+		mPositions[1], mTexCoords[1]);
 	binormal.normalize3fast();
 
 	LLVector4a normal;
 	LLVector4a d0, d1;
 	
 
-	d0.setSub(*mCenter, pos[0]);
-	d1.setSub(*mCenter, pos[1]);
+	d0.setSub(*mCenter, mPositions[0]);
+	d1.setSub(*mCenter, mPositions[1]);
 
 	if (mTypeMask & TOP_MASK)
 	{
