@@ -124,6 +124,7 @@
 #include "llwindow.h"
 #include "llpathfindingmanager.h"
 #include "boost/unordered_map.hpp"
+#include "llhmd.h"
 
 using namespace LLAvatarAppearanceDefines;
 
@@ -315,6 +316,7 @@ BOOL enable_save_into_task_inventory(void*);
 BOOL enable_detach(const LLSD& = LLSD());
 void menu_toggle_attached_lights(void* user_data);
 void menu_toggle_attached_particles(void* user_data);
+void menu_toggle_render_hmd_2d_ui(void* user_data);
 
 class LLMenuParcelObserver : public LLParcelObserver
 {
@@ -4069,6 +4071,32 @@ class LLViewToggleUI : public view_listener_t
 	}
 };
 
+class LLViewCycleDisplay : public view_listener_t
+{
+    bool handleEvent(const LLSD& userdata)
+    {
+        BOOL debugHMD = gSavedSettings.getBOOL("DebugHMDEnable");
+        U32 curRenderMode = gHMD.getRenderMode();
+        U32 nextRenderMode = LLHMD::RenderMode_None;
+        switch (curRenderMode)
+        {
+        case LLHMD::RenderMode_None:
+            nextRenderMode = gHMD.isInitialized() ? LLHMD::RenderMode_HMD : debugHMD ? LLHMD::RenderMode_ScreenStereoDistort : LLHMD::RenderMode_None;
+            break;
+        case LLHMD::RenderMode_HMD:
+        case LLHMD::RenderMode_ScreenStereo:
+            nextRenderMode = debugHMD ? LLHMD::RenderMode_ScreenStereoDistort : LLHMD::RenderMode_None;
+            break;
+        case LLHMD::RenderMode_ScreenStereoDistort:
+        default:
+            nextRenderMode = LLHMD::RenderMode_None;
+            break;
+        }
+        gHMD.setRenderMode(nextRenderMode);
+        return true;
+    }
+};
+
 class LLEditDuplicate : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
@@ -7153,6 +7181,22 @@ class LLAdvancedHandleAttachedLightParticles: public view_listener_t
 	}
 };
 
+void menu_toggle_render_hmd_2d_ui(void* user_data)
+{
+    gHMD.shouldRender2DUI(gSavedSettings.getBOOL("RenderHMD2DUI"));
+}
+
+class LLAdvancedRenderHMD2DUI: public view_listener_t
+{
+    bool handleEvent(const LLSD& userdata)
+    {
+        // toggle the control
+        gSavedSettings.setBOOL("RenderHMD2DUI", !gSavedSettings.getBOOL("RenderHMD2DUI"));
+        menu_toggle_render_hmd_2d_ui(NULL);
+        return true;
+    }
+};
+
 class LLSomethingSelected : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
@@ -8426,6 +8470,7 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLZoomer(DEFAULT_FIELD_OF_VIEW, false), "View.ZoomDefault");
 	view_listener_t::addMenu(new LLViewDefaultUISize(), "View.DefaultUISize");
 	view_listener_t::addMenu(new LLViewToggleUI(), "View.ToggleUI");
+    view_listener_t::addMenu(new LLViewCycleDisplay(), "View.CycleDisplay");
 
 	view_listener_t::addMenu(new LLViewEnableMouselook(), "View.EnableMouselook");
 	view_listener_t::addMenu(new LLViewEnableJoystickFlycam(), "View.EnableJoystickFlycam");
@@ -8558,7 +8603,7 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLAdvancedHandleAttachedLightParticles(), "Advanced.HandleAttachedLightParticles");
 	view_listener_t::addMenu(new LLAdvancedCheckRenderShadowOption(), "Advanced.CheckRenderShadowOption");
 	view_listener_t::addMenu(new LLAdvancedClickRenderShadowOption(), "Advanced.ClickRenderShadowOption");
-	
+    view_listener_t::addMenu(new LLAdvancedRenderHMD2DUI(), "Advanced.ClickRenderHMD2DUI");
 
 	#ifdef TOGGLE_HACKED_GODLIKE_VIEWER
 	view_listener_t::addMenu(new LLAdvancedHandleToggleHackedGodmode(), "Advanced.HandleToggleHackedGodmode");

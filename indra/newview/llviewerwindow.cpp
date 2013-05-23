@@ -207,6 +207,8 @@
 #include "llviewerwindowlistener.h"
 #include "llpaneltopinfobar.h"
 
+#include "llhmd.h"
+
 #if LL_WINDOWS
 #include <tchar.h> // For Unicode conversion methods
 #endif
@@ -214,7 +216,7 @@
 //
 // Globals
 //
-void render_ui(F32 zoom_factor = 1.f, int subfield = 0, bool swap = true);
+void render_ui(F32 zoom_factor = 1.f, int subfield = 0);
 
 extern BOOL gDebugClicks;
 extern BOOL gDisplaySwapBuffers;
@@ -2167,8 +2169,8 @@ void LLViewerWindow::sendShapeToSim()
 	msg->addU32Fast(_PREHASH_CircuitCode, gMessageSystem->mOurCircuitCode);
 	msg->nextBlockFast(_PREHASH_HeightWidthBlock);
 	msg->addU32Fast(_PREHASH_GenCounter, 0);
-	U16 height16 = (U16) mWorldViewRectRaw.getHeight();
-	U16 width16 = (U16) mWorldViewRectRaw.getWidth();
+	U16 height16 = (U16)getWorldViewHeightRaw();
+	U16 width16 = (U16)getWindowWidthRaw();
 	msg->addU16Fast(_PREHASH_Height, height16);
 	msg->addU16Fast(_PREHASH_Width, width16);
 	gAgent.sendReliableMessage();
@@ -3281,8 +3283,8 @@ void LLViewerWindow::updateMouseDelta()
 	mWindow->getCursorPosition(&mouse_pos);
 	if (mouse_pos.mX < 0 || 
 		mouse_pos.mY < 0 ||
-		mouse_pos.mX > mWindowRectRaw.getWidth() ||
-		mouse_pos.mY > mWindowRectRaw.getHeight())
+		mouse_pos.mX > getWindowWidthRaw() ||
+		mouse_pos.mY > getWindowHeightRaw())
 	{
 		mMouseInWindow = FALSE;
 	}
@@ -3408,9 +3410,9 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 	LLFastTimer ft(FTM_UPDATE_WORLD_VIEW);
 
 	// start off using whole window to render world
-	LLRect new_world_rect = mWindowRectRaw;
+	LLRect new_world_rect = getWindowRectRaw();
 
-	if (use_full_window == false && mWorldViewPlaceholder.get())
+	if (use_full_window == false && mWorldViewPlaceholder.get() && !gHMD.shouldRender())
 	{
 		new_world_rect = mWorldViewPlaceholder.get()->calcScreenRect();
 		// clamp to at least a 1x1 rect so we don't try to allocate zero width gl buffers
@@ -4602,81 +4604,154 @@ LLRootView*	LLViewerWindow::getRootView() const
 
 LLRect LLViewerWindow::getWorldViewRectScaled() const
 {
-	return mWorldViewRectScaled;
+    return gHMD.shouldRender() ? LLRect(0, LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth, 0) : mWorldViewRectScaled;
 }
 
 S32 LLViewerWindow::getWorldViewHeightScaled() const
 {
-	return mWorldViewRectScaled.getHeight();
+    return gHMD.shouldRender() ? LLHMD::kHMDHeight : mWorldViewRectScaled.getHeight();
 }
 
 S32 LLViewerWindow::getWorldViewWidthScaled() const
 {
-	return mWorldViewRectScaled.getWidth();
+    return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth : mWorldViewRectScaled.getWidth();
 }
 
+S32 LLViewerWindow::getWorldViewLeftScaled() const
+{
+    return gHMD.shouldRender() ? (gRenderUIMode && LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE) ? LLHMD::kHMDEyeWidth : 0 : mWorldViewRectScaled.mLeft;
+}
+
+S32 LLViewerWindow::getWorldViewBottomScaled() const
+{
+    return gHMD.shouldRender() ? 0 : mWorldViewRectScaled.mBottom;
+}
 
 S32 LLViewerWindow::getWorldViewHeightRaw() const
 {
-	return mWorldViewRectRaw.getHeight(); 
+    return gHMD.shouldRender() ? LLHMD::kHMDHeight : mWorldViewRectRaw.getHeight();
 }
 
 S32 LLViewerWindow::getWorldViewWidthRaw() const
 {
-	return mWorldViewRectRaw.getWidth(); 
+    return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth : mWorldViewRectRaw.getWidth();
+}
+
+S32 LLViewerWindow::getWorldViewLeftRaw() const
+{
+    return gHMD.shouldRender() ? (gRenderUIMode && LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE) ? LLHMD::kHMDEyeWidth : 0 : mWorldViewRectRaw.mLeft;
+}
+
+S32 LLViewerWindow::getWorldViewBottomRaw() const
+{
+    return gHMD.shouldRender() ? 0 : mWorldViewRectRaw.mBottom;
+}
+
+LLRect LLViewerWindow::getWindowRectScaled() const
+{
+    return gHMD.shouldRender() ? LLRect(0, LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth, 0) : mWindowRectScaled;
 }
 
 S32	LLViewerWindow::getWindowHeightScaled()	const 	
 { 
-	return mWindowRectScaled.getHeight(); 
+    return gHMD.shouldRender() ? LLHMD::kHMDHeight : mWindowRectScaled.getHeight();
 }
 
 S32	LLViewerWindow::getWindowWidthScaled() const 	
 { 
-	return mWindowRectScaled.getWidth(); 
+    return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth : mWindowRectScaled.getWidth();
 }
 
-S32	LLViewerWindow::getWindowHeightRaw()	const 	
-{ 
-	return mWindowRectRaw.getHeight(); 
+S32 LLViewerWindow::getWindowLeftScaled() const
+{
+    return gHMD.shouldRender() ? (gRenderUIMode && LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE) ? LLHMD::kHMDEyeWidth : 0 : mWindowRectScaled.mLeft;
+}
+
+S32 LLViewerWindow::getWindowBottomScaled() const
+{
+    return gHMD.shouldRender() ? 0 : mWindowRectScaled.mBottom;
+}
+
+LLRect LLViewerWindow::getWindowRectRaw() const
+{
+    return gHMD.shouldRender() ? LLRect(0, LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth, 0) : mWindowRectRaw;
+}
+
+S32	LLViewerWindow::getWindowHeightRaw() const
+{
+    return gHMD.shouldRender() ? LLHMD::kHMDHeight : mWindowRectRaw.getHeight();
 }
 
 S32	LLViewerWindow::getWindowWidthRaw() const 	
-{ 
-	return mWindowRectRaw.getWidth(); 
+{
+    return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth : mWindowRectRaw.getWidth();
+}
+
+S32 LLViewerWindow::getWindowLeftRaw() const
+{
+    return gHMD.shouldRender() ? (gRenderUIMode && LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE) ? LLHMD::kHMDEyeWidth : 0 : mWindowRectRaw.mLeft;
+}
+
+S32 LLViewerWindow::getWindowBottomRaw() const
+{
+    return gHMD.shouldRender() ? 0 : mWindowRectRaw.mBottom;
 }
 
 void LLViewerWindow::setup2DRender()
 {
 	// setup ortho camera
-	gl_state_for_2d(mWindowRectRaw.getWidth(), mWindowRectRaw.getHeight());
+    S32 left = 0;
+    F32 offsetX = 0.0f;
+    if (gHMD.shouldRender())
+    {
+        if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
+        {
+            offsetX = gHMD.getOrthoPixelOffset();
+        }
+        else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+        {
+            offsetX = -gHMD.getOrthoPixelOffset();
+            if (gRenderUIMode)
+            {
+                left = LLHMD::kHMDEyeWidth;
+            }
+        }
+
+    }
+	gl_state_for_2d(getWindowWidthRaw(), getWindowHeightRaw(), left, offsetX);
 	setup2DViewport();
 }
 
 void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset)
 {
-	gGLViewport[0] = mWindowRectRaw.mLeft + x_offset;
-	gGLViewport[1] = mWindowRectRaw.mBottom + y_offset;
-	gGLViewport[2] = mWindowRectRaw.getWidth();
-	gGLViewport[3] = mWindowRectRaw.getHeight();
-	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+    gGLViewport[0] = x_offset + getWindowLeftRaw();
+    gGLViewport[1] = y_offset + getWindowBottomRaw();
+    gGLViewport[2] = getWindowWidthRaw();
+    gGLViewport[3] = getWindowHeightRaw();
+    glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 
 
 void LLViewerWindow::setup3DRender()
 {
 	// setup perspective camera
-	LLViewerCamera::getInstance()->setPerspective(NOT_FOR_SELECTION, mWorldViewRectRaw.mLeft, mWorldViewRectRaw.mBottom,  mWorldViewRectRaw.getWidth(), mWorldViewRectRaw.getHeight(), FALSE, LLViewerCamera::getInstance()->getNear(), MAX_FAR_CLIP*2.f);
+	LLViewerCamera::getInstance()->setPerspective(  NOT_FOR_SELECTION,
+                                                    getWorldViewLeftRaw(),
+                                                    getWorldViewBottomRaw(),
+                                                    getWorldViewWidthRaw(),
+                                                    getWorldViewHeightRaw(),
+                                                    FALSE,
+                                                    LLViewerCamera::getInstance()->getNear(),
+                                                    MAX_FAR_CLIP * 2.0f);
 	setup3DViewport();
 }
 
 void LLViewerWindow::setup3DViewport(S32 x_offset, S32 y_offset)
 {
-	gGLViewport[0] = mWorldViewRectRaw.mLeft + x_offset;
-	gGLViewport[1] = mWorldViewRectRaw.mBottom + y_offset;
-	gGLViewport[2] = mWorldViewRectRaw.getWidth();
-	gGLViewport[3] = mWorldViewRectRaw.getHeight();
-	
+    gGLViewport[0] = x_offset + getWorldViewLeftRaw();
+    gGLViewport[1] = y_offset + getWorldViewBottomRaw();
+    gGLViewport[2] = getWorldViewWidthRaw();
+    gGLViewport[3] = getWorldViewHeightRaw();
 	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 
@@ -5024,7 +5099,7 @@ BOOL LLViewerWindow::changeDisplaySettings(LLCoordScreen size, BOOL disable_vsyn
 
 F32	LLViewerWindow::getWorldViewAspectRatio() const
 {
-	F32 world_aspect = (F32)mWorldViewRectRaw.getWidth() / (F32)mWorldViewRectRaw.getHeight();
+	F32 world_aspect = (F32)getWorldViewWidthRaw() / (F32)getWorldViewHeightRaw();
 	return world_aspect;
 }
 
@@ -5055,10 +5130,13 @@ void LLViewerWindow::calcDisplayScale()
 LLRect 	LLViewerWindow::calcScaledRect(const LLRect & rect, const LLVector2& display_scale)
 {
 	LLRect res = rect;
-	res.mLeft = llround((F32)res.mLeft / display_scale.mV[VX]);
-	res.mRight = llround((F32)res.mRight / display_scale.mV[VX]);
-	res.mBottom = llround((F32)res.mBottom / display_scale.mV[VY]);
-	res.mTop = llround((F32)res.mTop / display_scale.mV[VY]);
+    if (!gHMD.shouldRender())
+    {
+	    res.mLeft = llround((F32)res.mLeft / display_scale.mV[VX]);
+	    res.mRight = llround((F32)res.mRight / display_scale.mV[VX]);
+	    res.mBottom = llround((F32)res.mBottom / display_scale.mV[VY]);
+	    res.mTop = llround((F32)res.mTop / display_scale.mV[VY]);
+    }
 
 	return res;
 }

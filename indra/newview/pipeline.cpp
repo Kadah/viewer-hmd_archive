@@ -112,6 +112,7 @@
 #include "llfloaterpathfindingconsole.h"
 #include "llfloaterpathfindingcharacters.h"
 #include "llpathfindingpathtool.h"
+#include "llhmd.h"
 
 #ifdef _DEBUG
 // Debug indices is disabled for now for debug performance - djs 4/24/02
@@ -1017,10 +1018,8 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		mDeferredScreen.shareDepthBuffer(mScreen);
 	}
 
-	U32 oculus_res_x = 640*1.25f;
-	U32 oculus_res_y = 800*1.25f;
-	mLeftEye.allocate(oculus_res_x, oculus_res_y, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true);
-	mRightEye.allocate(oculus_res_x, oculus_res_y, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true);
+	mLeftEye.allocate(LLHMD::kHMDEyeWidth, LLHMD::kHMDHeight, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true);
+	mRightEye.allocate(LLHMD::kHMDEyeWidth, LLHMD::kHMDHeight, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true);
 
 	gGL.getTexUnit(0)->disable();
 
@@ -7076,27 +7075,24 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 
-	if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
-	{
-		mLeftEye.bindTarget();
-	}
-	else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
-	{
-		mRightEye.bindTarget();
-	}
-
-
 	U32 viewport_left = gViewerWindow->getWorldViewRectRaw().mLeft;
 	U32 viewport_bottom = gViewerWindow->getWorldViewRectRaw().mBottom;
 	U32 viewport_width = gViewerWindow->getWorldViewRectRaw().getWidth();
 	U32 viewport_height = gViewerWindow->getWorldViewRectRaw().getHeight();
-
-	if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
+    if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
 	{
 		viewport_left = 0;
 		viewport_bottom = 0;
 		viewport_width = mLeftEye.getWidth();
 		viewport_height = mLeftEye.getHeight();
+        if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
+        {
+            mLeftEye.bindTarget();
+        }
+        else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+        {
+            mRightEye.bindTarget();
+        }
 	}
 
 	assertInitialized();
@@ -7709,108 +7705,116 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		}
 	}
 
-	if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
-	{
-		mLeftEye.flush();
-	}
-	else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
-	{
-		mRightEye.flush();
-		gViewerWindow->setup3DViewport();
+    //if (gHMD.shouldRender() && !gHMD.shouldRender2DUI())
+    //{
+    //    if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
+    //    {
+    //        mLeftEye.flush();
+    //    }
+    //    else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+    //    {
+    //        mRightEye.flush();
+    //        gViewerWindow->setup3DViewport();
 
-		gBarrelDistortProgram.bind();
+    //        BOOL shouldDistort = gSavedSettings.getBOOL("OculusShouldDistort");
+    //        BOOL shouldDistortScale = gSavedSettings.getBOOL("OculusShouldDistortScale");
+    //        LLVector3 oculusWHAS = gSavedSettings.getVector3("OculusWHAS");
+    //        F32 w = oculusWHAS.mV[VX]; // float(viewport_width) / float(LLHMD::kHMDWidth);
+    //        F32 h = oculusWHAS.mV[VY]; // float(viewport_height) / float(LLHMD::kHMDHeight);
+    //        F32 as = oculusWHAS.mV[VZ]; // float(viewport_width) / float(viewport_height);
+    //        LLVector3 oculusScaleMult = gSavedSettings.getVector3("OculusScaleMult");
+    //        //F32 w = 1.0f;
+    //        //F32 h = 1.0f;
+    //        //F32 as = 0.8f;
+    //        F32 scaleFactor = shouldDistortScale ? (1.0f / (gHMD.getDistortionScale() * oculusScaleMult.mV[VZ])) : 1.0f;
+    //        F32 ctrOffsetMult = gSavedSettings.getF32("OculusCenterOffsetMult");
+    //        LLVector4 hmd_param = gHMD.getDistortionConstants();
 
-		static LLStaticHashedString ScaleIn("ScaleIn");
-		static LLStaticHashedString LensCenter("LensCenter");
-		static LLStaticHashedString Scale("Scale");
-		static LLStaticHashedString HmdWarpParam("HmdWarpParam");
+    //        if (shouldDistort)
+    //        {
+    //            gBarrelDistortProgram.bind();
+    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("Scale"), (w * oculusScaleMult.mV[VX]) * scaleFactor, (h * oculusScaleMult.mV[VX]) * scaleFactor * as);
+    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScaleIn"), (oculusScaleMult.mV[VY] / w), (oculusScaleMult.mV[VY] / h) / as);
+    //            //gBarrelDistortProgram.uniform2f(LLStaticHashedString("Scale"), (w * 0.5f) * scaleFactor, (h * 0.5f) * scaleFactor * as);
+    //            //gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScaleIn"), (1.0f / w), (1.0f / h) / as);
+    //            // We are using 1/4 of DistortionCenter offset value here, since it is relative to [-1,1] range that gets mapped to [0, 0.5].
+    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w + (gHMD.getXCenterOffset() * ctrOffsetMult * 0.5f)) * 0.5f, (h * 0.5f));
+    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
+    //            gBarrelDistortProgram.uniform4fv(LLStaticHashedString("HmdWarpParam"), 1, hmd_param.mV);
+    //        }
+    //        else
+    //        {
+    //            gOneTextureNoColorProgram.bind();
+    //        }
+    //        gGL.setColorMask(true, false);
+    //        gGL.color4f(1,1,1,1);
+    //        gGL.getTexUnit(0)->bind(&mLeftEye);
+    //        gGL.begin(LLRender::TRIANGLE_STRIP);
+    //        //bottom left
+    //        gGL.texCoord2f(0, 0);
+    //        gGL.vertex2f(-1, -1);
+    //        //bottom right
+    //        gGL.texCoord2f(1, 0);
+    //        gGL.vertex2f(0, -1);
+    //        //top left
+    //        gGL.texCoord2f(0, 1);
+    //        gGL.vertex2f(-1,1);
+    //        //top right
+    //        gGL.texCoord2f(1, 1);
+    //        gGL.vertex2f(0,1);
+    //        gGL.end();
 
-		LLVector3 OculusLensCenter = gSavedSettings.getVector3("OculusLensCenter");
-		LLVector3 OculusScaleIn = gSavedSettings.getVector3("OculusScaleIn");
-		LLVector3 OculusScale = gSavedSettings.getVector3("OculusScale");
-		LLVector3 OculusWarpParam = gSavedSettings.getVector3("OculusWarpParam");
-		F32 OculusWarpW = gSavedSettings.getF32("OculusWarpParamW");
+    //        if (shouldDistort)
+    //        {
+    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w - (gHMD.getXCenterOffset() * ctrOffsetMult * 0.5f)) * 0.5f, h * 0.5f);
+    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
+    //        }
+    //        gGL.getTexUnit(0)->bind(&mRightEye);
+    //        gGL.begin(LLRender::TRIANGLE_STRIP);
+    //        //bottom left
+    //        gGL.texCoord2f(0, 0);
+    //        gGL.vertex2f(0, -1);
+    //        //bottom right
+    //        gGL.texCoord2f(1, 0);
+    //        gGL.vertex2f(1, -1);
+    //        //top left
+    //        gGL.texCoord2f(0, 1);
+    //        gGL.vertex2f(0,1);
+    //        //top right
+    //        gGL.texCoord2f(1, 1);
+    //        gGL.vertex2f(1,1);
+    //        gGL.end();
 
+    //        gGL.flush();
+    //        if (shouldDistort)
+    //        {
+    //            gBarrelDistortProgram.unbind();
+    //        }
+    //        else
+    //        {
+    //            gOneTextureNoColorProgram.unbind();
+    //        }
+    //    }
+    //}
 
-		gBarrelDistortProgram.uniform2f(ScaleIn, OculusScaleIn.mV[0], OculusScaleIn.mV[1]);
-		gBarrelDistortProgram.uniform2f(LensCenter, OculusLensCenter.mV[0], OculusLensCenter.mV[1]);
-		gBarrelDistortProgram.uniform2f(Scale, OculusScale.mV[0], OculusScale.mV[1]);
+    //if (!gHMD.shouldRender() || !gHMD.shouldRender2DUI())
+    //{
+    //    //if (LLRenderTarget::sUseFBO && LLViewerCamera::sCurrentEye != (S32)LLViewerCamera::LEFT_EYE)
+	   // //{ //copy depth buffer from mScreen to framebuffer
+	   // //	LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
+	   // //		0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+	   // //}
 
-		LLVector4 hmd_param(OculusWarpParam.mV[0], OculusWarpParam.mV[1], OculusWarpParam.mV[2], OculusWarpW);
-		gBarrelDistortProgram.uniform4fv(HmdWarpParam, 1, hmd_param.mV);
-		gGL.setColorMask(true, false);
+	   // //gGL.matrixMode(LLRender::MM_PROJECTION);
+	   // //gGL.popMatrix();
+	   // //gGL.matrixMode(LLRender::MM_MODELVIEW);
+	   // //gGL.popMatrix();
 
+	   // //LLVertexBuffer::unbind();
 
-		gGL.color4f(1,1,1,1);
-
-		gGL.getTexUnit(0)->bind(&mLeftEye);
-
-		gGL.begin(LLRender::TRIANGLE_STRIP);
-
-		//bottom left
-		gGL.texCoord2f(0, 0);
-		gGL.vertex2f(-1, -1);
-
-		//bottom right
-		gGL.texCoord2f(1, 0);
-		gGL.vertex2f(0, -1);
-
-		//top left
-		gGL.texCoord2f(0, 1);
-		gGL.vertex2f(-1,1);
-
-		//top right
-		gGL.texCoord2f(1, 1);
-		gGL.vertex2f(0,1);
-
-		gGL.end();
-
-		gGL.getTexUnit(0)->bind(&mRightEye);
-
-		gGL.begin(LLRender::TRIANGLE_STRIP);
-
-		//bottom left
-		gGL.texCoord2f(0, 0);
-		gGL.vertex2f(0, -1);
-
-		//bottom right
-		gGL.texCoord2f(1, 0);
-		gGL.vertex2f(1, -1);
-
-		//top left
-		gGL.texCoord2f(0, 1);
-		gGL.vertex2f(0,1);
-
-		//top right
-		gGL.texCoord2f(1, 1);
-		gGL.vertex2f(1,1);
-
-		gGL.end();
-				
-		gGL.flush();
-
-		gBarrelDistortProgram.unbind();
-	}
-
-
-
-	if (LLRenderTarget::sUseFBO)
-	{ //copy depth buffer from mScreen to framebuffer
-		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
-			0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-	}
-	
-
-	gGL.matrixMode(LLRender::MM_PROJECTION);
-	gGL.popMatrix();
-	gGL.matrixMode(LLRender::MM_MODELVIEW);
-	gGL.popMatrix();
-
-	LLVertexBuffer::unbind();
-
-	LLGLState::checkStates();
-	LLGLState::checkTextureChannels();
-
+	   // //LLGLState::checkStates();
+	   // //LLGLState::checkTextureChannels();
+    //}
 }
 
 static LLFastTimer::DeclareTimer FTM_BIND_DEFERRED("Bind Deferred");
@@ -10507,6 +10511,113 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 	LLGLState::checkClientArrays();
+}
+
+void LLPipeline::postRender()
+{
+    if (!(gPipeline.canUseVertexShaders() && sRenderGlow))
+    {
+        return;
+    }
+
+    if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE && !gHMD.shouldRender2DUI())
+    {
+        mLeftEye.flush();
+    }
+    else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+    {
+        mRightEye.flush();
+        gViewerWindow->setup3DViewport();
+
+        F32 w = 1.0f;
+        F32 h = 1.0f;
+        F32 as = (F32)LLHMD::kHMDEyeWidth / (F32)LLHMD::kHMDHeight;
+        //BOOL shouldDistortScale = gSavedSettings.getBOOL("OculusShouldDistortScale");
+        //F32 scaleFactor = shouldDistortScale ? (1.0f / (gHMD.getDistortionScale() * oculusScaleMult.mV[VZ])) : 1.0f;
+        F32 scaleFactor = 1.0f / gHMD.getDistortionScale();
+        LLVector4 hmd_param = gHMD.getDistortionConstants();
+
+        static BOOL shouldDistort = TRUE; // gSavedSettings.getBOOL("OculusShouldDistort");
+        if (shouldDistort)
+        {
+            gBarrelDistortProgram.bind();
+            gBarrelDistortProgram.uniform2f(LLStaticHashedString("Scale"), w * 0.5f * scaleFactor, h * 0.5f * scaleFactor * as);
+            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScaleIn"), (2.0f / w), (2.0f / h) / as);
+            // We are using 1/4 of DistortionCenter offset value here, since it is relative to [-1,1] range that gets mapped to [0, 0.5].
+            gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w + gHMD.getXCenterOffset()) * 0.5f, (h * 0.5f));
+            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
+            gBarrelDistortProgram.uniform4fv(LLStaticHashedString("HmdWarpParam"), 1, hmd_param.mV);
+        }
+        else
+        {
+            gOneTextureNoColorProgram.bind();
+        }
+        gGL.setColorMask(true, false);
+        gGL.color4f(1,1,1,1);
+        gGL.getTexUnit(0)->bind(&mLeftEye);
+        gGL.begin(LLRender::TRIANGLE_STRIP);
+        //bottom left
+        gGL.texCoord2f(0, 0);
+        gGL.vertex2f(-1, -1);
+        //bottom right
+        gGL.texCoord2f(1, 0);
+        gGL.vertex2f(0, -1);
+        //top left
+        gGL.texCoord2f(0, 1);
+        gGL.vertex2f(-1,1);
+        //top right
+        gGL.texCoord2f(1, 1);
+        gGL.vertex2f(0,1);
+        gGL.end();
+
+        if (shouldDistort)
+        {
+            gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w - gHMD.getXCenterOffset()) * 0.5f, h * 0.5f);
+            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
+        }
+        gGL.getTexUnit(0)->bind(&mRightEye);
+        gGL.begin(LLRender::TRIANGLE_STRIP);
+        //bottom left
+        gGL.texCoord2f(0, 0);
+        gGL.vertex2f(0, -1);
+        //bottom right
+        gGL.texCoord2f(1, 0);
+        gGL.vertex2f(1, -1);
+        //top left
+        gGL.texCoord2f(0, 1);
+        gGL.vertex2f(0,1);
+        //top right
+        gGL.texCoord2f(1, 1);
+        gGL.vertex2f(1,1);
+        gGL.end();
+
+        gGL.flush();
+        if (shouldDistort)
+        {
+            gBarrelDistortProgram.unbind();
+        }
+        else
+        {
+            gOneTextureNoColorProgram.unbind();
+        }
+    }
+
+	if (LLRenderTarget::sUseFBO && (!gHMD.shouldRender() || !gHMD.shouldRender2DUI() || LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE))
+	{
+        //copy depth buffer from mScreen to framebuffer
+		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
+			0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+	}
+	
+	gGL.matrixMode(LLRender::MM_PROJECTION);
+	gGL.popMatrix();
+	gGL.matrixMode(LLRender::MM_MODELVIEW);
+	gGL.popMatrix();
+
+	LLVertexBuffer::unbind();
+
+	LLGLState::checkStates();
+	LLGLState::checkTextureChannels();
 }
 
 BOOL LLPipeline::hasRenderBatches(const U32 type) const

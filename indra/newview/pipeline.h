@@ -410,6 +410,8 @@ public:
 	void hideObject( const LLUUID& id );
 	void restoreHiddenObject( const LLUUID& id );
 
+    void postRender();
+
 private:
 	void unloadShaders();
 	void addToQuickLookup( LLDrawPool* new_poolp );

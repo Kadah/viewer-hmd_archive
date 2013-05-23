@@ -82,9 +82,9 @@ public:
 
 	typedef enum
 	{
-		LEFT_EYE = 0,
-		RIGHT_EYE = 1,
-		CENTER_EYE = 2
+        CENTER_EYE = 0,
+		LEFT_EYE = 1,
+		RIGHT_EYE = 2,
 	} eCameraEye;
 
 	static U32 sCurCameraID;

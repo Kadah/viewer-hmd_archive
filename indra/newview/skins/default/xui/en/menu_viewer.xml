@@ -206,8 +206,15 @@
             <menu_item_check.on_click
              function="View.ShowHUDAttachments" />
          </menu_item_check>
+         <menu_item_call
+          label="Cycle Display"
+          name="Cycle Display"
+          shortcut="control|shift|D">
+            <menu_item_call.on_click
+             function="View.CycleDisplay" />
+         </menu_item_call>
 
-        <menu_item_separator/>
+         <menu_item_separator/>
 
         <menu_item_call
          label="Exit [APP_NAME]"
@@ -2849,6 +2856,26 @@
                 <menu_item_check.on_click
                  function="ToggleControl"
                  parameter="RenderHoverGlowEnable" />
+            </menu_item_check>
+            <menu_item_check
+             label="Debug HMD Display"
+             name="Debug HMD Display">
+              <menu_item_check.on_check
+               function="CheckControl"
+               parameter="DebugHMDEnable" />
+              <menu_item_check.on_click
+               function="ToggleControl"
+               parameter="DebugHMDEnable" />
+            </menu_item_check>
+            <menu_item_check
+             label="Render 2D UI in HMD"
+             name="Render 2D UI in HMD">
+                <menu_item_check.on_check
+                 function="CheckControl"
+                 parameter="RenderHMD2DUI" />
+                <menu_item_check.on_click
+                 function="Advanced.ClickRenderHMD2DUI"
+                 parameter="RenderHMD2DUI" />
             </menu_item_check>
         </menu>
 

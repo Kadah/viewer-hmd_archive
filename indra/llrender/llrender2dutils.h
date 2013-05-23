@@ -43,7 +43,7 @@ class LLUUID;
 extern const LLColor4 UI_VERTEX_COLOR;
 
 BOOL ui_point_in_rect(S32 x, S32 y, S32 left, S32 top, S32 right, S32 bottom);
-void gl_state_for_2d(S32 width, S32 height);
+void gl_state_for_2d(S32 width, S32 height, S32 left = 0, F32 offsetX = 0.0f);
 
 void gl_line_2d(S32 x1, S32 y1, S32 x2, S32 y2);
 void gl_line_2d(S32 x1, S32 y1, S32 x2, S32 y2, const LLColor4 &color );

@@ -3,6 +3,26 @@
 <map>
     <key>installables</key>
     <map>
+      <key>'libovr'</key>
+      <map>
+        <key>name</key>
+        <string>libovr</string>
+        <key>platforms</key>
+        <map>
+          <key>windows</key>
+          <map>
+            <key>archive</key>
+            <map>
+              <key>hash</key>
+              <string>f6316b95256d270848f65ccbe02a94a5</string>
+              <key>url</key>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/voidpointer_3p-libovr/rev/275300/arch/CYGWIN/installer/libovr-0.2.1-windows-20130503.tar.bz2</string>
+            </map>
+            <key>name</key>
+            <string>windows</string>
+          </map>
+        </map>
+      </map>
       <key>GLOD</key>
       <map>
         <key>license</key>
@@ -1624,9 +1644,9 @@
             <key>archive</key>
             <map>
               <key>hash</key>
-	      <string>7dc5191a3d95074a6ed3bd53f57420e5</string>
+              <string>7dc5191a3d95074a6ed3bd53f57420e5</string>
               <key>url</key>
-		   <string>http://automated-builds-secondlife-com.s3.amazonaws.com/hg/repo/3p-openssl/rev/249044/arch/Linux/installer/openssl-1.0.0g-linux-20120207.tar.bz2</string>
+              <string>http://automated-builds-secondlife-com.s3.amazonaws.com/hg/repo/3p-openssl/rev/249044/arch/Linux/installer/openssl-1.0.0g-linux-20120207.tar.bz2</string>
             </map>
             <key>name</key>
             <string>linux</string>

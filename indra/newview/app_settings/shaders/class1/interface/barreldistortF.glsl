@@ -22,7 +22,7 @@
  * Linden Research, Inc., 945 Battery Street, San Francisco, CA  94111  USA
  * $/LicenseInfo$
  */
- 
+
 #extension GL_ARB_texture_rectangle : enable
 
 #ifdef DEFINE_GL_FRAGCOLOR
@@ -36,6 +36,7 @@ uniform sampler2D screenMap;
 VARYING vec2 vary_texcoord0;
 
 uniform vec2 LensCenter;
+uniform vec2 ScreenCenter;
 uniform vec2 Scale;
 uniform vec2 ScaleIn;
 uniform vec4 HmdWarpParam;
@@ -58,13 +59,12 @@ void main()
 {
 	vec2 tc = HmdWarp(vary_texcoord0);
 
-	vec2 ScreenCenter = vec2(0.5,0.5);
-	vec2 clamped_tc = clamp(tc, ScreenCenter-vec2(0.25,0.5),
-			          ScreenCenter+vec2(0.25, 0.5)) - tc;
+	vec2 clamped_tc = clamp(tc, ScreenCenter-vec2(0.5,0.5),
+			          ScreenCenter+vec2(0.5,0.5)) - tc;
 	
 	if (dot(clamped_tc, clamped_tc) > 0.0)
 	{
-		frag_color = vec4(0,0,0,0);
+		frag_color = vec4(1,1,1,1);
 	}
 	else
 	{

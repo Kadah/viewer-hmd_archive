@@ -98,6 +98,7 @@
 #include "llfloatertexturefetchdebugger.h"
 #include "llspellcheck.h"
 #include "llavatarrenderinfoaccountant.h"
+#include "llhmd.h"
 
 // Linden library includes
 #include "llavatarnamecache.h"
@@ -1766,7 +1767,12 @@ bool LLAppViewer::cleanup()
 	// Clean up before GL is shut down because we might be holding on to objects with texture references
 	LLSelectMgr::cleanupGlobals();
 	
-	llinfos << "Shutting down OpenGL" << llendflush;
+    if (gHMD.isInitialized())
+    {
+        gHMD.shutdown();
+    }
+
+    llinfos << "Shutting down OpenGL" << llendflush;
 
 	// Shut down OpenGL
 	if( gViewerWindow)
@@ -4313,8 +4319,20 @@ void LLAppViewer::idle()
 		// Update spaceserver timeinfo
 	    LLWorld::getInstance()->setSpaceTimeUSec(LLWorld::getInstance()->getSpaceTimeUSec() + (U32)(dt_raw * SEC_TO_MICROSEC));
     
-    
-	    //////////////////////////////////////
+        // TODO: move the init step so that it happens in the LLHMD::onMessage 
+        if (!gHMD.isInitialized() && !gHMD.failedInit())
+        {
+            if (!gHMD.init())
+            {
+                LL_WARNS("Oculus") << "Oculus Rift initialization Failed!" << LL_ENDL;
+            }
+        }
+        if (gHMD.isInitialized())
+        {
+            gHMD.onIdle();
+        }
+
+        //////////////////////////////////////
 	    //
 	    // Update simulator agent state
 	    //

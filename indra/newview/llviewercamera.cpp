@@ -41,6 +41,7 @@
 #include "llworld.h"
 #include "lltoolmgr.h"
 #include "llviewerjoystick.h"
+#include "llhmd.h"
 
 // Linden library includes
 #include "lldrawable.h"
@@ -125,7 +126,7 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
 											const LLVector3 &point_of_interest)
 {
 	// do not update if avatar didn't move
-	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate())
+	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate() && !gHMD.shouldRender())
 	{
 		return;
 	}
@@ -150,7 +151,10 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
 		origin.mV[2] = llmin(origin.mV[2], water_height-0.20f);
 	}
 
-	setOriginAndLookAt(origin, up_direction, point_of_interest);
+    LLVector3 up = up_direction;
+    LLVector3 poi = point_of_interest;
+    gHMD.adjustLookAt(origin, up, poi);
+    setOriginAndLookAt(origin, up, poi);
 
 	mVelocityDir = center - last_position ; 
 	F32 dpos = mVelocityDir.normVec() ;
@@ -385,6 +389,27 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 		proj_mat = translate*proj_mat;
 	}
 
+    if (gHMD.shouldRender())
+    {
+        F32 viewCenter = gHMD.getHScreenSize() * 0.25f;
+        F32 eyeProjShift = viewCenter - (gHMD.getLensSeparationDistance() * 0.5f);
+        F32 projCtrOffset = (4.0f * eyeProjShift) / gHMD.getHScreenSize();
+        if (sCurrentEye == LEFT_EYE)
+        {
+            glh::matrix4f translate;
+            translate.set_translate(glh::vec3f(projCtrOffset, 0.0f, 0.0f));
+            proj_mat = translate * proj_mat;
+        }
+        else if (sCurrentEye == RIGHT_EYE)
+        {
+            glh::matrix4f translate;
+            translate.set_translate(glh::vec3f(-projCtrOffset, 0.0f, 0.0f));
+            proj_mat = translate * proj_mat;
+        }
+
+        fov_y = 2.0f * RAD_TO_DEG * atan((gHMD.getVScreenSize() * 0.5f) / gHMD.getEyeToScreenDistance());
+    }
+
 	calcProjection(z_far); // Update the projection matrix cache
 
 	proj_mat *= gl_perspective(fov_y,aspect,z_near,z_far);
@@ -405,6 +430,23 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 	getOpenGLTransform(ogl_matrix);
 
 	modelview *= glh::matrix4f(ogl_matrix);
+
+    if (gHMD.shouldRender())
+    {
+        F32 viewOffset = gHMD.getInterpupillaryOffset() * 0.25f;
+        if (sCurrentEye == LEFT_EYE)
+        {
+            glh::matrix4f translate;
+            translate.set_translate(glh::vec3f(0.0f, viewOffset, 0.0f));
+            modelview = translate * modelview;
+        }
+        else if (sCurrentEye == RIGHT_EYE)
+        {
+            glh::matrix4f translate;
+            translate.set_translate(glh::vec3f(0.0f, -viewOffset, 0.0f));
+            modelview = translate * modelview;
+        }
+    }
 	
 	gGL.loadMatrix(modelview.m);
 	

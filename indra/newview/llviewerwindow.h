@@ -226,21 +226,29 @@ public:
 	LLRect			getWorldViewRectScaled() const;
 	S32				getWorldViewHeightScaled() const;
 	S32				getWorldViewWidthScaled() const;
+    S32             getWorldViewLeftScaled() const;
+    S32             getWorldViewBottomScaled() const;
 
 	// 3D world area, in raw unscaled pixels
 	LLRect			getWorldViewRectRaw() const		{ return mWorldViewRectRaw; }
 	S32 			getWorldViewHeightRaw() const;
 	S32 			getWorldViewWidthRaw() const;
+    S32             getWorldViewLeftRaw() const;
+    S32             getWorldViewBottomRaw() const;
 
 	// Window in scaled pixels (via UI scale), use for most UI computations
-	LLRect			getWindowRectScaled() const		{ return mWindowRectScaled; }
+	LLRect			getWindowRectScaled() const;
 	S32				getWindowHeightScaled() const;
 	S32				getWindowWidthScaled() const;
+    S32             getWindowLeftScaled() const;
+    S32             getWindowBottomScaled() const;
 
 	// Window in raw pixels as seen on screen.
-	LLRect			getWindowRectRaw() const		{ return mWindowRectRaw; }
+	LLRect			getWindowRectRaw() const;
 	S32				getWindowHeightRaw() const;
 	S32				getWindowWidthRaw() const;
+    S32             getWindowLeftRaw() const;
+    S32             getWindowBottomRaw() const;
 
 	LLWindow*		getWindow()			const	{ return mWindow; }
 	void*			getPlatformWindow() const;

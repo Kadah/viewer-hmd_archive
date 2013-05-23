@@ -2103,6 +2103,17 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
+    <key>DebugHMDEnable</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable Head Mounted Display Debugging Mode.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
     <key>DebugInventoryFilters</key>
     <map>
       <key>Comment</key>
@@ -14525,82 +14536,6 @@
     <key>Value</key>
     <integer>0</integer>
   </map>
-
-  <key>OculusLensCenter</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL]</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Vector3</string>
-    <key>Value</key>
-    <array>
-      <real>0.5</real>
-      <real>0.5</real>
-      <real>0.0</real>
-    </array>
-  </map>
-
-  <key>OculusScaleIn</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL]</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Vector3</string>
-    <key>Value</key>
-    <array>
-      <real>2.0</real>
-      <real>2.0</real>
-      <real>0.0</real>
-    </array>
-  </map>
-
-  <key>OculusScale</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL]</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Vector3</string>
-    <key>Value</key>
-    <array>
-      <real>0.5</real>
-      <real>0.5</real>
-      <real>0.0</real>
-    </array>
-  </map>
-
-  <key>OculusWarpParam</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL]</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Vector3</string>
-    <key>Value</key>
-    <array>
-      <real>0.1</real>
-      <real>0.1</real>
-      <real>0.1</real>
-    </array>
-  </map>
-
-  <key>OculusWarpParamW</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL]</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.1</real>
-  </map>  
   
   <key>VersionChannelName</key>
     <map>
@@ -14613,6 +14548,31 @@
       <key>Value</key>
       <string />
     </map>
+
+  <key>Oculus2DFOV</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus Field of View that the 2D coordinate area stretches to (degrees)</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>85.0</real>
+  </map>
+
+  <key>RenderHMD2DUI</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] attempt to render old-style 2D UI in Oculus Rift (doesn't work well currently)</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+
 </map>
 </llsd>
 
