@@ -9,6 +9,18 @@
         <string>libovr</string>
         <key>platforms</key>
         <map>
+          <key>darwin</key>
+          <map>
+            <key>archive</key>
+            <map>
+              <key>hash</key>
+              <string>346003599d4b07951095fdaced3cc980</string>
+              <key>url</key>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/voidpointer_3p-libovr/rev/276503/arch/Darwin/installer/libovr-0.2.1-darwin-20130524.tar.bz2</string>
+            </map>
+            <key>name</key>
+            <string>darwin</string>
+          </map>
           <key>windows</key>
           <map>
             <key>archive</key>
