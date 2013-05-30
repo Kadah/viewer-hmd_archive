@@ -14592,7 +14592,6 @@
     <key>Value</key>
     <real>85.0</real>
   </map>
-
   <key>RenderHMD2DUI</key>
   <map>
     <key>Comment</key>
@@ -14603,6 +14602,66 @@
     <string>Boolean</string>
     <key>Value</key>
     <real>0</real>
+  </map>
+  <key>OculusSwizzleMultipliers</key>
+  <map>
+      <key>Comment</key>
+      <string>[EXPERIMENTAL] multipliers for each of the head tracking quat components.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Vector4</string>
+      <key>Value</key>
+      <array>
+          <real>-1.0</real>
+          <real>-1.0</real>
+          <real>1.0</real>
+          <real>1.0</real>
+      </array>
+  </map>
+  <key>OculusInterpupillaryOffsetModifier</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus adds this value to the interpupillary distance returned</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>0.0</real>
+  </map>
+  <key>OculusLensSeparationDistanceModifier</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus adds this value to the lens separation distance returned</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>0.0</real>
+  </map>
+  <key>OculusEyeToScreenDistanceModifier</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus adds this value to the Eye-To-Screen Distance returned</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>0.0</real>
+  </map>
+  <key>OculusXCenterOffsetModifier</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus adds this value to the X Center Offset returned</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>0.0</real>
   </map>
 
 </map>

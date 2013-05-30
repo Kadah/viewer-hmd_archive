@@ -2855,7 +2855,7 @@
                function="CheckControl"
                parameter="DebugHMDEnable" />
               <menu_item_check.on_click
-               function="ToggleControl"
+               function="Advanced.ClickRenderDebugHMD"
                parameter="DebugHMDEnable" />
             </menu_item_check>
             <menu_item_check

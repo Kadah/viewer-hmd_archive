@@ -49,6 +49,16 @@ public:
         kHMDEyeWidth = 640,
     };
 
+    enum eFlags
+    {
+        kFlag_None                      = 0,
+        kFlag_Initialized               = 1 << 0,
+        kFlag_FailedInit                = 1 << 1,
+        kFlag_MainIsFullScreen          = 1 << 2,
+        kFlag_Render2DUI                = 1 << 3,
+        kFlag_IsCalibrated              = 1 << 4,
+    };
+
 public:
     LLHMD();
     ~LLHMD();
@@ -56,21 +66,23 @@ public:
     BOOL init();
     void shutdown();
     void onIdle();
-    void adjustLookAt(LLVector3& origin, LLVector3& up, LLVector3& poi);
 
-    // True if the HMD has been successfully initialized
-    BOOL isInitialized() const;
-    BOOL failedInit() const;
-
-    // experimental: attempt to render 2D UI
-    BOOL shouldRender2DUI() const;
-    void shouldRender2DUI(BOOL b);
+    BOOL isInitialized() const { return ((mFlags & kFlag_Initialized) != 0) ? TRUE : FALSE; }
+    void isInitialized(BOOL b) { if (b) { mFlags |= kFlag_Initialized; } else { mFlags &= ~kFlag_Initialized; } }
+    BOOL failedInit() const { return ((mFlags & kFlag_FailedInit) != 0) ? TRUE : FALSE; }
+    void failedInit(BOOL b) { if (b) { mFlags |= kFlag_FailedInit; } else { mFlags &= ~kFlag_FailedInit; } }
+    BOOL isMainFullScreen() const { return ((mFlags & kFlag_MainIsFullScreen) != 0) ? TRUE : FALSE; }
+    void isMainFullScreen(BOOL b) { if (b) { mFlags |= kFlag_MainIsFullScreen; } else { mFlags &= ~kFlag_MainIsFullScreen; } }
+    BOOL shouldRender2DUI() const { return ((mFlags & kFlag_Render2DUI) != 0) ? TRUE : FALSE; }
+    void shouldRender2DUI(BOOL b) { if (b) { mFlags |= kFlag_Render2DUI; } else { mFlags &= ~kFlag_Render2DUI; } }
+    BOOL isCalibrated() const { return ((mFlags & kFlag_IsCalibrated) != 0) ? TRUE : FALSE; }
+    void isCalibrated(BOOL b) { if (b) { mFlags |= kFlag_IsCalibrated; } else { mFlags &= ~kFlag_IsCalibrated; } }
 
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
-    BOOL shouldRender() const;
+    BOOL shouldRender() const { return mRenderMode != RenderMode_None; }
 
     // get/set current HMD rendering mode
-    U32 getRenderMode() const;
+    U32 getRenderMode() const { return mRenderMode; }
     void setRenderMode(U32 mode);
     void setRenderWindowMain();
     void setRenderWindowHMD();
@@ -101,6 +113,11 @@ public:
     // An inverse of this value is applied to sampled UV coordinates (1/Scale).
     F32 getDistortionScale() const;
 
+    // Get the current HMD orientation
+    LLQuaternion getHMDOrient() const;
+    void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
+    const LLVector3& getRawHMDRollPitchYaw() const;
+
     void setFOV(F32 fov);
 
     //// array of parameters for controlling additional Red and Blue scaling in order to reduce chromatic aberration
@@ -120,11 +137,24 @@ public:
 
     F32 getOrthoPixelOffset() const;
 
+    static void onChangeInterpupillaryOffsetModifer();
+    static void onChangeLensSeparationDistanceModifier();
+    static void onChangeEyeToScreenDistanceModifier();
+    static void onChangeXCenterOffsetModifier();
+    static void onChangeShouldChangeFOV();
+
 private:
     LLHMDImpl* mImpl;
+    F32 mInterpupillaryMod;
+    F32 mLensSepMod;
+    F32 mEyeToScreenMod;
+    F32 mXCenterOffsetMod;
+    U32 mFlags;
+    U32 mRenderMode;
 };
 
 extern LLHMD gHMD;
+extern BOOL gDebugHMD;
 
 #endif // LL_LLHMD_H
 

@@ -109,14 +109,6 @@ void LLFloaterSettingsDebug::onCommitSettings()
 		return;
 	}
 
-	LLVector3 vector;
-	LLVector3d vectord;
-	LLRect rect;
-	LLColor4 col4;
-	LLColor3 col3;
-	LLColor4U col4U;
-	LLColor4 color_with_alpha;
-
 	switch(controlp->type())
 	{		
 	  case TYPE_U32:
@@ -135,28 +127,51 @@ void LLFloaterSettingsDebug::onCommitSettings()
 		controlp->set(LLSD(getChild<LLUICtrl>("val_text")->getValue().asString()));
 		break;
 	  case TYPE_VEC3:
-		vector.mV[VX] = (F32)getChild<LLUICtrl>("val_spinner_1")->getValue().asReal();
-		vector.mV[VY] = (F32)getChild<LLUICtrl>("val_spinner_2")->getValue().asReal();
-		vector.mV[VZ] = (F32)getChild<LLUICtrl>("val_spinner_3")->getValue().asReal();
-		controlp->set(vector.getValue());
-		break;
+        {
+            LLVector3 vector;
+            vector.mV[VX] = (F32)getChild<LLUICtrl>("val_spinner_1")->getValue().asReal();
+            vector.mV[VY] = (F32)getChild<LLUICtrl>("val_spinner_2")->getValue().asReal();
+            vector.mV[VZ] = (F32)getChild<LLUICtrl>("val_spinner_3")->getValue().asReal();
+            controlp->set(vector.getValue());
+        }
+        break;
 	  case TYPE_VEC3D:
-		vectord.mdV[VX] = getChild<LLUICtrl>("val_spinner_1")->getValue().asReal();
-		vectord.mdV[VY] = getChild<LLUICtrl>("val_spinner_2")->getValue().asReal();
-		vectord.mdV[VZ] = getChild<LLUICtrl>("val_spinner_3")->getValue().asReal();
-		controlp->set(vectord.getValue());
+        {
+	        LLVector3d vectord;
+		    vectord.mdV[VX] = getChild<LLUICtrl>("val_spinner_1")->getValue().asReal();
+		    vectord.mdV[VY] = getChild<LLUICtrl>("val_spinner_2")->getValue().asReal();
+		    vectord.mdV[VZ] = getChild<LLUICtrl>("val_spinner_3")->getValue().asReal();
+		    controlp->set(vectord.getValue());
+        }
+		break;
+	  case TYPE_VEC4:
+        {
+            LLVector4 vector4;
+		    vector4.mV[VX] = (F32)getChild<LLUICtrl>("val_spinner_1")->getValue().asReal();
+		    vector4.mV[VY] = (F32)getChild<LLUICtrl>("val_spinner_2")->getValue().asReal();
+		    vector4.mV[VZ] = (F32)getChild<LLUICtrl>("val_spinner_3")->getValue().asReal();
+		    vector4.mV[VW] = (F32)getChild<LLUICtrl>("val_spinner_4")->getValue().asReal();
+		    controlp->set(vector4.getValue());
+        }
 		break;
 	  case TYPE_RECT:
-		rect.mLeft = getChild<LLUICtrl>("val_spinner_1")->getValue().asInteger();
-		rect.mRight = getChild<LLUICtrl>("val_spinner_2")->getValue().asInteger();
-		rect.mBottom = getChild<LLUICtrl>("val_spinner_3")->getValue().asInteger();
-		rect.mTop = getChild<LLUICtrl>("val_spinner_4")->getValue().asInteger();
-		controlp->set(rect.getValue());
+        {
+	        LLRect rect;
+		    rect.mLeft = getChild<LLUICtrl>("val_spinner_1")->getValue().asInteger();
+		    rect.mRight = getChild<LLUICtrl>("val_spinner_2")->getValue().asInteger();
+		    rect.mBottom = getChild<LLUICtrl>("val_spinner_3")->getValue().asInteger();
+		    rect.mTop = getChild<LLUICtrl>("val_spinner_4")->getValue().asInteger();
+    		controlp->set(rect.getValue());
+        }
 		break;
 	  case TYPE_COL4:
-		col3.setValue(getChild<LLUICtrl>("val_color_swatch")->getValue());
-		col4 = LLColor4(col3, (F32)getChild<LLUICtrl>("val_spinner_4")->getValue().asReal());
-		controlp->set(col4.getValue());
+        {
+	        LLColor3 col3;
+	        LLColor4 col4;
+		    col3.setValue(getChild<LLUICtrl>("val_color_swatch")->getValue());
+		    col4 = LLColor4(col3, (F32)getChild<LLUICtrl>("val_spinner_4")->getValue().asReal());
+		    controlp->set(col4.getValue());
+        }
 		break;
 	  case TYPE_COL3:
 		controlp->set(getChild<LLUICtrl>("val_color_swatch")->getValue());
@@ -348,6 +363,48 @@ void LLFloaterSettingsDebug::updateControl(LLControlVariable* controlp)
 			{
 				spinner3->setPrecision(3);
 				spinner3->setValue(v[VZ]);
+			}
+			break;
+		  }
+		  case TYPE_VEC4:
+		  {
+			LLVector4 v;
+			v.setValue(sd);
+			spinner1->setVisible(TRUE);
+		    spinner1->setMinValue(-F32_MAX);
+		    spinner1->setMaxValue(F32_MAX);
+		    spinner1->setLabel(std::string("X"));
+			spinner2->setVisible(TRUE);
+		    spinner2->setMinValue(-F32_MAX);
+		    spinner2->setMaxValue(F32_MAX);
+			spinner2->setLabel(std::string("Y"));
+			spinner3->setVisible(TRUE);
+		    spinner3->setMinValue(-F32_MAX);
+		    spinner3->setMaxValue(F32_MAX);
+			spinner3->setLabel(std::string("Z"));
+			spinner4->setVisible(TRUE);
+		    spinner4->setMinValue(-F32_MAX);
+		    spinner4->setMaxValue(F32_MAX);
+			spinner4->setLabel(std::string("W"));
+			if (!spinner1->hasFocus())
+			{
+				spinner1->setPrecision(3);
+				spinner1->setValue(v[VX]);
+			}
+			if (!spinner2->hasFocus())
+			{
+				spinner2->setPrecision(3);
+				spinner2->setValue(v[VY]);
+			}
+			if (!spinner3->hasFocus())
+			{
+				spinner3->setPrecision(3);
+				spinner3->setValue(v[VZ]);
+			}
+			if (!spinner4->hasFocus())
+			{
+				spinner4->setPrecision(3);
+				spinner4->setValue(v[VW]);
 			}
 			break;
 		  }

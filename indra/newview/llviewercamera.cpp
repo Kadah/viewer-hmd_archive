@@ -126,7 +126,7 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
 											const LLVector3 &point_of_interest)
 {
 	// do not update if avatar didn't move
-	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate() && !gHMD.shouldRender())
+	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate() && (!gHMD.isInitialized() || !gHMD.shouldRender()))
 	{
 		return;
 	}
@@ -153,8 +153,18 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
 
     LLVector3 up = up_direction;
     LLVector3 poi = point_of_interest;
-    gHMD.adjustLookAt(origin, up, poi);
     setOriginAndLookAt(origin, up, poi);
+    if (gHMD.isInitialized() && gHMD.shouldRender())
+    {
+        float r, p, y;
+        gHMD.getHMDRollPitchYaw(r, p, y);
+        LLQuaternion qr(r, mXAxis);
+        LLQuaternion qp(p, mYAxis);
+        LLQuaternion qy(y, mZAxis);
+        qr *= qp;
+        qr *= qy;
+        rotate(qr);
+    }
 
 	mVelocityDir = center - last_position ; 
 	F32 dpos = mVelocityDir.normVec() ;
@@ -406,8 +416,6 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
             translate.set_translate(glh::vec3f(-projCtrOffset, 0.0f, 0.0f));
             proj_mat = translate * proj_mat;
         }
-
-        fov_y = 2.0f * RAD_TO_DEG * atan((gHMD.getVScreenSize() * 0.5f) / gHMD.getEyeToScreenDistance());
     }
 
 	calcProjection(z_far); // Update the projection matrix cache

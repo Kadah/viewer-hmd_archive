@@ -835,6 +835,27 @@ public:
 				}
 			}
 		}
+
+		if (gDebugHMD
+            //&& gHMD.shouldRender()
+            && gHMD.isInitialized())
+		{
+			addText(xpos, ypos, llformat("HMD XCenter Offset: %f", gHMD.getXCenterOffset()));
+			ypos += y_inc;
+			addText(xpos, ypos, llformat("HMD Eye To Screen Distance: %f", gHMD.getEyeToScreenDistance()));
+			ypos += y_inc;
+			addText(xpos, ypos, llformat("HMD Interpupillary Offset: %f", gHMD.getInterpupillaryOffset()));
+			ypos += y_inc;
+			addText(xpos, ypos, llformat("HMD Lens Separation Distance: %f", gHMD.getLensSeparationDistance()));
+		    ypos += y_inc;
+            const LLVector3& rawRollPitchYaw = gHMD.getRawHMDRollPitchYaw();
+			addText(xpos, ypos, llformat("HMD Orient Raw Euler: [roll=%f, pitch=%f, yaw=%f]", rawRollPitchYaw.mV[VX], rawRollPitchYaw.mV[VY], rawRollPitchYaw.mV[VZ]));
+			ypos += y_inc;
+            F32 roll, pitch, yaw;
+            gHMD.getHMDRollPitchYaw(roll, pitch, yaw);
+			addText(xpos, ypos, llformat("HMD Orient Euler: [roll=%f, pitch=%f, yaw=%f]", roll, pitch, yaw));
+			ypos += y_inc;
+        }
 	}
 
 	void draw()
