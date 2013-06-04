@@ -107,17 +107,13 @@ class NamedTimerFactory : public LLSingleton<NamedTimerFactory>
 {
 public:
 	NamedTimerFactory()
-	:	mTimerRoot(NULL)
-	{}
-
-	/*virtual */ void initSingleton()
+	:	mTimerRoot(new LLFastTimer::NamedTimer("root"))
 	{
-		mTimerRoot = new LLFastTimer::NamedTimer("root");
 		mRootFrameState.setNamedTimer(mTimerRoot);
 		mTimerRoot->setFrameState(&mRootFrameState);
 		mTimerRoot->mParent = mTimerRoot;
 		mTimerRoot->setCollapsed(false);
-		mRootFrameState.mParent = &mRootFrameState;
+		mRootFrameState.mParent = &mRootFrameState;	
 	}
 
 	~NamedTimerFactory()
@@ -559,6 +555,12 @@ std::vector<LLFastTimer::NamedTimer*>::const_iterator LLFastTimer::NamedTimer::e
 std::vector<LLFastTimer::NamedTimer*>& LLFastTimer::NamedTimer::getChildren()
 {
 	return mChildren;
+}
+
+// static
+LLFastTimer::NamedTimer& LLFastTimer::NamedTimer::getRootNamedTimer()
+{
+        return *NamedTimerFactory::instance().getRootTimer();
 }
 
 //static

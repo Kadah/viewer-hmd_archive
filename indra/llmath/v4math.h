@@ -43,6 +43,18 @@ class LLVector4
 {
 	public:
 		F32 mV[LENGTHOFVECTOR4];
+
+		static const LLVector4 zero;
+		static const LLVector4 x_axis;
+		static const LLVector4 y_axis;
+		static const LLVector4 z_axis;
+		static const LLVector4 w_axis;
+		static const LLVector4 x_axis_neg;
+        static const LLVector4 y_axis_neg;
+		static const LLVector4 z_axis_neg;
+		static const LLVector4 w_axis_neg;
+		static const LLVector4 all_one;
+
 		LLVector4();						// Initializes LLVector4 to (0, 0, 0, 1)
 		explicit LLVector4(const F32 *vec);			// Initializes LLVector4 to (vec[0]. vec[1], vec[2], vec[3])
 		explicit LLVector4(const F64 *vec);			// Initialized LLVector4 to ((F32) vec[0], (F32) vec[1], (F32) vec[3], (F32) vec[4]);
@@ -50,6 +62,15 @@ class LLVector4
 		explicit LLVector4(const LLVector3 &vec, F32 w);	// Initializes LLVector4 to (vec, w)
 		LLVector4(F32 x, F32 y, F32 z);		// Initializes LLVector4 to (x. y, z, 1)
 		LLVector4(F32 x, F32 y, F32 z, F32 w);
+		explicit LLVector4(const LLSD& sd) { setValue(sd); }
+
+		void setValue(const LLSD& sd)
+		{
+			mV[0] = sd[0].asReal();
+			mV[1] = sd[1].asReal();
+			mV[2] = sd[2].asReal();
+			mV[3] = sd[3].asReal();
+		}
 
 		LLSD getValue() const
 		{
@@ -122,6 +143,8 @@ class LLVector4
 		friend const LLVector4& operator/=(LLVector4 &a, F32 k);				// Return a divided by scaler k
 
 		friend LLVector4 operator-(const LLVector4 &a);					// Return vector -a
+
+		static BOOL parseVector4(const std::string& buf, LLVector4* value);
 };
 
 // Non-member functions 
@@ -499,7 +522,6 @@ inline F32		LLVector4::normVec(void)
 	}
 	return (mag);
 }
-
 
 #endif
 

@@ -42,6 +42,7 @@
 #include "llwindowcallbacks.h"
 #include "lltimer.h"
 #include "llmousehandler.h"
+#include "llnotifications.h"
 #include "llhandle.h"
 #include "llinitparam.h"
 
@@ -64,6 +65,7 @@ class LLWindow;
 class LLRootView;
 class LLWindowListener;
 class LLViewerWindowListener;
+class LLVOPartGroup;
 class LLPopupView;
 
 #define PICK_HALF_WIDTH 5
@@ -86,7 +88,8 @@ public:
 	LLPickInfo();
 	LLPickInfo(const LLCoordGL& mouse_pos, 
 		MASK keyboard_mask, 
-		BOOL pick_transparent, 
+		BOOL pick_transparent,
+		BOOL pick_particle,
 		BOOL pick_surface_info,
 		void (*pick_callback)(const LLPickInfo& pick_info));
 
@@ -107,6 +110,8 @@ public:
 	LLVector3d		mPosGlobal;
 	LLVector3		mObjectOffset;
 	LLUUID			mObjectID;
+	LLUUID			mParticleOwnerID;
+	LLUUID			mParticleSourceID;
 	S32				mObjectFace;
 	LLHUDIcon*		mHUDIcon;
 	LLVector3       mIntersection;
@@ -116,6 +121,7 @@ public:
 	LLVector3		mNormal;
 	LLVector3		mBinormal;
 	BOOL			mPickTransparent;
+	BOOL			mPickParticle;
 	void		    getSurfaceInfo();
 
 private:
@@ -220,21 +226,29 @@ public:
 	LLRect			getWorldViewRectScaled() const;
 	S32				getWorldViewHeightScaled() const;
 	S32				getWorldViewWidthScaled() const;
+    S32             getWorldViewLeftScaled() const;
+    S32             getWorldViewBottomScaled() const;
 
 	// 3D world area, in raw unscaled pixels
 	LLRect			getWorldViewRectRaw() const		{ return mWorldViewRectRaw; }
 	S32 			getWorldViewHeightRaw() const;
 	S32 			getWorldViewWidthRaw() const;
+    S32             getWorldViewLeftRaw() const;
+    S32             getWorldViewBottomRaw() const;
 
 	// Window in scaled pixels (via UI scale), use for most UI computations
-	LLRect			getWindowRectScaled() const		{ return mWindowRectScaled; }
+	LLRect			getWindowRectScaled() const;
 	S32				getWindowHeightScaled() const;
 	S32				getWindowWidthScaled() const;
+    S32             getWindowLeftScaled() const;
+    S32             getWindowBottomScaled() const;
 
 	// Window in raw pixels as seen on screen.
-	LLRect			getWindowRectRaw() const		{ return mWindowRectRaw; }
+	LLRect			getWindowRectRaw() const;
 	S32				getWindowHeightRaw() const;
 	S32				getWindowWidthRaw() const;
+    S32             getWindowLeftRaw() const;
+    S32             getWindowBottomRaw() const;
 
 	LLWindow*		getWindow()			const	{ return mWindow; }
 	void*			getPlatformWindow() const;
@@ -354,7 +368,7 @@ public:
 	void			returnEmptyPicks();
 
 	void			pickAsync(S32 x, S32 y_from_bot, MASK mask, void (*callback)(const LLPickInfo& pick_info), BOOL pick_transparent = FALSE);
-	LLPickInfo		pickImmediate(S32 x, S32 y, BOOL pick_transparent);
+	LLPickInfo		pickImmediate(S32 x, S32 y, BOOL pick_transparent, BOOL pick_particle = FALSE);
 	LLHUDIcon* cursorIntersectIcon(S32 mouse_x, S32 mouse_y, F32 depth,
 										   LLVector3* intersection);
 
@@ -400,7 +414,6 @@ public:
 
 private:
 	bool                    shouldShowToolTipFor(LLMouseHandler *mh);
-	static bool onAlert(const LLSD& notify);
 
 	void			switchToolByMask(MASK mask);
 	void			destroyWindow();
@@ -416,6 +429,11 @@ private:
 	LLWindow*		mWindow;						// graphical window object
 	bool			mActive;
 	bool			mUIVisible;
+
+	LLNotificationChannelPtr mSystemChannel;
+	LLNotificationChannelPtr mCommunicationChannel;
+	LLNotificationChannelPtr mAlertsChannel;
+	LLNotificationChannelPtr mModalAlertsChannel;
 
 	LLRect			mWindowRectRaw;				// whole window, including UI
 	LLRect			mWindowRectScaled;			// whole window, scaled by UI size
@@ -494,6 +512,8 @@ extern LLFrameTimer		gAwayTimer;				// tracks time before setting the avatar awa
 extern LLFrameTimer		gAwayTriggerTimer;		// how long the avatar has been away
 
 extern LLViewerObject*  gDebugRaycastObject;
+extern LLVOPartGroup*	gDebugRaycastParticle;
+extern LLVector3		gDebugRaycastParticleIntersection;
 extern LLVector3        gDebugRaycastIntersection;
 extern LLVector2        gDebugRaycastTexCoord;
 extern LLVector3        gDebugRaycastNormal;

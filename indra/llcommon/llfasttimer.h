@@ -91,6 +91,8 @@ public:
 		U32 getHistoricalCount(S32 history_index = 0) const;
 		U32 getHistoricalCalls(S32 history_index = 0) const;
 
+		static NamedTimer& getRootNamedTimer();
+
 		void setFrameState(FrameState* state) { mFrameState = state; state->setNamedTimer(this); }
 		FrameState& getFrameState() const;
 
@@ -137,10 +139,11 @@ public:
 
 	// used to statically declare a new named timer
 	class LL_COMMON_API DeclareTimer
-	:	public LLInstanceTracker<DeclareTimer>
+	:	public LLInstanceTracker< DeclareTimer >
 	{
 		friend class LLFastTimer;
 	public:
+
 		DeclareTimer(const std::string& name, bool open);
 		DeclareTimer(const std::string& name);
 

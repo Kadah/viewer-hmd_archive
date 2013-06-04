@@ -28,7 +28,6 @@
 #define LL_LLRENDERTARGET_H
 
 // LLRenderTarget is unavailible on the mapserver since it uses FBOs.
-#if !LL_MESA_HEADLESS
 
 #include "llgl.h"
 #include "llrender.h"
@@ -113,6 +112,7 @@ public:
 	LLTexUnit::eTextureType getUsage(void) const { return mUsage; }
 
 	U32 getTexture(U32 attachment = 0) const;
+	U32 getNumTextures() const;
 
 	U32 getDepth(void) const { return mDepth; }
 	bool hasStencil() const { return mStencil; }
@@ -155,8 +155,6 @@ protected:
 	
 	static LLRenderTarget* sBoundTarget;
 };
-
-#endif //!LL_MESA_HEADLESS
 
 #endif
 

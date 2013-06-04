@@ -27,7 +27,7 @@
 #ifndef LL_LLVIEWERMENU_H
 #define LL_LLVIEWERMENU_H
 
-#include "llmenugl.h"
+#include "../llui/llmenugl.h"
 #include "llsafehandle.h"
 
 class LLMessageSystem;
@@ -138,6 +138,11 @@ bool handle_go_to();
 // Export to XML or Collada
 void handle_export_selected( void * );
 
+// Convert strings to internal types
+U32 render_type_from_string(std::string render_type);
+U32 feature_from_string(std::string feature);
+U32 info_display_from_string(std::string info_display);
+
 class LLViewerMenuHolderGL : public LLMenuHolderGL
 {
 public:
@@ -172,6 +177,7 @@ extern LLContextMenu		*gMenuObject;
 extern LLContextMenu		*gMenuAttachmentSelf;
 extern LLContextMenu		*gMenuAttachmentOther;
 extern LLContextMenu		*gMenuLand;
+extern LLContextMenu		*gMenuMuteParticle;
 
 // Needed to build menus when attachment site list available
 extern LLMenuGL* gAttachSubMenu;
@@ -184,8 +190,6 @@ extern LLContextMenu* gDetachPieMenu;
 extern LLContextMenu* gAttachBodyPartPieMenus[8];
 extern LLContextMenu* gDetachBodyPartPieMenus[8];
 
-extern LLMenuItemCallGL* gAFKMenu;
-extern LLMenuItemCallGL* gBusyMenu;
 extern LLMenuItemCallGL* gMutePieMenu;
 extern LLMenuItemCallGL* gMuteObjectPieMenu;
 extern LLMenuItemCallGL* gBuyPassPieMenu;

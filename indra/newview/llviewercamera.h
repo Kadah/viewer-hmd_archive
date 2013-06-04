@@ -80,7 +80,15 @@ public:
 		NUM_CAMERAS
 	} eCameraID;
 
+	typedef enum
+	{
+        CENTER_EYE = 0,
+		LEFT_EYE = 1,
+		RIGHT_EYE = 2,
+	} eCameraEye;
+
 	static U32 sCurCameraID;
+	static U32 sCurrentEye;
 
 	LLViewerCamera();
 

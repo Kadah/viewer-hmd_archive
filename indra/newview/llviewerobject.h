@@ -112,14 +112,6 @@ class LLViewerObject : public LLPrimitive, public LLRefCount, public LLGLUpdate
 protected:
 	~LLViewerObject(); // use unref()
 
-	// TomY: Provide for a list of extra parameter structures, mapped by structure name
-	struct ExtraParameter
-	{
-		BOOL in_use;
-		LLNetworkData *data;
-	};
-	std::map<U16, ExtraParameter*> mExtraParameterList;
-
 public:
 	typedef std::list<LLPointer<LLViewerObject> > child_list_t;
 	typedef std::list<LLPointer<LLViewerObject> > vobj_list_t;
@@ -301,7 +293,7 @@ public:
 	/*virtual*/	void	setNumTEs(const U8 num_tes);
 	/*virtual*/	void	setTE(const U8 te, const LLTextureEntry &texture_entry);
 	/*virtual*/ S32		setTETexture(const U8 te, const LLUUID &uuid);
-	S32 setTETextureCore(const U8 te, const LLUUID& uuid, LLHost host);
+	S32 				setTETextureCore(const U8 te, LLViewerTexture *image);
 	/*virtual*/ S32		setTEColor(const U8 te, const LLColor3 &color);
 	/*virtual*/ S32		setTEColor(const U8 te, const LLColor4 &color);
 	/*virtual*/ S32		setTEScale(const U8 te, const F32 s, const F32 t);
@@ -545,6 +537,8 @@ public:
 	std::vector<LLVector3> mUnselectedChildrenPositions ;
 
 private:
+	// TomY: Provide for a list of extra parameter structures, mapped by structure name
+	struct ExtraParameter;
 	ExtraParameter* createNewParameterEntry(U16 param_type);
 	ExtraParameter* getExtraParameterEntry(U16 param_type) const;
 	ExtraParameter* getExtraParameterEntryCreate(U16 param_type);
@@ -584,6 +578,7 @@ public:
 	} EPhysicsShapeType;
 
 	LLUUID			mID;
+	LLUUID			mOwnerID; //null if unknown
 
 	// unique within region, not unique across regions
 	// Local ID = 0 is not used
@@ -656,13 +651,13 @@ protected:
 	//
 
 	static void processTaskInvFile(void** user_data, S32 error_code, LLExtStat ext_status);
-	void loadTaskInvFile(const std::string& filename);
+	BOOL loadTaskInvFile(const std::string& filename);
 	void doInventoryCallback();
 	
 	BOOL isOnMap();
 
 	void unpackParticleSource(const S32 block_num, const LLUUID& owner_id);
-	void unpackParticleSource(LLDataPacker &dp, const LLUUID& owner_id);
+	void unpackParticleSource(LLDataPacker &dp, const LLUUID& owner_id, bool legacy);
 	void deleteParticleSource();
 	void setParticleSource(const LLPartSysData& particle_parameters, const LLUUID& owner_id);
 	
@@ -781,6 +776,14 @@ private:
 	LLUUID mAttachmentItemID; // ItemID of the associated object is in user inventory.
 	EObjectUpdateType	mLastUpdateType;
 	BOOL	mLastUpdateCached;
+
+	// TomY: Provide for a list of extra parameter structures, mapped by structure name
+	struct ExtraParameter
+	{
+		BOOL in_use;
+		LLNetworkData *data;
+	};
+	std::map<U16, ExtraParameter*> mExtraParameterList;
 };
 
 ///////////////////
@@ -826,8 +829,11 @@ public:
 								LLStrider<LLVector4a>& verticesp,
 								LLStrider<LLVector3>& normalsp, 
 								LLStrider<LLVector2>& texcoordsp,
-								LLStrider<LLColor4U>& colorsp, 
+								LLStrider<LLColor4U>& colorsp,
+								LLStrider<LLColor4U>& emissivep,
 								LLStrider<U16>& indicesp) = 0;
+
+	virtual void getBlendFunc(S32 face, U32& src, U32& dst);
 
 	F32 mDepth;
 };

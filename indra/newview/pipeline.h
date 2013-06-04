@@ -57,6 +57,7 @@ class LLRenderFunc;
 class LLCubeMap;
 class LLCullResult;
 class LLVOAvatar;
+class LLVOPartGroup;
 class LLGLSLShader;
 class LLCurlRequest;
 
@@ -193,6 +194,12 @@ public:
 												LLVector3* normal = NULL,               // return the surface normal at the intersection point
 												LLVector3* bi_normal = NULL             // return the surface bi-normal at the intersection point  
 		);
+
+	//get the closest particle to start between start and end, returns the LLVOPartGroup and particle index
+	LLVOPartGroup* lineSegmentIntersectParticle(const LLVector3& start, const LLVector3& end, LLVector3* intersection,
+														S32* face_hit);
+
+
 	LLViewerObject* lineSegmentIntersectInHUD(const LLVector3& start, const LLVector3& end,
 											  BOOL pick_transparent,
 											  S32* face_hit,                          // return the face hit
@@ -324,19 +331,27 @@ public:
 
 	BOOL hasRenderDebugFeatureMask(const U32 mask) const	{ return (mRenderDebugFeatureMask & mask) ? TRUE : FALSE; }
 	BOOL hasRenderDebugMask(const U32 mask) const			{ return (mRenderDebugMask & mask) ? TRUE : FALSE; }
-	
-
+	void setAllRenderDebugFeatures() { mRenderDebugFeatureMask = 0xffffffff; }
+	void clearAllRenderDebugFeatures() { mRenderDebugFeatureMask = 0x0; }
+	void setAllRenderDebugDisplays() { mRenderDebugMask = 0xffffffff; }
+	void clearAllRenderDebugDisplays() { mRenderDebugMask = 0x0; }
 
 	BOOL hasRenderType(const U32 type) const;
 	BOOL hasAnyRenderType(const U32 type, ...) const;
 
 	void setRenderTypeMask(U32 type, ...);
-	void orRenderTypeMask(U32 type, ...);
+	// This is equivalent to 'setRenderTypeMask'
+	//void orRenderTypeMask(U32 type, ...);
 	void andRenderTypeMask(U32 type, ...);
 	void clearRenderTypeMask(U32 type, ...);
+	void setAllRenderTypes();
+	void clearAllRenderTypes();
 	
 	void pushRenderTypeMask();
 	void popRenderTypeMask();
+
+	void pushRenderDebugFeatureMask();
+	void popRenderDebugFeatureMask();
 
 	static void toggleRenderType(U32 type);
 
@@ -394,6 +409,8 @@ public:
 	void skipRenderingOfTerrain( BOOL flag );
 	void hideObject( const LLUUID& id );
 	void restoreHiddenObject( const LLUUID& id );
+
+    void postRender();
 
 private:
 	void unloadShaders();
@@ -560,6 +577,9 @@ public:
 	U32 					mScreenWidth;
 	U32 					mScreenHeight;
 	
+	LLRenderTarget			mLeftEye;
+	LLRenderTarget			mRightEye;
+
 	LLRenderTarget			mScreen;
 	LLRenderTarget			mUIScreen;
 	LLRenderTarget			mDeferredScreen;
@@ -634,6 +654,7 @@ protected:
 
 	U32						mRenderDebugFeatureMask;
 	U32						mRenderDebugMask;
+	std::stack<U32>			mRenderDebugFeatureStack;
 
 	U32						mOldRenderDebugMask;
 	
@@ -857,6 +878,7 @@ public:
 	static F32 RenderGlowWidth;
 	static F32 RenderGlowStrength;
 	static BOOL RenderDepthOfField;
+	static BOOL RenderDepthOfFieldInEditMode;
 	static F32 CameraFocusTransitionTime;
 	static F32 CameraFNumber;
 	static F32 CameraFocalLength;

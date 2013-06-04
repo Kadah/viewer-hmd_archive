@@ -153,7 +153,7 @@ void LLStandardBumpmap::addstandard()
 		gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount].mLabel = label;
 		gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount].mImage = 
 			LLViewerTextureManager::getFetchedTexture(LLUUID(bump_image_id));	
-		gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount].mImage->setBoostLevel(LLViewerTexture::BOOST_BUMP) ;
+		gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount].mImage->setBoostLevel(LLGLTexture::BOOST_BUMP) ;
 		gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount].mImage->setLoadedCallback(LLBumpImageList::onSourceStandardLoaded, 0, TRUE, FALSE, NULL, NULL );
 		gStandardBumpmapList[LLStandardBumpmap::sStandardBumpmapCount].mImage->forceToSaveRawImage(0) ;
 		LLStandardBumpmap::sStandardBumpmapCount++;
@@ -449,9 +449,6 @@ void LLDrawPoolBump::unbindCubeMap(LLGLSLShader* shader, S32 shader_level, S32& 
 	LLCubeMap* cube_map = gSky.mVOSkyp ? gSky.mVOSkyp->getCubeMap() : NULL;
 	if( cube_map )
 	{
-		cube_map->disable();
-		cube_map->restoreMatrix();
-
 		if (!invisible && shader_level > 1)
 		{
 			shader->disableTexture(LLViewerShaderMgr::ENVIRONMENT_MAP, LLTexUnit::TT_CUBE_MAP);
@@ -464,6 +461,10 @@ void LLDrawPoolBump::unbindCubeMap(LLGLSLShader* shader, S32 shader_level, S32& 
 				}
 			}
 		}
+        // Moved below shader->disableTexture call to avoid false alarms from auto-re-enable of textures on stage 0
+        // MAINT-755
+		cube_map->disable();
+		cube_map->restoreMatrix();
 	}
 
 	if (!LLGLSLShader::sNoFixedFunction)
@@ -1075,7 +1076,7 @@ LLViewerTexture* LLBumpImageList::getBrightnessDarknessImage(LLViewerFetchedText
 			src_image->getHeight() != bump->getHeight())// ||
 			//(LLPipeline::sRenderDeferred && bump->getComponents() != 4))
 		{
-			src_image->setBoostLevel(LLViewerTexture::BOOST_BUMP) ;
+			src_image->setBoostLevel(LLGLTexture::BOOST_BUMP) ;
 			src_image->setLoadedCallback( callback_func, 0, TRUE, FALSE, new LLUUID(src_image->getID()), NULL );
 			src_image->forceToSaveRawImage(0) ;
 		}
@@ -1369,9 +1370,14 @@ void LLBumpImageList::onSourceLoaded( BOOL success, LLViewerTexture *src_vi, LLI
 					LLGLDisable blend(GL_BLEND);
 					gGL.setColorMask(TRUE, TRUE);
 					gNormalMapGenProgram.bind();
-					gNormalMapGenProgram.uniform1f("norm_scale", gSavedSettings.getF32("RenderNormalMapScale"));
-					gNormalMapGenProgram.uniform1f("stepX", 1.f/bump->getWidth());
-					gNormalMapGenProgram.uniform1f("stepY", 1.f/bump->getHeight());
+
+					static LLStaticHashedString sNormScale("norm_scale");
+					static LLStaticHashedString sStepX("stepX");
+					static LLStaticHashedString sStepY("stepY");
+
+					gNormalMapGenProgram.uniform1f(sNormScale, gSavedSettings.getF32("RenderNormalMapScale"));
+					gNormalMapGenProgram.uniform1f(sStepX, 1.f/bump->getWidth());
+					gNormalMapGenProgram.uniform1f(sStepY, 1.f/bump->getHeight());
 
 					LLVector2 v((F32) bump->getWidth()/gPipeline.mScreen.getWidth(),
 								(F32) bump->getHeight()/gPipeline.mScreen.getHeight());

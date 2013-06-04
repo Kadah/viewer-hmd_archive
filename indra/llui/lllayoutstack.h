@@ -29,6 +29,7 @@
 #define LL_LLLAYOUTSTACK_H
 
 #include "llpanel.h"
+#include "llresizebar.h"
 
 
 class LLLayoutPanel;
@@ -37,6 +38,7 @@ class LLLayoutPanel;
 class LLLayoutStack : public LLView, public LLInstanceTracker<LLLayoutStack>
 {
 public:
+
 	typedef enum e_layout_orientation
 	{
 		HORIZONTAL,
@@ -178,6 +180,9 @@ public:
 	F32 getAutoResizeFactor() const;
 	F32 getVisibleAmount() const;
 	S32 getVisibleDim() const;
+	LLResizeBar* getResizeBar() { return mResizeBar; }
+
+	bool isCollapsed() const { return mCollapsed;}
 
 	void setOrientation(LLLayoutStack::ELayoutOrientation orientation);
 	void storeOriginalDim();

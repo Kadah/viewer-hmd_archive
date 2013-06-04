@@ -640,6 +640,29 @@ void LLImageRaw::compositeUnscaled4onto3( LLImageRaw* src )
 	}
 }
 
+void LLImageRaw::copyUnscaledAlphaMask( LLImageRaw* src, const LLColor4U& fill)
+{
+	LLImageRaw* dst = this;  // Just for clarity.
+
+	llassert( 1 == src->getComponents() );
+	llassert( 4 == dst->getComponents() );
+	llassert( (src->getWidth() == dst->getWidth()) && (src->getHeight() == dst->getHeight()) );
+
+	S32 pixels = getWidth() * getHeight();
+	U8* src_data = src->getData();
+	U8* dst_data = dst->getData();
+	for ( S32 i = 0; i < pixels; i++ )
+	{
+		dst_data[0] = fill.mV[0];
+		dst_data[1] = fill.mV[1];
+		dst_data[2] = fill.mV[2];
+		dst_data[3] = src_data[0];
+		src_data += 1;
+		dst_data += 4;
+	}
+}
+
+
 // Fill the buffer with a constant color
 void LLImageRaw::fill( const LLColor4U& color )
 {
@@ -666,8 +689,17 @@ void LLImageRaw::fill( const LLColor4U& color )
 	}
 }
 
+LLPointer<LLImageRaw> LLImageRaw::duplicate()
+{
+	if(getNumRefs() < 2)
+	{
+		return this; //nobody else refences to this image, no need to duplicate.
+	}
 
-
+	//make a duplicate
+	LLPointer<LLImageRaw> dup = new LLImageRaw(getData(), getWidth(), getHeight(), getComponents());
+	return dup; 
+}
 
 // Src and dst can be any size.  Src and dst can each have 3 or 4 components.
 void LLImageRaw::copy(LLImageRaw* src)
