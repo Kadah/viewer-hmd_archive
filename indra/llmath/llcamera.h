@@ -112,8 +112,10 @@ private:
 	U8 mPlaneMask[8];         // 8 for alignment	
 	
 	F32 mView;					// angle between top and bottom frustum planes in radians.
+protected:
 	F32 mAspect;				// width/height
 	S32 mViewHeightInPixels;	// for ViewHeightInPixels() only
+private:
 	F32 mNearPlane;
 	F32 mFarPlane;
 	LL_ALIGN_16(LLPlane mLocalPlanes[4]);
@@ -147,8 +149,8 @@ public:
 	void setFar(F32 new_far);
 
 	F32 getView() const							{ return mView; }				// vertical FOV in radians
-	S32 getViewHeightInPixels() const			{ return mViewHeightInPixels; }
-	F32 getAspect() const						{ return mAspect; }				// width / height
+	virtual S32 getViewHeightInPixels() const   { return mViewHeightInPixels; }
+	virtual F32 getAspect() const               { return mAspect; }				// width / height
 	F32 getNear() const							{ return mNearPlane; }			// meters
 	F32 getFar() const							{ return mFarPlane; }			// meters
 

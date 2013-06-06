@@ -369,7 +369,6 @@ BOOL LLHMDImpl::init()
         }
     }
 
-    //setFOV(gSavedSettings.getF32("Oculus2DFOV"));
     gHMD.isInitialized(TRUE);
     gHMD.failedInit(FALSE);
     gHMD.isCalibrated(FALSE);
@@ -472,13 +471,6 @@ void LLHMDImpl::onIdle()
         orient.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&mEyeYaw, &mEyePitch, &mEyeRoll);
         mEyeRoll = -mEyeRoll;
         mEyePitch = -mEyePitch;
-        //LLVector4 swizMul = gSavedSettings.getVector4("OculusSwizzleMultipliers");
-        //orient.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(  &(mRawHMDRollPitchYaw.mV[VZ]),
-        //                                                &(mRawHMDRollPitchYaw.mV[VY]),
-        //                                                &(mRawHMDRollPitchYaw.mV[VX]));
-        //mHMDOrient.setEulerAngles(  mRawHMDRollPitchYaw.mV[VX] * llclamp(swizMul.mV[VX] * 10.0f, -1.0f, 1.0f),
-        //                            mRawHMDRollPitchYaw.mV[VY] * llclamp(swizMul.mV[VY] * 10.0f, -1.0f, 1.0f),
-        //                            mRawHMDRollPitchYaw.mV[VZ] * llclamp(swizMul.mV[VZ] * 10.0f, -1.0f, 1.0f));
     }    
 }
 
