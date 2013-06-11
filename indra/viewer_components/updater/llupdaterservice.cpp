@@ -669,10 +669,10 @@ std::string const & ll_get_version(void) {
 	
 	if (version.empty()) {
 		std::ostringstream stream;
-		stream << LL_VIEWER_VERSION_MAJOR << "."
-			   << LL_VIEWER_VERSION_MINOR << "."
-			   << LL_VIEWER_VERSION_PATCH << "."
-			   << LL_VIEWER_VERSION_BUILD;
+		stream << (U32)(LL_VIEWER_VERSION_MAJOR) << "."
+			   << (U32)(LL_VIEWER_VERSION_MINOR) << "."
+			   << (U32)(LL_VIEWER_VERSION_PATCH) << "."
+			   << (U32)(LL_VIEWER_VERSION_BUILD);
 		version = stream.str();
 	}
 	

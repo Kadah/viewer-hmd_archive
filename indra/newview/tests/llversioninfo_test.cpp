@@ -37,16 +37,16 @@ namespace tut
 			: mResetChannel("Reset Channel")
 		{
 			std::ostringstream stream;
-			stream << LL_VIEWER_VERSION_MAJOR << "."
-				   << LL_VIEWER_VERSION_MINOR << "."
-				   << LL_VIEWER_VERSION_PATCH << "."
-				   << LL_VIEWER_VERSION_BUILD;
+			stream << (U32)(LL_VIEWER_VERSION_MAJOR) << "."
+				   << (U32)(LL_VIEWER_VERSION_MINOR) << "."
+				   << (U32)(LL_VIEWER_VERSION_PATCH) << "."
+				   << (U32)(LL_VIEWER_VERSION_BUILD);
 			mVersion = stream.str();
 			stream.str("");
 
-			stream << LL_VIEWER_VERSION_MAJOR << "."
-				   << LL_VIEWER_VERSION_MINOR << "."
-				   << LL_VIEWER_VERSION_PATCH;
+			stream << (U32)(LL_VIEWER_VERSION_MAJOR) << "."
+				   << (U32)(LL_VIEWER_VERSION_MINOR) << "."
+				   << (U32)(LL_VIEWER_VERSION_PATCH);
 			mShortVersion = stream.str();
 			stream.str("");
 
@@ -77,16 +77,16 @@ namespace tut
 	{
 		ensure_equals("Major version", 
 					  LLVersionInfo::getMajor(), 
-					  LL_VIEWER_VERSION_MAJOR);
+					  (U32)(LL_VIEWER_VERSION_MAJOR));
 		ensure_equals("Minor version", 
 					  LLVersionInfo::getMinor(), 
-					  LL_VIEWER_VERSION_MINOR);
+					  (U32)(LL_VIEWER_VERSION_MINOR));
 		ensure_equals("Patch version", 
 					  LLVersionInfo::getPatch(), 
-					  LL_VIEWER_VERSION_PATCH);
+					  (U32)(LL_VIEWER_VERSION_PATCH));
 		ensure_equals("Build version", 
 					  LLVersionInfo::getBuild(), 
-					  LL_VIEWER_VERSION_BUILD);
+					  (U32)(LL_VIEWER_VERSION_BUILD));
 		ensure_equals("Channel version", 
 					  LLVersionInfo::getChannel(), 
 					  LL_VIEWER_CHANNEL);

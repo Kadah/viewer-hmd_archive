@@ -333,8 +333,8 @@ int LLBufferStreamBuf::underflow() {return 0;}
 int LLBufferStreamBuf::overflow(int) {return 0;}
 LLBufferStreamBuf::~LLBufferStreamBuf() {}
 
-S32 LLVersionInfo::getBuild() { return 0; }
+U32 LLVersionInfo::getBuild() { return 0; }
 const std::string& LLVersionInfo::getChannel() {static std::string dummy; return dummy;}
-S32 LLVersionInfo::getMajor() { return 0; }
-S32 LLVersionInfo::getMinor() { return 0; }
-S32 LLVersionInfo::getPatch() { return 0; }
+U32 LLVersionInfo::getMajor() { return 0; }
+U32 LLVersionInfo::getMinor() { return 0; }
+U32 LLVersionInfo::getPatch() { return 0; }
