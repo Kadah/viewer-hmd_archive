@@ -253,6 +253,11 @@ static LLAppViewerListener sAppViewerListener(LLAppViewer::instance);
 //----------------------------------------------------------------------------
 // viewer.cpp - these are only used in viewer, should be easily moved.
 
+#if LL_DARWIN
+const char * const LL_VERSION_BUNDLE_ID = "com.secondlife.indra.viewer";
+extern void init_apple_menu(const char* product);
+#endif // LL_DARWIN
+
 extern BOOL gRandomizeFramerate;
 extern BOOL gPeriodicSlowFrame;
 extern BOOL gDebugGL;
@@ -1270,7 +1275,7 @@ bool LLAppViewer::mainLoop()
 		
 		LLVoiceChannel::initClass();
 		LLVoiceClient::getInstance()->init(gServicePump);
-		LLVoiceChannel::setCurrentVoiceChannelChangedCallback(boost::bind(&LLCallFloater::sOnCurrentChannelChanged, _1), true);
+		LLVoiceChannel::setCurrentVoiceChannelChangedCallback(boost::bind(&LLFloaterIMContainer::onCurrentChannelChanged, _1), true);
 		
 		joystick = LLViewerJoystick::getInstance();
 		joystick->setNeedsReset(true);
@@ -3296,10 +3301,10 @@ void LLAppViewer::writeSystemInfo()
 	gDebugInfo["SLLog"] = LLError::logFileName();
 
 	gDebugInfo["ClientInfo"]["Name"] = LLVersionInfo::getChannel();
-	gDebugInfo["ClientInfo"]["MajorVersion"] = LLVersionInfo::getMajor();
-	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::getMinor();
-	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::getPatch();
-	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::getBuild();
+	gDebugInfo["ClientInfo"]["MajorVersion"] = (S32)(LLVersionInfo::getMajor());
+	gDebugInfo["ClientInfo"]["MinorVersion"] = (S32)(LLVersionInfo::getMinor());
+	gDebugInfo["ClientInfo"]["PatchVersion"] = (S32)(LLVersionInfo::getPatch());
+	gDebugInfo["ClientInfo"]["BuildVersion"] = (S32)(LLVersionInfo::getBuild());
 
 	gDebugInfo["CAFilename"] = gDirUtilp->getCAFile();
 
@@ -3402,10 +3407,10 @@ void LLAppViewer::handleViewerCrash()
 	//to check against no matter what
 	gDebugInfo["ClientInfo"]["Name"] = LLVersionInfo::getChannel();
 
-	gDebugInfo["ClientInfo"]["MajorVersion"] = LLVersionInfo::getMajor();
-	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::getMinor();
-	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::getPatch();
-	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::getBuild();
+	gDebugInfo["ClientInfo"]["MajorVersion"] = (S32)(LLVersionInfo::getMajor());
+	gDebugInfo["ClientInfo"]["MinorVersion"] = (S32)(LLVersionInfo::getMinor());
+	gDebugInfo["ClientInfo"]["PatchVersion"] = (S32)(LLVersionInfo::getPatch());
+	gDebugInfo["ClientInfo"]["BuildVersion"] = (S32)(LLVersionInfo::getBuild());
 
 	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
 	if ( parcel && parcel->getMusicURL()[0])
@@ -5323,10 +5328,10 @@ void LLAppViewer::handleLoginComplete()
 	// Store some data to DebugInfo in case of a freeze.
 	gDebugInfo["ClientInfo"]["Name"] = LLVersionInfo::getChannel();
 
-	gDebugInfo["ClientInfo"]["MajorVersion"] = LLVersionInfo::getMajor();
-	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::getMinor();
-	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::getPatch();
-	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::getBuild();
+	gDebugInfo["ClientInfo"]["MajorVersion"] = (S32)(LLVersionInfo::getMajor());
+	gDebugInfo["ClientInfo"]["MinorVersion"] = (S32)(LLVersionInfo::getMinor());
+	gDebugInfo["ClientInfo"]["PatchVersion"] = (S32)(LLVersionInfo::getPatch());
+	gDebugInfo["ClientInfo"]["BuildVersion"] = (S32)(LLVersionInfo::getBuild());
 
 	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
 	if ( parcel && parcel->getMusicURL()[0])
