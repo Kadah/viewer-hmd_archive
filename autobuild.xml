@@ -5,6 +5,10 @@
     <map>
       <key>'libovr'</key>
       <map>
+        <key>license</key>
+        <string>Oculus</string>
+        <key>license_file</key>
+        <string>LICENSES/libovr.txt</string>
         <key>name</key>
         <string>libovr</string>
         <key>platforms</key>
