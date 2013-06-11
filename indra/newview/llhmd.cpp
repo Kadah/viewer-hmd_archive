@@ -46,7 +46,7 @@
 
 BOOL gDebugHMD = FALSE;
 
-#if LL_WINDOWS
+#if (LL_WINDOWS || LL_DARWIN)
 #include "llwindowwin32.h"
 
 // TODO_VR: add support for non-Windows platforms.  Currently waiting for Oculus SDK to support Linux/Mac
@@ -662,12 +662,10 @@ BOOL LLHMDImpl::getDisplayInfo(const llutf16string& displayName, LLRect& rcWork,
 
     return FALSE;
 }
-
-#elif LL_DWARIN
-#elif LL_LINUX
 #else
-    #error unsupported platform?
-#endif // LL_WINDOWS
+    // We do not support the Oculus Rift on LL_LINUX for the moment
+    #error unsupported platform
+#endif // LL_WINDOWS || LL_DARWIN
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -3,7 +3,7 @@
 <map>
     <key>installables</key>
     <map>
-      <key>'libovr'</key>
+      <key>libovr</key>
       <map>
         <key>license</key>
         <string>Oculus</string>

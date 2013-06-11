@@ -5,6 +5,11 @@ if (WINDOWS)
     debug libovrd.lib
     optimized libovr.lib
     )
+elseif (DARWIN)
+  set(LIBOVR_LIBRARIES 
+    debug libovr.a
+    optimized libovr.a
+    )
 endif (WINDOWS)
 set(LIBOVR_INCLUDE_DIRS
   "${LIBS_PREBUILT_DIR}/include"
