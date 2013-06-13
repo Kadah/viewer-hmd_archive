@@ -126,6 +126,12 @@ public:
 	
 	void handleDragNDrop(std::string url, LLWindowCallbacks::DragNDropAction action);
 
+    // HMD support
+    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height);
+    /*virtual*/ BOOL destroyHMDWindow();
+    /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
+    /*virtual*/ BOOL setFocusWindow(S32 idx);
+    
 protected:
 	LLWindowMacOSX(LLWindowCallbacks* callbacks,
 		const std::string& title, const std::string& name, int x, int y, int width, int height, U32 flags,

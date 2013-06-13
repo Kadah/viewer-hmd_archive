@@ -118,7 +118,8 @@ LLWindow::LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags)
 	  mSwapMethod(SWAP_METHOD_UNDEFINED),
 	  mHideCursorPermanent(FALSE),
 	  mFlags(flags),
-	  mHighSurrogate(0)
+	  mHighSurrogate(0),
+      mCurRCIdx(0)
 {
 }
 

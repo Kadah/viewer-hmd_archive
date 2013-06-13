@@ -114,11 +114,10 @@ public:
 	LLWindowCallbacks::DragNDropResult completeDragNDropRequest( const LLCoordGL gl_coord, const MASK mask, LLWindowCallbacks::DragNDropAction action, const std::string url );
 
     // HMD support
-    BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height);
-    BOOL destroyHMDWindow();
-    S32 getRenderWindow(BOOL& fullScreen) const { fullScreen = mFullscreen; return mCurRCIdx; }
-    BOOL setRenderWindow(S32 idx, BOOL fullscreen);
-    BOOL setFocusWindow(S32 idx);
+    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height);
+    /*virtual*/ BOOL destroyHMDWindow();
+    /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
+    /*virtual*/ BOOL setFocusWindow(S32 idx);
 
 	static std::vector<std::string> getDynamicFallbackFontList();
 
@@ -176,7 +175,6 @@ protected:
 
 	HWND		mWindowHandle[2];   // window handle
 	HDC		    mhDC[2];            // Windows Device context handle
-    S32         mCurRCIdx;
 	U32         mPixelFormat;
     PIXELFORMATDESCRIPTOR mPixelFormatDescriptor;
 	HGLRC		mhRC;           // OpenGL rendering context

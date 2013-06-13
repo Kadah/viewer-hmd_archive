@@ -165,6 +165,13 @@ public:
 	// Provide native key event data
 	virtual LLSD getNativeKeyData() { return LLSD::emptyMap(); }
 
+    // HMD support
+    virtual BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height) = 0;
+    virtual BOOL destroyHMDWindow() = 0;
+    S32 getRenderWindow(BOOL& fullScreen) const { fullScreen = mFullscreen; return mCurRCIdx; }
+    virtual BOOL setRenderWindow(S32 idx, BOOL fullscreen) = 0;
+    virtual BOOL setFocusWindow(S32 idx) = 0;
+    
 protected:
 	LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags);
 	virtual ~LLWindow();
@@ -198,6 +205,9 @@ protected:
 	U16			mHighSurrogate;
 	S32			mMinWindowWidth;
 	S32			mMinWindowHeight;
+
+    // HMD support
+    S32         mCurRCIdx;
 
  	// Handle a UTF-16 encoding unit received from keyboard.
  	// Converting the series of UTF-16 encoding units to UTF-32 data,

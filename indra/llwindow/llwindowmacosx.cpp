@@ -1780,6 +1780,32 @@ MASK LLWindowMacOSX::modifiersToMask(S16 modifiers)
 	return mask;
 }
 
+// HMD Support
+// Merov : simple stubbs for the moment
+/*virtual*/
+BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
+{
+    return FALSE;
+}
+
+/*virtual*/
+BOOL LLWindowMacOSX::destroyHMDWindow()
+{
+    return FALSE;
+}
+
+/*virtual*/
+BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
+{
+    return FALSE;
+}
+
+/*virtual*/
+BOOL LLWindowMacOSX::setFocusWindow(S32 idx)
+{
+    return FALSE;
+}
+
 #if LL_OS_DRAGDROP_ENABLED
 /*
 S16 LLWindowMacOSX::dragTrackingHandler(DragTrackingMessage message, WindowRef theWindow,
