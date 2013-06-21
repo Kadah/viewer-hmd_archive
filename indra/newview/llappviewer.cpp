@@ -119,6 +119,7 @@
 
 #include "llleap.h"
 #include "stringize.h"
+#include "llcoros.h"
 
 // Third party library includes
 #include <boost/bind.hpp>
@@ -762,6 +763,7 @@ bool LLAppViewer::init()
 
 	//set the max heap size.
 	initMaxHeapSize() ;
+	LLCoros::instance().setStackSize(gSavedSettings.getS32("CoroutineStackSize"));
 
 	LLPrivateMemoryPoolManager::initClass((BOOL)gSavedSettings.getBOOL("MemoryPrivatePoolEnabled"), (U32)gSavedSettings.getU32("MemoryPrivatePoolSize")*1024*1024) ;
 
@@ -1751,7 +1753,7 @@ bool LLAppViewer::cleanup()
 		gAudiop->setStreamingAudioImpl(NULL);
 
 		// shut down the audio subsystem
-			gAudiop->shutdown();
+        gAudiop->shutdown();
 
 		delete gAudiop;
 		gAudiop = NULL;
@@ -2781,38 +2783,38 @@ bool LLAppViewer::initConfiguration()
 		}
 	}
 
-	    //
-	    // Check for another instance of the app running
-	    //
-		mSecondInstance = anotherInstanceRunning();
+	//
+	// Check for another instance of the app running
+	//
+	mSecondInstance = anotherInstanceRunning();
 	if (mSecondInstance && !gSavedSettings.getBOOL("AllowMultipleViewers"))
-		{
-			std::ostringstream msg;
-			msg << LLTrans::getString("MBAlreadyRunning");
-			OSMessageBox(
-				msg.str(),
-				LLStringUtil::null,
-				OSMB_OK);
-			return false;
-		}
+	{
+		std::ostringstream msg;
+		msg << LLTrans::getString("MBAlreadyRunning");
+		OSMessageBox(
+			msg.str(),
+			LLStringUtil::null,
+			OSMB_OK);
+		return false;
+	}
 
-		initMarkerFile();
+	initMarkerFile();
         
-		if (mSecondInstance)
+	if (mSecondInstance)
+	{
+		// This is the second instance of SL. Turn off voice support,
+		// but make sure the setting is *not* persisted.
+		LLControlVariable* disable_voice = gSavedSettings.getControl("CmdLineDisableVoice");
+		if(disable_voice)
 		{
-			// This is the second instance of SL. Turn off voice support,
-			// but make sure the setting is *not* persisted.
-			LLControlVariable* disable_voice = gSavedSettings.getControl("CmdLineDisableVoice");
-			if(disable_voice)
-			{
-				const BOOL DO_NOT_PERSIST = FALSE;
-				disable_voice->setValue(LLSD(TRUE), DO_NOT_PERSIST);
-			}
+			const BOOL DO_NOT_PERSIST = FALSE;
+			disable_voice->setValue(LLSD(TRUE), DO_NOT_PERSIST);
 		}
+	}
 	else
-        {
-            checkForCrash();
-        }
+	{
+		checkForCrash();
+	}
 
    	// NextLoginLocation is set from the command line option
 	std::string nextLoginLocation = gSavedSettings.getString( "NextLoginLocation" );
@@ -2839,6 +2841,16 @@ bool LLAppViewer::initConfiguration()
 	gLastRunVersion = gSavedSettings.getString("LastRunVersion");
 
 	loadColorSettings();
+
+	// Let anyone else who cares know that we've populated our settings
+	// variables.
+	for (LLControlGroup::key_iter ki(LLControlGroup::beginKeys()), kend(LLControlGroup::endKeys());
+		 ki != kend; ++ki)
+	{
+		// For each named instance of LLControlGroup, send an event saying
+		// we've initialized an LLControlGroup instance by that name.
+		LLEventPumps::instance().obtain("LLControlGroup").post(LLSDMap("init", *ki));
+	}
 
 	return true; // Config was successful.
 }
@@ -2988,26 +3000,26 @@ namespace {
 		{
 			LL_WARNS("UpdaterService") << "no info url supplied - defaulting to hard coded release notes pattern" << LL_ENDL;
 
-		// truncate version at the rightmost '.' 
-		std::string version_short(data["version"]);
-		size_t short_length = version_short.rfind('.');
-		if (short_length != std::string::npos)
-		{
-			version_short.resize(short_length);
-		}
+			// truncate version at the rightmost '.' 
+			std::string version_short(data["version"]);
+			size_t short_length = version_short.rfind('.');
+			if (short_length != std::string::npos)
+			{
+				version_short.resize(short_length);
+			}
 
-		LLUIString relnotes_url("[RELEASE_NOTES_BASE_URL][CHANNEL_URL]/[VERSION_SHORT]");
-		relnotes_url.setArg("[VERSION_SHORT]", version_short);
+			LLUIString relnotes_url("[RELEASE_NOTES_BASE_URL][CHANNEL_URL]/[VERSION_SHORT]");
+			relnotes_url.setArg("[VERSION_SHORT]", version_short);
 
-		// *TODO thread the update service's response through to this point
-		std::string const & channel = LLVersionInfo::getChannel();
-		boost::shared_ptr<char> channel_escaped(curl_escape(channel.c_str(), channel.size()), &curl_free);
+			// *TODO thread the update service's response through to this point
+			std::string const & channel = LLVersionInfo::getChannel();
+			boost::shared_ptr<char> channel_escaped(curl_escape(channel.c_str(), channel.size()), &curl_free);
 
-		relnotes_url.setArg("[CHANNEL_URL]", channel_escaped.get());
-		relnotes_url.setArg("[RELEASE_NOTES_BASE_URL]", LLTrans::getString("RELEASE_NOTES_BASE_URL"));
+			relnotes_url.setArg("[CHANNEL_URL]", channel_escaped.get());
+			relnotes_url.setArg("[RELEASE_NOTES_BASE_URL]", LLTrans::getString("RELEASE_NOTES_BASE_URL"));
 			substitutions["INFO_URL"] = relnotes_url.getString();
 		}
-
+		
 		LLNotificationsUtil::add(notification_name, substitutions, LLSD(), apply_callback);
 	}
 
@@ -3639,7 +3651,7 @@ void LLAppViewer::initMarkerFile()
 		if ( markerIsSameVersion(mMarkerFileName) )
 		{
 			LL_INFOS("MarkerFile") << "Exec marker '"<< mMarkerFileName << "' found" << LL_ENDL;
-		gLastExecEvent = LAST_EXEC_FROZE;
+			gLastExecEvent = LAST_EXEC_FROZE;
 		}
 		else
 		{
@@ -3650,7 +3662,7 @@ void LLAppViewer::initMarkerFile()
 	{
 		if (markerIsSameVersion(logout_marker_file))
 		{
-		gLastExecEvent = LAST_EXEC_LOGOUT_FROZE;
+			gLastExecEvent = LAST_EXEC_LOGOUT_FROZE;
 			LL_INFOS("MarkerFile") << "Logout crashed '"<< logout_marker_file << "', setting LastExecEvent to " << gLastExecEvent << LL_ENDL;
 		}
 		else
@@ -3705,9 +3717,9 @@ void LLAppViewer::initMarkerFile()
 		{
 			recordMarkerVersion(mMarkerFile);
 			LL_DEBUGS("MarkerFile") << "Marker file locked." << LL_ENDL;
-	}
-	else
-	{
+		}
+		else
+		{
 			LL_INFOS("MarkerFile") << "Marker file cannot be locked." << LL_ENDL;
 		}
 	}
@@ -3723,7 +3735,7 @@ void LLAppViewer::removeMarkerFile(bool leave_logout_marker)
 	if (mMarkerFile.getFileHandle())
 	{
 		LL_DEBUGS("MarkerFile") << "removeMarkerFile marker '"<<mMarkerFileName<<"'"<< LL_ENDL;
-		mMarkerFile.close() ;
+		mMarkerFile.close();
 		LLAPRFile::remove( mMarkerFileName );
 	}
 	else
@@ -3738,7 +3750,7 @@ void LLAppViewer::removeMarkerFile(bool leave_logout_marker)
 			mLogoutMarkerFile.close();
 		}
 		else
-	{
+		{
 			LL_WARNS("MarkerFile") << "removeMarkerFile logout marker '"<<mLogoutMarkerFileName<<"' not open"<< LL_ENDL;
 		}
 		LLAPRFile::remove( mLogoutMarkerFileName );
@@ -5370,7 +5382,7 @@ void LLAppViewer::handleLoginComplete()
 
 void LLAppViewer::launchUpdater()
 {
-		LLSD query_map = LLSD::emptyMap();
+	LLSD query_map = LLSD::emptyMap();
 	query_map["os"] = gPlatform;
 
 	// *TODO change userserver to be grid on both viewer and sim, since

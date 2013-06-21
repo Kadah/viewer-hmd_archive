@@ -121,6 +121,25 @@ LLViewerCamera::LLViewerCamera() : LLCamera()
 	gSavedSettings.getControl("CameraAngle")->getCommitSignal()->connect(boost::bind(&LLViewerCamera::updateCameraAngle, this, _2));
 }
 
+
+S32 LLViewerCamera::getViewHeightInPixels() const
+{
+    return gHMD.shouldRender() ? gHMD.kHMDHeight : mViewHeightInPixels;
+}
+
+F32 LLViewerCamera::getAspect() const
+{
+    if (gHMD.shouldRender())
+    {
+        static const F32 kHMDHalfAspect = (float)gHMD.kHMDEyeWidth / (float)gHMD.kHMDHeight;
+        return kHMDHalfAspect;
+    }
+    else
+    {
+        return mAspect;
+    }
+}
+
 void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
 											const LLVector3 &up_direction,
 											const LLVector3 &point_of_interest)

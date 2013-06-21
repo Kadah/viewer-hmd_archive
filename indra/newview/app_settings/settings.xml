@@ -1905,6 +1905,17 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>CoroutineStackSize</key>
+    <map>
+      <key>Comment</key>
+      <string>Size (in bytes) for each coroutine stack</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <integer>262144</integer>
+    </map>
     <key>CreateToolCopyCenters</key>
     <map>
       <key>Comment</key>
@@ -12560,6 +12571,17 @@
       <key>Value</key>
       <string>update</string>
     </map>
+    <key>UpdaterWillingToTest</key>
+    <map>
+      <key>Comment</key>
+      <string>Whether or not the updater should offer test candidate upgrades.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <string>1</string>
+    </map>
     <key>UploadBakedTexOld</key>
     <map>
       <key>Comment</key>
@@ -14581,17 +14603,6 @@
       <string />
     </map>
 
-  <key>Oculus2DFOV</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL] Oculus Field of View that the 2D coordinate area stretches to (degrees)</string>
-    <key>Persist</key>
-    <integer>0</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>85.0</real>
-  </map>
   <key>RenderHMD2DUI</key>
   <map>
     <key>Comment</key>
@@ -14602,22 +14613,6 @@
     <string>Boolean</string>
     <key>Value</key>
     <real>0</real>
-  </map>
-  <key>OculusSwizzleMultipliers</key>
-  <map>
-      <key>Comment</key>
-      <string>[EXPERIMENTAL] multipliers for each of the head tracking quat components.</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Vector4</string>
-      <key>Value</key>
-      <array>
-          <real>-1.0</real>
-          <real>-1.0</real>
-          <real>1.0</real>
-          <real>1.0</real>
-      </array>
   </map>
   <key>OculusInterpupillaryOffsetModifier</key>
   <map>

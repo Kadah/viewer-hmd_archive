@@ -646,12 +646,12 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
         case LLViewerCamera::LEFT_EYE:
         case LLViewerCamera::RIGHT_EYE:
             {
-                if (!gHMD.isInitialized() || render_mode == LLHMD::RenderMode_None)
+                if ((!gDebugHMD && !gHMD.isInitialized()) || render_mode == LLHMD::RenderMode_None)
                 {
                     continue;
                 }
                 gHMD.setCurrentEye(i);
-                if (i == LLViewerCamera::LEFT_EYE && render_mode == LLHMD::RenderMode_HMD)
+                if (gHMD.isInitialized() && i == LLViewerCamera::LEFT_EYE && render_mode == LLHMD::RenderMode_HMD)
                 {
                     gHMD.setRenderWindowHMD();
                 }
