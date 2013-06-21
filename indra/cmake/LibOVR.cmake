@@ -1,4 +1,6 @@
 # -*- cmake -*-
+include(Prebuilt)
+use_prebuilt_binary(libovr)
 
 if (WINDOWS)
   set(LIBOVR_LIBRARIES 
