@@ -26,6 +26,10 @@
  */
 
 #include <AppKit/AppKit.h>
+#include <Cocoa/Cocoa.h>
+#include "llwindowmacosx-objc.h"
+#include "llopenglview-objc.h"
+#include "llappdelegate-objc.h"
 
 /*
  * These functions are broken out into a separate file because the
@@ -34,7 +38,10 @@
  * linden headers with any objective-C++ source.
  */
 
-#include "llwindowmacosx-objc.h"
+int createNSApp(int argc, const char *argv[])
+{
+	return NSApplicationMain(argc, argv);
+}
 
 void setupCocoa()
 {
@@ -48,20 +55,46 @@ void setupCocoa()
 		// ie. running './secondlife -set Language fr' would cause a pop-up saying can't open document 'fr' 
 		// when init'ing the Cocoa App window.		
 		[[NSUserDefaults standardUserDefaults] setObject:@"NO" forKey:@"NSTreatUnknownArgumentsAsOpen"];
-		
-		// This is a bit of voodoo taken from the Apple sample code "CarbonCocoa_PictureCursor":
-		//   http://developer.apple.com/samplecode/CarbonCocoa_PictureCursor/index.html
-		
-		//	Needed for Carbon based applications which call into Cocoa
-		NSApplicationLoad();
-
-		//	Must first call [[[NSWindow alloc] init] release] to get the NSWindow machinery set up so that NSCursor can use a window to cache the cursor image
-		[[[NSWindow alloc] init] release];
 
 		[pool release];
 		
 		inited = true;
 	}
+}
+
+bool copyToPBoard(const unsigned short *str, unsigned int len)
+{
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc]init];
+	NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+	[pboard clearContents];
+	
+	NSArray *contentsToPaste = [[NSArray alloc] initWithObjects:[NSString stringWithCharacters:str length:len], nil];
+	[pool release];
+	return [pboard writeObjects:contentsToPaste];
+}
+
+bool pasteBoardAvailable()
+{
+	NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
+	return [[NSPasteboard generalPasteboard] canReadObjectForClasses:classArray options:[NSDictionary dictionary]];
+}
+
+const unsigned short *copyFromPBoard()
+{
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc]init];
+	NSPasteboard *pboard = [NSPasteboard generalPasteboard];
+	NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
+	NSString *str = NULL;
+	BOOL ok = [pboard canReadObjectForClasses:classArray options:[NSDictionary dictionary]];
+	if (ok)
+	{
+		NSArray *objToPaste = [pboard readObjectsForClasses:classArray options:[NSDictionary dictionary]];
+		str = [objToPaste objectAtIndex:0];
+	}
+	unichar* temp = (unichar*)calloc([str length], sizeof(unichar));
+	[str getCharacters:temp];
+	[pool release];
+	return temp;
 }
 
 CursorRef createImageCursor(const char *fullpath, int hotspotX, int hotspotY)
@@ -81,6 +114,57 @@ CursorRef createImageCursor(const char *fullpath, int hotspotX, int hotspotY)
 	[pool release];
 	
 	return (CursorRef)cursor;
+}
+
+void setArrowCursor()
+{
+	NSCursor *cursor = [NSCursor arrowCursor];
+	[cursor set];
+}
+
+void setIBeamCursor()
+{
+	NSCursor *cursor = [NSCursor IBeamCursor];
+	[cursor set];
+}
+
+void setPointingHandCursor()
+{
+	NSCursor *cursor = [NSCursor pointingHandCursor];
+	[cursor set];
+}
+
+void setCopyCursor()
+{
+	NSCursor *cursor = [NSCursor dragCopyCursor];
+	[cursor set];
+}
+
+void setCrossCursor()
+{
+	NSCursor *cursor = [NSCursor crosshairCursor];
+	[cursor set];
+}
+
+void setNotAllowedCursor()
+{
+	NSCursor *cursor = [NSCursor operationNotAllowedCursor];
+	[cursor set];
+}
+
+void hideNSCursor()
+{
+	[NSCursor hide];
+}
+
+void showNSCursor()
+{
+	[NSCursor unhide];
+}
+
+void hideNSCursorTillMove(bool hide)
+{
+	[NSCursor setHiddenUntilMouseMoves:hide];
 }
 
 // This is currently unused, since we want all our cursors to persist for the life of the app, but I've included it for completeness.
@@ -118,3 +202,142 @@ OSErr setImageCursor(CursorRef ref)
 	return noErr;
 }
 
+// Now for some unholy juggling between generic pointers and casting them to Obj-C objects!
+// Note: things can get a bit hairy from here.  This is not for the faint of heart.
+
+NSWindowRef createNSWindow(int x, int y, int width, int height)
+{
+	LLNSWindow *window = [[LLNSWindow alloc]initWithContentRect:NSMakeRect(x, y, width, height)
+						styleMask:NSTitledWindowMask | NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTexturedBackgroundWindowMask backing:NSBackingStoreBuffered defer:NO];
+	[window makeKeyAndOrderFront:nil];
+	[window setAcceptsMouseMovedEvents:TRUE];
+	return window;
+}
+
+GLViewRef createOpenGLView(NSWindowRef window, unsigned int samples, bool vsync)
+{
+	LLOpenGLView *glview = [[LLOpenGLView alloc]initWithFrame:[(LLNSWindow*)window frame] withSamples:samples andVsync:vsync];
+	[(LLNSWindow*)window setContentView:glview];
+	return glview;
+}
+
+void glSwapBuffers(void* context)
+{
+	[(NSOpenGLContext*)context flushBuffer];
+}
+
+CGLContextObj getCGLContextObj(GLViewRef view)
+{
+	return [(LLOpenGLView *)view getCGLContextObj];
+}
+
+CGLPixelFormatObj* getCGLPixelFormatObj(NSWindowRef window)
+{
+	LLOpenGLView *glview = [(LLNSWindow*)window contentView];
+	return [glview getCGLPixelFormatObj];
+}
+
+unsigned long getVramSize(GLViewRef view)
+{
+	return [(LLOpenGLView *)view getVramSize];
+}
+
+void getContentViewBounds(NSWindowRef window, float* bounds)
+{
+	bounds[0] = [[(LLNSWindow*)window contentView] bounds].origin.x;
+	bounds[1] = [[(LLNSWindow*)window contentView] bounds].origin.y;
+	bounds[2] = [[(LLNSWindow*)window contentView] bounds].size.width;
+	bounds[3] = [[(LLNSWindow*)window contentView] bounds].size.height;
+}
+
+void getWindowSize(NSWindowRef window, float* size)
+{
+	NSRect frame = [(LLNSWindow*)window frame];
+	size[0] = frame.origin.x;
+	size[1] = frame.origin.y;
+	size[2] = frame.size.width;
+	size[3] = frame.size.height;
+}
+
+void setWindowSize(NSWindowRef window, int width, int height)
+{
+	NSRect frame = [(LLNSWindow*)window frame];
+	frame.size.width = width;
+	frame.size.height = height;
+	[(LLNSWindow*)window setFrame:frame display:TRUE];
+}
+
+void setWindowPos(NSWindowRef window, float* pos)
+{
+	NSPoint point;
+	point.x = pos[0];
+	point.y = pos[1];
+	[(LLNSWindow*)window setFrameOrigin:point];
+}
+
+void getCursorPos(NSWindowRef window, float* pos)
+{
+	NSPoint mLoc;
+	mLoc = [(LLNSWindow*)window mouseLocationOutsideOfEventStream];
+	pos[0] = mLoc.x;
+	pos[1] = mLoc.y;
+}
+
+void makeWindowOrderFront(NSWindowRef window)
+{
+	[(LLNSWindow*)window makeKeyAndOrderFront:nil];
+}
+
+void convertScreenToWindow(NSWindowRef window, float *coord)
+{
+	NSPoint point;
+	point.x = coord[0];
+	point.y = coord[1];
+	point = [(LLNSWindow*)window convertScreenToBase:point];
+	coord[0] = point.x;
+	coord[1] = point.y;
+}
+
+void convertScreenToView(NSWindowRef window, float *coord)
+{
+	NSRect point;
+	point.origin.x = coord[0];
+	point.origin.y = coord[1];
+	point.origin = [(LLNSWindow*)window convertScreenToBase:point.origin];
+	point.origin = [[(LLNSWindow*)window contentView] convertPoint:point.origin fromView:nil];
+}
+
+void convertWindowToScreen(NSWindowRef window, float *coord)
+{
+	NSPoint point;
+	point.x = coord[0];
+	point.y = coord[1];
+	point = [(LLNSWindow*)window convertToScreenFromLocalPoint:point relativeToView:[(LLNSWindow*)window contentView]];
+	coord[0] = point.x;
+	coord[1] = point.y;
+}
+
+void closeWindow(NSWindowRef window)
+{
+	[(LLNSWindow*)window close];
+	[(LLNSWindow*)window release];
+}
+
+void removeGLView(GLViewRef view)
+{
+	[(LLOpenGLView*)view removeFromSuperview];
+	[(LLOpenGLView*)view release];
+}
+
+NSWindowRef getMainAppWindow()
+{
+	LLNSWindow *winRef = [(LLAppDelegate*)[[NSApplication sharedApplication] delegate] window];
+	
+	[winRef setAcceptsMouseMovedEvents:TRUE];
+	return winRef;
+}
+
+unsigned int getModifiers()
+{
+	return [NSEvent modifierFlags];
+}

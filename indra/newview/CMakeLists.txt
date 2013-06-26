@@ -1271,6 +1271,11 @@ set_source_files_properties(
 
 if (DARWIN)
   LIST(APPEND viewer_SOURCE_FILES llappviewermacosx.cpp)
+  LIST(APPEND viewer_SOURCE_FILES llfilepicker_mac.mm)
+  LIST(APPEND viewer_HEADER_FILES llfilepicker_mac.h)
+
+  # This should be compiled with the viewer.
+  LIST(APPEND viewer_SOURCE_FILES llappdelegate-objc.mm)
 
   find_library(AGL_LIBRARY AGL)
   find_library(APPKIT_LIBRARY AppKit)
@@ -1291,7 +1296,7 @@ if (DARWIN)
     macview.r
     gpu_table.txt
     Info-SecondLife.plist
-    SecondLife.nib/
+    SecondLife.xib/
     # CMake doesn't seem to support Xcode language variants well just yet
     English.lproj/InfoPlist.strings
     English.lproj/language.txt

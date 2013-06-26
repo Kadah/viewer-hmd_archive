@@ -61,6 +61,10 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>${VIEWER_VERSION_MAJOR}.${VIEWER_VERSION_MINOR}.${VIEWER_VERSION_PATCH}.${VIEWER_VERSION_REVISION}</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>NSMainNibFile</key>
+	<string>SecondLife</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 </dict>

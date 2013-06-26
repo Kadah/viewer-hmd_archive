@@ -80,6 +80,7 @@ set(cmake_SOURCE_FILES
     LLWindow.cmake
     LLXML.cmake
     LScript.cmake
+    LibOVR.cmake
     Linking.cmake
     MediaPluginBase.cmake
     NDOF.cmake

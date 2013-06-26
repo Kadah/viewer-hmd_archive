@@ -48,6 +48,13 @@ BOOL gDebugHMD = FALSE;
 
 #if LL_WINDOWS
 #include "llwindowwin32.h"
+#elif LL_DARWIN
+#include "llwindowmacosx.h"
+#define IDCONTINUE 1        // Exist on Windows along "IDOK" and "IDCANCEL" but not on Mac
+#else
+// We do not support the Oculus Rift on LL_LINUX for the moment
+#error unsupported platform
+#endif // LL_WINDOWS
 
 // TODO_VR: add support for non-Windows platforms.  Currently waiting for Oculus SDK to support Linux/Mac
 
@@ -341,7 +348,7 @@ BOOL LLHMDImpl::init()
     BOOL dummy;
     getDisplayInfo(mDisplayName, mHMDRect, dummy);
     BOOL mainFullScreen = FALSE;
-    LLWindowWin32* pWin = (LLWindowWin32*)gViewerWindow->getWindow();
+    LLWindow* pWin = gViewerWindow->getWindow();
     pWin->getRenderWindow(mainFullScreen);
     gHMD.isMainFullScreen(mainFullScreen);
     if (!pWin->initHMDWindow(mHMDRect.mLeft, mHMDRect.mTop, mHMDRect.mRight - mHMDRect.mLeft, mHMDRect.mBottom - mHMDRect.mTop))
@@ -387,7 +394,7 @@ void LLHMDImpl::shutdown()
         return;
     }
     gHMD.isInitialized(FALSE);
-    ((LLWindowWin32*)gViewerWindow->getWindow())->destroyHMDWindow();
+    gViewerWindow->getWindow()->destroyHMDWindow();
     RemoveHandlerFromDevices();
     mpSensor.Clear();
     mpHMD.Clear();
@@ -575,6 +582,7 @@ void LLHMDImpl::OnMessage(const OVR::Message& msg)
 }
 
 
+#if LL_WINDOWS
 // Used to capture all the active monitor handles
 struct MonitorSet
 {
@@ -598,14 +606,13 @@ BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC, LPRECT, LPARAM dwData)
     return TRUE;
 };
 
-
 S32 LLHMDImpl::GetDisplayCount()
 {
     // Get all the monitor handles
     MonitorSet monitors;
     monitors.MonitorCount = 0;
     ::EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)&monitors);
-
+    
     // Count the primary monitors
     int primary = 0;
     MONITORINFOEX info;
@@ -618,7 +625,7 @@ S32 LLHMDImpl::GetDisplayCount()
             primary++;
         }
     }
-
+    
     if (primary > 1)
     {
         // Regard mirrored displays as a single screen
@@ -626,10 +633,9 @@ S32 LLHMDImpl::GetDisplayCount()
     }
     else
     {
-        return monitors.MonitorCount;  // Return all extended displays 
+        return monitors.MonitorCount;  // Return all extended displays
     }
 }
-
 
 BOOL LLHMDImpl::getDisplayInfo(const llutf16string& displayName, LLRect& rcWork, BOOL& isPrimary)
 {
@@ -656,14 +662,19 @@ BOOL LLHMDImpl::getDisplayInfo(const llutf16string& displayName, LLRect& rcWork,
             }
         }
     }
-
+    
     return FALSE;
 }
-
-#elif LL_DWARIN
-#elif LL_LINUX
-#else
-    #error unsupported platform?
+#elif LL_DARWIN
+// Need to implement the relevant monitor enumeration functions for Mac here
+S32 LLHMDImpl::GetDisplayCount()
+{
+    return 1;
+}
+BOOL LLHMDImpl::getDisplayInfo(const llutf16string& displayName, LLRect& rcWork, BOOL& isPrimary)
+{
+    return FALSE;
+}
 #endif // LL_WINDOWS
 
 
@@ -752,25 +763,25 @@ void LLHMD::setRenderMode(U32 mode)
 
 void LLHMD::setRenderWindowMain()
 {
-    ((LLWindowWin32*)gViewerWindow->getWindow())->setRenderWindow(0, gHMD.isMainFullScreen());
+    gViewerWindow->getWindow()->setRenderWindow(0, gHMD.isMainFullScreen());
 }
 
 
 void LLHMD::setRenderWindowHMD()
 {
-    ((LLWindowWin32*)gViewerWindow->getWindow())->setRenderWindow(1, TRUE);
+    gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
 }
 
 
 void LLHMD::setFocusWindowMain()
 {
-    ((LLWindowWin32*)gViewerWindow->getWindow())->setFocusWindow(0);
+    gViewerWindow->getWindow()->setFocusWindow(0);
 }
 
 
 void LLHMD::setFocusWindowHMD()
 {
-    ((LLWindowWin32*)gViewerWindow->getWindow())->setFocusWindow(1);
+    gViewerWindow->getWindow()->setFocusWindow(1);
 }
 
 U32 LLHMD::getCurrentEye() const { return mImpl->getCurrentEye(); }
