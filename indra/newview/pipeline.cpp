@@ -917,7 +917,7 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		resY /= res_mod;
 	}
 
-	if (RenderUIBuffer)
+	if (RenderUIBuffer || gHMD.isInitialized() || gDebugHMD)
 	{
 		if (!mUIScreen.allocate(resX,resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE))
 		{
@@ -7070,16 +7070,8 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 
-	U32 viewport_left = gViewerWindow->getWorldViewRectRaw().mLeft;
-	U32 viewport_bottom = gViewerWindow->getWorldViewRectRaw().mBottom;
-	U32 viewport_width = gViewerWindow->getWorldViewRectRaw().getWidth();
-	U32 viewport_height = gViewerWindow->getWorldViewRectRaw().getHeight();
     if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
 	{
-		viewport_left = 0;
-		viewport_bottom = 0;
-		viewport_width = mLeftEye.getWidth();
-		viewport_height = mLeftEye.getHeight();
         if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
         {
             mLeftEye.bindTarget();
@@ -7237,15 +7229,9 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}*/
 
+    gViewerWindow->setup3DViewport(0, 0, gHMD.shouldRender() ? LLHMD::kHMDEyeWidth : 0);
 
-	gGLViewport[0] = viewport_left;
-	gGLViewport[1] = viewport_bottom;
-	gGLViewport[2] = viewport_width;
-	gGLViewport[3] = viewport_height;
-	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-
-	tc2.setVec((F32) mScreen.getWidth(),
-			(F32) mScreen.getHeight());
+	tc2.setVec((F32)mScreen.getWidth(), (F32)mScreen.getHeight());
 
 	gGL.flush();
 	
@@ -7261,12 +7247,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 		bool multisample = RenderFSAASamples > 1 && mFXAABuffer.isComplete();
 
-		gGLViewport[0] = viewport_left;
-		gGLViewport[1] = viewport_bottom;
-		gGLViewport[2] = viewport_width;
-		gGLViewport[3] = viewport_height;
-		glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-
+        gViewerWindow->setup3DViewport(0, 0, gHMD.shouldRender() ? LLHMD::kHMDEyeWidth : 0);
 				
 		if (dof_enabled)
 		{
@@ -7452,11 +7433,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				}
 				else
 				{
-					gGLViewport[0] = viewport_left;
-					gGLViewport[1] = viewport_bottom;
-					gGLViewport[2] = viewport_width;
-					gGLViewport[3] = viewport_height;
-					glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+                    gViewerWindow->setup3DViewport(0, 0, gHMD.shouldRender() ? LLHMD::kHMDEyeWidth : 0);
 				}
 
 				shader = &gDeferredDoFCombineProgram;
@@ -7573,11 +7550,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
 			}
 			
-			gGLViewport[0] = viewport_left;
-			gGLViewport[1] = viewport_bottom;
-			gGLViewport[2] = viewport_width;
-			gGLViewport[3] = viewport_height;
-			glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+            gViewerWindow->setup3DViewport(0, 0, gHMD.shouldRender() ? LLHMD::kHMDEyeWidth : 0);
 
 			F32 scale_x = (F32) width/mFXAABuffer.getWidth();
 			F32 scale_y = (F32) height/mFXAABuffer.getHeight();
@@ -7699,117 +7672,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			gSplatTextureRectProgram.unbind();
 		}
 	}
-
-    //if (gHMD.shouldRender() && !gHMD.shouldRender2DUI())
-    //{
-    //    if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
-    //    {
-    //        mLeftEye.flush();
-    //    }
-    //    else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
-    //    {
-    //        mRightEye.flush();
-    //        gViewerWindow->setup3DViewport();
-
-    //        BOOL shouldDistort = gSavedSettings.getBOOL("OculusShouldDistort");
-    //        BOOL shouldDistortScale = gSavedSettings.getBOOL("OculusShouldDistortScale");
-    //        LLVector3 oculusWHAS = gSavedSettings.getVector3("OculusWHAS");
-    //        F32 w = oculusWHAS.mV[VX]; // float(viewport_width) / float(LLHMD::kHMDWidth);
-    //        F32 h = oculusWHAS.mV[VY]; // float(viewport_height) / float(LLHMD::kHMDHeight);
-    //        F32 as = oculusWHAS.mV[VZ]; // float(viewport_width) / float(viewport_height);
-    //        LLVector3 oculusScaleMult = gSavedSettings.getVector3("OculusScaleMult");
-    //        //F32 w = 1.0f;
-    //        //F32 h = 1.0f;
-    //        //F32 as = 0.8f;
-    //        F32 scaleFactor = shouldDistortScale ? (1.0f / (gHMD.getDistortionScale() * oculusScaleMult.mV[VZ])) : 1.0f;
-    //        F32 ctrOffsetMult = gSavedSettings.getF32("OculusCenterOffsetMult");
-    //        LLVector4 hmd_param = gHMD.getDistortionConstants();
-
-    //        if (shouldDistort)
-    //        {
-    //            gBarrelDistortProgram.bind();
-    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("Scale"), (w * oculusScaleMult.mV[VX]) * scaleFactor, (h * oculusScaleMult.mV[VX]) * scaleFactor * as);
-    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScaleIn"), (oculusScaleMult.mV[VY] / w), (oculusScaleMult.mV[VY] / h) / as);
-    //            //gBarrelDistortProgram.uniform2f(LLStaticHashedString("Scale"), (w * 0.5f) * scaleFactor, (h * 0.5f) * scaleFactor * as);
-    //            //gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScaleIn"), (1.0f / w), (1.0f / h) / as);
-    //            // We are using 1/4 of DistortionCenter offset value here, since it is relative to [-1,1] range that gets mapped to [0, 0.5].
-    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w + (gHMD.getXCenterOffset() * ctrOffsetMult * 0.5f)) * 0.5f, (h * 0.5f));
-    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
-    //            gBarrelDistortProgram.uniform4fv(LLStaticHashedString("HmdWarpParam"), 1, hmd_param.mV);
-    //        }
-    //        else
-    //        {
-    //            gOneTextureNoColorProgram.bind();
-    //        }
-    //        gGL.setColorMask(true, false);
-    //        gGL.color4f(1,1,1,1);
-    //        gGL.getTexUnit(0)->bind(&mLeftEye);
-    //        gGL.begin(LLRender::TRIANGLE_STRIP);
-    //        //bottom left
-    //        gGL.texCoord2f(0, 0);
-    //        gGL.vertex2f(-1, -1);
-    //        //bottom right
-    //        gGL.texCoord2f(1, 0);
-    //        gGL.vertex2f(0, -1);
-    //        //top left
-    //        gGL.texCoord2f(0, 1);
-    //        gGL.vertex2f(-1,1);
-    //        //top right
-    //        gGL.texCoord2f(1, 1);
-    //        gGL.vertex2f(0,1);
-    //        gGL.end();
-
-    //        if (shouldDistort)
-    //        {
-    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w - (gHMD.getXCenterOffset() * ctrOffsetMult * 0.5f)) * 0.5f, h * 0.5f);
-    //            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
-    //        }
-    //        gGL.getTexUnit(0)->bind(&mRightEye);
-    //        gGL.begin(LLRender::TRIANGLE_STRIP);
-    //        //bottom left
-    //        gGL.texCoord2f(0, 0);
-    //        gGL.vertex2f(0, -1);
-    //        //bottom right
-    //        gGL.texCoord2f(1, 0);
-    //        gGL.vertex2f(1, -1);
-    //        //top left
-    //        gGL.texCoord2f(0, 1);
-    //        gGL.vertex2f(0,1);
-    //        //top right
-    //        gGL.texCoord2f(1, 1);
-    //        gGL.vertex2f(1,1);
-    //        gGL.end();
-
-    //        gGL.flush();
-    //        if (shouldDistort)
-    //        {
-    //            gBarrelDistortProgram.unbind();
-    //        }
-    //        else
-    //        {
-    //            gOneTextureNoColorProgram.unbind();
-    //        }
-    //    }
-    //}
-
-    //if (!gHMD.shouldRender() || !gHMD.shouldRender2DUI())
-    //{
-    //    //if (LLRenderTarget::sUseFBO && LLViewerCamera::sCurrentEye != (S32)LLViewerCamera::LEFT_EYE)
-	   // //{ //copy depth buffer from mScreen to framebuffer
-	   // //	LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
-	   // //		0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-	   // //}
-
-	   // //gGL.matrixMode(LLRender::MM_PROJECTION);
-	   // //gGL.popMatrix();
-	   // //gGL.matrixMode(LLRender::MM_MODELVIEW);
-	   // //gGL.popMatrix();
-
-	   // //LLVertexBuffer::unbind();
-
-	   // //LLGLState::checkStates();
-	   // //LLGLState::checkTextureChannels();
-    //}
 }
 
 static LLFastTimer::DeclareTimer FTM_BIND_DEFERRED("Bind Deferred");
@@ -10515,7 +10377,7 @@ void LLPipeline::postRender()
         return;
     }
 
-    if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE && !gHMD.shouldRender2DUI())
+    if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
     {
         mLeftEye.flush();
     }
@@ -10551,18 +10413,11 @@ void LLPipeline::postRender()
         gGL.color4f(1,1,1,1);
         gGL.getTexUnit(0)->bind(&mLeftEye);
         gGL.begin(LLRender::TRIANGLE_STRIP);
-        //bottom left
-        gGL.texCoord2f(0, 0);
-        gGL.vertex2f(-1, -1);
-        //bottom right
-        gGL.texCoord2f(1, 0);
-        gGL.vertex2f(0, -1);
-        //top left
-        gGL.texCoord2f(0, 1);
-        gGL.vertex2f(-1,1);
-        //top right
-        gGL.texCoord2f(1, 1);
-        gGL.vertex2f(0,1);
+        //bottom left, bottom right, top left, top right
+        gGL.texCoord2f(0, 0);       gGL.vertex2f(-1, -1);
+        gGL.texCoord2f(1, 0);       gGL.vertex2f(0, -1);
+        gGL.texCoord2f(0, 1);       gGL.vertex2f(-1,1);
+        gGL.texCoord2f(1, 1);       gGL.vertex2f(0,1);
         gGL.end();
 
         if (shouldDistort)
@@ -10572,18 +10427,11 @@ void LLPipeline::postRender()
         }
         gGL.getTexUnit(0)->bind(&mRightEye);
         gGL.begin(LLRender::TRIANGLE_STRIP);
-        //bottom left
-        gGL.texCoord2f(0, 0);
-        gGL.vertex2f(0, -1);
-        //bottom right
-        gGL.texCoord2f(1, 0);
-        gGL.vertex2f(1, -1);
-        //top left
-        gGL.texCoord2f(0, 1);
-        gGL.vertex2f(0,1);
-        //top right
-        gGL.texCoord2f(1, 1);
-        gGL.vertex2f(1,1);
+        //bottom left, bottom right, top left, top right
+        gGL.texCoord2f(0, 0);       gGL.vertex2f(0, -1);
+        gGL.texCoord2f(1, 0);       gGL.vertex2f(1, -1);
+        gGL.texCoord2f(0, 1);       gGL.vertex2f(0,1);
+        gGL.texCoord2f(1, 1);       gGL.vertex2f(1,1);
         gGL.end();
 
         gGL.flush();
@@ -10597,7 +10445,7 @@ void LLPipeline::postRender()
         }
     }
 
-	if (LLRenderTarget::sUseFBO && (!gHMD.shouldRender() || !gHMD.shouldRender2DUI() || LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE))
+    if (LLRenderTarget::sUseFBO && (!gHMD.shouldRender() || LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE))
 	{
         //copy depth buffer from mScreen to framebuffer
 		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 

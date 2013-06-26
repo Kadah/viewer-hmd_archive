@@ -461,18 +461,9 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
     if (gHMD.shouldRender())
     {
         F32 viewOffset = gHMD.getInterpupillaryOffset() * 0.25f;
-        if (sCurrentEye == LEFT_EYE)
-        {
-            glh::matrix4f translate;
-            translate.set_translate(glh::vec3f(0.0f, viewOffset, 0.0f));
-            modelview = translate * modelview;
-        }
-        else if (sCurrentEye == RIGHT_EYE)
-        {
-            glh::matrix4f translate;
-            translate.set_translate(glh::vec3f(0.0f, -viewOffset, 0.0f));
-            modelview = translate * modelview;
-        }
+        glh::matrix4f translate;
+        translate.set_translate(glh::vec3f(0.0f, sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f));
+        modelview *= translate;
     }
 	
 	gGL.loadMatrix(modelview.m);

@@ -164,6 +164,7 @@ extern LLGLSLShader			gGlowCombineFXAAProgram;
 extern LLGLSLShader			gDebugProgram;
 extern LLGLSLShader			gClipProgram;
 extern LLGLSLShader			gBarrelDistortProgram;
+extern LLGLSLShader			gBarrelDistortRectProgram;
 
 //output tex0[tc0] + tex1[tc1]
 extern LLGLSLShader			gTwoTextureAddProgram;

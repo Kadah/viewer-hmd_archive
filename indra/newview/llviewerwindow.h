@@ -230,7 +230,7 @@ public:
     S32             getWorldViewBottomScaled() const;
 
 	// 3D world area, in raw unscaled pixels
-	LLRect			getWorldViewRectRaw() const		{ return mWorldViewRectRaw; }
+	LLRect			getWorldViewRectRaw() const;
 	S32 			getWorldViewHeightRaw() const;
 	S32 			getWorldViewWidthRaw() const;
     S32             getWorldViewLeftRaw() const;
@@ -271,8 +271,8 @@ public:
 
 	const LLPickInfo&	getLastPick() const { return mLastPick; }
 
-	void			setup2DViewport(S32 x_offset = 0, S32 y_offset = 0);
-	void			setup3DViewport(S32 x_offset = 0, S32 y_offset = 0);
+	void			setup2DViewport(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0);
+	void			setup3DViewport(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0);
 	void			setup3DRender();
 	void			setup2DRender();
 
