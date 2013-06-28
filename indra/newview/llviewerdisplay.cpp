@@ -1037,11 +1037,11 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderFlush");		
 		
-			if (!for_snapshot)
+			/*if (!for_snapshot)
 			{
 				LLFastTimer t(FTM_RENDER_UI);
 				render_ui(1.0f, 0);
-			}
+			}*/
 
 			if (to_texture)
 			{
@@ -1081,11 +1081,11 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUI");
 		}
 
-		//if (!for_snapshot)
-		//{
-		//	LLFastTimer t(FTM_RENDER_UI);
-  //          render_ui(1.0f, 0);
-		//}
+		if (!for_snapshot)
+		{
+			LLFastTimer t(FTM_RENDER_UI);
+            render_ui(1.0f, 0);
+		}
 	}
 			
 	LLSpatialGroup::sNoDelete = FALSE;
