@@ -646,7 +646,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
         case LLViewerCamera::LEFT_EYE:
         case LLViewerCamera::RIGHT_EYE:
             {
-                if ((!gDebugHMD && !gHMD.isInitialized()) || render_mode == LLHMD::RenderMode_None)
+				if ((!gSavedSettings.getBOOL("DebugHMDEnable") && !gHMD.isInitialized()) || render_mode == LLHMD::RenderMode_None)
                 {
                     continue;
                 }
@@ -1037,6 +1037,12 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderFlush");		
 		
+			if (!for_snapshot)
+			{
+				LLFastTimer t(FTM_RENDER_UI);
+				render_ui(1.0f, 0);
+			}
+
 			if (to_texture)
 			{
 				if (LLPipeline::sRenderDeferred && !LLPipeline::sUnderWaterRender)
@@ -1075,11 +1081,11 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUI");
 		}
 
-		if (!for_snapshot)
-		{
-			LLFastTimer t(FTM_RENDER_UI);
-            render_ui(1.0f, 0);
-		}
+		//if (!for_snapshot)
+		//{
+		//	LLFastTimer t(FTM_RENDER_UI);
+  //          render_ui(1.0f, 0);
+		//}
 	}
 			
 	LLSpatialGroup::sNoDelete = FALSE;
@@ -1257,7 +1263,7 @@ bool get_hud_matrices(const LLRect& screen_region, glh::matrix4f &proj, glh::mat
             proj *= mat;
         }
 
-        glh::matrix4f tmp_model((GLfloat*) OGL_TO_CFR_ROTATION);
+		glh::matrix4f tmp_model((GLfloat*) OGL_TO_CFR_ROTATION);
 		mat.set_scale(glh::vec3f(zoom_level, zoom_level, zoom_level));
 		mat.set_translate(glh::vec3f(-hud_bbox.getCenterLocal().mV[VX] + (hud_depth * 0.5f), 0.f, 0.f));
 		tmp_model *= mat;
@@ -1337,29 +1343,29 @@ void render_ui(F32 zoom_factor, int subfield)
     }
     render_hud_elements();  // in-world text, labels, nametags
     render_hud_attachments();   // huds worn by avatar
-    LLGLSDefault gls_default;
-    LLGLSUIDefault gls_ui;
-    gPipeline.disableLights();
-    gGL.color4f(1,1,1,1);
-    if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
-    {
-        LLFastTimer t(FTM_RENDER_UI);
-        if (!gDisconnected)
-        {
+	LLGLSDefault gls_default;
+	LLGLSUIDefault gls_ui;
+	gPipeline.disableLights();
+	gGL.color4f(1,1,1,1);
+        if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
+	    {
+		    LLFastTimer t(FTM_RENDER_UI);
+		    if (!gDisconnected)
+		    {
             render_ui_3d(); // ??
-            LLGLState::checkStates();
-        }
-        else
-        {
-            render_disconnected_background();
-        }
+			    LLGLState::checkStates();
+		    }
+		    else
+		    {
+			    render_disconnected_background();
+		    }
         if (LLViewerCamera::sCurrentEye == LLViewerCamera::CENTER_EYE)
         {
             render_ui_2d(); // Side/bottom buttons, 2D UI windows, etc.
         }
-        LLGLState::checkStates();
-    }
-    gGL.flush();
+		    LLGLState::checkStates();
+	    }
+	    gGL.flush();
     if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
     {
         gGL.matrixMode(LLRender::MM_PROJECTION);
@@ -1372,8 +1378,8 @@ void render_ui(F32 zoom_factor, int subfield)
     }
     if (LLViewerCamera::sCurrentEye == LLViewerCamera::CENTER_EYE)
     {
-        gViewerWindow->setup2DRender();
-        gViewerWindow->updateDebugText();
+	    gViewerWindow->setup2DRender();
+	    gViewerWindow->updateDebugText();
         gViewerWindow->drawDebugText(); // debugging text
     }
     else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
@@ -1449,18 +1455,18 @@ void render_ui(F32 zoom_factor, int subfield)
     }
 
     // copy 
-    LLVertexBuffer::unbind();
-    if (!gSnapshot)
-    {
-        glh_set_current_modelview(saved_view);
-        gGL.popMatrix();
-    }
-    if (gDisplaySwapBuffers && LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE)
-    {
-        LLFastTimer t(FTM_SWAP);
-        gViewerWindow->getWindow()->swapBuffers();
-    }
-    gDisplaySwapBuffers = TRUE;
+	LLVertexBuffer::unbind();
+	if (!gSnapshot)
+	{
+		glh_set_current_modelview(saved_view);
+		gGL.popMatrix();
+	}
+	if (gDisplaySwapBuffers && LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE)
+	{
+		LLFastTimer t(FTM_SWAP);
+		gViewerWindow->getWindow()->swapBuffers();
+	}
+	gDisplaySwapBuffers = TRUE;
 }
 
 void renderCoordinateAxes()
@@ -1660,7 +1666,7 @@ void render_ui_2d()
 
             if (LLViewerCamera::sCurrentEye != LLViewerCamera::RIGHT_EYE)
             {
-			    gPipeline.mUIScreen.flush();
+			gPipeline.mUIScreen.flush();
             }
 			gGL.setColorMask(true, false);
 
@@ -1671,17 +1677,17 @@ void render_ui_2d()
 		LLGLDisable blend(GL_BLEND);
         if (LLViewerCamera::sCurrentEye != LLViewerCamera::RIGHT_EYE)
         {
-		    S32 width = gViewerWindow->getWindowWidthScaled();
-		    S32 height = gViewerWindow->getWindowHeightScaled();
-		    gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
-		    gGL.begin(LLRender::TRIANGLE_STRIP);
-		    gGL.color4f(1,1,1,1);
-		    gGL.texCoord2f(0, 0);			gGL.vertex2i(0, 0);
-		    gGL.texCoord2f(width, 0);		gGL.vertex2i(width, 0);
-		    gGL.texCoord2f(0, height);		gGL.vertex2i(0, height);
-		    gGL.texCoord2f(width, height);	gGL.vertex2i(width, height);
-		    gGL.end();
-        }
+		S32 width = gViewerWindow->getWindowWidthScaled();
+		S32 height = gViewerWindow->getWindowHeightScaled();
+		gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+		gGL.begin(LLRender::TRIANGLE_STRIP);
+		gGL.color4f(1,1,1,1);
+		gGL.texCoord2f(0, 0);			gGL.vertex2i(0, 0);
+		gGL.texCoord2f(width, 0);		gGL.vertex2i(width, 0);
+		gGL.texCoord2f(0, height);		gGL.vertex2i(0, height);
+		gGL.texCoord2f(width, height);	gGL.vertex2i(width, height);
+		gGL.end();
+	}
 	}
 	else if (LLViewerCamera::sCurrentEye == LLViewerCamera::CENTER_EYE)
 	{

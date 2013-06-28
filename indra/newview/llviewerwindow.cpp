@@ -836,7 +836,7 @@ public:
 			}
 		}
 
-		if (gDebugHMD
+		if (gSavedSettings.getBOOL("DebugHMDEnable")
             //&& gHMD.shouldRender()
             && gHMD.isInitialized())
 		{
@@ -4702,13 +4702,13 @@ LLRect LLViewerWindow::getWindowRectScaled() const
     return mWindowRectScaled;
 }
 
-S32	LLViewerWindow::getWindowHeightScaled()	const
-{
+S32	LLViewerWindow::getWindowHeightScaled()	const 	
+{ 
     return mWindowRectScaled.getHeight();
 }
 
-S32	LLViewerWindow::getWindowWidthScaled() const
-{
+S32	LLViewerWindow::getWindowWidthScaled() const 	
+{ 
     return mWindowRectScaled.getWidth();
 }
 
@@ -4732,7 +4732,7 @@ S32	LLViewerWindow::getWindowHeightRaw() const
     return mWindowRectRaw.getHeight();
 }
 
-S32	LLViewerWindow::getWindowWidthRaw() const
+S32	LLViewerWindow::getWindowWidthRaw() const 	
 {
     return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDWidth : LLHMD::kHMDEyeWidth : mWindowRectRaw.getWidth();
 }
@@ -4754,8 +4754,8 @@ void LLViewerWindow::setup2DRender()
     F32 offsetX = 0.0f;
     if (gHMD.shouldRender())
     {
-        offsetX = gHMD.getOrthoPixelOffset();
-    }
+            offsetX = gHMD.getOrthoPixelOffset();
+        }
 	gl_state_for_2d(getWindowWidthRaw(), getWindowHeightRaw(), left, offsetX);
 	setup2DViewport();
 }

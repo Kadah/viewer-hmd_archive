@@ -154,7 +154,6 @@ private:
 };
 
 extern LLHMD gHMD;
-extern BOOL gDebugHMD;
 
 #endif // LL_LLHMD_H
 
