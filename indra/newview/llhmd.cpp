@@ -44,8 +44,6 @@
 #include "Kernel/OVR_Timer.h"
 #include "Util/Util_MagCalibration.h"
 
-BOOL gDebugHMD = FALSE;
-
 #if LL_WINDOWS
 #include "llwindowwin32.h"
 #elif LL_DARWIN
@@ -260,7 +258,6 @@ BOOL LLHMDImpl::init()
         return TRUE;
     }
 
-    gDebugHMD = gSavedSettings.getBOOL("DebugHMDEnable");
     OVR::System::Init(OVR::Log::ConfigureDefaultLog(OVR::LogMask_All));
 
     if (!mpDeviceMgr)
@@ -434,7 +431,8 @@ void LLHMDImpl::shutdown()
 
 void LLHMDImpl::onIdle()
 {
-    if (!gHMD.isInitialized() || (!gDebugHMD && !gHMD.shouldRender()))
+	static LLCachedControl<bool> debug_hmd(gSavedSettings, "DebugHMDEnable");
+    if (!gHMD.isInitialized() || (!debug_hmd && !gHMD.shouldRender()))
     {
         return;
     }

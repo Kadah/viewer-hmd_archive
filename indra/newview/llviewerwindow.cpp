@@ -836,7 +836,7 @@ public:
 			}
 		}
 
-		if (gDebugHMD
+		if (gSavedSettings.getBOOL("DebugHMDEnable")
             //&& gHMD.shouldRender()
             && gHMD.isInitialized())
 		{
