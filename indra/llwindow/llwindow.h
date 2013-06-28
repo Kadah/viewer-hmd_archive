@@ -171,6 +171,8 @@ public:
     S32 getRenderWindow(BOOL& fullScreen) const { fullScreen = mFullscreen; return mCurRCIdx; }
     virtual BOOL setRenderWindow(S32 idx, BOOL fullscreen) = 0;
     virtual BOOL setFocusWindow(S32 idx) = 0;
+    virtual S32 getDisplayCount() = 0;
+    virtual BOOL getDisplayInfo(const llutf16string& displayName, LLRect& rcWork, BOOL& isPrimary) = 0;
     
 protected:
 	LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags);

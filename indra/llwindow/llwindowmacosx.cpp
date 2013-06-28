@@ -1806,6 +1806,18 @@ BOOL LLWindowMacOSX::setFocusWindow(S32 idx)
     return FALSE;
 }
 
+/*virtual*/
+S32 LLWindowMacOSX::getDisplayCount()
+{
+    return getDisplayCount();
+}
+
+/*virtual*/
+BOOL LLWindowMacOSX::getDisplayInfo(const llutf16string& displayName, LLRect& rcWork, BOOL& isPrimary)
+{
+    return FALSE;
+}
+
 #if LL_OS_DRAGDROP_ENABLED
 /*
 S16 LLWindowMacOSX::dragTrackingHandler(DragTrackingMessage message, WindowRef theWindow,

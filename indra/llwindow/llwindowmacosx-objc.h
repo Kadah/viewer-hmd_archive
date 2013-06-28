@@ -108,3 +108,5 @@ NSWindowRef getMainAppWindow();
 GLViewRef getGLView();
 
 unsigned int getModifiers();
+
+int getDisplayCount();

@@ -131,6 +131,8 @@ public:
     /*virtual*/ BOOL destroyHMDWindow();
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
     /*virtual*/ BOOL setFocusWindow(S32 idx);
+    /*virtual*/ S32 getDisplayCount();
+    /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, LLRect& rcWork, BOOL& isPrimary);
     
 protected:
 	LLWindowMacOSX(LLWindowCallbacks* callbacks,
