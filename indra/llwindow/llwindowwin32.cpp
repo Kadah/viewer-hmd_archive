@@ -4043,7 +4043,8 @@ S32 LLWindowWin32::getDisplayCount()
     }
 }
 
-BOOL LLWindowWin32::getDisplayInfo(const llutf16string& displayName, LLRect& rcWork, BOOL& isPrimary)
+// Note: displayId is used on the Mac side of the universe...
+BOOL LLWindowWin32::getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary)
 {
     MonitorSet monitors;
     monitors.MonitorCount = 0;

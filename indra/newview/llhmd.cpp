@@ -56,7 +56,7 @@ BOOL gDebugHMD = FALSE;
 #error unsupported platform
 #endif // LL_WINDOWS
 
-// TODO_VR: add support for non-Windows platforms.  Currently waiting for Oculus SDK to support Linux/Mac
+// TODO_VR: Add support for non-supported platforms. Currently waiting for Oculus SDK to support Linux.
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // LLHMDImpl
@@ -209,7 +209,8 @@ private:
     OVR::Ptr<SensorDevice> mpSensor;
     OVR::Ptr<HMDDevice> mpHMD;
     OVR::Ptr<LatencyTestDevice> mpLatencyTester;
-    llutf16string mDisplayName;
+    llutf16string mDisplayName;     // Identity of the Oculus on Windows
+    long mDisplayId;                // Identity of the Oculus on Mac
     LLVector3 mRawHMDRollPitchYaw;
     F32 mEyePitch;
     F32 mEyeRoll;
@@ -276,6 +277,7 @@ BOOL LLHMDImpl::init()
         mpSensor.Clear();
         mpHMD.Clear();
         mDisplayName.clear();
+        mDisplayId = 0;
         mpHMD  = *(mpDeviceMgr->EnumerateDevices<OVR::HMDDevice>().CreateDevice());
         if (mpHMD)
         {
@@ -288,6 +290,7 @@ BOOL LLHMDImpl::init()
             if (mpHMD->GetDeviceInfo(&mHMDInfo))
             {
                 mDisplayName = utf8str_to_utf16str(mHMDInfo.DisplayDeviceName);
+                mDisplayId = mHMDInfo.DisplayId;
                 //mHMDInfo.EyeToScreenDistance = kDefaultEyeToScreenDistance;
                 mStereoConfig.SetHMDInfo(mHMDInfo);
             }
@@ -346,7 +349,7 @@ BOOL LLHMDImpl::init()
     BOOL dummy;
     BOOL mainFullScreen = FALSE;
     LLWindow* pWin = gViewerWindow->getWindow();
-    pWin->getDisplayInfo(mDisplayName, mHMDRect, dummy);
+    pWin->getDisplayInfo(mDisplayName, mDisplayId, mHMDRect, dummy);
     pWin->getRenderWindow(mainFullScreen);
     gHMD.isMainFullScreen(mainFullScreen);
     if (!pWin->initHMDWindow(mHMDRect.mLeft, mHMDRect.mTop, mHMDRect.mRight - mHMDRect.mLeft, mHMDRect.mBottom - mHMDRect.mTop))

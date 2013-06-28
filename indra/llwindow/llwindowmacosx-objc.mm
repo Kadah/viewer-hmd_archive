@@ -342,19 +342,29 @@ unsigned int getModifiers()
 	return [NSEvent modifierFlags];
 }
 
+
+// Implemented for HMD support
 int getDisplayCount()
 {
     return (int)[[NSScreen screens] count];
 }
 
-// *TODO : This is copied from OSX_Platform.mm comparing with Win32_Platform.cpp
-// What Void implemented is a method giving back screen name, rectangle definition and primary or not
-// This method only return the screen name for screen i. One way is to implement to other functions to
-// return screen size and primary flag for screen i and do the screen iteration in the llwindowmacosx.cpp code.
-// It's likely cleaner and also easier to implement for an Objective-C newbie like me...
-//Render::DisplayId getDisplay(int i)
-//{
-//    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:i];
-//    return Render::DisplayId([OVRView displayFromScreen:s]);
-//}
+long getDisplayId(int screen_id)
+{
+    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_id];
+    NSNumber* didref = (NSNumber*)[[s deviceDescription] objectForKey:@"NSScreenNumber"];
+    CGDirectDisplayID disp = (CGDirectDisplayID)[didref longValue];
+    return long(disp);
+}
+
+void getScreenSize(int screen_id, float* size)
+{
+    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_id];
+	NSRect frame = [s frame];
+	size[0] = frame.origin.x;
+	size[1] = frame.origin.y;
+	size[2] = frame.size.width;
+	size[3] = frame.size.height;
+}
+
 

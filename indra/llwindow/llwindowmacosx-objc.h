@@ -109,4 +109,8 @@ GLViewRef getGLView();
 
 unsigned int getModifiers();
 
+// Implemented for HMD support
 int getDisplayCount();
+long getDisplayId(int screen_id);
+void getScreenSize(int screen_id, float* size);
+

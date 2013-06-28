@@ -1813,9 +1813,30 @@ S32 LLWindowMacOSX::getDisplayCount()
 }
 
 /*virtual*/
-BOOL LLWindowMacOSX::getDisplayInfo(const llutf16string& displayName, LLRect& rcWork, BOOL& isPrimary)
+// Note: displayName is used on the Windows side of the universe...
+BOOL LLWindowMacOSX::getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary)
 {
-    return FALSE;
+    // Find the screen the Oculus displayId corresponds to
+    S32 screen_count = getDisplayCount();
+    S32 screen_id = 0;
+    for (; screen_id < screen_count; screen_id++)
+    {
+        if (getDisplayId(screen_id) == displayId)
+            break;
+    }
+    // Not found -> exit with error
+    if (screen_id == screen_count)
+        return FALSE;
+    // Screen size given the NS way in a 4 floats array: x0, y0, width, height
+    float screen_size[4];
+    getScreenSize(screen_id, screen_size);
+    rcWork.set((S32)(screen_size[0]),
+                (S32)(screen_size[1]+screen_size[3]),
+                (S32)(screen_size[0]+screen_size[2]),
+                (S32)(screen_size[1]));
+    // On Mac, the primary screen is the one with index 0
+    isPrimary = (screen_id == 0);
+    return TRUE;
 }
 
 #if LL_OS_DRAGDROP_ENABLED
