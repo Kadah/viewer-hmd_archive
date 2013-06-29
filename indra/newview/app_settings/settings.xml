@@ -14658,6 +14658,50 @@
     <key>Value</key>
     <real>0.0</real>
   </map>
+  <key>OculusOptWindowRaw</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus Option for WindowRectRaw</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>S32</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  <key>OculusOptWindowScaled</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus Option for WindowRectScaled</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>S32</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  <key>OculusOptWorldViewRaw</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus Option for WorldViewRaw</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>S32</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  <key>OculusOptWorldViewScaled</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus Option for WorldViewScaled</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>S32</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
 </map>
 </llsd>
 
