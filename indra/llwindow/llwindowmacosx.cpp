@@ -1781,29 +1781,36 @@ MASK LLWindowMacOSX::modifiersToMask(S16 modifiers)
 }
 
 // HMD Support
-// Merov : simple stubbs for the moment
 /*virtual*/
 BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
 {
-    return FALSE;
+    // For the moment, we have only one window so we just pretend we initialized something else...
+    return TRUE;
+//    return FALSE;
 }
 
 /*virtual*/
 BOOL LLWindowMacOSX::destroyHMDWindow()
 {
-    return FALSE;
+    // For the moment, we have only one window so we just pretend we destroyed something else...
+    return TRUE;
+//    return FALSE;
 }
 
 /*virtual*/
 BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
 {
-    return FALSE;
+    // For the moment, we have only one window so we just pretend we switched to the other window...
+    return TRUE;
+//    return FALSE;
 }
 
 /*virtual*/
 BOOL LLWindowMacOSX::setFocusWindow(S32 idx)
 {
-    return FALSE;
+    // For the moment, we have only one window so we just pretend we set the focus to a different window...
+    return TRUE;
+//   return FALSE;
 }
 
 /*virtual*/
