@@ -44,8 +44,6 @@
 #include "Kernel/OVR_Timer.h"
 #include "Util/Util_MagCalibration.h"
 
-BOOL gDebugHMD = FALSE;
-
 #if LL_WINDOWS
 #include "llwindowwin32.h"
 #elif LL_DARWIN
@@ -259,7 +257,6 @@ BOOL LLHMDImpl::init()
         return TRUE;
     }
 
-    gDebugHMD = gSavedSettings.getBOOL("DebugHMDEnable");
     OVR::System::Init(OVR::Log::ConfigureDefaultLog(OVR::LogMask_All));
 
     if (!mpDeviceMgr)
@@ -408,7 +405,8 @@ void LLHMDImpl::shutdown()
 
 void LLHMDImpl::onIdle()
 {
-    if (!gHMD.isInitialized() || (!gDebugHMD && !gHMD.shouldRender()))
+	static LLCachedControl<bool> debug_hmd(gSavedSettings, "DebugHMDEnable");
+    if (!gHMD.isInitialized() || (!debug_hmd && !gHMD.shouldRender()))
     {
         return;
     }
@@ -595,6 +593,8 @@ LLHMD::LLHMD()
     , mEyeToScreenMod(0.0f)
     , mXCenterOffsetMod(0.0f)
     , mRenderMode(RenderMode_None)
+    , mMainWindowWidth(LLHMD::kHMDWidth)
+    , mMainWindowHeight(LLHMD::kHMDHeight)
 {
     mImpl = new LLHMDImpl();
 }
@@ -627,6 +627,14 @@ BOOL LLHMD::init()
         onChangeEyeToScreenDistanceModifier();
 	    gSavedSettings.getControl("OculusXCenterOffsetModifier")->getSignal()->connect(boost::bind(&onChangeXCenterOffsetModifier));
         onChangeXCenterOffsetModifier();
+        gSavedSettings.getControl("OculusOptWindowRaw")->getSignal()->connect(boost::bind(&onChangeWindowRaw));
+        onChangeWindowRaw();
+        gSavedSettings.getControl("OculusOptWindowScaled")->getSignal()->connect(boost::bind(&onChangeWindowScaled));
+        onChangeWindowScaled();
+        gSavedSettings.getControl("OculusOptWorldViewRaw")->getSignal()->connect(boost::bind(&onChangeWorldViewRaw));
+        onChangeWorldViewRaw();
+        gSavedSettings.getControl("OculusOptWorldViewScaled")->getSignal()->connect(boost::bind(&onChangeWorldViewScaled));
+        onChangeWorldViewScaled();
     //}
     return res;
 }
@@ -635,7 +643,11 @@ void LLHMD::onChangeInterpupillaryOffsetModifer() { gHMD.mInterpupillaryMod = gS
 void LLHMD::onChangeLensSeparationDistanceModifier() { gHMD.mLensSepMod = gSavedSettings.getF32("OculusLensSeparationDistanceModifier") * 0.1f; }
 void LLHMD::onChangeEyeToScreenDistanceModifier() { gHMD.mEyeToScreenMod = gSavedSettings.getF32("OculusEyeToScreenDistanceModifier") * 0.1f; }
 void LLHMD::onChangeXCenterOffsetModifier() { gHMD.mXCenterOffsetMod = gSavedSettings.getF32("OculusXCenterOffsetModifier") * 0.1f; }
-
+void LLHMD::onChangeWindowRaw() { gHMD.mOptWindowRaw = gSavedSettings.getS32("OculusOptWindowRaw"); }
+void LLHMD::onChangeWindowScaled() { gHMD.mOptWindowScaled = gSavedSettings.getS32("OculusOptWindowScaled"); }
+void LLHMD::onChangeWorldViewRaw() { gHMD.mOptWorldViewRaw = gSavedSettings.getS32("OculusOptWorldViewRaw"); }
+void LLHMD::onChangeWorldViewScaled() { gHMD.mOptWorldViewScaled = gSavedSettings.getS32("OculusOptWorldViewScaled"); }
+ 
 void LLHMD::shutdown() { mImpl->shutdown(); }
 void LLHMD::onIdle() { mImpl->onIdle(); }
 
@@ -649,7 +661,20 @@ void LLHMD::setRenderMode(U32 mode)
         {
             return;
         }
+        BOOL oldShouldRender = shouldRender();
         mRenderMode = newRenderMode;
+        if (!oldShouldRender && shouldRender())
+        {
+            LLCoordWindow windowSize;
+            gViewerWindow->getWindow()->getSize(&windowSize);
+            mMainWindowWidth = windowSize.mX;
+            mMainWindowHeight = windowSize.mY;
+            gViewerWindow->reshape(LLHMD::kHMDEyeWidth, LLHMD::kHMDHeight);
+        }
+        else if (oldShouldRender && !shouldRender())
+        {
+            gViewerWindow->reshape(mMainWindowWidth, mMainWindowHeight);
+        }
         if (mRenderMode == RenderMode_HMD)
         {
             setFocusWindowHMD();

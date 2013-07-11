@@ -2855,9 +2855,9 @@
                function="CheckControl"
                parameter="DebugHMDEnable" />
               <menu_item_check.on_click
-               function="Advanced.ClickRenderDebugHMD"
+               function="ToggleControl"
                parameter="DebugHMDEnable" />
-            </menu_item_check>
+                         </menu_item_check>
             <menu_item_check
              label="Render 2D UI in HMD"
              name="Render 2D UI in HMD">

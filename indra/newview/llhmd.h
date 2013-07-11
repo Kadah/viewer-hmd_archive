@@ -137,11 +137,27 @@ public:
 
     F32 getOrthoPixelOffset() const;
 
+    S32 getMainWindowWidth() const { return mMainWindowWidth; }
+    void setMainWindowWidth(S32 w) { mMainWindowWidth = w; }
+    S32 getMainWindowHeight() const { return mMainWindowHeight; }
+    void setMainWindowHeight(S32 h) { mMainWindowHeight = h; }
+    void getMainWindowSize(S32& w, S32& h) { w = mMainWindowWidth; h = mMainWindowHeight; }
+    void setMainWindowSize(S32 w, S32 h) { mMainWindowWidth = w; mMainWindowHeight = h; }
+
+    S32 getOptWindowRaw() const { return mOptWindowRaw; }
+    S32 getOptWindowScaled() const { return mOptWindowScaled; }
+    S32 getOptWorldViewRaw() const { return mOptWorldViewRaw; }
+    S32 getOptWorldViewScaled() const { return mOptWorldViewScaled; }
+
     static void onChangeInterpupillaryOffsetModifer();
     static void onChangeLensSeparationDistanceModifier();
     static void onChangeEyeToScreenDistanceModifier();
     static void onChangeXCenterOffsetModifier();
     static void onChangeShouldChangeFOV();
+    static void onChangeWindowRaw();
+    static void onChangeWindowScaled();
+    static void onChangeWorldViewRaw();
+    static void onChangeWorldViewScaled();
 
 private:
     LLHMDImpl* mImpl;
@@ -151,10 +167,15 @@ private:
     F32 mXCenterOffsetMod;
     U32 mFlags;
     U32 mRenderMode;
-};
+    S32 mOptWindowRaw;
+    S32 mOptWindowScaled;
+    S32 mOptWorldViewRaw;
+    S32 mOptWorldViewScaled;
+    S32 mMainWindowWidth;
+    S32 mMainWindowHeight;
+ };
 
 extern LLHMD gHMD;
-extern BOOL gDebugHMD;
 
 #endif // LL_LLHMD_H
 

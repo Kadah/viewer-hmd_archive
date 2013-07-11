@@ -64,7 +64,7 @@ void main()
 	
 	if (dot(clamped_tc, clamped_tc) > 0.0)
 	{
-		frag_color = vec4(1,1,1,1);
+		frag_color = vec4(0,0,0,1);
 	}
 	else
 	{

@@ -4076,16 +4076,18 @@ class LLViewCycleDisplay : public view_listener_t
 {
     bool handleEvent(const LLSD& userdata)
     {
+		static LLCachedControl<bool> debug_hmd(gSavedSettings, "DebugHMDEnable");
+
         U32 curRenderMode = gHMD.getRenderMode();
         U32 nextRenderMode = LLHMD::RenderMode_None;
         switch (curRenderMode)
         {
         case LLHMD::RenderMode_None:
-            nextRenderMode = gHMD.isInitialized() ? LLHMD::RenderMode_HMD : gDebugHMD ? LLHMD::RenderMode_ScreenStereoDistort : LLHMD::RenderMode_None;
+            nextRenderMode = gHMD.isInitialized() ? LLHMD::RenderMode_HMD : debug_hmd ? LLHMD::RenderMode_ScreenStereoDistort : LLHMD::RenderMode_None;
             break;
         case LLHMD::RenderMode_HMD:
         case LLHMD::RenderMode_ScreenStereo:
-            nextRenderMode = gDebugHMD ? LLHMD::RenderMode_ScreenStereoDistort : LLHMD::RenderMode_None;
+            nextRenderMode = debug_hmd ? LLHMD::RenderMode_ScreenStereoDistort : LLHMD::RenderMode_None;
             break;
         case LLHMD::RenderMode_ScreenStereoDistort:
         default:
@@ -7181,22 +7183,6 @@ class LLAdvancedHandleAttachedLightParticles: public view_listener_t
 	}
 };
 
-void menu_toggle_render_debug_hmd(void* user_data)
-{
-    gDebugHMD = gSavedSettings.getBOOL("DebugHMDEnable");
-}
-
-class LLAdvancedRenderDebugHMD: public view_listener_t
-{
-    bool handleEvent(const LLSD& userdata)
-    {
-        // toggle the control
-        gSavedSettings.setBOOL("DebugHMDEnable", !gSavedSettings.getBOOL("DebugHMDEnable"));
-        menu_toggle_render_debug_hmd(NULL);
-        return true;
-    }
-};
-
 void menu_toggle_render_hmd_2d_ui(void* user_data)
 {
     gHMD.shouldRender2DUI(gSavedSettings.getBOOL("RenderHMD2DUI"));
@@ -8619,7 +8605,6 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLAdvancedHandleAttachedLightParticles(), "Advanced.HandleAttachedLightParticles");
 	view_listener_t::addMenu(new LLAdvancedCheckRenderShadowOption(), "Advanced.CheckRenderShadowOption");
 	view_listener_t::addMenu(new LLAdvancedClickRenderShadowOption(), "Advanced.ClickRenderShadowOption");
-    view_listener_t::addMenu(new LLAdvancedRenderDebugHMD(), "Advanced.ClickRenderDebugHMD");
     view_listener_t::addMenu(new LLAdvancedRenderHMD2DUI(), "Advanced.ClickRenderHMD2DUI");
 
 	#ifdef TOGGLE_HACKED_GODLIKE_VIEWER

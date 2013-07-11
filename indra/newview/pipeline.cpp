@@ -917,7 +917,7 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		resY /= res_mod;
 	}
 
-	if (RenderUIBuffer || gHMD.isInitialized() || gDebugHMD)
+	if (RenderUIBuffer)
 	{
 		if (!mUIScreen.allocate(resX,resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE))
 		{
@@ -10370,7 +10370,7 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 	LLGLState::checkClientArrays();
 }
 
-void LLPipeline::postRender()
+void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL writeAlpha, S32 viewportWidth)
 {
     if (!(gPipeline.canUseVertexShaders() && sRenderGlow))
     {
@@ -10379,12 +10379,18 @@ void LLPipeline::postRender()
 
     if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
     {
-        mLeftEye.flush();
+        if (pLeft)
+        {
+            pLeft->flush();
+        }
     }
     else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
     {
-        mRightEye.flush();
-        gViewerWindow->setup3DViewport();
+        if (pRight)
+        {
+            pRight->flush();
+        }
+        gViewerWindow->setup3DViewport(0, 0, viewportWidth);
 
         F32 w = 1.0f;
         F32 h = 1.0f;
@@ -10394,55 +10400,43 @@ void LLPipeline::postRender()
         F32 scaleFactor = 1.0f / gHMD.getDistortionScale();
         LLVector4 hmd_param = gHMD.getDistortionConstants();
 
-        static BOOL shouldDistort = TRUE; // gSavedSettings.getBOOL("OculusShouldDistort");
-        if (shouldDistort)
-        {
-            gBarrelDistortProgram.bind();
-            gBarrelDistortProgram.uniform2f(LLStaticHashedString("Scale"), w * 0.5f * scaleFactor, h * 0.5f * scaleFactor * as);
-            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScaleIn"), (2.0f / w), (2.0f / h) / as);
-            // We are using 1/4 of DistortionCenter offset value here, since it is relative to [-1,1] range that gets mapped to [0, 0.5].
-            gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w + gHMD.getXCenterOffset()) * 0.5f, (h * 0.5f));
-            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
-            gBarrelDistortProgram.uniform4fv(LLStaticHashedString("HmdWarpParam"), 1, hmd_param.mV);
-        }
-        else
-        {
-            gOneTextureNoColorProgram.bind();
-        }
-        gGL.setColorMask(true, false);
+        gBarrelDistortProgram.bind();
+        gBarrelDistortProgram.uniform2f(LLStaticHashedString("Scale"), w * 0.5f * scaleFactor, h * 0.5f * scaleFactor * as);
+        gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScaleIn"), (2.0f / w), (2.0f / h) / as);
+        // We are using 1/4 of DistortionCenter offset value here, since it is relative to [-1,1] range that gets mapped to [0, 0.5].
+        gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w + gHMD.getXCenterOffset()) * 0.5f, (h * 0.5f));
+        gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
+        gBarrelDistortProgram.uniform4fv(LLStaticHashedString("HmdWarpParam"), 1, hmd_param.mV);
+        gGL.setColorMask(true, writeAlpha);
         gGL.color4f(1,1,1,1);
-        gGL.getTexUnit(0)->bind(&mLeftEye);
-        gGL.begin(LLRender::TRIANGLE_STRIP);
-        //bottom left, bottom right, top left, top right
-        gGL.texCoord2f(0, 0);       gGL.vertex2f(-1, -1);
-        gGL.texCoord2f(1, 0);       gGL.vertex2f(0, -1);
-        gGL.texCoord2f(0, 1);       gGL.vertex2f(-1,1);
-        gGL.texCoord2f(1, 1);       gGL.vertex2f(0,1);
-        gGL.end();
-
-        if (shouldDistort)
+        if (pLeft)
         {
-            gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w - gHMD.getXCenterOffset()) * 0.5f, h * 0.5f);
-            gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
+            gGL.getTexUnit(0)->bind(pLeft);
+            gGL.begin(LLRender::TRIANGLE_STRIP);
+            //bottom left, bottom right, top left, top right
+            gGL.texCoord2f(0, 0);       gGL.vertex2f(-1, -1);
+            gGL.texCoord2f(1, 0);       gGL.vertex2f(0, -1);
+            gGL.texCoord2f(0, 1);       gGL.vertex2f(-1,1);
+            gGL.texCoord2f(1, 1);       gGL.vertex2f(0,1);
+            gGL.end();
         }
-        gGL.getTexUnit(0)->bind(&mRightEye);
-        gGL.begin(LLRender::TRIANGLE_STRIP);
-        //bottom left, bottom right, top left, top right
-        gGL.texCoord2f(0, 0);       gGL.vertex2f(0, -1);
-        gGL.texCoord2f(1, 0);       gGL.vertex2f(1, -1);
-        gGL.texCoord2f(0, 1);       gGL.vertex2f(0,1);
-        gGL.texCoord2f(1, 1);       gGL.vertex2f(1,1);
-        gGL.end();
+
+        gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w - gHMD.getXCenterOffset()) * 0.5f, h * 0.5f);
+        gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
+        if (pRight)
+        {
+            gGL.getTexUnit(0)->bind(pRight);
+            gGL.begin(LLRender::TRIANGLE_STRIP);
+            //bottom left, bottom right, top left, top right
+            gGL.texCoord2f(0, 0);       gGL.vertex2f(0, -1);
+            gGL.texCoord2f(1, 0);       gGL.vertex2f(1, -1);
+            gGL.texCoord2f(0, 1);       gGL.vertex2f(0,1);
+            gGL.texCoord2f(1, 1);       gGL.vertex2f(1,1);
+            gGL.end();
+        }
 
         gGL.flush();
-        if (shouldDistort)
-        {
-            gBarrelDistortProgram.unbind();
-        }
-        else
-        {
-            gOneTextureNoColorProgram.unbind();
-        }
+        gBarrelDistortProgram.unbind();
     }
 
     if (LLRenderTarget::sUseFBO && (!gHMD.shouldRender() || LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE))
@@ -10451,16 +10445,6 @@ void LLPipeline::postRender()
 		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
 			0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 	}
-	
-	gGL.matrixMode(LLRender::MM_PROJECTION);
-	gGL.popMatrix();
-	gGL.matrixMode(LLRender::MM_MODELVIEW);
-	gGL.popMatrix();
-
-	LLVertexBuffer::unbind();
-
-	LLGLState::checkStates();
-	LLGLState::checkTextureChannels();
 }
 
 BOOL LLPipeline::hasRenderBatches(const U32 type) const
