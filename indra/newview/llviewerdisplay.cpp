@@ -78,6 +78,7 @@
 #include "llwaterparammanager.h"
 #include "llpostprocess.h"
 #include "llhmd.h"
+#include "llrootview.h"
 
 extern LLPointer<LLViewerTexture> gStartTexture;
 extern bool gShiftFrame;
@@ -1260,7 +1261,7 @@ bool get_hud_matrices(const LLRect& screen_region, glh::matrix4f &proj, glh::mat
         {
             mat.make_identity();
             mat.set_translate(glh::vec3f(gHMD.getOrthoPixelOffset(), 0.0f, 0.0f));
-            proj *= mat;
+            proj = mat * proj;
         }
 
 		glh::matrix4f tmp_model((GLfloat*) OGL_TO_CFR_ROTATION);
@@ -1269,10 +1270,10 @@ bool get_hud_matrices(const LLRect& screen_region, glh::matrix4f &proj, glh::mat
 		tmp_model *= mat;
         if (gHMD.shouldRender())
         {
-            F32 offsetY  = (gHMD.getInterpupillaryOffset() * 0.5f) * (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? 1.0f : -1.0f);
+            F32 viewOffset = gHMD.getInterpupillaryOffset();
             mat.make_identity();
-            mat.set_translate(glh::vec3f(0.0f, offsetY, 0.0f));
-            tmp_model *= mat;
+            mat.set_translate(glh::vec3f(LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? viewOffset : -viewOffset, 0.0f, 0.0f));
+            tmp_model = mat * tmp_model;
         }
 		model = tmp_model;
 		return TRUE;
@@ -1330,10 +1331,94 @@ void render_ui(F32 zoom_factor, int subfield)
     BOOL to_texture = gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow;
 	if (to_texture)
 	{
+
+        gGL.matrixMode(LLRender::MM_PROJECTION);
+        gGL.pushMatrix();
+        gGL.loadIdentity();
+        gGL.matrixMode(LLRender::MM_MODELVIEW);
+        gGL.pushMatrix();
+        gGL.loadIdentity();
+
 		gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
-        // handle HMD distortion and copying mScreen to framebuffer
         if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
         {
+            gGL.matrixMode(LLRender::MM_PROJECTION);
+            gGL.popMatrix();
+            gGL.matrixMode(LLRender::MM_MODELVIEW);
+            gGL.popMatrix();
+            
+            render_hud_elements();  // in-world text, labels, nametags
+            if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
+            {
+                LLFastTimer t(FTM_RENDER_UI);
+                if (!gDisconnected)
+                {
+                    render_ui_3d(); // edit outline, move arrows, etc.
+                    LLGLState::checkStates();
+                }
+                else
+                {
+                    render_disconnected_background();
+                }
+            }
+
+            if (gPipeline.mUIScreen.isComplete())
+            {
+                gGL.matrixMode(LLRender::MM_MODELVIEW);
+                gGL.pushMatrix();
+                LLViewerCamera* pViewerCamera = LLViewerCamera::getInstance();
+                const LLMatrix4& m1 = pViewerCamera->getPreHMDViewMatrix();
+                gGL.multMatrix((GLfloat*)m1.mMatrix);
+                gUIProgram.bind();
+                LLGLEnable blend_on(GL_BLEND);
+                gGL.blendFunc(LLRender::BF_ONE, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
+		        LLGLDisable cull(GL_CULL_FACE);
+                gGL.setColorMask(true, true);
+                gGL.color4f(1,1,1,1);
+                gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+                gGL.begin(LLRender::TRIANGLE_STRIP);
+                //bottom left, bottom right, top left, top right
+                gGL.texCoord2f(0, 0);       gGL.vertex3f( -2, -1, -2);
+                gGL.texCoord2f(1, 0);       gGL.vertex3f(  2, -1, -2);
+                gGL.texCoord2f(0, 1);       gGL.vertex3f( -2,  1, -2);
+                gGL.texCoord2f(1, 1);       gGL.vertex3f(  2,  1, -2);
+                gGL.end();
+                gGL.flush();
+                gUIProgram.unbind();
+                gGL.matrixMode(LLRender::MM_MODELVIEW);
+                gGL.popMatrix();
+            }
+            else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+            {
+                if (!gPipeline.mUIScreen.allocate(LLHMD::kHMDUIWidth, LLHMD::kHMDUIHeight, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
+                {
+                    llwarns << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
+                    return;
+                }
+                gViewerWindow->calcDisplayScale();
+                const LLVector2& displayScale = gViewerWindow->getDisplayScale();
+                BOOL display_scale_changed = displayScale != LLUI::getScaleFactor();
+                LLUI::setScaleFactor(displayScale);
+                LLView::sForceReshape = display_scale_changed;
+                LLRootView* rootView = gViewerWindow->getRootView();
+                rootView->reshape(llceil((F32)LLHMD::kHMDUIWidth / displayScale.mV[VX]), llceil((F32)LLHMD::kHMDUIHeight / displayScale.mV[VY]));
+                LLView::sForceReshape = FALSE;
+
+                // clear font width caches
+                if (display_scale_changed)
+                {
+                    LLHUDObject::reshapeAll();
+                }
+            }
+
+            gGL.matrixMode(LLRender::MM_PROJECTION);
+            gGL.pushMatrix();
+            gGL.loadIdentity();
+            gGL.matrixMode(LLRender::MM_MODELVIEW);
+            gGL.pushMatrix();
+            gGL.loadIdentity();
+
+            // handle HMD distortion and copying mScreen to framebuffer
             gPipeline.postRender(&gPipeline.mLeftEye, &gPipeline.mRightEye);
         }
         else
@@ -1348,171 +1433,54 @@ void render_ui(F32 zoom_factor, int subfield)
         LLGLState::checkStates();
         LLGLState::checkTextureChannels();
 	}
-    if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
-    {
-        gPipeline.mLeftEye.bindTarget();
-    }
-    else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
-    {
-        gPipeline.mRightEye.bindTarget();
-    }
-    render_hud_elements();  // in-world text, labels, nametags
-    render_hud_attachments();   // huds worn by avatar
-	LLGLSDefault gls_default;
-	LLGLSUIDefault gls_ui;
-	gPipeline.disableLights();
-	gGL.color4f(1,1,1,1);
-    if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
-	{
-		LLFastTimer t(FTM_RENDER_UI);
-		if (!gDisconnected)
-		{
-            render_ui_3d(); // ??
-			LLGLState::checkStates();
-		}
-		else
-		{
-			render_disconnected_background();
-		}
-        if (LLViewerCamera::sCurrentEye == LLViewerCamera::CENTER_EYE)
-        {
-            render_ui_2d(); // Side/bottom buttons, 2D UI windows, etc.
-        }
-		LLGLState::checkStates();
-	}
-	gGL.flush();
-    if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
-    {
-        gGL.matrixMode(LLRender::MM_PROJECTION);
-        gGL.pushMatrix();
-        gGL.loadIdentity();
-        gGL.matrixMode(LLRender::MM_MODELVIEW);
-        gGL.pushMatrix();
-        gGL.loadIdentity();
-        gPipeline.postRender(&gPipeline.mLeftEye, &gPipeline.mRightEye, FALSE, 0);
-        gGL.matrixMode(LLRender::MM_PROJECTION);
-        gGL.popMatrix();
-        gGL.matrixMode(LLRender::MM_MODELVIEW);
-        gGL.popMatrix();
-        LLVertexBuffer::unbind();
-        LLGLState::checkStates();
-        LLGLState::checkTextureChannels();
-    }
     if (LLViewerCamera::sCurrentEye == LLViewerCamera::CENTER_EYE)
     {
-	    gViewerWindow->setup2DRender();
-	    gViewerWindow->updateDebugText();
-        gViewerWindow->drawDebugText(); // debugging text
+        render_hud_elements();  // in-world text, labels, nametags
     }
-    else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+    if (LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE)
     {
-        //gPipeline.mUIScreen.bindTarget();
-        gPipeline.mRightEye.bindTarget();
-        gGL.setColorMask(true, true);
-        glClear(GL_COLOR_BUFFER_BIT);
-        //gRenderUIMode = TRUE; // gHMD.shouldRender() && gHMD.shouldRender2DUI();
-        render_ui_2d(); // Side/bottom buttons, 2D UI windows, etc.
-        //gViewerWindow->setup2DRender();
-        //gViewerWindow->updateDebugText();
-        //gViewerWindow->drawDebugText(); // debugging text
+        if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
         {
-            //bool oldUseFBO = LLRenderTarget::sUseFBO;
-            //LLRenderTarget::sUseFBO = false;
-            LLGLDisable cull(GL_CULL_FACE);
-            gPipeline.postRender(&gPipeline.mRightEye, &gPipeline.mRightEye, TRUE, LLHMD::kHMDWidth);
-            //LLRenderTarget::sUseFBO = oldUseFBO;
+            gPipeline.mUIScreen.bindTarget();
+            gGL.setColorMask(true, true);
+            glClearColor(0.0f,0.0f,0.0f,0.0f);
+            gPipeline.mUIScreen.clear();
         }
-        //gPipeline.mRightEye.flush();
-        ////gPipeline.mUIScreen.flush();
-        //LLVertexBuffer::unbind();
-        //LLGLState::checkStates();
-        //LLGLState::checkTextureChannels();
-
-        ////if (0)  // disabled for now until I get it working correctly
-        //{
-        //    gGL.setColorMask(true, true);
-        //    //gGL.setColorMask(true, false);
-        //    LLGLDisable cull(GL_CULL_FACE);
-        //    //LLGLDisable blend(GL_BLEND);
-        //    //gViewerWindow->setup3DViewport();
-        //    //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        //    //glClear(GL_COLOR_BUFFER_BIT);
-
-        //    S32 width = gViewerWindow->getWindowWidthScaled();
-        //    S32 height = gViewerWindow->getWindowHeightScaled();
-        //    F32 w = 1.0f;
-        //    F32 h = 1.0f;
-        //    F32 as = (F32)LLHMD::kHMDEyeWidth / (F32)LLHMD::kHMDHeight;
-        //    F32 scaleFactor = 1.0f / gHMD.getDistortionScale();
-        //    LLVector4 hmd_param = gHMD.getDistortionConstants();
-
-        //    gBarrelDistortProgram.bind();
-        //    gBarrelDistortProgram.uniform2f(LLStaticHashedString("Scale"), w * 0.25f * scaleFactor, h * 0.5f * scaleFactor * as);
-        //    gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScaleIn"), (2.0f / (w * 0.5f)), (2.0f / h) / as);
-        //    // We are using 1/4 of DistortionCenter offset value here, since it is relative to [-1,1] range that gets mapped to [0, 0.5].
-        //    gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w + gHMD.getXCenterOffset()) * 0.25f, (h * 0.5f));
-        //    gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.25f, h * 0.5f);
-        //    gBarrelDistortProgram.uniform4fv(LLStaticHashedString("HmdWarpParam"), 1, hmd_param.mV);
-        //    //gGL.setColorMask(true, true);
-        //    //glClearColor(0,0,0,0);
-        //    //gGL.setColorMask(true, false);
-        //    //gGL.color4f(1,1,1,1);
-        //    gGL.color4f(1,1,1,1);
-        //    S32 x1 = 0, x2 = (width / 2);
-        //    //gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
-        //    gGL.getTexUnit(0)->bind(&gPipeline.mRightEye);
-        //    gGL.begin(LLRender::TRIANGLE_STRIP);
-        //    //gGL.texCoord2f(0, 0);           gGL.vertex2f(-1, -1);
-        //    //gGL.texCoord2f(width, 0);       gGL.vertex2f(0, -1);
-        //    //gGL.texCoord2f(0, height);      gGL.vertex2f(-1,1);
-        //    //gGL.texCoord2f(width, height);  gGL.vertex2f(0,1);
-        //    //gGL.texCoord2i(0, 0);			gGL.vertex2i(x1, 0);
-        //    //gGL.texCoord2i(width, 0);		gGL.vertex2i(x2, 0);
-        //    //gGL.texCoord2i(0, height);		gGL.vertex2i(x1, height);
-        //    //gGL.texCoord2i(width, height);	gGL.vertex2i(x2, height);
-        //    //gGL.texCoord2f(0, 0);       gGL.vertex2f(-1, -1);
-        //    //gGL.texCoord2f(1, 0);       gGL.vertex2f(0, -1);
-        //    //gGL.texCoord2f(0, 1);       gGL.vertex2f(-1, 1);
-        //    //gGL.texCoord2f(1, 1);       gGL.vertex2f(0, 1);
-        //    gGL.texCoord2f(0, 0);       gGL.vertex2i(x1, 0);
-        //    gGL.texCoord2f(1, 0);       gGL.vertex2i(x2, 0);
-        //    gGL.texCoord2f(0, 1);       gGL.vertex2i(x1, height);
-        //    gGL.texCoord2f(1, 1);       gGL.vertex2i(x2, height);
-        //    gGL.end();
-        //    gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), 0.5f + ((w - gHMD.getXCenterOffset()) * 0.25f), h * 0.5f);
-        //    gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), 0.5f + (w * 0.25f), h * 0.5f);
-        //    x1 = x2 + 1;
-        //    x2 = width;
-        //    //gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
-        //    gGL.begin(LLRender::TRIANGLE_STRIP);
-        //    //gGL.texCoord2f(0, 0);			gGL.vertex2f(0, -1);
-        //    //gGL.texCoord2f(width, 0);		gGL.vertex2f(1, -1);
-        //    //gGL.texCoord2f(0, height);		gGL.vertex2f(0,1);
-        //    //gGL.texCoord2f(width, height);	gGL.vertex2f(1,1);
-        //    //gGL.texCoord2f(0, 0);			gGL.vertex2i(x1, 0);
-        //    //gGL.texCoord2f(width, 0);		gGL.vertex2i(x2, 0);
-        //    //gGL.texCoord2f(0, height);		gGL.vertex2i(x1, height);
-        //    //gGL.texCoord2f(width, height);	gGL.vertex2i(x2, height);
-        //    //gGL.texCoord2f(0, 0);       gGL.vertex2f(-1, -1);
-        //    //gGL.texCoord2f(1, 0);       gGL.vertex2f(0, -1);
-        //    //gGL.texCoord2f(0, 1);       gGL.vertex2f(-1,1);
-        //    //gGL.texCoord2f(1, 1);       gGL.vertex2f(0,1);
-        //    gGL.texCoord2f(0, 0);       gGL.vertex2i(x1, 0);
-        //    gGL.texCoord2f(1, 0);       gGL.vertex2i(x2, 0);
-        //    gGL.texCoord2f(0, 1);       gGL.vertex2i(x1, height);
-        //    gGL.texCoord2f(1, 1);       gGL.vertex2i(x2, height);
-        //    gGL.end();
-        //    gGL.flush();
-        //    gBarrelDistortProgram.unbind();
-
-        //    //if (LLRenderTarget::sUseFBO && (!gHMD.shouldRender() || LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE))
-        //    //{
-        //    //    //copy depth buffer from mScreen to framebuffer
-        //    //    LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
-        //    //        0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-        //    //}
-        //}
-        //gRenderUIMode = FALSE; // gHMD.shouldRender() && gHMD.shouldRender2DUI();
+        render_hud_attachments();   // huds worn by avatar
+	    LLGLSDefault gls_default;
+	    LLGLSUIDefault gls_ui;
+	    gPipeline.disableLights();
+	    gGL.color4f(1,1,1,1);
+        gGL.setColorMask(true, gHMD.shouldRender());
+        LLGLDisable cull(GL_CULL_FACE);
+        if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
+	    {
+		    LLFastTimer t(FTM_RENDER_UI);
+            if (LLViewerCamera::sCurrentEye == LLViewerCamera::CENTER_EYE)
+            {
+		        if (!gDisconnected)
+		        {
+                    render_ui_3d(); // ??
+			        LLGLState::checkStates();
+		        }
+		        else
+		        {
+			        render_disconnected_background();
+		        }
+            }
+            render_ui_2d(); // Side/bottom buttons, 2D UI windows, etc.
+		    LLGLState::checkStates();
+	    }
+	    gGL.flush();
+        gRenderUIMode = TRUE;
+        gViewerWindow->setup2DRender();
+        gViewerWindow->updateDebugText();
+        gViewerWindow->drawDebugText(); // debugging text
+        gRenderUIMode = FALSE;
+        if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+        {
+            gPipeline.mUIScreen.flush();
+        }
     }
 
     // copy 
@@ -1658,16 +1626,8 @@ void render_ui_2d()
     }
     else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
     {
-        // setup ortho camera
-        S32 left = 0;
-        F32 offsetX = 0.0f;
-        //if (gHMD.shouldRender())
-        //{
-        //    offsetX = gHMD.getOrthoPixelOffset();
-        //}
-        //gl_state_for_2d(gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw(), left, offsetX);
-        gl_state_for_2d(LLHMD::kHMDEyeWidth, LLHMD::kHMDHeight, left, offsetX);
-        gViewerWindow->setup2DViewport(0, 0, LLHMD::kHMDEyeWidth);
+        gl_state_for_2d(LLHMD::kHMDUIWidth, LLHMD::kHMDUIHeight);
+        gViewerWindow->setup2DViewport(0, 0, LLHMD::kHMDUIWidth);
     }
 
 	F32 zoom_factor = LLViewerCamera::getInstance()->getZoomFactor();
@@ -1702,67 +1662,7 @@ void render_ui_2d()
 		stop_glerror();
 	}
 
-    if (LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE)
-    {
-	    if (gSavedSettings.getBOOL("RenderUIBuffer"))
-	    {
-		    if (LLUI::sDirty)
-		    {
-			    LLUI::sDirty = FALSE;
-			    LLRect t_rect;
-
-			    gPipeline.mUIScreen.bindTarget();
-			    gGL.setColorMask(true, true);
-				static const S32 pad = 8;
-
-				LLUI::sDirtyRect.mLeft -= pad;
-				LLUI::sDirtyRect.mRight += pad;
-				LLUI::sDirtyRect.mBottom -= pad;
-				LLUI::sDirtyRect.mTop += pad;
-
-				LLGLEnable scissor(GL_SCISSOR_TEST);
-				static LLRect last_rect = LLUI::sDirtyRect;
-
-				//union with last rect to avoid mouse poop
-				last_rect.unionWith(LLUI::sDirtyRect);
-								
-				t_rect = LLUI::sDirtyRect;
-				LLUI::sDirtyRect = last_rect;
-				last_rect = t_rect;
-			
-				last_rect.mLeft = LLRect::tCoordType(last_rect.mLeft / LLUI::getScaleFactor().mV[0]);
-				last_rect.mRight = LLRect::tCoordType(last_rect.mRight / LLUI::getScaleFactor().mV[0]);
-				last_rect.mTop = LLRect::tCoordType(last_rect.mTop / LLUI::getScaleFactor().mV[1]);
-				last_rect.mBottom = LLRect::tCoordType(last_rect.mBottom / LLUI::getScaleFactor().mV[1]);
-
-				LLRect clip_rect(last_rect);
-				
-				glClear(GL_COLOR_BUFFER_BIT);
-
-				gViewerWindow->draw();
-			    gPipeline.mUIScreen.flush();
-			    gGL.setColorMask(true, false);
-			    LLUI::sDirtyRect = t_rect;
-		    }
-
-		    LLGLDisable cull(GL_CULL_FACE);
-		    LLGLDisable blend(GL_BLEND);
-		    S32 width = gViewerWindow->getWindowWidthScaled();
-		    S32 height = gViewerWindow->getWindowHeightScaled();
-		    gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
-		    gGL.begin(LLRender::TRIANGLE_STRIP);
-		    gGL.color4f(1,1,1,1);
-		    gGL.texCoord2f(0, 0);			gGL.vertex2i(0, 0);
-		    gGL.texCoord2f(width, 0);		gGL.vertex2i(width, 0);
-		    gGL.texCoord2f(0, height);		gGL.vertex2i(0, height);
-		    gGL.texCoord2f(width, height);	gGL.vertex2i(width, height);
-		    gGL.end();
-    	}
-        else
-        {
-		    gViewerWindow->draw();
-	    }
-    }
+    gViewerWindow->draw();
 
 	// reset current origin for font rendering, in case of tiling render
 	LLFontGL::sCurOrigin.set(0, 0);

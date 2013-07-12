@@ -78,6 +78,7 @@ public:
     static const F32 kDefaultYCenterOffset;
     static const F32 kDefaultDistortionScale;
     static const F32 kDefaultOrthoPixelOffset;
+    static const F32 kDefaultVerticalFOVRadians;
 
 public:
     LLHMDImpl();
@@ -138,8 +139,9 @@ public:
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = mEyeRoll; pitch = mEyePitch; yaw = mEyeYaw; }
     const LLVector3& getRawHMDRollPitchYaw() const { return mRawHMDRollPitchYaw; }
 
+    F32 getVerticalFOV() const { return kDefaultVerticalFOVRadians; }
     //F32 getFOV() const { return mStereoConfig.GetYFOVDegrees();
-    void setFOV(F32 fov) { mStereoConfig.Set2DAreaFov(DegreeToRad(fov)); }
+    //void setFOV(F32 fov) { mStereoConfig.Set2DAreaFov(DegreeToRad(fov)); }
 
     //LLVector4 getChromaticAberrationConstants() const
     //{
@@ -233,6 +235,7 @@ const F32 LLHMDImpl::kDefaultXCenterOffset = 0.152f;
 const F32 LLHMDImpl::kDefaultYCenterOffset = 0.0f;
 const F32 LLHMDImpl::kDefaultDistortionScale = 1.7146f;
 const F32 LLHMDImpl::kDefaultOrthoPixelOffset = 0.1775f; // -0.1775f Right Eye
+const F32 LLHMDImpl::kDefaultVerticalFOVRadians = 1.5707963f; // -0.1775f Right Eye
 
 
 LLHMDImpl::LLHMDImpl()
@@ -730,6 +733,8 @@ BOOL LLHMD::init()
         onChangeWorldViewRaw();
         gSavedSettings.getControl("OculusOptWorldViewScaled")->getSignal()->connect(boost::bind(&onChangeWorldViewScaled));
         onChangeWorldViewScaled();
+        gSavedSettings.getControl("OculusVerticalFOVModifier")->getSignal()->connect(boost::bind(&onChangeVerticalFOVModifier));
+        onChangeVerticalFOVModifier();
     //}
     return res;
 }
@@ -742,6 +747,7 @@ void LLHMD::onChangeWindowRaw() { gHMD.mOptWindowRaw = gSavedSettings.getS32("Oc
 void LLHMD::onChangeWindowScaled() { gHMD.mOptWindowScaled = gSavedSettings.getS32("OculusOptWindowScaled"); }
 void LLHMD::onChangeWorldViewRaw() { gHMD.mOptWorldViewRaw = gSavedSettings.getS32("OculusOptWorldViewRaw"); }
 void LLHMD::onChangeWorldViewScaled() { gHMD.mOptWorldViewScaled = gSavedSettings.getS32("OculusOptWorldViewScaled"); }
+void LLHMD::onChangeVerticalFOVModifier() { gHMD.mVerticalFOVMod = gSavedSettings.getF32("OculusVerticalFOVModifier"); }
  
 void LLHMD::shutdown() { mImpl->shutdown(); }
 void LLHMD::onIdle() { mImpl->onIdle(); }
@@ -824,7 +830,7 @@ F32 LLHMD::getDistortionScale() const { return mImpl->getDistortionScale(); }
 LLQuaternion LLHMD::getHMDOrient() const { return mImpl->getHMDOrient(); }
 void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); }
 const LLVector3& LLHMD::getRawHMDRollPitchYaw() const { return mImpl->getRawHMDRollPitchYaw(); }
-void LLHMD::setFOV(F32 fov) { mImpl->setFOV(fov); }
+F32 LLHMD::getVerticalFOV() const { return mVerticalFOVMod + mImpl->getVerticalFOV(); }
 //LLVector4 LLHMD::getChromaticAberrationConstants() const { return mImpl->getChromaticAberrationConstants(); }
 //LLMatrix4 LLHMD::getViewAdjustMatrix() const { return mImpl->getViewAdjustMatrix(); }
 //LLMatrix4 LLHMD::getProjectionMatrix() const { return mImpl->getProjectionMatrix(); }
