@@ -344,7 +344,7 @@ unsigned int getModifiers()
 
 
 // Implemented for HMD support
-int getDisplayCount()
+int getDisplayCountObjC()
 {
     return (int)[[NSScreen screens] count];
 }

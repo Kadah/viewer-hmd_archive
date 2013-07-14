@@ -1852,7 +1852,7 @@ BOOL LLWindowMacOSX::setFocusWindow(S32 idx)
 /*virtual*/
 S32 LLWindowMacOSX::getDisplayCount()
 {
-    return getDisplayCount();
+    return getDisplayCountObjC();
 }
 
 /*virtual*/
