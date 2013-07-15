@@ -85,6 +85,9 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 
 	LLVector3 render_pos = pos_agent + (floorf(x_offset) * right_axis) + (floorf(y_offset) * up_axis);
 
+    LLVector3 textToCameraDir = (camera->getOrigin() - render_pos);
+    F32 textToCameraDist = textToCameraDir.length();
+
 	//get the render_pos in screen space
 	
 	F64 winX, winY, winZ;
@@ -120,13 +123,10 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
     F32 offsetX = 0.0f;
     if (gHMD.shouldRender())
     {
-        if (orthographic)
+        offsetX = gHMD.getOrthoPixelOffset() / 10.0f;
+        if (textToCameraDist != 0.0f)
         {
-            offsetX = gHMD.getOrthoPixelOffset();
-        }
-        else
-        {
-            offsetX  = (gHMD.getInterpupillaryOffset() * 0.25f) * (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? 1.0f : -1.0f);
+            offsetX /= textToCameraDist;
         }
     }
     gl_state_for_2d(viewport[2], viewport[3], left, offsetX);

@@ -47,6 +47,8 @@ public:
         kHMDHeight = 800,
         kHMDWidth = 1280,
         kHMDEyeWidth = 640,
+        kHMDUIWidth = kHMDWidth,
+        kHMDUIHeight = kHMDHeight,
     };
 
     enum eFlags
@@ -118,7 +120,7 @@ public:
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     const LLVector3& getRawHMDRollPitchYaw() const;
 
-    void setFOV(F32 fov);
+    F32 getVerticalFOV() const;
 
     //// array of parameters for controlling additional Red and Blue scaling in order to reduce chromatic aberration
     //// caused by the Rift lenses.  Additional per-channel scaling is applied after distortion:
@@ -158,6 +160,7 @@ public:
     static void onChangeWindowScaled();
     static void onChangeWorldViewRaw();
     static void onChangeWorldViewScaled();
+    static void onChangeVerticalFOVModifier();
 
 private:
     LLHMDImpl* mImpl;
@@ -165,6 +168,7 @@ private:
     F32 mLensSepMod;
     F32 mEyeToScreenMod;
     F32 mXCenterOffsetMod;
+    F32 mVerticalFOVMod;
     U32 mFlags;
     U32 mRenderMode;
     S32 mOptWindowRaw;

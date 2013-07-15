@@ -9444,17 +9444,6 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-    <key>RenderUIBuffer</key>
-    <map>
-      <key>Comment</key>
-      <string>Cache ui render in a screen aligned buffer.</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-    </map>
     <key>RenderUnloadedAvatar</key>
     <map>
       <key>Comment</key>
@@ -14623,7 +14612,7 @@
     <key>Type</key>
     <string>F32</string>
     <key>Value</key>
-    <real>-0.6</real>
+    <real>0.0</real>
   </map>
   <key>OculusLensSeparationDistanceModifier</key>
   <map>
@@ -14651,6 +14640,17 @@
   <map>
     <key>Comment</key>
     <string>[EXPERIMENTAL] Oculus adds this value to the X Center Offset returned</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>0.0</real>
+  </map>
+  <key>OculusVerticalFOVModifier</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus adds this value to the vertical FOV default of PI/2.  mod value is in radians</string>
     <key>Persist</key>
     <integer>0</integer>
     <key>Type</key>

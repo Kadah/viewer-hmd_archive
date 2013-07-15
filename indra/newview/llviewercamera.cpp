@@ -175,6 +175,8 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
     setOriginAndLookAt(origin, up, poi);
     if (gHMD.isInitialized() && gHMD.shouldRender())
     {
+        mPreHMDViewMatrix = getModelview();
+        mPreHMDViewMatrix.invert();
         float r, p, y;
         gHMD.getHMDRollPitchYaw(r, p, y);
         LLQuaternion qr(r, mXAxis);
@@ -347,8 +349,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 									BOOL limit_select_distance,
 									F32 z_near, F32 z_far)
 {
-	F32 fov_y, aspect;
-	fov_y = RAD_TO_DEG * getView();
+    F32 fov_y = RAD_TO_DEG * getView();
 	BOOL z_default_far = FALSE;
 	if (z_far <= 0)
 	{
@@ -359,7 +360,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 	{
 		z_near = getNear();
 	}
-	aspect = getAspect();
+	F32 aspect = getAspect();
 
 	// Load camera view matrix
 	gGL.matrixMode(LLRender::MM_PROJECTION);
@@ -460,10 +461,10 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 
     if (gHMD.shouldRender())
     {
-        F32 viewOffset = gHMD.getInterpupillaryOffset() * 0.25f;
+        F32 viewOffset = gHMD.getInterpupillaryOffset();
         glh::matrix4f translate;
-        translate.set_translate(glh::vec3f(0.0f, sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f));
-        modelview *= translate;
+        translate.set_translate(glh::vec3f(sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f, 0.0f));
+        modelview = translate * modelview;
     }
 	
 	gGL.loadMatrix(modelview.m);
@@ -939,6 +940,11 @@ void LLViewerCamera::setDefaultFOV(F32 vertical_fov_rads)
 	mCosHalfCameraFOV = cosf(mCameraFOVDefault * 0.5f);
 }
 
+
+F32 LLViewerCamera::getDefaultFOV() const
+{
+    return gHMD.shouldRender() ? gHMD.getVerticalFOV() : mCameraFOVDefault;
+}
 
 // static
 void LLViewerCamera::updateCameraAngle( void* user_data, const LLSD& value)
