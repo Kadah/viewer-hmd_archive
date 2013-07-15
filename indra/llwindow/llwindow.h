@@ -210,6 +210,7 @@ protected:
 
     // HMD support
     S32         mCurRCIdx;
+    bool        mUseDisplayMirroring;   // Experimental: used for Mac while we're fixing the second display issues
 
  	// Handle a UTF-16 encoding unit received from keyboard.
  	// Converting the series of UTF-16 encoding units to UTF-32 data,

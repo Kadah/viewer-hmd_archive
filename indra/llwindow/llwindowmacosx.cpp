@@ -1774,17 +1774,26 @@ MASK LLWindowMacOSX::modifiersToMask(S16 modifiers)
 BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
 {
     LL_INFOS("Window") << "initHMDWindow" << LL_ENDL;
-    
-    if (mWindow[1] == NULL)
+
+    if (mUseDisplayMirroring)
     {
-        LL_INFOS("Window") << "Creating the HMD window" << LL_ENDL;
-        mWindow[1] = createNSWindow(left, top, width, height);
+        mWindow[1] = mWindow[0];
+        mGLView[1] = mGLView[0];
     }
-        
-    if (mGLView[1] == NULL)
+    else
     {
-        LL_INFOS("Window") << "Creating the HMD GL view" << LL_ENDL;
-        mGLView[1] = createOpenGLView(mWindow[1], mFSAASamples, true);
+    
+        if (mWindow[1] == NULL)
+        {
+            LL_INFOS("Window") << "Creating the HMD window" << LL_ENDL;
+            mWindow[1] = createNSWindow(left, top, width, height);
+        }
+        
+        if (mGLView[1] == NULL)
+        {
+            LL_INFOS("Window") << "Creating the HMD GL view" << LL_ENDL;
+            mGLView[1] = createOpenGLView(mWindow[1], mFSAASamples, true);
+        }
     }
     
     return TRUE;
@@ -1794,22 +1803,23 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
 BOOL LLWindowMacOSX::destroyHMDWindow()
 {
     LL_INFOS("Window") << "destroyHMDWindow" << LL_ENDL;
-    
-	// Destroy the LLOpenGLView
-	if (mGLView[1] != NULL)
-	{
-		removeGLView(mGLView[1]);
-		mGLView[1] = NULL;
-	}
+    if (!mUseDisplayMirroring)
+    {
+        // Destroy the LLOpenGLView
+        if (mGLView[1] != NULL)
+        {
+            removeGLView(mGLView[1]);
+            mGLView[1] = NULL;
+        }
 	
-	// Close the window
-	if(mWindow[1] != NULL)
-	{
-        NSWindowRef dead_window = mWindow[1];
-        mWindow[1] = NULL;
-		closeWindow(dead_window);
+        // Close the window
+        if(mWindow[1] != NULL)
+        {
+            NSWindowRef dead_window = mWindow[1];
+            mWindow[1] = NULL;
+            closeWindow(dead_window);
+        }
 	}
-    
     return TRUE;
 }
 
@@ -1822,18 +1832,21 @@ BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
         return FALSE;
     }
 
-    // Set the context
-    mContext = getCGLContextObj(mGLView[idx]);
-   
-    // Hook up the context to a drawable
-    if (mContext != NULL)
+    if (!mUseDisplayMirroring)
     {
-        U32 err = CGLSetCurrentContext(mContext);
-        if (err != kCGLNoError)
+        // Set the context
+        mContext = getCGLContextObj(mGLView[idx]);
+   
+        // Hook up the context to a drawable
+        if (mContext != NULL)
         {
-            LL_INFOS("Window") << "setRenderWindow : Error setting the context" << LL_ENDL;
-            setupFailure("Can't activate GL rendering context", "Error", OSMB_OK);
-            return FALSE;
+            U32 err = CGLSetCurrentContext(mContext);
+            if (err != kCGLNoError)
+            {
+                LL_INFOS("Window") << "setRenderWindow : Error setting the context" << LL_ENDL;
+                setupFailure("Can't activate GL rendering context", "Error", OSMB_OK);
+                return FALSE;
+            }
         }
     }
     
