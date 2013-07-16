@@ -14658,6 +14658,17 @@
     <key>Value</key>
     <real>0.0</real>
   </map>
+  <key>OculusUseMirroring</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus : Do turn this on when using the Rift in display mirroring instead of second screen (Mac only)</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
   <key>OculusOptWindowRaw</key>
   <map>
     <key>Comment</key>

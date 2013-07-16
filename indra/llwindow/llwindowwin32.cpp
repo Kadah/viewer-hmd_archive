@@ -85,6 +85,29 @@ void show_window_creation_error(const std::string& title)
 	LL_WARNS("Window") << title << LL_ENDL;
 }
 
+// Used to capture all the active monitor handles
+struct MonitorSet
+{
+    enum { MaxMonitors = 8 };
+    HMONITOR Monitors[MaxMonitors];
+    S32      MonitorCount;
+    S32      PrimaryCount;
+};
+
+
+BOOL CALLBACK monitor_enum_proc(HMONITOR hMonitor, HDC, LPRECT, LPARAM dwData)
+{
+    MonitorSet* monitorSet = (MonitorSet*)dwData;
+    if (monitorSet->MonitorCount > MonitorSet::MaxMonitors)
+    {
+        return FALSE;
+    }
+    
+    monitorSet->Monitors[monitorSet->MonitorCount] = hMonitor;
+    monitorSet->MonitorCount++;
+    return TRUE;
+};
+
 //static
 BOOL LLWindowWin32::sIsClassRegistered = FALSE;
 
@@ -3989,6 +4012,66 @@ BOOL LLWindowWin32::setFocusWindow(S32 idx)
     return TRUE;
 }
 
+S32 LLWindowWin32::getDisplayCount()
+{
+    // Get all the monitor handles
+    MonitorSet monitors;
+    monitors.MonitorCount = 0;
+    ::EnumDisplayMonitors(NULL, NULL, monitor_enum_proc, (LPARAM)&monitors);
+    
+    // Count the primary monitors
+    int primary = 0;
+    MONITORINFOEX info;
+    for (S32 i = 0; i < monitors.MonitorCount; i++)
+    {
+        info.cbSize = sizeof(MONITORINFOEX);
+        ::GetMonitorInfo(monitors.Monitors[i], &info);
+        if (info.dwFlags & MONITORINFOF_PRIMARY)
+        {
+            primary++;
+        }
+    }
+    
+    if (primary > 1)
+    {
+        // Regard mirrored displays as a single screen
+        return 1;
+    }
+    else
+    {
+        return monitors.MonitorCount;  // Return all extended displays
+    }
+}
+
+// Note: displayId is used on the Mac side of the universe...
+BOOL LLWindowWin32::getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary)
+{
+    MonitorSet monitors;
+    monitors.MonitorCount = 0;
+    ::EnumDisplayMonitors(NULL, NULL, monitor_enum_proc, (LPARAM)&monitors);
+    MONITORINFOEX info;
+    for (S32 i = 0; i < monitors.MonitorCount; i++)
+    {
+        info.cbSize = sizeof(MONITORINFOEX);
+        if (::GetMonitorInfo(monitors.Monitors[i], &info) && info.szDevice[0])
+        {
+            llutf16string displayNameTest1(info.szDevice);
+            llutf16string displayNameTest2(info.szDevice);
+            // for some reason, the library return seems to sometimes add "\\Monitor0" to the display name it gives.
+            // however, the display names returned by GetMonitorInfo do not have that.  So we check for both
+            // forms.
+            displayNameTest2.append(L"\\Monitor0");
+            if (!displayName.compare(displayNameTest1) || !displayName.compare(displayNameTest2))
+            {
+                isPrimary = (info.dwFlags & MONITORINFOF_PRIMARY) ? TRUE : FALSE;
+                rcWork.set(info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom);
+                return TRUE;
+            }
+        }
+    }
+    
+    return FALSE;
+}
 
 //static
 std::vector<std::string> LLWindowWin32::getDynamicFallbackFontList()

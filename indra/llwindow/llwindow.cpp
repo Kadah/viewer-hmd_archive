@@ -38,10 +38,12 @@
 #endif
 
 #include "llerror.h"
+#include "llcontrol.h"
 #include "llkeyboard.h"
 #include "linked_lists.h"
 #include "llwindowcallbacks.h"
 
+extern LLControlGroup gSavedSettings;
 
 //
 // Globals
@@ -121,6 +123,8 @@ LLWindow::LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags)
 	  mHighSurrogate(0),
       mCurRCIdx(0)
 {
+    // Experimental : Temporary while we fix the second screen issue on Mac
+    mUseDisplayMirroring = gSavedSettings.getBOOL("OculusUseMirroring");
 }
 
 LLWindow::~LLWindow()

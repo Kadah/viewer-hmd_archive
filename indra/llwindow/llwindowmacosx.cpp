@@ -128,7 +128,9 @@ LLWindowMacOSX::LLWindowMacOSX(LLWindowCallbacks* callbacks,
 	gKeyboard->setCallbacks(callbacks);
 
 	// Ignore use_gl for now, only used for drones on PC
-	mWindow = NULL;
+	mWindow[0] = mWindow[1] = NULL;
+    mGLView[0] = mGLView[1] = NULL;
+    mCurRCIdx = 0;
 	mContext = NULL;
 	mPixelFormat = NULL;
 	mDisplay = CGMainDisplayID();
@@ -168,11 +170,11 @@ LLWindowMacOSX::LLWindowMacOSX(LLWindowCallbacks* callbacks,
 	gWindowImplementation = this;
 	// Create the GL context and set it up for windowed or fullscreen, as appropriate.
 	LL_INFOS("Window") << "Creating context..." << LL_ENDL;
-	if(createContext(x, y, width, height, 32, fullscreen, disable_vsync))
+	if (createContext(x, y, width, height, 32, fullscreen, disable_vsync))
 	{
-		if(mWindow != NULL)
+		if (mWindow[0] != NULL)
 		{
-			makeWindowOrderFront(mWindow);
+			makeWindowOrderFront(mWindow[0]);
 		}
 
 		if (!gGLManager.initGL())
@@ -393,10 +395,10 @@ BOOL LLWindowMacOSX::createContext(int x, int y, int width, int height, int bits
 
 	mFullscreen = fullscreen;
 	
-	if (mWindow == NULL)
+	if (mWindow[0] == NULL)
 	{
 		LL_INFOS("Window") << "Creating window..." << LL_ENDL;
-		mWindow = getMainAppWindow();
+		mWindow[0] = getMainAppWindow();
 	}
 
 	if(mContext == NULL)
@@ -404,12 +406,12 @@ BOOL LLWindowMacOSX::createContext(int x, int y, int width, int height, int bits
 		LL_INFOS("Window") << "Creating GL view..." << LL_ENDL;
 		// Our OpenGL view is already defined within SecondLife.xib.
 		// Get the view instead.
-		mGLView = createOpenGLView(mWindow, mFSAASamples, !disable_vsync);
-		mContext = getCGLContextObj(mGLView);
+		mGLView[0] = createOpenGLView(mWindow[0], mFSAASamples, !disable_vsync);
+		mContext = getCGLContextObj(mGLView[0]);
 		// Since we just created the context, it needs to be set up.
 		glNeedsInit = TRUE;
 		
-		gGLManager.mVRAM = getVramSize(mGLView);
+		gGLManager.mVRAM = getVramSize(mGLView[0]);
 	}
 
 	// Hook up the context to a drawable
@@ -502,17 +504,17 @@ void LLWindowMacOSX::destroyContext()
 	}
 	
 	// Destroy our LLOpenGLView
-	if(mGLView != NULL)
+	if (mGLView[0] != NULL)
 	{
-		removeGLView(mGLView);
-		mGLView = NULL;
+		removeGLView(mGLView[0]);
+		mGLView[0] = NULL;
 	}
 	
 	// Close the window
-	if(mWindow != NULL)
+	if(mWindow[mCurRCIdx] != NULL)
 	{
-        NSWindowRef dead_window = mWindow;
-        mWindow = NULL;
+        NSWindowRef dead_window = mWindow[mCurRCIdx];
+        mWindow[mCurRCIdx] = NULL;
 		closeWindow(dead_window);
 	}
 
@@ -574,27 +576,12 @@ void LLWindowMacOSX::close()
 
 BOOL LLWindowMacOSX::isValid()
 {
-	if(mFullscreen)
-	{
-		return(TRUE);
-	}
-
-	return (mWindow != NULL);
+	return (mFullscreen || (mWindow[mCurRCIdx] != NULL));
 }
 
 BOOL LLWindowMacOSX::getVisible()
 {
-	BOOL result = FALSE;
-
-	if(mFullscreen)
-	{
-		result = TRUE;
-	}if (mWindow)
-	{
-			result = TRUE;
-	}
-
-	return(result);
+	return (mFullscreen || (mWindow[mCurRCIdx] != NULL));
 }
 
 BOOL LLWindowMacOSX::getMinimized()
@@ -609,8 +596,9 @@ BOOL LLWindowMacOSX::getMaximized()
 
 BOOL LLWindowMacOSX::maximize()
 {
-	if (mWindow && !mMaximized)
+	if (mWindow[mCurRCIdx] && !mMaximized)
 	{
+        // *TODO: Implement maximize code or simplify this method
 	}
 
 	return mMaximized;
@@ -637,15 +625,15 @@ BOOL LLWindowMacOSX::getPosition(LLCoordScreen *position)
 	float rect[4];
 	S32 err = -1;
 
-	if(mFullscreen)
+	if (mFullscreen)
 	{
 		position->mX = 0;
 		position->mY = 0;
 		err = noErr;
 	}
-	else if(mWindow)
+	else if (mWindow[mCurRCIdx])
 	{
-		getContentViewBounds(mWindow, rect);
+		getContentViewBounds(mWindow[mCurRCIdx], rect);
 
 		position->mX = rect[0];
 		position->mY = rect[1];
@@ -663,15 +651,15 @@ BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
 	float rect[4];
 	S32 err = -1;
 
-	if(mFullscreen)
+	if (mFullscreen)
 	{
 		size->mX = mFullscreenWidth;
 		size->mY = mFullscreenHeight;
 		err = noErr;
 	}
-	else if(mWindow)
+	else if (mWindow[mCurRCIdx])
 	{
-		getContentViewBounds(mWindow, rect);
+		getContentViewBounds(mWindow[mCurRCIdx], rect);
 
 		size->mX = rect[2];
 		size->mY = rect[3];
@@ -689,15 +677,15 @@ BOOL LLWindowMacOSX::getSize(LLCoordWindow *size)
 	float rect[4];
 	S32 err = -1;
 	
-	if(mFullscreen)
+	if (mFullscreen)
 	{
 		size->mX = mFullscreenWidth;
 		size->mY = mFullscreenHeight;
 		err = noErr;
 	}
-	else if(mWindow)
+	else if (mWindow[mCurRCIdx])
 	{
-		getContentViewBounds(mWindow, rect);
+		getContentViewBounds(mWindow[mCurRCIdx], rect);
 		
 		size->mX = rect[2];
 		size->mY = rect[3];
@@ -712,10 +700,10 @@ BOOL LLWindowMacOSX::getSize(LLCoordWindow *size)
 
 BOOL LLWindowMacOSX::setPosition(const LLCoordScreen position)
 {
-	if(mWindow)
+	if (mWindow[mCurRCIdx])
 	{
 		float pos[2] = {position.mX, position.mY};
-		setWindowPos(mWindow, pos);
+		setWindowPos(mWindow[mCurRCIdx], pos);
 	}
 
 	return TRUE;
@@ -723,9 +711,9 @@ BOOL LLWindowMacOSX::setPosition(const LLCoordScreen position)
 
 BOOL LLWindowMacOSX::setSizeImpl(const LLCoordScreen size)
 {
-	if(mWindow)
+	if (mWindow[mCurRCIdx])
 	{
-		setWindowSize(mWindow, size.mX, size.mY);
+		setWindowSize(mWindow[mCurRCIdx], size.mX, size.mY);
 	}
 
 	return TRUE;
@@ -734,15 +722,15 @@ BOOL LLWindowMacOSX::setSizeImpl(const LLCoordScreen size)
 BOOL LLWindowMacOSX::setSizeImpl(const LLCoordWindow size)
 {
 	float client_rect[4];
-	if (mWindow)
+	if (mWindow[mCurRCIdx])
 	{
 		S32 err = noErr;
-		getContentViewBounds(mWindow, client_rect);
+		getContentViewBounds(mWindow[mCurRCIdx], client_rect);
 		if (err == noErr)
 		{
 			client_rect[2] += size.mX;
 			client_rect[3] += size.mY;
-			setWindowSize(mWindow, client_rect[2], client_rect[3]);
+			setWindowSize(mWindow[mCurRCIdx], client_rect[2], client_rect[3]);
 		}
 		if (err == noErr)
 		{
@@ -939,10 +927,12 @@ BOOL LLWindowMacOSX::getCursorPosition(LLCoordWindow *position)
 	float cursor_point[2];
 	LLCoordScreen screen_pos;
 
-	if(mWindow == NULL)
+	if (mWindow[mCurRCIdx] == NULL)
+    {
 		return FALSE;
+    }
 	
-	getCursorPos(mWindow, cursor_point);
+	getCursorPos(mWindow[mCurRCIdx], cursor_point);
 
 	if(mCursorDecoupled)
 	{
@@ -1141,14 +1131,14 @@ LLWindow::LLWindowResolution* LLWindowMacOSX::getSupportedResolutions(S32 &num_r
 
 BOOL LLWindowMacOSX::convertCoords(LLCoordGL from, LLCoordWindow *to)
 {
-	S32		client_height;
-	float	client_rect[4];
-	getContentViewBounds(mWindow, client_rect);
-	if (!mWindow ||
-		NULL == to)
+	if (!mWindow[mCurRCIdx] || (NULL == to))
 	{
 		return FALSE;
 	}
+
+	S32		client_height;
+	float	client_rect[4];
+	getContentViewBounds(mWindow[mCurRCIdx], client_rect);
 
 	to->mX = from.mX;
 	client_height = client_rect[3];
@@ -1159,17 +1149,16 @@ BOOL LLWindowMacOSX::convertCoords(LLCoordGL from, LLCoordWindow *to)
 
 BOOL LLWindowMacOSX::convertCoords(LLCoordWindow from, LLCoordGL* to)
 {
-	S32		client_height;
-	float	client_rect[4];
-	
-	getContentViewBounds(mWindow, client_rect);
-	
-	if (!mWindow ||
-		NULL == to)
+	if (!mWindow[mCurRCIdx] || (NULL == to))
 	{
 		return FALSE;
 	}
-
+    
+	S32		client_height;
+	float	client_rect[4];
+	
+	getContentViewBounds(mWindow[mCurRCIdx], client_rect);
+	
 	to->mX = from.mX;
 	client_height = client_rect[3];
 	to->mY = from.mY - 1;
@@ -1179,21 +1168,21 @@ BOOL LLWindowMacOSX::convertCoords(LLCoordWindow from, LLCoordGL* to)
 
 BOOL LLWindowMacOSX::convertCoords(LLCoordScreen from, LLCoordWindow* to)
 {
-	if(mFullscreen)
+	if (mFullscreen)
 	{
 		// In the fullscreen case, window and screen coordinates are the same.
 		to->mX = from.mX;
 		to->mY = from.mY;
 		return TRUE;
 	}
-	else if(mWindow)
+	else if (mWindow[mCurRCIdx])
 	{
 		float mouse_point[2];
 
 		mouse_point[0] = from.mX;
 		mouse_point[1] = from.mY;
 		
-		convertScreenToWindow(mWindow, mouse_point);
+		convertScreenToWindow(mWindow[mCurRCIdx], mouse_point);
 
 		to->mX = mouse_point[0];
 		to->mY = mouse_point[1];
@@ -1206,20 +1195,20 @@ BOOL LLWindowMacOSX::convertCoords(LLCoordScreen from, LLCoordWindow* to)
 
 BOOL LLWindowMacOSX::convertCoords(LLCoordWindow from, LLCoordScreen *to)
 {
-	if(mFullscreen)
+	if (mFullscreen)
 	{
 		// In the fullscreen case, window and screen coordinates are the same.
 		to->mX = from.mX;
 		to->mY = from.mY;
 		return TRUE;
 	}
-	else if(mWindow)
+	else if (mWindow[mCurRCIdx])
 	{
 		float mouse_point[2];
 
 		mouse_point[0] = from.mX;
 		mouse_point[1] = from.mY;
-		convertWindowToScreen(mWindow, mouse_point);
+		convertWindowToScreen(mWindow[mCurRCIdx], mouse_point);
 
 		to->mX = mouse_point[0];
 		to->mY = mouse_point[1];
@@ -1720,7 +1709,7 @@ BOOL LLWindowMacOSX::dialogColorPicker( F32 *r, F32 *g, F32 *b)
 void *LLWindowMacOSX::getPlatformWindow()
 {
 	// NOTE: this will be NULL in fullscreen mode.  Plan accordingly.
-	return (void*)mWindow;
+	return (void*)(mWindow[mCurRCIdx]);
 }
 
 void LLWindowMacOSX::stopDockTileBounce()
@@ -1781,29 +1770,129 @@ MASK LLWindowMacOSX::modifiersToMask(S16 modifiers)
 }
 
 // HMD Support
-// Merov : simple stubbs for the moment
 /*virtual*/
 BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
 {
-    return FALSE;
+    LL_INFOS("Window") << "initHMDWindow" << LL_ENDL;
+
+    if (mUseDisplayMirroring)
+    {
+        mWindow[1] = mWindow[0];
+        mGLView[1] = mGLView[0];
+    }
+    else
+    {
+    
+        if (mWindow[1] == NULL)
+        {
+            LL_INFOS("Window") << "Creating the HMD window" << LL_ENDL;
+            mWindow[1] = createNSWindow(left, top, width, height);
+        }
+        
+        if (mGLView[1] == NULL)
+        {
+            LL_INFOS("Window") << "Creating the HMD GL view" << LL_ENDL;
+            mGLView[1] = createOpenGLView(mWindow[1], mFSAASamples, true);
+        }
+    }
+    
+    return TRUE;
 }
 
 /*virtual*/
 BOOL LLWindowMacOSX::destroyHMDWindow()
 {
-    return FALSE;
+    LL_INFOS("Window") << "destroyHMDWindow" << LL_ENDL;
+    if (!mUseDisplayMirroring)
+    {
+        // Destroy the LLOpenGLView
+        if (mGLView[1] != NULL)
+        {
+            removeGLView(mGLView[1]);
+            mGLView[1] = NULL;
+        }
+	
+        // Close the window
+        if(mWindow[1] != NULL)
+        {
+            NSWindowRef dead_window = mWindow[1];
+            mWindow[1] = NULL;
+            closeWindow(dead_window);
+        }
+	}
+    return TRUE;
 }
 
 /*virtual*/
 BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
 {
-    return FALSE;
+    LL_INFOS("Window") << "setRenderWindow : start" << LL_ENDL;
+    if ((idx < 0) || (idx > 1) || !mGLView[idx])
+    {
+        return FALSE;
+    }
+
+    if (!mUseDisplayMirroring)
+    {
+        // Set the context
+        mContext = getCGLContextObj(mGLView[idx]);
+   
+        // Hook up the context to a drawable
+        if (mContext != NULL)
+        {
+            U32 err = CGLSetCurrentContext(mContext);
+            if (err != kCGLNoError)
+            {
+                LL_INFOS("Window") << "setRenderWindow : Error setting the context" << LL_ENDL;
+                setupFailure("Can't activate GL rendering context", "Error", OSMB_OK);
+                return FALSE;
+            }
+        }
+    }
+    
+    LL_INFOS("Window") << "setRenderWindow : successful" << LL_ENDL;
+    mCurRCIdx = idx;
+    return TRUE;
 }
 
 /*virtual*/
 BOOL LLWindowMacOSX::setFocusWindow(S32 idx)
 {
-    return FALSE;
+    // *TODO : Implement the focus grabbing if the context setting is not enough
+    return TRUE;
+}
+
+/*virtual*/
+S32 LLWindowMacOSX::getDisplayCount()
+{
+    return getDisplayCountObjC();
+}
+
+/*virtual*/
+// Note: displayName is used on the Windows side of the universe...
+BOOL LLWindowMacOSX::getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary)
+{
+    // Find the screen the Oculus displayId corresponds to
+    S32 screen_count = getDisplayCount();
+    S32 screen_id = 0;
+    for (; screen_id < screen_count; screen_id++)
+    {
+        if (getDisplayId(screen_id) == displayId)
+            break;
+    }
+    // Not found -> exit with error
+    if (screen_id == screen_count)
+        return FALSE;
+    // Screen size given the NS way in a 4 floats array: x0, y0, width, height
+    float screen_size[4];
+    getScreenSize(screen_id, screen_size);
+    rcWork.set((S32)(screen_size[0]),
+                (S32)(screen_size[1]+screen_size[3]),
+                (S32)(screen_size[0]+screen_size[2]),
+                (S32)(screen_size[1]));
+    // On Mac, the primary screen is the one with index 0
+    isPrimary = (screen_id == 0);
+    return TRUE;
 }
 
 #if LL_OS_DRAGDROP_ENABLED
@@ -1850,7 +1939,7 @@ void LLWindowMacOSX::handleDragNDrop(std::string url, LLWindowCallbacks::DragNDr
 
 	float mouse_point[2];
 	// This will return the mouse point in global screen coords
-	getCursorPos(mWindow, mouse_point);
+	getCursorPos(mWindow[mCurRCIdx], mouse_point);
 	LLCoordScreen screen_coords(mouse_point[0], mouse_point[1]);
 	LLCoordGL gl_pos;
 	convertCoords(screen_coords, &gl_pos);

@@ -55,7 +55,7 @@
 #error unsupported platform
 #endif // LL_WINDOWS
 
-// TODO_VR: add support for non-Windows platforms.  Currently waiting for Oculus SDK to support Linux/Mac
+// TODO_VR: Add support for non-supported platforms. Currently waiting for Oculus SDK to support Linux.
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // LLHMDImpl
@@ -199,8 +199,6 @@ public:
 
 protected:
     void updateManualMagCalibration();
-    S32 GetDisplayCount();
-    BOOL getDisplayInfo(const llutf16string& displayName, LLRect& rcWork, BOOL& isPrimary);
 
 private:
     OVR::Util::MagCalibration mMagCal;
@@ -212,7 +210,8 @@ private:
     OVR::Ptr<SensorDevice> mpSensor;
     OVR::Ptr<HMDDevice> mpHMD;
     OVR::Ptr<LatencyTestDevice> mpLatencyTester;
-    llutf16string mDisplayName;
+    llutf16string mDisplayName;     // Identity of the Oculus on Windows
+    long mDisplayId;                // Identity of the Oculus on Mac
     LLVector3 mRawHMDRollPitchYaw;
     F32 mEyePitch;
     F32 mEyeRoll;
@@ -279,6 +278,7 @@ BOOL LLHMDImpl::init()
         mpSensor.Clear();
         mpHMD.Clear();
         mDisplayName.clear();
+        mDisplayId = 0;
         mpHMD  = *(mpDeviceMgr->EnumerateDevices<OVR::HMDDevice>().CreateDevice());
         if (mpHMD)
         {
@@ -291,6 +291,7 @@ BOOL LLHMDImpl::init()
             if (mpHMD->GetDeviceInfo(&mHMDInfo))
             {
                 mDisplayName = utf8str_to_utf16str(mHMDInfo.DisplayDeviceName);
+                mDisplayId = mHMDInfo.DisplayId;
                 //mHMDInfo.EyeToScreenDistance = kDefaultEyeToScreenDistance;
                 mStereoConfig.SetHMDInfo(mHMDInfo);
             }
@@ -347,9 +348,9 @@ BOOL LLHMDImpl::init()
 
     // get device's "monitor" info
     BOOL dummy;
-    getDisplayInfo(mDisplayName, mHMDRect, dummy);
     BOOL mainFullScreen = FALSE;
     LLWindow* pWin = gViewerWindow->getWindow();
+    pWin->getDisplayInfo(mDisplayName, mDisplayId, mHMDRect, dummy);
     pWin->getRenderWindow(mainFullScreen);
     gHMD.isMainFullScreen(mainFullScreen);
     if (!pWin->initHMDWindow(mHMDRect.mLeft, mHMDRect.mTop, mHMDRect.mRight - mHMDRect.mLeft, mHMDRect.mBottom - mHMDRect.mTop))
@@ -582,102 +583,6 @@ void LLHMDImpl::OnMessage(const OVR::Message& msg)
         LL_INFOS("Oculus") << "Sensor reported device removed.\n" << LL_ENDL;
     }
 }
-
-
-#if LL_WINDOWS
-// Used to capture all the active monitor handles
-struct MonitorSet
-{
-    enum { MaxMonitors = 8 };
-    HMONITOR Monitors[MaxMonitors];
-    S32      MonitorCount;
-    S32      PrimaryCount;
-};
-
-
-BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC, LPRECT, LPARAM dwData)
-{
-    MonitorSet* monitorSet = (MonitorSet*)dwData;
-    if (monitorSet->MonitorCount > MonitorSet::MaxMonitors)
-    {
-        return FALSE;
-    }
-
-    monitorSet->Monitors[monitorSet->MonitorCount] = hMonitor;
-    monitorSet->MonitorCount++;
-    return TRUE;
-};
-
-S32 LLHMDImpl::GetDisplayCount()
-{
-    // Get all the monitor handles
-    MonitorSet monitors;
-    monitors.MonitorCount = 0;
-    ::EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)&monitors);
-    
-    // Count the primary monitors
-    int primary = 0;
-    MONITORINFOEX info;
-    for (S32 i = 0; i < monitors.MonitorCount; i++)
-    {
-        info.cbSize = sizeof(MONITORINFOEX);
-        ::GetMonitorInfo(monitors.Monitors[i], &info);
-        if (info.dwFlags & MONITORINFOF_PRIMARY)
-        {
-            primary++;
-        }
-    }
-    
-    if (primary > 1)
-    {
-        // Regard mirrored displays as a single screen
-        return 1;
-    }
-    else
-    {
-        return monitors.MonitorCount;  // Return all extended displays
-    }
-}
-
-BOOL LLHMDImpl::getDisplayInfo(const llutf16string& displayName, LLRect& rcWork, BOOL& isPrimary)
-{
-    MonitorSet monitors;
-    monitors.MonitorCount = 0;
-    ::EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, (LPARAM)&monitors);
-    MONITORINFOEX info;
-    for (S32 i = 0; i < monitors.MonitorCount; i++)
-    {
-        info.cbSize = sizeof(MONITORINFOEX);
-        if (::GetMonitorInfo(monitors.Monitors[i], &info) && info.szDevice[0])
-        {
-            llutf16string displayNameTest1(info.szDevice);
-            llutf16string displayNameTest2(info.szDevice);
-            // for some reason, the library return seems to sometimes add "\\Monitor0" to the display name it gives.
-            // however, the display names returned by GetMonitorInfo do not have that.  So we check for both
-            // forms.
-            displayNameTest2.append(L"\\Monitor0");
-            if (!displayName.compare(displayNameTest1) || !displayName.compare(displayNameTest2))
-            {
-                isPrimary = (info.dwFlags & MONITORINFOF_PRIMARY) ? TRUE : FALSE;
-                rcWork.set(info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom);
-                return TRUE;
-            }
-        }
-    }
-    
-    return FALSE;
-}
-#elif LL_DARWIN
-// Need to implement the relevant monitor enumeration functions for Mac here
-S32 LLHMDImpl::GetDisplayCount()
-{
-    return 1;
-}
-BOOL LLHMDImpl::getDisplayInfo(const llutf16string& displayName, LLRect& rcWork, BOOL& isPrimary)
-{
-    return FALSE;
-}
-#endif // LL_WINDOWS
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////

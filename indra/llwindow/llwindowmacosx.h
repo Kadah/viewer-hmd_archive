@@ -118,7 +118,7 @@ public:
 	// Provide native key event data
 	/*virtual*/ LLSD getNativeKeyData();
 	
-	void* getWindow() { return mWindow; }
+	void* getWindow() { return mWindow[mCurRCIdx]; }
 	LLWindowCallbacks* getCallbacks() { return mCallbacks; }
 	
 	void updateMouseDeltas(float* deltas);
@@ -131,6 +131,8 @@ public:
     /*virtual*/ BOOL destroyHMDWindow();
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
     /*virtual*/ BOOL setFocusWindow(S32 idx);
+    /*virtual*/ S32 getDisplayCount();
+    /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary);
     
 protected:
 	LLWindowMacOSX(LLWindowCallbacks* callbacks,
@@ -183,8 +185,8 @@ protected:
 	//
 	
 	// Use generic pointers here.  This lets us do some funky Obj-C interop using Obj-C objects without having to worry about any compilation problems that may arise.
-	NSWindowRef			mWindow;
-	GLViewRef			mGLView;
+	NSWindowRef			mWindow[2];
+	GLViewRef			mGLView[2];
 	CGLContextObj		mContext;
 	CGLPixelFormatObj	mPixelFormat;
 	CGDirectDisplayID	mDisplay;

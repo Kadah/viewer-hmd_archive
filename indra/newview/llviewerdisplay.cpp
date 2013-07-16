@@ -232,6 +232,10 @@ static LLFastTimer::DeclareTimer FTM_TELEPORT_DISPLAY("Teleport Display");
 
 void renderUnusedMainWindow()
 {
+#if LL_DARWIN
+    if (!gSavedSettings.getBOOL("OculusUseMirroring"))
+    {
+#endif
     gHMD.setRenderWindowMain();
     // just clear the main window, write some text, continue
     gViewerWindow->setup3DViewport();
@@ -244,7 +248,7 @@ void renderUnusedMainWindow()
     ////to be on top of Bottom bar when it is opened
     //const S32 INSTRUCTIONS_PAD = 50;
 
-    //font->renderUTF8( 
+    //font->renderUTF8(
     //    instructions, 0,
     //    getWorldViewRectScaled().getCenterX(),
     //    getWorldViewRectScaled().mBottom + INSTRUCTIONS_PAD,
@@ -253,6 +257,9 @@ void renderUnusedMainWindow()
     //    LLFontGL::NORMAL,LLFontGL::DROP_SHADOW);
 
     gViewerWindow->getWindow()->swapBuffers();
+#if LL_DARWIN
+    }
+#endif
 }
 
 void renderUnusedHMDWindow()

@@ -118,6 +118,8 @@ public:
     /*virtual*/ BOOL destroyHMDWindow();
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
     /*virtual*/ BOOL setFocusWindow(S32 idx);
+    /*virtual*/ S32 getDisplayCount();
+    /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary);
 
 	static std::vector<std::string> getDynamicFallbackFontList();
 
