@@ -150,6 +150,10 @@ public:
     S32 getOptWindowScaled() const { return mOptWindowScaled; }
     S32 getOptWorldViewRaw() const { return mOptWorldViewRaw; }
     S32 getOptWorldViewScaled() const { return mOptWorldViewScaled; }
+    F32 getUISurfaceFudge() const { return mUISurface_Fudge; }
+    void getUISurfaceX(F32& start, F32& end) const { start = mUISurface_B[0]; end = mUISurface_B[1]; }
+    void getUISurfaceY(F32& start, F32& end) const { start = mUISurface_A[0]; end = mUISurface_A[1]; }
+    F32 getUISurfaceRadius() const { return mUISurface_R; }
 
     static void onChangeInterpupillaryOffsetModifer();
     static void onChangeLensSeparationDistanceModifier();
@@ -161,6 +165,7 @@ public:
     static void onChangeWorldViewRaw();
     static void onChangeWorldViewScaled();
     static void onChangeVerticalFOVModifier();
+    static void onChangeUISurfaceShape();
 
 private:
     LLHMDImpl* mImpl;
@@ -177,6 +182,10 @@ private:
     S32 mOptWorldViewScaled;
     S32 mMainWindowWidth;
     S32 mMainWindowHeight;
+    F32 mUISurface_Fudge;
+    F32 mUISurface_R;
+    LLVector3 mUISurface_A;
+    LLVector3 mUISurface_B;
  };
 
 extern LLHMD gHMD;
