@@ -620,6 +620,9 @@ public:
 	F32									mSpotLightFade[2];
 	LLPointer<LLDrawable>				mTargetShadowSpotLight[2];
 
+    //utilitye buffer for rendering oculus UI surface
+    LLPointer<LLVertexBuffer> mOculusUISurface;
+
 	LLVector4				mSunClipPlanes;
 	LLVector4				mSunOrthoClipPlanes;
 

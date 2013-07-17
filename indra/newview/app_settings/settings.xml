@@ -14713,6 +14713,59 @@
     <key>Value</key>
     <real>0</real>
   </map>
+  <key>OculusUISurfaceFudge</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Amount to fudge UI distortion by for spherical projection correction</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>1.0</real>
+  </map>
+  <key>OculusUISurfaceX</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] X = startB, Y = endB, Z = ignored</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Vector3</string>
+    <key>Value</key>
+    <array>
+      <real>1.1</real>
+      <real>2.0</real>
+      <real>0.0</real>
+    </array>
+  </map>
+  <key>OculusUISurfaceY</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] X = startA, Y = endA, Z = ignored</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Vector3</string>
+    <key>Value</key>
+    <array>
+      <real>0.25</real>
+      <real>0.7</real>
+      <real>0.0</real>
+    </array>
+  </map>
+  <key>OculusUISurfaceRadius</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Radius of UI Toroid</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>4.0</real>
+  </map>
+
 </map>
 </llsd>
 

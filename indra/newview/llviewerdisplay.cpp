@@ -1371,27 +1371,110 @@ void render_ui(F32 zoom_factor, int subfield)
 
             if (gPipeline.mUIScreen.isComplete())
             {
+                if (gPipeline.mOculusUISurface.isNull())
+                {
+                    //render floating UI torus
+                    LLVertexBuffer* buff = new LLVertexBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0, GL_STATIC_DRAW_ARB);
+                    U32 resX = 32;
+                    U32 resY = 16;
+                    U32 numVerts = resX*resY;
+                    U32 numIndices = 6*(resX-1)*(resY-1);
+                    buff->allocateBuffer(numVerts, numIndices, true);
+                    LLStrider<LLVector4a> v;
+                    LLStrider<LLVector2> tc;
+                    buff->getVertexStrider(v);
+                    buff->getTexCoord0Strider(tc);
+                    F32 dx = 1.f/(resX - 1);
+                    F32 dy = 1.f/(resY - 1);
+                    F32 y = 0.0f;
+                    F32 r = gHMD.getUISurfaceRadius(); // 1.0f;
+                    F32 start_a, end_a;
+                    gHMD.getUISurfaceY(start_a, end_a);
+                    F32 start_b, end_b;
+                    gHMD.getUISurfaceX(start_b, end_b);
+                    F32 target_width = r*(end_b-start_b);
+                    F32 fudge = gHMD.getUISurfaceFudge();
+                    for (U32 i = 0; i < resY; ++i)
+                    {
+                        F32 x = 0.f;
+                        F32 a = start_a + (end_a-start_a)*y;
+                        F32 b = start_b;
+                        LLVector2 dt(r*sinf(a)*cosf(b), r*sinf(a)*sinf(b));
+                        F32 cur_rad = dt.length();
+                        F32 cur_range = target_width/cur_rad;
+                        F32 mid_b = (start_b+end_b) * 0.5f;
+                        F32 cur_start_b = mid_b - cur_range*0.5f;
+                        F32 cur_end_b = mid_b + cur_range*0.5f;
+                        cur_start_b = cur_start_b + (start_b-cur_start_b)*fudge;
+                        cur_end_b = cur_end_b + (end_b-cur_end_b)*fudge;
+                        for (U32 j = 0; j < resX; j++)
+                        {
+                            LLVector4a t;
+                            F32 b = cur_start_b + (cur_end_b-cur_start_b)*x;
+                            t.set(r*sinf(a)*cosf(b), r*cosf(a), r*sinf(a)*sinf(b));
+                            *v++ = t;
+                            LLVector2 cur_tc(x, 1.f-y);
+                            *tc++ = cur_tc;
+                            x += dx;
+                        }
+                        y += dy;
+                    }
+                    LLStrider<U16> idx;
+                    buff->getIndexStrider(idx);
+                    for (U32 i = 0; i < resY-1; ++i)
+                    {
+                        for (U32 j = 0; j < resX-1; ++j)
+                        {
+                            U16 cur_idx = i*resX+j;
+                            U16 right = cur_idx + 1;
+                            U16 bottom = cur_idx + resX;
+                            U16 bottom_right = bottom+1;
+                            *idx++ = cur_idx;
+                            *idx++ = bottom;
+                            *idx++ = right;
+                            *idx++ = right;
+                            *idx++ = bottom;
+                            *idx++ = bottom_right;
+                        }
+                    }
+                    buff->flush();
+                    gPipeline.mOculusUISurface = buff;
+                }
+
                 gGL.matrixMode(LLRender::MM_MODELVIEW);
                 gGL.pushMatrix();
                 LLViewerCamera* pViewerCamera = LLViewerCamera::getInstance();
                 const LLMatrix4& m1 = pViewerCamera->getPreHMDViewMatrix();
                 gGL.multMatrix((GLfloat*)m1.mMatrix);
-                gUIProgram.bind();
-                LLGLEnable blend_on(GL_BLEND);
-                gGL.blendFunc(LLRender::BF_ONE, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
-		        LLGLDisable cull(GL_CULL_FACE);
+
+                gOneTextureNoColorProgram.bind();
                 gGL.setColorMask(true, true);
-                gGL.color4f(1,1,1,1);
                 gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
-                gGL.begin(LLRender::TRIANGLE_STRIP);
-                //bottom left, bottom right, top left, top right
-                gGL.texCoord2f(0, 0);       gGL.vertex3f( -2, -1, -2);
-                gGL.texCoord2f(1, 0);       gGL.vertex3f(  2, -1, -2);
-                gGL.texCoord2f(0, 1);       gGL.vertex3f( -2,  1, -2);
-                gGL.texCoord2f(1, 1);       gGL.vertex3f(  2,  1, -2);
-                gGL.end();
-                gGL.flush();
-                gUIProgram.unbind();
+                LLVertexBuffer* buff = gPipeline.mOculusUISurface;
+                {
+                    LLGLDisable cull(GL_CULL_FACE);
+                    LLGLEnable blend(GL_BLEND);
+                    buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
+                    buff->drawRange(LLRender::TRIANGLES, 0, buff->getNumVerts()-1, buff->getNumIndices(), 0);
+                }
+                gOneTextureNoColorProgram.unbind();
+
+          //      gUIProgram.bind();
+          //      LLGLEnable blend_on(GL_BLEND);
+          //      gGL.blendFunc(LLRender::BF_ONE, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
+		        //LLGLDisable cull(GL_CULL_FACE);
+          //      gGL.setColorMask(true, true);
+          //      gGL.color4f(1,1,1,1);
+          //      gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+          //      gGL.begin(LLRender::TRIANGLE_STRIP);
+          //      //bottom left, bottom right, top left, top right
+          //      gGL.texCoord2f(0, 0);       gGL.vertex3f( -2, -1, -2);
+          //      gGL.texCoord2f(1, 0);       gGL.vertex3f(  2, -1, -2);
+          //      gGL.texCoord2f(0, 1);       gGL.vertex3f( -2,  1, -2);
+          //      gGL.texCoord2f(1, 1);       gGL.vertex3f(  2,  1, -2);
+          //      gGL.end();
+          //      gGL.flush();
+          //      gUIProgram.unbind();
                 gGL.matrixMode(LLRender::MM_MODELVIEW);
                 gGL.popMatrix();
             }
@@ -1402,17 +1485,22 @@ void render_ui(F32 zoom_factor, int subfield)
                     llwarns << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
                     return;
                 }
-                gViewerWindow->calcDisplayScale();
-                const LLVector2& displayScale = gViewerWindow->getDisplayScale();
-                BOOL display_scale_changed = displayScale != LLUI::getScaleFactor();
-                LLUI::setScaleFactor(displayScale);
-                LLView::sForceReshape = display_scale_changed;
+                //gViewerWindow->calcDisplayScale();
+                //const LLVector2& displayScale = gViewerWindow->getDisplayScale();
+                //BOOL display_scale_changed = displayScale != LLUI::getScaleFactor();
+                //LLUI::setScaleFactor(displayScale);
+                //LLView::sForceReshape = display_scale_changed;
+                LLView::sForceReshape = TRUE;
                 LLRootView* rootView = gViewerWindow->getRootView();
-                rootView->reshape(llceil((F32)LLHMD::kHMDUIWidth / displayScale.mV[VX]), llceil((F32)LLHMD::kHMDUIHeight / displayScale.mV[VY]));
+                //S32 nw = llceil((F32)LLHMD::kHMDUIWidth / displayScale.mV[VX]);
+                //S32 nh = llceil((F32)LLHMD::kHMDUIHeight / displayScale.mV[VY]);
+                S32 nw = LLHMD::kHMDUIWidth; // - 32;
+                S32 nh = LLHMD::kHMDUIHeight; //  - 100;
+                rootView->reshape(nw, nh);
                 LLView::sForceReshape = FALSE;
 
                 // clear font width caches
-                if (display_scale_changed)
+                //if (display_scale_changed)
                 {
                     LLHUDObject::reshapeAll();
                 }
@@ -1459,7 +1547,7 @@ void render_ui(F32 zoom_factor, int subfield)
 	    gPipeline.disableLights();
 	    gGL.color4f(1,1,1,1);
         gGL.setColorMask(true, gHMD.shouldRender());
-        LLGLDisable cull(GL_CULL_FACE);
+        //LLGLDisable cull(GL_CULL_FACE);
         if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
 	    {
 		    LLFastTimer t(FTM_RENDER_UI);
@@ -1475,7 +1563,15 @@ void render_ui(F32 zoom_factor, int subfield)
 			        render_disconnected_background();
 		        }
             }
+            //if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+            //{
+            //    gGL.setColorMask(true, true);
+            //}
             render_ui_2d(); // Side/bottom buttons, 2D UI windows, etc.
+            //if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+            //{
+            //    gGL.setColorMask(true, false);
+            //}
 		    LLGLState::checkStates();
 	    }
 	    gGL.flush();
@@ -1487,6 +1583,12 @@ void render_ui(F32 zoom_factor, int subfield)
         if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
         {
             gPipeline.mUIScreen.flush();
+            if (LLRenderTarget::sUseFBO)
+            {
+                //copy depth buffer from mScreen to framebuffer
+                LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
+                    0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+            }
         }
     }
 

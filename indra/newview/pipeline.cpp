@@ -6921,6 +6921,7 @@ void LLPipeline::doResetVertexBuffers()
 	mResetVertexBuffers = false;
 
 	mCubeVB = NULL;
+    mOculusUISurface = NULL;
 
 	for (LLWorld::region_list_t::const_iterator iter = LLWorld::getInstance()->getRegionList().begin(); 
 			iter != LLWorld::getInstance()->getRegionList().end(); ++iter)

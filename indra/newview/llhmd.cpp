@@ -39,6 +39,7 @@
 #include "llfocusmgr.h"
 #include "llnotificationsutil.h"
 #include "llviewercontrol.h"
+#include "pipeline.h"
 
 #include "OVR.h"
 #include "Kernel/OVR_Timer.h"
@@ -640,6 +641,11 @@ BOOL LLHMD::init()
         onChangeWorldViewScaled();
         gSavedSettings.getControl("OculusVerticalFOVModifier")->getSignal()->connect(boost::bind(&onChangeVerticalFOVModifier));
         onChangeVerticalFOVModifier();
+        gSavedSettings.getControl("OculusUISurfaceFudge")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
+        gSavedSettings.getControl("OculusUISurfaceX")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
+        gSavedSettings.getControl("OculusUISurfaceY")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
+        gSavedSettings.getControl("OculusUISurfaceRadius")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
+        onChangeUISurfaceShape();
     //}
     return res;
 }
@@ -653,7 +659,18 @@ void LLHMD::onChangeWindowScaled() { gHMD.mOptWindowScaled = gSavedSettings.getS
 void LLHMD::onChangeWorldViewRaw() { gHMD.mOptWorldViewRaw = gSavedSettings.getS32("OculusOptWorldViewRaw"); }
 void LLHMD::onChangeWorldViewScaled() { gHMD.mOptWorldViewScaled = gSavedSettings.getS32("OculusOptWorldViewScaled"); }
 void LLHMD::onChangeVerticalFOVModifier() { gHMD.mVerticalFOVMod = gSavedSettings.getF32("OculusVerticalFOVModifier"); }
- 
+
+void LLHMD::onChangeUISurfaceShape()
+{
+    gHMD.mUISurface_Fudge = gSavedSettings.getF32("OculusUISurfaceFudge");
+    gHMD.mUISurface_R = gSavedSettings.getF32("OculusUISurfaceRadius");
+    gHMD.mUISurface_A = gSavedSettings.getVector3("OculusUISurfaceY");
+    gHMD.mUISurface_A *= F_PI;
+    gHMD.mUISurface_B = gSavedSettings.getVector3("OculusUISurfaceX");
+    gHMD.mUISurface_B *= F_PI;
+    gPipeline.mOculusUISurface = NULL;
+}
+
 void LLHMD::shutdown() { mImpl->shutdown(); }
 void LLHMD::onIdle() { mImpl->onIdle(); }
 

@@ -4861,10 +4861,10 @@ void LLViewerWindow::setup2DRender()
 	// setup ortho camera
     S32 left = 0;
     F32 offsetX = 0.0f;
-    if (gHMD.shouldRender())
-    {
-        offsetX = gHMD.getOrthoPixelOffset();
-    }
+    //if (gHMD.shouldRender())
+    //{
+    //    offsetX = gHMD.getOrthoPixelOffset();
+    //}
 	gl_state_for_2d(getWindowWidthRaw(), getWindowHeightRaw(), left, offsetX);
 	setup2DViewport();
 }
