@@ -399,6 +399,8 @@ LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
 	mNativeAspectRatio = 0.f;
 	mMousePositionModified = FALSE;
 	mInputProcessingPaused = FALSE;
+    mHMDMode = FALSE;
+    mHMDRenderWindowIdx = 0;
 	mPreeditor = NULL;
 	mKeyCharCode = 0;
 	mKeyScanCode = 0;
@@ -829,17 +831,66 @@ BOOL LLWindowWin32::getFullscreen()
 	return mFullscreen;
 }
 
+BOOL LLWindowWin32::getCurrentClientRect(RECT& r, RECT* pActualRect)
+{
+    S32 idx = mHMDMode ? mHMDRenderWindowIdx : mCurRCIdx;
+    if (!mWindowHandle[idx] || !GetClientRect(mWindowHandle[idx], &r))
+    {
+        return FALSE;
+    }
+    if (pActualRect)
+    {
+        *pActualRect = r;
+    }
+    if (mHMDMode)
+    {
+        // TODO: can't access LLHMD from here - where to get these constants from?
+        r.right = r.left + 1280;
+        r.top = r.bottom - 800;
+        //RECT window_rect;
+        //if (!GetWindowRect(mWindowHandle[idx], &window_rect))
+        //{
+        //    return FALSE;
+        //}
+        //S32 ww = window_rect.right - window_rect.left;
+        //S32 wh = window_rect.bottom - window_rect.top;
+        //S32 cw = r.right - r.left;
+        //S32 ch = r.bottom - r.top;
+        //S32 dw = (ww - cw) >= 0 ? (ww - cw) : 0;
+        //S32 dh = (wh - ch) >= 0 ? (wh - ch) : 0;
+        //r.right = r.left + 1280 - dw;
+        //r.top = r.bottom - 800 - dh;
+    }
+    return TRUE;
+}
+
+BOOL LLWindowWin32::getCurrentWindowRect(RECT& r, RECT* pActualRect)
+{
+    S32 idx = mHMDMode ? mHMDRenderWindowIdx : mCurRCIdx;
+    if (!mWindowHandle[idx] || !GetWindowRect(mWindowHandle[idx], &r))
+    {
+        return FALSE;
+    }
+    if (pActualRect)
+    {
+        *pActualRect = r;
+    }
+    if (mHMDMode)
+    {
+        // TODO: can't access LLHMD from here - where to get these constants from?
+        r.right = r.left + 1280;
+        r.top = r.bottom - 800;
+    }
+    return TRUE;
+}
+
 BOOL LLWindowWin32::getPosition(LLCoordScreen *position)
 {
 	RECT window_rect;
-
-	if (!mWindowHandle[mCurRCIdx] ||
-		!GetWindowRect(mWindowHandle[mCurRCIdx], &window_rect) ||
-		NULL == position)
-	{
-		return FALSE;
-	}
-
+    if (NULL == position || !getCurrentWindowRect(window_rect))
+    {
+        return FALSE;
+    }
 	position->mX = window_rect.left;
 	position->mY = window_rect.top;
 	return TRUE;
@@ -848,14 +899,10 @@ BOOL LLWindowWin32::getPosition(LLCoordScreen *position)
 BOOL LLWindowWin32::getSize(LLCoordScreen *size)
 {
 	RECT window_rect;
-
-	if (!mWindowHandle[mCurRCIdx] ||
-		!GetWindowRect(mWindowHandle[mCurRCIdx], &window_rect) ||
-		NULL == size)
-	{
-		return FALSE;
-	}
-
+    if (NULL == size || !getCurrentWindowRect(window_rect))
+    {
+        return FALSE;
+    }
 	size->mX = window_rect.right - window_rect.left;
 	size->mY = window_rect.bottom - window_rect.top;
 	return TRUE;
@@ -863,15 +910,11 @@ BOOL LLWindowWin32::getSize(LLCoordScreen *size)
 
 BOOL LLWindowWin32::getSize(LLCoordWindow *size)
 {
-	RECT client_rect;
-
-	if (!mWindowHandle[mCurRCIdx] ||
-		!GetClientRect(mWindowHandle[mCurRCIdx], &client_rect) ||
-		NULL == size)
-	{
-		return FALSE;
-	}
-
+    RECT client_rect;
+    if (NULL == size || !getCurrentClientRect(client_rect))
+    {
+        return FALSE;
+    }
 	size->mX = client_rect.right - client_rect.left;
 	size->mY = client_rect.bottom - client_rect.top;
 	return TRUE;
@@ -2462,7 +2505,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				POINT mouse_coord = {(S32)(S16)LOWORD(l_param), (S32)(S16)HIWORD(l_param)};
 
 				if (ScreenToClient(window_imp->mWindowHandle[window_imp->mCurRCIdx], &mouse_coord)
-					&& GetClientRect(window_imp->mWindowHandle[window_imp->mCurRCIdx], &client_rect))
+					&& window_imp->getCurrentClientRect(client_rect))
 				{
 					// we have a valid mouse point and client rect
 					if (mouse_coord.x < client_rect.left || client_rect.right < mouse_coord.x
@@ -2622,19 +2665,17 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 
 BOOL LLWindowWin32::convertCoords(LLCoordGL from, LLCoordWindow *to)
 {
-	S32		client_height;
-	RECT	client_rect;
-	LLCoordWindow window_position;
-
-	if (!mWindowHandle[mCurRCIdx] ||
-		!GetClientRect(mWindowHandle[mCurRCIdx], &client_rect) ||
-		NULL == to)
-	{
-		return FALSE;
-	}
-
+	RECT client_rect, actual_client_rect;
+    if (NULL == to || !getCurrentClientRect(client_rect, &actual_client_rect))
+    {
+        return FALSE;
+    }
 	to->mX = from.mX;
-	client_height = client_rect.bottom - client_rect.top;
+	S32 client_height = client_rect.bottom - client_rect.top;
+    if (mHMDMode && mHMDRenderWindowIdx == 0)
+    {
+        client_height = actual_client_rect.bottom - actual_client_rect.top;
+    }
 	to->mY = client_height - from.mY - 1;
 
 	return TRUE;
@@ -2642,83 +2683,76 @@ BOOL LLWindowWin32::convertCoords(LLCoordGL from, LLCoordWindow *to)
 
 BOOL LLWindowWin32::convertCoords(LLCoordWindow from, LLCoordGL* to)
 {
-	S32		client_height;
-	RECT	client_rect;
+    RECT client_rect, actual_client_rect;
+    if (NULL == to || !getCurrentClientRect(client_rect, &actual_client_rect))
+    {
+        return FALSE;
+    }
+    to->mX = from.mX;
+    S32 client_height = client_rect.bottom - client_rect.top;
+    if (mHMDMode && mHMDRenderWindowIdx == 0)
+    {
+        client_height = actual_client_rect.bottom - actual_client_rect.top;
+    }
+    to->mY = client_height - from.mY - 1;
 
-	if (!mWindowHandle[mCurRCIdx] ||
-		!GetClientRect(mWindowHandle[mCurRCIdx], &client_rect) ||
-		NULL == to)
-	{
-		return FALSE;
-	}
-
-	to->mX = from.mX;
-	client_height = client_rect.bottom - client_rect.top;
-	to->mY = client_height - from.mY - 1;
-
-	return TRUE;
+    return TRUE;
 }
 
 BOOL LLWindowWin32::convertCoords(LLCoordScreen from, LLCoordWindow* to)
-{	
+{
+    if (!mWindowHandle[mCurRCIdx] || NULL == to)
+    {
+        return FALSE;
+    }
 	POINT mouse_point;
-
 	mouse_point.x = from.mX;
 	mouse_point.y = from.mY;
 	BOOL result = ScreenToClient(mWindowHandle[mCurRCIdx], &mouse_point);
-
 	if (result)
 	{
 		to->mX = mouse_point.x;
 		to->mY = mouse_point.y;
 	}
-
 	return result;
 }
 
 BOOL LLWindowWin32::convertCoords(LLCoordWindow from, LLCoordScreen *to)
 {
+    if (!mWindowHandle[mCurRCIdx] || NULL == to)
+    {
+        return FALSE;
+    }
 	POINT mouse_point;
-
 	mouse_point.x = from.mX;
 	mouse_point.y = from.mY;
 	BOOL result = ClientToScreen(mWindowHandle[mCurRCIdx], &mouse_point);
-
 	if (result)
 	{
 		to->mX = mouse_point.x;
 		to->mY = mouse_point.y;
 	}
-
 	return result;
 }
 
 BOOL LLWindowWin32::convertCoords(LLCoordScreen from, LLCoordGL *to)
 {
 	LLCoordWindow window_coord;
-
-	if (!mWindowHandle[mCurRCIdx] || (NULL == to))
-	{
-		return FALSE;
-	}
-
-	convertCoords(from, &window_coord);
-	convertCoords(window_coord, to);
-	return TRUE;
+    if (!convertCoords(from, &window_coord) || !convertCoords(window_coord, to))
+    {
+        return FALSE;
+    }
+    return TRUE;
 }
 
 BOOL LLWindowWin32::convertCoords(LLCoordGL from, LLCoordScreen *to)
 {
 	LLCoordWindow window_coord;
-
-	if (!mWindowHandle[mCurRCIdx] || (NULL == to))
-	{
-		return FALSE;
-	}
-
-	convertCoords(from, &window_coord);
-	convertCoords(window_coord, to);
-	return TRUE;
+    if (!convertCoords(from, &window_coord) || !convertCoords(window_coord, to))
+    {
+        return FALSE;
+    }
+    return TRUE;
 }
 
 
@@ -2826,29 +2860,29 @@ void LLWindowWin32::setMouseClipping( BOOL b )
 
 BOOL LLWindowWin32::getClientRectInScreenSpace( RECT* rectp )
 {
-	BOOL success = FALSE;
-
+    BOOL success = FALSE;
 	RECT client_rect;
-	if( mWindowHandle[mCurRCIdx] && GetClientRect(mWindowHandle[mCurRCIdx], &client_rect) )
-	{
-		POINT top_left;
-		top_left.x = client_rect.left;
-		top_left.y = client_rect.top;
-		ClientToScreen(mWindowHandle[mCurRCIdx], &top_left); 
+    if (NULL != rectp && getCurrentClientRect(client_rect))
+    {
+        S32 idx = mHMDMode ? mHMDRenderWindowIdx : mCurRCIdx;
+        POINT top_left;
+        top_left.x = client_rect.left;
+        top_left.y = client_rect.top;
+        ClientToScreen(mWindowHandle[idx], &top_left); 
 
-		POINT bottom_right;
-		bottom_right.x = client_rect.right;
-		bottom_right.y = client_rect.bottom;
-		ClientToScreen(mWindowHandle[mCurRCIdx], &bottom_right); 
+        POINT bottom_right;
+        bottom_right.x = client_rect.right;
+        bottom_right.y = client_rect.bottom;
+        ClientToScreen(mWindowHandle[idx], &bottom_right); 
 
-		SetRect( rectp,
-			top_left.x,
-			top_left.y,
-			bottom_right.x,
-			bottom_right.y );
+        SetRect( rectp,
+            top_left.x,
+            top_left.y,
+            bottom_right.x,
+            bottom_right.y );
 
-		success = TRUE;
-	}
+        success = TRUE;
+    }
 
 	return success;
 }
@@ -4001,12 +4035,14 @@ BOOL LLWindowWin32::setRenderWindow(S32 idx, BOOL fullScreen)
 }
 
 
-BOOL LLWindowWin32::setFocusWindow(S32 idx)
+BOOL LLWindowWin32::setFocusWindow(S32 idx, BOOL clipping)
 {
     if (idx < 0 || idx > 1 || !mWindowHandle[idx])
     {
         return FALSE;
     }
+    mHMDMode = clipping;
+    mHMDRenderWindowIdx = idx;
     SetForegroundWindow(mWindowHandle[idx]);
     SetFocus(mWindowHandle[idx]);
     return TRUE;

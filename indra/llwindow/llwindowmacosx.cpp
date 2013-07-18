@@ -1875,7 +1875,7 @@ BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
 }
 
 /*virtual*/
-BOOL LLWindowMacOSX::setFocusWindow(S32 idx)
+BOOL LLWindowMacOSX::setFocusWindow(S32 idx, BOOL clipping)
 {
     // *TODO : Implement the focus grabbing if the context setting is not enough
     return TRUE;

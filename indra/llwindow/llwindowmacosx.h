@@ -130,7 +130,7 @@ public:
     /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height);
     /*virtual*/ BOOL destroyHMDWindow();
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
-    /*virtual*/ BOOL setFocusWindow(S32 idx);
+    /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping);
     /*virtual*/ S32 getDisplayCount();
     /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary);
 
