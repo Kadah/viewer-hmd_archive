@@ -959,7 +959,7 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 		LLUI::resetMouseIdleTimer();
 
 		// Don't let the user move the mouse out of the window until mouse up.
-		if( LLToolMgr::getInstance()->getCurrentTool()->clipMouseWhenDown() )
+		if( gHMD.getRenderMode() != LLHMD::RenderMode_HMD && LLToolMgr::getInstance()->getCurrentTool()->clipMouseWhenDown() )
 		{
 			mWindow->setMouseClipping(down);
 		}
@@ -1266,6 +1266,11 @@ void LLViewerWindow::handleMouseMove(LLWindow *window,  LLCoordGL pos, MASK mask
 
 	LLCoordGL mouse_point(x, y);
 
+    //if (LLView::sDebugMouseHandling)
+    //{
+    //    LL_INFOS("Window") << "MouseMove [pos.mX,pos.mY] = {" << pos.mX << "," << pos.mY << "}, [x,y] = {" << x << "," << y << "}, mouse_point = {" << mouse_point.mX << "," << mouse_point.mY << "}" << LL_ENDL;
+    //}
+
 	if (mouse_point != mCurrentMousePoint)
 	{
 		LLUI::resetMouseIdleTimer();
@@ -1324,6 +1329,8 @@ void LLViewerWindow::handleFocus(LLWindow *window)
 	{
 		gKeyboard->resetMaskKeys();
 	}
+
+    getWindow()->setMouseClipping(gHMD.shouldRender());
 
 	// resume foreground running timer
 	// since we artifically limit framerate when not frontmost

@@ -728,13 +728,22 @@ void LLHMD::setRenderWindowHMD()
 
 void LLHMD::setFocusWindowMain()
 {
-    gViewerWindow->getWindow()->setFocusWindow(0);
+    gViewerWindow->getWindow()->setFocusWindow(0, gHMD.shouldRender());
+    if (gHMD.shouldRender())
+    {
+        gViewerWindow->hideCursor();
+    }
+    else
+    {
+        gViewerWindow->showCursor();
+    }
 }
 
 
 void LLHMD::setFocusWindowHMD()
 {
-    gViewerWindow->getWindow()->setFocusWindow(1);
+    gViewerWindow->getWindow()->setFocusWindow(1, TRUE);
+    gViewerWindow->hideCursor();
 }
 
 U32 LLHMD::getCurrentEye() const { return mImpl->getCurrentEye(); }

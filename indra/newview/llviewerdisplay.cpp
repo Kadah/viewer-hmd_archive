@@ -1399,7 +1399,11 @@ void render_ui(F32 zoom_factor, int subfield)
                         F32 x = 0.f;
                         F32 a = start_a + (end_a-start_a)*y;
                         F32 b = start_b;
-                        LLVector2 dt(r*sinf(a)*cosf(b), r*sinf(a)*sinf(b));
+                        F32 sa = sinf(a);
+                        F32 ca = cosf(a);
+                        F32 sb = sinf(b);
+                        F32 cb = cosf(b);
+                        LLVector2 dt(r*sa*cb, r*sa*sb);
                         F32 cur_rad = dt.length();
                         F32 cur_range = target_width/cur_rad;
                         F32 mid_b = (start_b+end_b) * 0.5f;
@@ -1409,9 +1413,10 @@ void render_ui(F32 zoom_factor, int subfield)
                         cur_end_b = cur_end_b + (end_b-cur_end_b)*fudge;
                         for (U32 j = 0; j < resX; j++)
                         {
-                            LLVector4a t;
-                            F32 b = cur_start_b + (cur_end_b-cur_start_b)*x;
-                            t.set(r*sinf(a)*cosf(b), r*cosf(a), r*sinf(a)*sinf(b));
+                            b = cur_start_b + (cur_end_b-cur_start_b)*x;
+                            sb = sinf(b);
+                            cb = cosf(b);
+                            LLVector4a t(r*sa*cb, r*ca, r*sa*sb);
                             *v++ = t;
                             LLVector2 cur_tc(x, 1.f-y);
                             *tc++ = cur_tc;
@@ -1547,7 +1552,6 @@ void render_ui(F32 zoom_factor, int subfield)
 	    gPipeline.disableLights();
 	    gGL.color4f(1,1,1,1);
         gGL.setColorMask(true, gHMD.shouldRender());
-        //LLGLDisable cull(GL_CULL_FACE);
         if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
 	    {
 		    LLFastTimer t(FTM_RENDER_UI);
@@ -1563,15 +1567,7 @@ void render_ui(F32 zoom_factor, int subfield)
 			        render_disconnected_background();
 		        }
             }
-            //if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
-            //{
-            //    gGL.setColorMask(true, true);
-            //}
             render_ui_2d(); // Side/bottom buttons, 2D UI windows, etc.
-            //if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
-            //{
-            //    gGL.setColorMask(true, false);
-            //}
 		    LLGLState::checkStates();
 	    }
 	    gGL.flush();
@@ -1579,6 +1575,32 @@ void render_ui(F32 zoom_factor, int subfield)
         gViewerWindow->setup2DRender();
         gViewerWindow->updateDebugText();
         gViewerWindow->drawDebugText(); // debugging text
+
+        if (gHMD.shouldRender())
+        {
+            // Draw "3D" mouse cursor onto UI RT so that it gets "warped" when placed on
+            // toroid surface and matches what is visible.
+            gGL.pushMatrix();
+            gGL.pushUIMatrix();
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gUIProgram.bind();
+            }
+            {
+                S32 mx = gViewerWindow->getCurrentMouseX();
+                S32 my = gViewerWindow->getCurrentMouseY();
+                gl_line_2d(mx - 10, my, mx + 10, my, LLColor4(1.0f, 0.0f, 0.0f));
+                gl_line_2d(mx, my - 10, mx, my + 10, LLColor4(0.0f, 1.0f, 0.0f));
+            }
+            gGL.popUIMatrix();
+            gGL.popMatrix();
+            gGL.flush();
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gUIProgram.unbind();
+            }
+        }
+
         gRenderUIMode = FALSE;
         if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
         {
