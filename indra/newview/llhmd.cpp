@@ -614,7 +614,11 @@ LLHMD::~LLHMD()
 	   // gSavedSettings.getControl("OculusXCenterOffsetModifier")->getSignal()->disconnect_all_slots();
     //    gSavedSettings.getControl("OculusUIRenderSkip")->getSignal()->disconnect_all_slots();
     //}
-    delete mImpl;
+    
+    if (gHMD.isInitialized())
+    {
+        delete mImpl;
+    }
 }
 
 

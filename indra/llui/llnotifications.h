@@ -942,6 +942,8 @@ public:
 	bool getIgnoreAllNotifications();
 
 	bool isVisibleByRules(LLNotificationPtr pNotification);
+    
+    static void cleanUp();
 	
 private:
 	// we're a singleton, so we don't have a public constructor
@@ -955,8 +957,6 @@ private:
 	bool uniqueFilter(LLNotificationPtr pNotification);
 	bool uniqueHandler(const LLSD& payload);
 	bool failedUniquenessTest(const LLSD& payload);
-	LLNotificationChannelPtr pHistoryChannel;
-	LLNotificationChannelPtr pExpirationChannel;
 	
 	TemplateMap mTemplates;
 

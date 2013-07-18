@@ -1689,8 +1689,11 @@ bool LLAppViewer::cleanup()
 	disconnectViewer();
 
 	llinfos << "Viewer disconnected" << llendflush;
+    
+    // Shuts down notifications after the viewer is disconnected
+    LLNotifications::cleanUp();
 
-	display_cleanup(); 
+	display_cleanup();
 
 	release_start_screen(); // just in case
 

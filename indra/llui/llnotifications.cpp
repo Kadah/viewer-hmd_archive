@@ -1209,6 +1209,13 @@ LLNotifications::LLNotifications()
 	LLUICtrl::CommitCallbackRegistry::currentRegistrar().add("Notification.Show", boost::bind(&LLNotifications::addFromCallback, this, _2));
 }
 
+//static
+void LLNotifications::cleanUp()
+{
+    // Letting C++ to delete this singleton on exit leads to a crash as critical services gets deleted before.
+    // This allows notifications to cleanly close up when the time is right (see LLAppViewer::cleanup() for the call).
+    deleteSingleton();
+}
 
 // The expiration channel gets all notifications that are cancelled
 bool LLNotifications::expirationFilter(LLNotificationPtr pNotification)
