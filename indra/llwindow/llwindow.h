@@ -173,6 +173,8 @@ public:
     virtual BOOL setFocusWindow(S32 idx) = 0;
     virtual S32 getDisplayCount() = 0;
     virtual BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary) = 0;
+    // Experimental : allow testing of Mac code for dual screen mode without Oculus Rift plugged in
+    virtual void addExtraWindow() { }
     
 protected:
 	LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags);

@@ -1769,6 +1769,25 @@ MASK LLWindowMacOSX::modifiersToMask(S16 modifiers)
 	return mask;
 }
 
+// Experimental : dual screen rendering
+/*virtual*/
+void LLWindowMacOSX::addExtraWindow()
+{
+    llinfos << "Merov : Hit the extra window init!" << llendl;
+    //getDisplayInfo(mDisplayName, mDisplayId, mHMDRect, dummy);
+    //getRenderWindow(mainFullScreen);
+    //gHMD.isMainFullScreen(mainFullScreen);
+    if (!initHMDWindow(100, 100, 512, 512))
+    {
+        llinfos << "Merov : Window creation failed!" << llendl;
+    }
+    else
+    {
+        llinfos << "Merov : Window creation successful!" << llendl;
+    }
+    return;
+}
+
 // HMD Support
 /*virtual*/
 BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)

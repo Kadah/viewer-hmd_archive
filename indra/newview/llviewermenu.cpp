@@ -4099,6 +4099,15 @@ class LLViewCycleDisplay : public view_listener_t
     }
 };
 
+class LLAddExtraMonitor : public view_listener_t
+{
+    bool handleEvent(const LLSD& userdata)
+    {
+        gViewerWindow->addExtraWindow();
+        return true;
+    }
+};
+
 class LLEditDuplicate : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
@@ -8473,6 +8482,7 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLViewDefaultUISize(), "View.DefaultUISize");
 	view_listener_t::addMenu(new LLViewToggleUI(), "View.ToggleUI");
     view_listener_t::addMenu(new LLViewCycleDisplay(), "View.CycleDisplay");
+    view_listener_t::addMenu(new LLAddExtraMonitor(), "View.AddExtraMonitor");
 
 	view_listener_t::addMenu(new LLViewEnableMouselook(), "View.EnableMouselook");
 	view_listener_t::addMenu(new LLViewEnableJoystickFlycam(), "View.EnableJoystickFlycam");
