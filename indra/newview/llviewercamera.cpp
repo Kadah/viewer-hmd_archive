@@ -256,8 +256,16 @@ void LLViewerCamera::updateFrustumPlanes(LLCamera& camera, BOOL ortho, BOOL zfli
 
 	for (U32 i = 0; i < 16; i++)
 	{
-		model[i] = (F64) gGLModelView[i];
-		proj[i] = (F64) gGLProjection[i];
+        if (gHMD.shouldRender())
+        {
+            model[i] = (F64)gHMD.getBaseModelView()[i];
+            proj[i] = (F64)gHMD.getBaseProjection()[i];
+        }
+        else
+        {
+		    model[i] = (F64) gGLModelView[i];
+		    proj[i] = (F64) gGLProjection[i];
+        }
 	}
 
 	GLdouble objX,objY,objZ;
@@ -419,8 +427,13 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 		proj_mat = translate*proj_mat;
 	}
 
+	calcProjection(z_far); // Update the projection matrix cache
+
+	proj_mat *= gl_perspective(fov_y,aspect,z_near,z_far);
+
     if (gHMD.shouldRender())
     {
+        gHMD.setBaseProjection(proj_mat.m);
         F32 viewCenter = gHMD.getHScreenSize() * 0.25f;
         F32 eyeProjShift = viewCenter - (gHMD.getLensSeparationDistance() * 0.5f);
         F32 projCtrOffset = (4.0f * eyeProjShift) / gHMD.getHScreenSize();
@@ -437,10 +450,6 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
             proj_mat = translate * proj_mat;
         }
     }
-
-	calcProjection(z_far); // Update the projection matrix cache
-
-	proj_mat *= gl_perspective(fov_y,aspect,z_near,z_far);
 
 	gGL.loadMatrix(proj_mat.m);
 
@@ -461,6 +470,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 
     if (gHMD.shouldRender())
     {
+        gHMD.setBaseModelView(modelview.m);
         F32 viewOffset = gHMD.getInterpupillaryOffset();
         glh::matrix4f translate;
         translate.set_translate(glh::vec3f(sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f, 0.0f));

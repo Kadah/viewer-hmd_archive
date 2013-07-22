@@ -122,6 +122,11 @@ public:
 
     F32 getVerticalFOV() const;
 
+    void setBaseModelView(F32* m) { for (int i = 0; i < 16; ++i) { mBaseModelView[i] = m[i]; } }
+    F32* getBaseModelView() { return mBaseModelView; }
+    void setBaseProjection(F32* m) { for (int i = 0; i < 16; ++i) { mBaseProjection[i] = m[i]; } }
+    F32* getBaseProjection() { return mBaseProjection; }
+    
     //// array of parameters for controlling additional Red and Blue scaling in order to reduce chromatic aberration
     //// caused by the Rift lenses.  Additional per-channel scaling is applied after distortion:
     //// Index [0] - Red channel constant coefficient.
@@ -176,6 +181,8 @@ private:
     F32 mVerticalFOVMod;
     U32 mFlags;
     U32 mRenderMode;
+    F32 mBaseModelView[16];
+    F32 mBaseProjection[16];
     S32 mOptWindowRaw;
     S32 mOptWindowScaled;
     S32 mOptWorldViewRaw;
