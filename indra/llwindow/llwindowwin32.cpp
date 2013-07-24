@@ -845,21 +845,8 @@ BOOL LLWindowWin32::getCurrentClientRect(RECT& r, RECT* pActualRect)
     if (mHMDMode)
     {
         // TODO: can't access LLHMD from here - where to get these constants from?
-        r.right = r.left + 1280;
-        r.top = r.bottom - 800;
-        //RECT window_rect;
-        //if (!GetWindowRect(mWindowHandle[idx], &window_rect))
-        //{
-        //    return FALSE;
-        //}
-        //S32 ww = window_rect.right - window_rect.left;
-        //S32 wh = window_rect.bottom - window_rect.top;
-        //S32 cw = r.right - r.left;
-        //S32 ch = r.bottom - r.top;
-        //S32 dw = (ww - cw) >= 0 ? (ww - cw) : 0;
-        //S32 dh = (wh - ch) >= 0 ? (wh - ch) : 0;
-        //r.right = r.left + 1280 - dw;
-        //r.top = r.bottom - 800 - dh;
+        r.right = (LONG)llmin((S32)r.right, (S32)(r.left + 1280));
+        r.top = (LONG)llmax((S32)r.top, (S32)(r.bottom - 800));
     }
     return TRUE;
 }
@@ -878,8 +865,8 @@ BOOL LLWindowWin32::getCurrentWindowRect(RECT& r, RECT* pActualRect)
     if (mHMDMode)
     {
         // TODO: can't access LLHMD from here - where to get these constants from?
-        r.right = r.left + 1280;
-        r.top = r.bottom - 800;
+        r.right = (LONG)llmin((S32)r.right, (S32)(r.left + 1280));
+        r.top = (LONG)llmax((S32)r.top, (S32)(r.bottom - 800));
     }
     return TRUE;
 }
