@@ -98,7 +98,20 @@
              tab_stop="false"/>
     </layout_panel>
   </layout_stack>
- 
+
+  <panel bottom="768"
+         left="0"
+         width="1024"
+         height="256"
+         follows="left|right|bottom"
+         name="hmd_config_panel_holder"
+         class="panel_hmd_config"
+         filename="panel_hmd_config.xml"
+         background_visible="true"
+         background_opaque="true"
+         bg_opaque_color="0 0.6 0 0.7"
+         visible="true"
+  />
   <panel top="0"
         follows="all"
         mouse_opaque="false"
