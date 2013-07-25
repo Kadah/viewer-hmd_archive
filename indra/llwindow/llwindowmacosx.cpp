@@ -1811,7 +1811,8 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
         if (mGLView[1] == NULL)
         {
             LL_INFOS("Window") << "Creating the HMD GL view" << LL_ENDL;
-            mGLView[1] = createOpenGLView(mWindow[1], mFSAASamples, true);
+            //mGLView[1] = createOpenGLView(mWindow[1], mFSAASamples, true);
+            mGLView[1] = createOpenGLViewTest(mWindow[1], width, height);
         }
     }
     

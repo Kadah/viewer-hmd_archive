@@ -221,6 +221,18 @@ GLViewRef createOpenGLView(NSWindowRef window, unsigned int samples, bool vsync)
 	return glview;
 }
 
+GLViewRef createOpenGLViewTest(NSWindowRef window, int width, int height)
+{
+    NSRect winrect;
+    winrect.origin.x = 0;
+    winrect.origin.y = 0;
+    winrect.size.width = width;
+    winrect.size.height = height;
+	LLOpenGLView *glview = [[LLOpenGLView alloc]initWithFrame:winrect];
+	[(LLNSWindow*)window setContentView:glview];
+	return glview;
+}
+
 void glSwapBuffers(void* context)
 {
 	[(NSOpenGLContext*)context flushBuffer];
