@@ -57,8 +57,9 @@ public:
         kFlag_Initialized               = 1 << 0,
         kFlag_FailedInit                = 1 << 1,
         kFlag_MainIsFullScreen          = 1 << 2,
-        kFlag_Render2DUI                = 1 << 3,
+        kFlag_Render2DUICurvedSurface   = 1 << 3,
         kFlag_IsCalibrated              = 1 << 4,
+        kFlag_ShowDepthUI               = 1 << 5,
     };
 
 public:
@@ -75,10 +76,12 @@ public:
     void failedInit(BOOL b) { if (b) { mFlags |= kFlag_FailedInit; } else { mFlags &= ~kFlag_FailedInit; } }
     BOOL isMainFullScreen() const { return ((mFlags & kFlag_MainIsFullScreen) != 0) ? TRUE : FALSE; }
     void isMainFullScreen(BOOL b) { if (b) { mFlags |= kFlag_MainIsFullScreen; } else { mFlags &= ~kFlag_MainIsFullScreen; } }
-    BOOL shouldRender2DUI() const { return ((mFlags & kFlag_Render2DUI) != 0) ? TRUE : FALSE; }
-    void shouldRender2DUI(BOOL b) { if (b) { mFlags |= kFlag_Render2DUI; } else { mFlags &= ~kFlag_Render2DUI; } }
+    BOOL shouldRender2DUICurvedSurface() const { return ((mFlags & kFlag_Render2DUICurvedSurface) != 0) ? TRUE : FALSE; }
+    void shouldRender2DUICurvedSurface(BOOL b) { if (b) { mFlags |= kFlag_Render2DUICurvedSurface; } else { mFlags &= ~kFlag_Render2DUICurvedSurface; } }
     BOOL isCalibrated() const { return ((mFlags & kFlag_IsCalibrated) != 0) ? TRUE : FALSE; }
     void isCalibrated(BOOL b) { if (b) { mFlags |= kFlag_IsCalibrated; } else { mFlags &= ~kFlag_IsCalibrated; } }
+    BOOL shouldShowDepthUI() const { return ((mFlags & kFlag_ShowDepthUI) != 0) ? TRUE : FALSE; }
+    void shouldShowDepthUI(BOOL b) { if (b) { mFlags |= kFlag_ShowDepthUI; } else { mFlags &= ~kFlag_ShowDepthUI; } }
 
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL shouldRender() const { return mRenderMode != RenderMode_None; }
@@ -170,6 +173,8 @@ public:
     static void onChangeWorldViewRaw();
     static void onChangeWorldViewScaled();
     static void onChangeVerticalFOVModifier();
+    static void onChangeTestCalibration();
+    static void onChangeRender2DUICurvedSurface();
     static void onChangeUISurfaceShape();
 
 private:

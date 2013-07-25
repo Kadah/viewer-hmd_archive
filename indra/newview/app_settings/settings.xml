@@ -14592,17 +14592,6 @@
       <string />
     </map>
 
-  <key>RenderHMD2DUI</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL] attempt to render old-style 2D UI in Oculus Rift (doesn't work well currently)</string>
-    <key>Persist</key>
-    <integer>0</integer>
-    <key>Type</key>
-    <string>Boolean</string>
-    <key>Value</key>
-    <real>0</real>
-  </map>
   <key>OculusInterpupillaryOffsetModifier</key>
   <map>
     <key>Comment</key>
@@ -14734,8 +14723,8 @@
     <string>Vector3</string>
     <key>Value</key>
     <array>
-      <real>1.1</real>
-      <real>2.0</real>
+      <real>1.178097</real>
+      <real>1.963495</real>
       <real>0.0</real>
     </array>
   </map>
@@ -14764,6 +14753,28 @@
     <string>F32</string>
     <key>Value</key>
     <real>4.0</real>
+  </map>
+  <key>OculusTestCalibration</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Test rednering for Oculus 3D Depth calibration</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  <key>Oculus2DUICurvedSurface</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] TRUE = render 2D UI on a toroid surface. FALSE = render 2D UI on a flat surface.</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <real>1</real>
   </map>
 
 </map>

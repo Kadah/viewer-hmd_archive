@@ -4314,61 +4314,159 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
 	U32 cur_type = 0;
 
 	gGL.setColorMask(true, true);
-	
-	pool_set_t::iterator iter1 = mPools.begin();
 
-	while ( iter1 != mPools.end() )
-	{
-		LLDrawPool *poolp = *iter1;
+    BOOL renderHMDDepthUI = gHMD.shouldRender() && gHMD.shouldShowDepthUI();
+    if (renderHMDDepthUI)
+    {
+        LLVertexBuffer::unbind();
+        if (gPipeline.mOculusDepthShape.isNull())
+        {
+            LLVertexBuffer* buff = new LLVertexBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0, GL_STATIC_DRAW_ARB);
+            buff->allocateBuffer(8, 36, true);
+            LLStrider<LLVector3> v;
+            buff->getVertexStrider(v);
+            LLStrider<LLVector2> tc;
+            buff->getTexCoord0Strider(tc);
+            v[0] = LLVector3(-0.05f,-0.05f,-1.2f);  tc[0] = LLVector2(0,0);
+            v[1] = LLVector3(-0.05f,-0.05f,-1.1f);  tc[1] = LLVector2(1,0);
+            v[2] = LLVector3(-0.05f, 0.05f,-1.2f);  tc[2] = LLVector2(0,1);
+            v[3] = LLVector3(-0.05f, 0.05f,-1.1f);  tc[3] = LLVector2(1,1);
+            v[4] = LLVector3( 0.05f,-0.05f,-1.2f);  tc[4] = LLVector2(1,0);
+            v[5] = LLVector3( 0.05f,-0.05f,-1.1f);  tc[5] = LLVector2(0,0);
+            v[6] = LLVector3( 0.05f, 0.05f,-1.2f);  tc[6] = LLVector2(1,1);
+            v[7] = LLVector3( 0.05f, 0.05f,-1.1f);  tc[7] = LLVector2(0,1);
+            static const S32 kVGI[6][4] = {{1,3,5,7}, {3,2,7,6}, {4,6,0,2}, {0,1,4,5}, {5,7,4,6}, {0,2,1,3}};
+            LLStrider<U16> idx;
+            buff->getIndexStrider(idx);
+            for (int i = 0; i < 6; ++i)
+            {
+                *idx++ = kVGI[i][1];
+                *idx++ = kVGI[i][0];
+                *idx++ = kVGI[i][3];
+                *idx++ = kVGI[i][3];
+                *idx++ = kVGI[i][0];
+                *idx++ = kVGI[i][2];
+            }
+            buff->flush();
+            gPipeline.mOculusDepthShape = buff;
+        }
+
+        gGL.matrixMode(LLRender::MM_MODELVIEW);
+        gGL.pushMatrix();
+        LLViewerCamera* pViewerCamera = LLViewerCamera::getInstance();
+        const LLMatrix4& m1 = pViewerCamera->getPreHMDViewMatrix();
+        gGL.multMatrix((GLfloat*)m1.mMatrix);
+
+        gOneTextureNoColorProgram.bind();
+        gGL.setColorMask(true, true);
+        LLGLEnable blend_on(GL_BLEND);
+        gGL.blendFunc(LLRender::BF_ONE, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
+        gGL.color4f(1,1,1,1);
+        // TODO: use a better high-contrast texture for the background
+        gGL.getTexUnit(0)->bind(LLViewerTexture::sCheckerBoardImagep);
+        gGL.begin(LLRender::TRIANGLE_STRIP);
+        //bottom left, bottom right, top left, top right
+        gGL.texCoord2f(0, 0);       gGL.vertex3f( -1.0f, -1.0f, -4.0f);
+        gGL.texCoord2f(1, 0);       gGL.vertex3f(  1.0f, -1.0f, -4.0f);
+        gGL.texCoord2f(0, 1);       gGL.vertex3f( -1.0f,  1.0f, -4.0f);
+        gGL.texCoord2f(1, 1);       gGL.vertex3f(  1.0f,  1.0f, -4.0f);
+        gGL.end();
+        gGL.flush();
+
+        // render 9 copies of the VB, offset in a "grid" pattern so that users can get a good sense of depth perception
+        // TODO: use a different texture for the cubes
+        static const LLVector3 kMat[][3] =
+        {
+            { LLVector3(-0.2f, 0.2f,-0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
+            { LLVector3( 0.0f, 0.2f, 0.0f), LLVector3( 0.5f, 0.5f, 1.0f) },
+            { LLVector3( 0.2f, 0.2f, 0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
+            { LLVector3(-0.2f, 0.0f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
+            { LLVector3( 0.0f, 0.0f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
+            { LLVector3( 0.2f, 0.0f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
+            { LLVector3(-0.3f,-0.3f,-0.1f), LLVector3( 2.0f, 2.0f, 1.0f) },
+            { LLVector3( 0.0f,-0.3f, 0.0f), LLVector3( 2.0f, 2.0f, 1.0f) },
+            { LLVector3( 0.3f,-0.3f, 0.1f), LLVector3( 2.0f, 2.0f, 1.0f) },
+        };
+        {
+            LLGLDisable cull(GL_CULL_FACE);
+            LLGLEnable blend(GL_BLEND);
+            LLVertexBuffer* buff = gPipeline.mOculusDepthShape;
+            buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
+            for (int i = 0; i < 9; ++i)
+            {
+                gGL.matrixMode(LLRender::MM_MODELVIEW);
+                gGL.pushMatrix();
+                LLMatrix4 m2;
+                m2.initScale(kMat[i][1]);
+                m2.setTranslation(kMat[i][0]);
+                gGL.multMatrix((GLfloat*)m2.mMatrix);
+                buff->drawRange(LLRender::TRIANGLES, 0, buff->getNumVerts()-1, buff->getNumIndices(), 0);
+                gGL.popMatrix();
+            }
+        }
+        gGL.flush();
+        gOneTextureNoColorProgram.unbind();
+
+        gGL.matrixMode(LLRender::MM_MODELVIEW);
+        gGL.popMatrix();
+    }
+    else
+    {
+	    pool_set_t::iterator iter1 = mPools.begin();
+
+	    while ( iter1 != mPools.end() )
+	    {
+		    LLDrawPool *poolp = *iter1;
 		
-		cur_type = poolp->getType();
+		    cur_type = poolp->getType();
 
-		pool_set_t::iterator iter2 = iter1;
-		if (hasRenderType(poolp->getType()) && poolp->getNumDeferredPasses() > 0)
-		{
-			LLFastTimer t(FTM_DEFERRED_POOLRENDER);
+		    pool_set_t::iterator iter2 = iter1;
+		    if (hasRenderType(poolp->getType()) && poolp->getNumDeferredPasses() > 0)
+		    {
+			    LLFastTimer t(FTM_DEFERRED_POOLRENDER);
 
-			gGLLastMatrix = NULL;
-			gGL.loadMatrix(gGLModelView);
+			    gGLLastMatrix = NULL;
+			    gGL.loadMatrix(gGLModelView);
 		
-			for( S32 i = 0; i < poolp->getNumDeferredPasses(); i++ )
-			{
-				LLVertexBuffer::unbind();
-				poolp->beginDeferredPass(i);
-				for (iter2 = iter1; iter2 != mPools.end(); iter2++)
-				{
-					LLDrawPool *p = *iter2;
-					if (p->getType() != cur_type)
-					{
-						break;
-					}
+			    for( S32 i = 0; i < poolp->getNumDeferredPasses(); i++ )
+			    {
+				    LLVertexBuffer::unbind();
+				    poolp->beginDeferredPass(i);
+				    for (iter2 = iter1; iter2 != mPools.end(); iter2++)
+				    {
+					    LLDrawPool *p = *iter2;
+					    if (p->getType() != cur_type)
+					    {
+						    break;
+					    }
 										
-					if ( !p->getSkipRenderFlag() ) { p->renderDeferred(i); }
-				}
-				poolp->endDeferredPass(i);
-				LLVertexBuffer::unbind();
+					    if ( !p->getSkipRenderFlag() ) { p->renderDeferred(i); }
+				    }
+				    poolp->endDeferredPass(i);
+				    LLVertexBuffer::unbind();
 
-				if (gDebugGL || gDebugPipeline)
-				{
-					LLGLState::checkStates();
-				}
-			}
-		}
-		else
-		{
-			// Skip all pools of this type
-			for (iter2 = iter1; iter2 != mPools.end(); iter2++)
-			{
-				LLDrawPool *p = *iter2;
-				if (p->getType() != cur_type)
-				{
-					break;
-				}
-			}
-		}
-		iter1 = iter2;
-		stop_glerror();
-	}
+				    if (gDebugGL || gDebugPipeline)
+				    {
+					    LLGLState::checkStates();
+				    }
+			    }
+		    }
+		    else
+		    {
+			    // Skip all pools of this type
+			    for (iter2 = iter1; iter2 != mPools.end(); iter2++)
+			    {
+				    LLDrawPool *p = *iter2;
+				    if (p->getType() != cur_type)
+				    {
+					    break;
+				    }
+			    }
+		    }
+		    iter1 = iter2;
+		    stop_glerror();
+	    }
+    }
 
 	gGLLastMatrix = NULL;
 	gGL.loadMatrix(gGLModelView);
@@ -4379,6 +4477,13 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
 void LLPipeline::renderGeomPostDeferred(LLCamera& camera)
 {
 	LLFastTimer t(FTM_POST_DEFERRED_POOLS);
+
+    BOOL renderHMDDepthUI = gHMD.shouldRender() && gHMD.shouldShowDepthUI();
+    if (renderHMDDepthUI)
+    {
+        return;
+    }
+
 	U32 cur_type = 0;
 
 	LLGLEnable cull(GL_CULL_FACE);
@@ -6922,6 +7027,7 @@ void LLPipeline::doResetVertexBuffers()
 
 	mCubeVB = NULL;
     mOculusUISurface = NULL;
+    mOculusDepthShape = NULL;
 
 	for (LLWorld::region_list_t::const_iterator iter = LLWorld::getInstance()->getRegionList().begin(); 
 			iter != LLWorld::getInstance()->getRegionList().end(); ++iter)
@@ -10381,8 +10487,6 @@ void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL 
         F32 w = 1.0f;
         F32 h = 1.0f;
         F32 as = (F32)LLHMD::kHMDEyeWidth / (F32)LLHMD::kHMDHeight;
-        //BOOL shouldDistortScale = gSavedSettings.getBOOL("OculusShouldDistortScale");
-        //F32 scaleFactor = shouldDistortScale ? (1.0f / (gHMD.getDistortionScale() * oculusScaleMult.mV[VZ])) : 1.0f;
         F32 scaleFactor = 1.0f / gHMD.getDistortionScale();
         LLVector4 hmd_param = gHMD.getDistortionConstants();
 

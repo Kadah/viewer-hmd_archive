@@ -645,6 +645,10 @@ BOOL LLHMD::init()
         onChangeWorldViewScaled();
         gSavedSettings.getControl("OculusVerticalFOVModifier")->getSignal()->connect(boost::bind(&onChangeVerticalFOVModifier));
         onChangeVerticalFOVModifier();
+        gSavedSettings.getControl("OculusTestCalibration")->getSignal()->connect(boost::bind(&onChangeTestCalibration));
+        onChangeTestCalibration();
+        gSavedSettings.getControl("Oculus2DUICurvedSurface")->getSignal()->connect(boost::bind(&onChangeRender2DUICurvedSurface));
+        onChangeRender2DUICurvedSurface();
         gSavedSettings.getControl("OculusUISurfaceFudge")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
         gSavedSettings.getControl("OculusUISurfaceX")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
         gSavedSettings.getControl("OculusUISurfaceY")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
@@ -663,6 +667,8 @@ void LLHMD::onChangeWindowScaled() { gHMD.mOptWindowScaled = gSavedSettings.getS
 void LLHMD::onChangeWorldViewRaw() { gHMD.mOptWorldViewRaw = gSavedSettings.getS32("OculusOptWorldViewRaw"); }
 void LLHMD::onChangeWorldViewScaled() { gHMD.mOptWorldViewScaled = gSavedSettings.getS32("OculusOptWorldViewScaled"); }
 void LLHMD::onChangeVerticalFOVModifier() { gHMD.mVerticalFOVMod = gSavedSettings.getF32("OculusVerticalFOVModifier"); }
+void LLHMD::onChangeTestCalibration() { gHMD.shouldShowDepthUI(gSavedSettings.getBOOL("OculusTestCalibration")); }
+void LLHMD::onChangeRender2DUICurvedSurface() { gHMD.shouldRender2DUICurvedSurface(gSavedSettings.getBOOL("Oculus2DUICurvedSurface")); }
 
 void LLHMD::onChangeUISurfaceShape()
 {

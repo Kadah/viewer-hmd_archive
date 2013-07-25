@@ -317,7 +317,6 @@ BOOL enable_detach(const LLSD& = LLSD());
 void menu_toggle_attached_lights(void* user_data);
 void menu_toggle_attached_particles(void* user_data);
 void menu_toggle_render_debug_hmd(void* user_data);
-void menu_toggle_render_hmd_2d_ui(void* user_data);
 
 class LLMenuParcelObserver : public LLParcelObserver
 {
@@ -7183,22 +7182,6 @@ class LLAdvancedHandleAttachedLightParticles: public view_listener_t
 	}
 };
 
-void menu_toggle_render_hmd_2d_ui(void* user_data)
-{
-    gHMD.shouldRender2DUI(gSavedSettings.getBOOL("RenderHMD2DUI"));
-}
-
-class LLAdvancedRenderHMD2DUI: public view_listener_t
-{
-    bool handleEvent(const LLSD& userdata)
-    {
-        // toggle the control
-        gSavedSettings.setBOOL("RenderHMD2DUI", !gSavedSettings.getBOOL("RenderHMD2DUI"));
-        menu_toggle_render_hmd_2d_ui(NULL);
-        return true;
-    }
-};
-
 class LLSomethingSelected : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
@@ -8605,7 +8588,6 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLAdvancedHandleAttachedLightParticles(), "Advanced.HandleAttachedLightParticles");
 	view_listener_t::addMenu(new LLAdvancedCheckRenderShadowOption(), "Advanced.CheckRenderShadowOption");
 	view_listener_t::addMenu(new LLAdvancedClickRenderShadowOption(), "Advanced.ClickRenderShadowOption");
-    view_listener_t::addMenu(new LLAdvancedRenderHMD2DUI(), "Advanced.ClickRenderHMD2DUI");
 
 	#ifdef TOGGLE_HACKED_GODLIKE_VIEWER
 	view_listener_t::addMenu(new LLAdvancedHandleToggleHackedGodmode(), "Advanced.HandleToggleHackedGodmode");
