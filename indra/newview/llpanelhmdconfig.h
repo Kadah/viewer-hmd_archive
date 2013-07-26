@@ -31,6 +31,8 @@
 
 #include "llpanel.h"
 
+class LLSliderCtrl;
+
 class LLPanelHMDConfig : public LLPanel
 {
  public:
@@ -46,6 +48,7 @@ class LLPanelHMDConfig : public LLPanel
 
  private:
     static LLPanelHMDConfig*  sInstance;
+    LLSliderCtrl* mIPPSliderCtrl;
 };
 
 

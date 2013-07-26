@@ -25,6 +25,8 @@
  */
 
 #include "llviewerprecompiledheaders.h"
+
+#include "llsliderctrl.h"
 #include "llpanelhmdconfig.h"
 #include "llfloaterreg.h"
 
@@ -57,16 +59,19 @@ LLPanelHMDConfig* LLPanelHMDConfig::getInstance()
 // static
 void LLPanelHMDConfig::toggleVisibility()
 {
-    const BOOL& visible = LLPanelHMDConfig::getInstance()->getVisible();
-    LLPanelHMDConfig::getInstance()->setVisible( ! visible);
+    bool visible = LLPanelHMDConfig::getInstance()->getVisible();
 
     // turn off main view (other views e.g. tool tips, snapshot are still available)
-    LLUI::getRootView()->getChildView("menu_stack")->setVisible( ! visible);
+    LLUI::getRootView()->getChildView("menu_stack")->setVisible( ! visible );
+
+    LLPanelHMDConfig::getInstance()->setVisible( ! visible );
 }
 
 BOOL LLPanelHMDConfig::postBuild()
 {
     setVisible(FALSE);
+
+    mIPPSliderCtrl       = getChild<LLSliderCtrl>("ipp_slider");
 
 	return LLPanel::postBuild();
 }
@@ -83,5 +88,5 @@ void LLPanelHMDConfig::onClickClose()
 
 void LLPanelHMDConfig::onSetIPP()
 {
-    llinfos << "Setting IPP" << llendl;
+    llinfos << "Setting IPP to " << mIPPSliderCtrl->getValueF32() << llendl;
 }

@@ -30,7 +30,7 @@
      left="10"
      width="160"
      layout="topleft"
-     name="IPP"
+     name="ipp_slider"
      show_text="false"
      top="50">
         <slider.commit_callback
