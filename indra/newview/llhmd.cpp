@@ -40,6 +40,7 @@
 #include "llnotificationsutil.h"
 #include "llviewercontrol.h"
 #include "pipeline.h"
+#include "llagentcamera.h"
 
 #include "OVR.h"
 #include "Kernel/OVR_Timer.h"
@@ -698,6 +699,10 @@ void LLHMD::setRenderMode(U32 mode)
         mRenderMode = newRenderMode;
         if (!oldShouldRender && shouldRender())
         {
+            if (gAgentCamera.cameraMouselook())
+            {
+                gAgentCamera.changeCameraToFirstPerson();
+            }
             LLCoordWindow windowSize;
             gViewerWindow->getWindow()->getSize(&windowSize);
             mMainWindowWidth = windowSize.mX;
@@ -706,6 +711,10 @@ void LLHMD::setRenderMode(U32 mode)
         }
         else if (oldShouldRender && !shouldRender())
         {
+            if (gAgentCamera.cameraFirstPerson())
+            {
+                gAgentCamera.changeCameraToMouselook();
+            }
             gViewerWindow->reshape(mMainWindowWidth, mMainWindowHeight);
         }
         if (mRenderMode == RenderMode_HMD)

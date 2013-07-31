@@ -43,7 +43,8 @@ enum ECameraMode
 	CAMERA_MODE_THIRD_PERSON,
 	CAMERA_MODE_MOUSELOOK,
 	CAMERA_MODE_CUSTOMIZE_AVATAR,
-	CAMERA_MODE_FOLLOW
+	CAMERA_MODE_FOLLOW,
+    CAMERA_MODE_FIRST_PERSON,
 };
 
 /** Camera Presets for CAMERA_MODE_THIRD_PERSON */
@@ -90,10 +91,12 @@ public:
 	void			changeCameraToThirdPerson(BOOL animate = TRUE);
 	void			changeCameraToCustomizeAvatar(); // Trigger transition animation
 	void			changeCameraToFollow(BOOL animate = TRUE); 	// Ventrella
+    void			changeCameraToFirstPerson(BOOL animate = TRUE);
 	BOOL			cameraThirdPerson() const		{ return (mCameraMode == CAMERA_MODE_THIRD_PERSON && mLastCameraMode == CAMERA_MODE_THIRD_PERSON); }
 	BOOL			cameraMouselook() const			{ return (mCameraMode == CAMERA_MODE_MOUSELOOK && mLastCameraMode == CAMERA_MODE_MOUSELOOK); }
 	BOOL			cameraCustomizeAvatar() const	{ return (mCameraMode == CAMERA_MODE_CUSTOMIZE_AVATAR /*&& !mCameraAnimating*/); }
 	BOOL			cameraFollow() const			{ return (mCameraMode == CAMERA_MODE_FOLLOW && mLastCameraMode == CAMERA_MODE_FOLLOW); }
+    BOOL			cameraFirstPerson() const       { return (mCameraMode == CAMERA_MODE_FIRST_PERSON && mLastCameraMode == CAMERA_MODE_FIRST_PERSON); }
 	ECameraMode		getCameraMode() const 			{ return mCameraMode; }
 	ECameraMode		getLastCameraMode() const 		{ return mLastCameraMode; }
 	void			updateCamera();					// Call once per frame to update camera location/orientation

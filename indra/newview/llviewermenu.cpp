@@ -4007,9 +4007,16 @@ class LLViewMouselook : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		if (!gAgentCamera.cameraMouselook())
+		if (!gAgentCamera.cameraMouselook() && !gAgentCamera.cameraFirstPerson())
 		{
-			gAgentCamera.changeCameraToMouselook();
+            if (gHMD.shouldRender())
+            {
+                gAgentCamera.changeCameraToFirstPerson();
+            }
+            else
+            {
+			    gAgentCamera.changeCameraToMouselook();
+            }
 		}
 		else
 		{

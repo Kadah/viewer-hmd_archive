@@ -102,7 +102,7 @@
       <panel
           color="Transparent"
           follows="all"
-          height="68"
+          height="102"
           item_pad="4"
           layout="topleft"
           left="8"
@@ -139,6 +139,21 @@
             image_name="MouseLook_View_Off" />
           <panel_camera_item.selected_picture
             image_name="MouseLook_View_On" />
+        </panel_camera_item>
+        <panel_camera_item
+          name="first_person_view"
+          layout="topleft">
+          <panel_camera_item.mousedown_callback
+            function="CameraPresets.ChangeView"
+            parameter="first_person_view" />
+          <panel_camera_item.picture
+            image_name="FirstPersonView_Off" />
+          <panel_camera_item.selected_picture
+            image_name="FirstPersonView_On" />
+          <panel_camera_item.text
+            name="first_person_view_text">
+            First-Person View
+          </panel_camera_item.text>
         </panel_camera_item>
       </panel>
          <!--TODO: replace + - images -->

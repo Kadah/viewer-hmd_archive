@@ -8734,7 +8734,7 @@ void LLPipeline::generateWaterReflection(LLCamera& camera_in)
 	if (LLPipeline::sWaterReflections && assertInitialized() && LLDrawPoolWater::sNeedsReflectionUpdate)
 	{
 		BOOL skip_avatar_update = FALSE;
-		if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || !LLVOAvatar::sVisibleInFirstPerson)
+		if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || (gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK && gAgentCamera.getCameraMode() != CAMERA_MODE_FIRST_PERSON) || !LLVOAvatar::sVisibleInFirstPerson)
 		{
 			skip_avatar_update = TRUE;
 		}
@@ -9437,9 +9437,8 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 	LLFastTimer t(FTM_GEN_SUN_SHADOW);
 
 	BOOL skip_avatar_update = FALSE;
-	if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || !LLVOAvatar::sVisibleInFirstPerson)
+	if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || (gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK && gAgentCamera.getCameraMode() != CAMERA_MODE_FIRST_PERSON) || !LLVOAvatar::sVisibleInFirstPerson)
 	{
-
 		skip_avatar_update = TRUE;
 	}
 
