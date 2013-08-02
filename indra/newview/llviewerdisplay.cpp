@@ -1397,6 +1397,50 @@ LLVertexBuffer* ll_create_toroidal_ui_surface(F32 start_x, F32 end_x, F32 start_
     return buff;
 }
 
+
+void render_hmd_mouse_cursor()
+{
+    if (gHMD.shouldRender())
+    {
+        // Draw "3D" mouse cursor onto UI RT so that it gets "warped" when placed on
+        // toroid surface and matches what is visible.
+        gGL.pushMatrix();
+        gGL.pushUIMatrix();
+        S32 mx = gViewerWindow->getCurrentMouseX();
+        S32 my = gViewerWindow->getCurrentMouseY();
+        LLViewerTexture* pCursorTexture = gHMD.getCursorImage((U32)gViewerWindow->getWindow()->getCursor());
+        if (pCursorTexture)
+        {
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gOneTextureNoColorProgram.bind();
+            }
+            gl_draw_scaled_image(mx, my - 32, 32, 32, pCursorTexture);
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gOneTextureNoColorProgram.unbind();
+            }
+        }
+        else
+        {
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gUIProgram.bind();
+            }
+            gl_line_2d(mx - 10, my, mx + 10, my, LLColor4(1.0f, 0.0f, 0.0f));
+            gl_line_2d(mx, my - 10, mx, my + 10, LLColor4(0.0f, 1.0f, 0.0f));
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gUIProgram.unbind();
+            }
+        }
+        gGL.popUIMatrix();
+        gGL.popMatrix();
+        gGL.flush();
+    }
+}
+
+
 void render_ui(F32 zoom_factor, int subfield)
 {
 	LLGLState::checkStates();
@@ -1453,11 +1497,7 @@ void render_ui(F32 zoom_factor, int subfield)
                 {
                     if (gPipeline.mOculusUISurface.isNull())
                     {
-                        F32 start_y, end_y;
-                        gHMD.getUISurfaceY(start_y, end_y);
-                        F32 start_x, end_x;
-                        gHMD.getUISurfaceX(start_x, end_x);
-                        gPipeline.mOculusUISurface = ll_create_toroidal_ui_surface(start_x, end_x, start_y, end_y, gHMD.getUISurfaceRadius(), gHMD.getUISurfaceFudge());
+                        gPipeline.mOculusUISurface = ll_create_toroidal_ui_surface(gHMD.getUISurfaceX()[VX], gHMD.getUISurfaceX()[VY], gHMD.getUISurfaceY()[VX], gHMD.getUISurfaceY()[VY], gHMD.getUISurfaceRadius(), gHMD.getUISurfaceFudge());
                     }
                 }
 
@@ -1483,6 +1523,7 @@ void render_ui(F32 zoom_factor, int subfield)
                 }
                 else
                 {
+                    const LLVector3& vs = gHMD.getUIFlatSurfaceScale();
                     gUIProgram.bind();
                     LLGLEnable blend_on(GL_BLEND);
                     gGL.blendFunc(LLRender::BF_ONE, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
@@ -1492,10 +1533,10 @@ void render_ui(F32 zoom_factor, int subfield)
                     gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
                     gGL.begin(LLRender::TRIANGLE_STRIP);
                     //bottom left, bottom right, top left, top right
-                    gGL.texCoord2f(0, 0);       gGL.vertex3f( -2, -1, -2);
-                    gGL.texCoord2f(1, 0);       gGL.vertex3f(  2, -1, -2);
-                    gGL.texCoord2f(0, 1);       gGL.vertex3f( -2,  1, -2);
-                    gGL.texCoord2f(1, 1);       gGL.vertex3f(  2,  1, -2);
+                    gGL.texCoord2f(0, 0);       gGL.vertex3f( -1.6f * vs.mV[VX], -1.0f * vs.mV[VY], -1.0f * vs.mV[VZ]);
+                    gGL.texCoord2f(1, 0);       gGL.vertex3f(  1.6f * vs.mV[VX], -1.0f * vs.mV[VY], -1.0f * vs.mV[VZ]);
+                    gGL.texCoord2f(0, 1);       gGL.vertex3f( -1.6f * vs.mV[VX],  1.0f * vs.mV[VY], -1.0f * vs.mV[VZ]);
+                    gGL.texCoord2f(1, 1);       gGL.vertex3f(  1.6f * vs.mV[VX],  1.0f * vs.mV[VY], -1.0f * vs.mV[VZ]);
                     gGL.end();
                     gGL.flush();
                     gUIProgram.unbind();
@@ -1545,6 +1586,29 @@ void render_ui(F32 zoom_factor, int subfield)
     {
         render_hud_elements();  // in-world text, labels, nametags
     }
+    //if (!renderHMDDepthUI)
+    //{
+    //    //if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
+    //    //{
+    //    //    //gRenderUIMode = TRUE;
+    //    //    //if (LLGLSLShader::sNoFixedFunction)
+    //    //    //{
+    //    //    //    gDebugProgram.bind();
+    //    //    //    //gUIProgram.bind();
+    //    //    //}
+    //    //}
+    //    render_hud_attachments();   // huds worn by avatar
+    //    //if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
+    //    //{
+    //    //    //if (LLGLSLShader::sNoFixedFunction)
+    //    //    //{
+    //    //    //    gDebugProgram.unbind();
+    //    //    //    //gUIProgram.unbind();
+    //    //    //}
+    //    //    //gGL.flush();
+    //    //    //gRenderUIMode = FALSE;
+    //    //}
+    //}
     if (LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE)
     {
         if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
@@ -1553,10 +1617,30 @@ void render_ui(F32 zoom_factor, int subfield)
             gGL.setColorMask(true, true);
             glClearColor(0.0f,0.0f,0.0f,0.0f);
             gPipeline.mUIScreen.clear();
+            gGL.color4f(1,1,1,1);
         }
         if (!renderHMDDepthUI)
         {
+            if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+            {
+                gRenderUIMode = TRUE;
+                //if (LLGLSLShader::sNoFixedFunction)
+                //{
+                //    gDebugProgram.bind();
+                //    //gUIProgram.bind();
+                //}
+            }
             render_hud_attachments();   // huds worn by avatar
+            if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+            {
+                //if (LLGLSLShader::sNoFixedFunction)
+                //{
+                //    gDebugProgram.unbind();
+                //    //gUIProgram.unbind();
+                //}
+                //gGL.flush();
+                gRenderUIMode = FALSE;
+            }
         }
 	    LLGLSDefault gls_default;
 	    LLGLSUIDefault gls_ui;
@@ -1590,30 +1674,7 @@ void render_ui(F32 zoom_factor, int subfield)
             gViewerWindow->drawDebugText(); // debugging text
         }
 
-        if (gHMD.shouldRender())
-        {
-            // Draw "3D" mouse cursor onto UI RT so that it gets "warped" when placed on
-            // toroid surface and matches what is visible.
-            gGL.pushMatrix();
-            gGL.pushUIMatrix();
-            if (LLGLSLShader::sNoFixedFunction)
-            {
-                gUIProgram.bind();
-            }
-            {
-                S32 mx = gViewerWindow->getCurrentMouseX();
-                S32 my = gViewerWindow->getCurrentMouseY();
-                gl_line_2d(mx - 10, my, mx + 10, my, LLColor4(1.0f, 0.0f, 0.0f));
-                gl_line_2d(mx, my - 10, mx, my + 10, LLColor4(0.0f, 1.0f, 0.0f));
-            }
-            gGL.popUIMatrix();
-            gGL.popMatrix();
-            gGL.flush();
-            if (LLGLSLShader::sNoFixedFunction)
-            {
-                gUIProgram.unbind();
-            }
-        }
+        render_hmd_mouse_cursor();
 
         gRenderUIMode = FALSE;
         if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)

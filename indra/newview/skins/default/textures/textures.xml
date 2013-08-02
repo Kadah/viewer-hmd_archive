@@ -181,7 +181,7 @@ with the same filename but different name
   <texture name="Conv_log_inbox" file_name="icons/Conv_log_inbox.png" preload="false" />
 
   <texture name="Copy" file_name="icons/Copy.png" preload="false" />
-  
+
   <texture name="DisclosureArrow_Opened_Off" file_name="widgets/DisclosureArrow_Opened_Off.png" preload="true" />
 
   <texture name="ChatBarHandle" file_name="bottomtray/ChatBarHandle.png" preload="false" />
@@ -205,6 +205,8 @@ with the same filename but different name
   <texture name="Favorite_Star_Over" file_name="navbar/Favorite_Star_Over.png" preload="false" />
   <texture name="Favorite_Link_Over" file_name="navbar/Favorite_Link_Over.png" preload="false" />
 
+  <texture name="FirstPersonView_Off" file_name="build/Object_Torus.png" preload="false" />
+  <texture name="FirstPersonView_On" file_name="build/Object_Torus_Selected.png" preload="false" />
 
   <texture name="Flag" file_name="navbar/Flag.png" preload="false" />
 
@@ -340,9 +342,7 @@ with the same filename but different name
   
   <texture name="MouseLook_View_Off" file_name="bottomtray/MouseLook_view_off.png" preload="false" />
   <texture name="MouseLook_View_On" file_name="bottomtray/MouseLook_view_on.png" preload="false" />
-  <texture name="FirstPersonView_Off" file_name="build/Object_Torus.png" preload="false" />
-  <texture name="FirstPersonView_On" file_name="build/Object_Torus_Selected.png" preload="false" />
-
+  
   <texture name="Move_Fly_Off" file_name="bottomtray/Move_Fly_Off.png" preload="false" />
   <texture name="Move_Run_Off" file_name="bottomtray/Move_Run_Off.png" preload="false" />
   <texture name="Move_Walk_Off" file_name="bottomtray/Move_Walk_Off.png" preload="false" />

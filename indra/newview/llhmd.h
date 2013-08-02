@@ -28,6 +28,8 @@
 #define LL_LLHMD_H
 
 class LLHMDImpl;
+class LLViewerTexture;
+
 
 // TODO: move some of the data to this class instead of always requiring an extra method call via PIMPL
 class LLHMD
@@ -159,9 +161,12 @@ public:
     S32 getOptWorldViewRaw() const { return mOptWorldViewRaw; }
     S32 getOptWorldViewScaled() const { return mOptWorldViewScaled; }
     F32 getUISurfaceFudge() const { return mUISurface_Fudge; }
-    void getUISurfaceX(F32& start, F32& end) const { start = mUISurface_B[0]; end = mUISurface_B[1]; }
-    void getUISurfaceY(F32& start, F32& end) const { start = mUISurface_A[0]; end = mUISurface_A[1]; }
+    const LLVector2& getUISurfaceX() const { return mUICurvedSurfaceX; }
+    const LLVector2& getUISurfaceY() const { return mUICurvedSurfaceY; }
     F32 getUISurfaceRadius() const { return mUISurface_R; }
+    const LLVector3& getUIFlatSurfaceScale() const { return mUIFlatSurfaceScale; }
+
+    LLViewerTexture* getCursorImage(U32 cursorType);
 
     static void onChangeInterpupillaryOffsetModifer();
     static void onChangeLensSeparationDistanceModifier();
@@ -176,6 +181,7 @@ public:
     static void onChangeTestCalibration();
     static void onChangeRender2DUICurvedSurface();
     static void onChangeUISurfaceShape();
+    static void onChangeUIFlatSurfaceScale();
 
 private:
     LLHMDImpl* mImpl;
@@ -196,8 +202,9 @@ private:
     S32 mMainWindowHeight;
     F32 mUISurface_Fudge;
     F32 mUISurface_R;
-    LLVector3 mUISurface_A;
-    LLVector3 mUISurface_B;
+    LLVector2 mUICurvedSurfaceY;
+    LLVector2 mUICurvedSurfaceX;
+    LLVector3 mUIFlatSurfaceScale;
  };
 
 extern LLHMD gHMD;

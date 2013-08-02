@@ -1011,8 +1011,8 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		mDeferredScreen.shareDepthBuffer(mScreen);
 	}
 
-	mLeftEye.allocate(LLHMD::kHMDEyeWidth, LLHMD::kHMDHeight, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true);
-	mRightEye.allocate(LLHMD::kHMDEyeWidth, LLHMD::kHMDHeight, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true);
+    mLeftEye.release();
+    mRightEye.release();
 
 	gGL.getTexUnit(0)->disable();
 
@@ -1176,7 +1176,6 @@ void LLPipeline::releaseLUTBuffers()
 
 void LLPipeline::releaseScreenBuffers()
 {
-	mUIScreen.release();
 	mScreen.release();
 	mFXAABuffer.release();
 	mPhysicsDisplay.release();
@@ -1190,6 +1189,9 @@ void LLPipeline::releaseScreenBuffers()
 	{
 		mShadow[i].release();
 	}
+    mUIScreen.release();
+    mLeftEye.release();
+    mRightEye.release();
 }
 
 
@@ -7195,10 +7197,26 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	{
         if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
         {
+            if (!mLeftEye.isComplete())
+            {
+                if (!mLeftEye.allocate(LLHMD::kHMDEyeWidth, LLHMD::kHMDHeight, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
+                {
+                    llwarns << "could not allocate Left Eye buffer for HMD render mode" << LL_ENDL;
+                    return;
+                }
+            }
             mLeftEye.bindTarget();
         }
         else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
         {
+            if (!mRightEye.isComplete())
+            {
+                if (!mRightEye.allocate(LLHMD::kHMDEyeWidth, LLHMD::kHMDHeight, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
+                {
+                    llwarns << "could not allocate Right Eye buffer for HMD render mode" << LL_ENDL;
+                    return;
+                }
+            }
             mRightEye.bindTarget();
         }
 	}

@@ -14716,31 +14716,31 @@
   <key>OculusUISurfaceX</key>
   <map>
     <key>Comment</key>
-    <string>[EXPERIMENTAL] X = startB, Y = endB, Z = ignored</string>
+    <string>[EXPERIMENTAL] X = middle X, Y = width, Z = left-width-mult</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
     <string>Vector3</string>
     <key>Value</key>
     <array>
-      <real>1.178097</real>
-      <real>1.963495</real>
-      <real>0.0</real>
+      <real>1.5</real>
+      <real>0.85</real>
+      <real>0.5</real>
     </array>
   </map>
   <key>OculusUISurfaceY</key>
   <map>
     <key>Comment</key>
-    <string>[EXPERIMENTAL] X = startA, Y = endA, Z = ignored</string>
+    <string>[EXPERIMENTAL] X = middle Y, Y = height, Z = top-height-mult</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
     <string>Vector3</string>
     <key>Value</key>
     <array>
-      <real>0.25</real>
-      <real>0.7</real>
-      <real>0.0</real>
+      <real>0.45</real>
+      <real>0.425</real>
+      <real>0.5</real>
     </array>
   </map>
   <key>OculusUISurfaceRadius</key>
@@ -14752,7 +14752,7 @@
     <key>Type</key>
     <string>F32</string>
     <key>Value</key>
-    <real>4.0</real>
+    <real>2.0</real>
   </map>
   <key>OculusTestCalibration</key>
   <map>
@@ -14775,6 +14775,21 @@
     <string>Boolean</string>
     <key>Value</key>
     <real>1</real>
+  </map>
+  <key>OculusUIFlatSurfaceScale</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] x = * 1.6, y = * 1.0, z = * -1.0</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Vector3</string>
+    <key>Value</key>
+    <array>
+      <real>1.5</real>
+      <real>1.5</real>
+      <real>1.5</real>
+    </array>
   </map>
 
 </map>
