@@ -27,6 +27,7 @@
 #include "llviewerprecompiledheaders.h"
 
 #include "llsliderctrl.h"
+#include "llcheckboxctrl.h"
 #include "llpanelhmdconfig.h"
 #include "llfloaterreg.h"
 
@@ -85,6 +86,8 @@ BOOL LLPanelHMDConfig::postBuild()
     mVerticalFOVSliderCtrl = getChild<LLSlider>("vertical_fov_slider");
     mXCenterOffsetSliderCtrl = getChild<LLSlider>("x_center_offset_slider");
     mYCenterOffsetSliderCtrl = getChild<LLSlider>("y_center_offset_slider");
+
+    mMotionPredictionCheckBoxCtrl = getChild<LLCheckBox>("hmd_motion_prediction");
 
 	return LLPanel::postBuild();
 }
@@ -147,4 +150,5 @@ void LLPanelHMDConfig::onSetYCenterOffset()
 
 void LLPanelHMDConfig::onSetMotionPrediction()
 {
+    llinfos << "Motion Prediction changed to  " << mMotionPredictionCheckBoxCtrl->get() << llendl;
 }

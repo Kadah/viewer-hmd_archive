@@ -32,6 +32,7 @@
 #include "llpanel.h"
 
 class LLSlider;
+class LLCheckBox;
 
 class LLPanelHMDConfig : public LLPanel
 {
@@ -64,6 +65,7 @@ class LLPanelHMDConfig : public LLPanel
     LLSlider* mVerticalFOVSliderCtrl;
     LLSlider* mXCenterOffsetSliderCtrl;
     LLSlider* mYCenterOffsetSliderCtrl;
+    LLCheckBox* mMotionPredictionCheckBoxCtrl;
 };
 
 #endif // LL_LLPANELHMDCONFIG_H

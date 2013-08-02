@@ -277,11 +277,10 @@ Motion
 Prediction
               </text>
               <check_box
-                control_name="ConnectionPortEnabled"
                 height="16"
                 follows="top|left"
                 left="34"
-                name="connection_port_enabled"
+                name="hmd_motion_prediction"
                 top_delta="30"
                 tool_tip="Motion prediction attempts to predict headset movement for a smoother, less jerky experience"
                 width="32">
