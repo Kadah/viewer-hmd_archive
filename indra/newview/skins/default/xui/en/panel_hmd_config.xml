@@ -1,302 +1,332 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <panel
- visible="false"
- border="false"
- chrome="true"
- name="hmd_config"
- width="225">
-
-   <button
-   height="23"
-   label="Close"
-   left="0"
-   name="hmd_config_button"
-
-   top="100"
-   width="155">
-    <commit_callback
-     function="HMDConfig.Close"/>
-  </button>
-
-  <slider
-     control_name="IPP"
-     follows="top|left"
-     font.style="BOLD"
-     height="15"
-     increment="0.025"
-     initial_value="0.5"
-     label="Master"
-     label_width="60"
-     left="10"
-     width="160"
-     layout="topleft"
-     name="ipp_slider"
-     show_text="false"
-     top="50">
-        <slider.commit_callback
-         function="HMDConfig.SetIPP" />
-    </slider>
-<!--
-    <button
-     control_name="MuteAudio"
-     follows="top|left"
-     height="16"
-     image_selected="AudioMute_Off"
-     image_unselected="Audio_Off"
-     is_toggle="true"
-     layout="topleft"
-     left_pad="5"
-     name="mute_audio"
-     tab_stop="false"
-     width="16" />
-    <slider
-        control_name="AudioLevelUI"
-        disabled_control="MuteAudio"
-        follows="left|top"
-        height="15"
-        increment="0.025"
-        initial_value="0.5"
-        label="Buttons"
-        label_width="60"
-        left="10"
-        width="160"
-        layout="topleft"
-        name="UI Volume"
-        show_text="false"
-        top_pad="4"
-        volume="true">
-    <slider.commit_callback
-        function="Pref.setControlFalse"
-        parameter="MuteUI" />
-    </slider>
-    <button
-        control_name="MuteUI"
-        disabled_control="MuteAudio"
-        follows="top|left"
-        height="16"
-        image_selected="AudioMute_Off"
-        image_unselected="Audio_Off"
-        is_toggle="true"
-        layout="topleft"
-        left_pad="5"
-        name="mute_audio"
-        tab_stop="false"
-        width="16" />
-    <slider
-     control_name="AudioLevelAmbient"
-     disabled_control="MuteAudio"
-     follows="left|top"
-     height="15"
-     increment="0.025"
-     initial_value="0.5"
-     label="Ambient"
-     label_width="60"
-     left="10"
-     width="160"
-     layout="topleft"
-     name="Wind Volume"
-     show_text="false"
-     top_pad="4"
-     volume="true">
-        <slider.commit_callback
-         function="Pref.setControlFalse"
-         parameter="MuteAmbient" />
-    </slider>
-    <button
-     control_name="MuteAmbient"
-     disabled_control="MuteAudio"
-     follows="top|left"
-     height="16"
-     image_selected="AudioMute_Off"
-     image_unselected="Audio_Off"
-     is_toggle="true"
-     layout="topleft"
-     left_pad="5"
-     name="mute_audio"
-     tab_stop="false"
-     width="16" />
-    <slider
-     control_name="AudioLevelSFX"
-     disabled_control="MuteAudio"
-     follows="left|top"
-     height="15"
-     increment="0.025"
-     initial_value="0.5"
-     label="Sounds"
-     label_width="60"
-     left="10"
-     width="160"
-     layout="topleft"
-     name="SFX Volume"
-     show_text="false"
-     top_pad="4"
-     volume="true">
-        <slider.commit_callback
-         function="Pref.setControlFalse"
-         parameter="MuteSounds" />
-    </slider>
-    <button
-     control_name="MuteSounds"
-     disabled_control="MuteAudio"
-     follows="top|left"
-     height="16"
-     image_selected="AudioMute_Off"
-     image_unselected="Audio_Off"
-     is_toggle="true"
-     layout="topleft"
-     left_pad="5"
-     name="mute_audio"
-     tab_stop="false"
-     width="16">
-      <button.commit_callback
-      function="Pref.SetSounds"/>
-    </button>
-  <check_box
-    name="gesture_audio_play_btn"
-		control_name="EnableGestureSounds"
-    disabled_control="MuteAudio"
-    height="16"
+  follows="all"
+  visible="true"
+  border="false"
+  chrome="true"
+  width="1024"
+  height="180"
+  layout="topleft"
+  name="hmd_config">
+  <layout_stack
+    left="0"
+    top="0"
     layout="topleft"
-    left_pad="5"
-    tool_tip="Enable sounds from gestures"
-    top_delta="2"
-    width="350"/>
-    <slider
-     control_name="AudioLevelMusic"
-     disabled_control="MuteAudio"
-     follows="left|top"
-     height="15"
-     increment="0.025"
-     initial_value="0.5"
-     label="Music"
-     label_width="60"
-     left="10"
-     width="160"
-     layout="topleft"
-     name="Music Volume"
-     show_text="false"
-     top_pad="4"
-     volume="true">
-        <slider.commit_callback
-         function="Pref.setControlFalse"
-         parameter="MuteMusic" />
-    </slider>
-    <button
-     control_name="MuteMusic"
-     disabled_control="MuteAudio"
-     follows="top|left"
-     height="16"
-     image_selected="AudioMute_Off"
-     image_unselected="Audio_Off"
-     is_toggle="true"
-     layout="topleft"
-     left_pad="5"
-     name="mute_audio"
-     tab_stop="false"
-     width="16" />
-    <check_box
-        control_name="AudioStreamingMusic"
-        height="16"
-        tool_tip="Enable Streaming Music"
+    height="180"
+    follows="all"
+    orientation="horizontal">
+    <layout_panel
+      height="180"
+      width="1" />
+    <layout_panel
+      height="180"
+      auto_resize="false"
+      width="420">
+      <layout_stack
+        left="0"
+        border_size="0"
+        top="0"
         layout="topleft"
-        left_pad="5"
-        name="enable_music"
-        top_delta="2"
-        width="350">
-        <check_box.commit_callback
-            function="Pref.updateMediaAutoPlayCheckbox"/>
-    </check_box>
-    <slider
-        control_name="AudioLevelMedia"
-        disabled_control="MuteAudio"
-        follows="left|top"
-        height="16"
-        increment="0.025"
-        initial_value="0.5"
-        label="Media"
-        label_width="60"
-        left="10"
-        width="160"
-        layout="topleft"
-        name="Media Volume"
-        show_text="false"
-        top_pad="4"
-        volume="true">
-      <slider.commit_callback
-        function="Pref.setControlFalse"
-        parameter="MuteMedia" />
-    </slider>
-    <button
-        control_name="MuteMedia"
-        disabled_control="MuteAudio"
-        follows="top|left"
-        height="16"
-        image_selected="AudioMute_Off"
-        image_unselected="Audio_Off"
-        is_toggle="true"
-        layout="topleft"
-        left_pad="5"
-        name="mute_audio"
-        tab_stop="false"
-        width="16" />
-    <check_box
-        label_text.halign="left"
-        follows="left|top"
-        height="16"
-        control_name ="AudioStreamingMedia"
-        tool_tip="Enable Streaming Media"
-        layout="topleft"
-        top_delta="2"
-        left_pad="5"
-        name="enable_media"
-        width="110">
-        <check_box.commit_callback
-            function="Pref.updateMediaAutoPlayCheckbox"/>
-    </check_box>
-    <slider
-        control_name="AudioLevelVoice"
-        disabled_control="MuteAudio"
-        follows="left|top"
-        height="16"
-        increment="0.025"
-        initial_value="0.5"
-        label="Voice"
-        label_width="60"
-        left="10"
-        width="160"
-        layout="topleft"
-        top_pad="4"
-        name="Voice Volume"
-        show_text="false"
-        volume="true">
-    <slider.commit_callback
-        function="Pref.setControlFalse"
-        parameter="MuteVoice" />
-    </slider>
-    <button
-        control_name="MuteVoice"
-        disabled_control="MuteAudio"
-        follows="top|left"
-        height="16"
-        image_selected="AudioMute_Off"
-        image_unselected="Audio_Off"
-        is_toggle="true"
-        layout="topleft"
-        left_pad="5"
-        name="mute_audio"
-        tab_stop="false"
-        width="16" />
-    <check_box
-        label_text.halign="left"
-        follows="left|top"
-        height="16"
-        control_name ="EnableVoiceChat"
-        disabled_control="CmdLineDisableVoice"
-        tool_tip="Enable Voice Chat"
-        layout="topleft"
-        top_delta="2"
-        left_pad="5"
-        name="enable_voice_check"
-        width="110"/>
-    -->
+        height="180"
+        follows="all"
+        orientation="vertical">
+        <layout_panel>
+          <layout_stack
+            border_size="0"
+            left="0"
+            top="0"
+            height="90"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="140"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="23"
+                height="30"
+                width="140"
+                left="0"
+                text_color="white"
+                halign="center">
+Interpupillary
+Distance
+              </text>
+              <slider_bar
+                top_delta="32"
+                min_val="0"
+                max_val="100"
+                increment="1"
+                initial_value="64"
+                name="interpupillary_offset_slider"
+                tool_tip="Configured distance between the user's eye centers, in millimeters"
+                left="5"
+                width="74">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetInterpupillaryOffset" />
+              </slider_bar>
+            </layout_panel>
+            <layout_panel
+              width="140"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="10"
+                height="30"
+                width="140"
+                left="0"
+                text_color="white"
+                halign="center">
+Lens
+Separation
+Distance
+              </text>
+              <slider_bar
+                top_delta="45"
+                min_val="0"
+                max_val="100"
+                increment="0.5"
+                initial_value="63.5"
+                name="lens_separation_distance_slider"
+                tool_tip="Distance (in millimeters) between physical lens centers useful for calculating distortion center"
+                left="5"
+                width="74">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetLensSeparationDistance" />
+              </slider_bar>
+            </layout_panel>
+            <layout_panel
+              width="140"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="10"
+                height="30"
+                width="140"
+                left="0"
+                text_color="white"
+                halign="center">
+Eye to
+Screen
+Distance
+              </text>
+              <slider_bar
+                top_delta="45"
+                min_val="0"
+                max_val="100"
+                increment="1"
+                initial_value="41"
+                name="eye_to_screen_distance_slider"
+                tool_tip="Distance from the eye to screen surface, in millimeters"
+                left="5"
+                width="74">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetEyeToScreenDistance" />
+              </slider_bar>
+            </layout_panel>
+            <layout_panel
+              width="140"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="23"
+                height="30"
+                width="140"
+                left="0"
+                text_color="white"
+                halign="center">
+Vertical
+FOV
+              </text>
+              <slider_bar
+                top_delta="32"
+                min_val="45"
+                max_val="135"
+                increment="0.5"
+                initial_value="90"
+                name="vertical_fov_slider"
+                tool_tip="Vertical Field of View (in degrees)"
+                left="5"
+                width="74">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetVerticalFOV" />
+              </slider_bar>
+            </layout_panel>
+            <layout_panel
+              width="140"
+              background_visible="true"
+              bg_alpha_color="0.0 0.3 0.3"
+              height="90">
+              <button
+                height="23"
+                label="Calibrate"
+                left="5"
+                name="hmd_calibrate_button"
+                follows="top|left"
+                top="48"
+                width="74">
+                <commit_callback
+                  function="HMDConfig.Calibrate" />
+              </button>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+        <layout_panel>
+          <layout_stack
+            border_size="0"
+            top="0"
+            height="140"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="140"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="10"
+                height="30"
+                width="140"
+                left="0"
+                text_color="white"
+                halign="center">
+X
+Center
+Offset
+              </text>
+              <slider_bar
+                top_delta="45"
+                min_val="-1"
+                max_val="1"
+                increment="0.01"
+                initial_value="0"
+                name="x_center_offset_slider"
+                tool_tip="Horizontal offset of the eye from the middle of the head"
+                left="5"
+                width="74">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetXCenterOffset" />
+              </slider_bar>
+            </layout_panel>
+            <layout_panel
+              width="140"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="10"
+                height="30"
+                width="140"
+                left="0"
+                text_color="white"
+                halign="center">
+Y
+Center
+Offset
+              </text>
+              <slider_bar
+                top_delta="45"
+                min_val="-1"
+                max_val="1"
+                increment="0.01"
+                initial_value="0"
+                name="y_center_offset_slider"
+                tool_tip="Vertical offset of the eye from the middle of the head"
+                left="5"
+                width="74">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetYCenterOffset" />
+              </slider_bar>
+            </layout_panel>
+            <layout_panel
+              width="140"
+              background_visible="true"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="23"
+                height="30"
+                width="140"
+                left="0"
+                text_color="white"
+                halign="center">
+Motion
+Prediction
+              </text>
+              <check_box
+                control_name="ConnectionPortEnabled"
+                height="16"
+                follows="top|left"
+                left="34"
+                name="connection_port_enabled"
+                top_delta="30"
+                tool_tip="Motion prediction attempts to predict headset movement for a smoother, less jerky experience"
+                width="32">
+                <check_box.commit_callback
+                  function="HMDConfig.SetMotionPrediction" />
+              </check_box>
+            </layout_panel>
+            <layout_panel
+              width="140"
+              background_visible="true"
+              bg_alpha_color="0.0 0.3 0.3">
+              <button
+                height="23"
+                label="Cancel"
+                left="5"
+                name="hmd_cancel_button"
+                follows="top|left"
+                top="48"
+                width="74">
+                <commit_callback
+                  function="HMDConfig.Cancel" />
+              </button>
+            </layout_panel>
+            <layout_panel
+              width="140"
+              background_visible="true"
+              bg_alpha_color="0.0 0.3 0.3">
+              <button
+                height="23"
+                label="Save"
+                left="5"
+                name="hmd_save_button"
+                follows="top|left"
+                top="48"
+                width="74">
+                <commit_callback
+                  function="HMDConfig.Save" />
+              </button>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+      </layout_stack>
+    </layout_panel>
+    <layout_panel
+      height="180"
+      width="1" />
+  </layout_stack>
 </panel>

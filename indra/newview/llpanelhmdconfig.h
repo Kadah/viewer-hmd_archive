@@ -31,7 +31,7 @@
 
 #include "llpanel.h"
 
-class LLSliderCtrl;
+class LLSlider;
 
 class LLPanelHMDConfig : public LLPanel
 {
@@ -42,14 +42,28 @@ class LLPanelHMDConfig : public LLPanel
 	/*virtual*/ BOOL postBuild();
 
     static void toggleVisibility();
-    void onClickClose();
-    void onSetIPP();
     static LLPanelHMDConfig* getInstance();
+
+    void onClickCalibrate();
+    void onClickCancel();
+    void onClickSave();
+    void onSetEyeToScreenDistance();
+    void onSetInterpupillaryOffset();
+    void onSetLensSeparationDistance();
+    void onSetMotionPrediction();
+    void onSetVerticalFOV();
+    void onSetXCenterOffset();
+    void onSetYCenterOffset();
 
  private:
     static LLPanelHMDConfig*  sInstance;
-    LLSliderCtrl* mIPPSliderCtrl;
-};
 
+    LLSlider* mInterpupillaryOffsetSliderCtrl;
+    LLSlider* mLensSeparationDistanceSliderCtrl;
+    LLSlider* mEyeToScreenSliderCtrl;
+    LLSlider* mVerticalFOVSliderCtrl;
+    LLSlider* mXCenterOffsetSliderCtrl;
+    LLSlider* mYCenterOffsetSliderCtrl;
+};
 
 #endif // LL_LLPANELHMDCONFIG_H
