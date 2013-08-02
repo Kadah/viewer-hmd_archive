@@ -32,7 +32,7 @@
 #include "llpanel.h"
 
 class LLSlider;
-class LLCheckBox;
+class LLCheckBoxCtrl;
 
 class LLPanelHMDConfig : public LLPanel
 {
@@ -51,10 +51,10 @@ class LLPanelHMDConfig : public LLPanel
     void onSetEyeToScreenDistance();
     void onSetInterpupillaryOffset();
     void onSetLensSeparationDistance();
-    void onSetMotionPrediction();
     void onSetVerticalFOV();
     void onSetXCenterOffset();
     void onSetYCenterOffset();
+    void onCheckMotionPrediction();
 
  private:
     static LLPanelHMDConfig*  sInstance;
@@ -65,7 +65,7 @@ class LLPanelHMDConfig : public LLPanel
     LLSlider* mVerticalFOVSliderCtrl;
     LLSlider* mXCenterOffsetSliderCtrl;
     LLSlider* mYCenterOffsetSliderCtrl;
-    LLCheckBox* mMotionPredictionCheckBoxCtrl;
+    LLCheckBoxCtrl* mMotionPredictionCheckBoxCtrl;
 };
 
 #endif // LL_LLPANELHMDCONFIG_H

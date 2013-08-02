@@ -44,7 +44,7 @@ LLPanelHMDConfig::LLPanelHMDConfig()
     mCommitCallbackRegistrar.add("HMDConfig.SetEyeToScreenDistance", boost::bind(&LLPanelHMDConfig::onSetEyeToScreenDistance, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetInterpupillaryOffset", boost::bind(&LLPanelHMDConfig::onSetInterpupillaryOffset, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetLensSeparationDistance", boost::bind(&LLPanelHMDConfig::onSetLensSeparationDistance, this));
-    mCommitCallbackRegistrar.add("HMDConfig.SetMotionPrediction", boost::bind(&LLPanelHMDConfig::onSetMotionPrediction, this));
+    mCommitCallbackRegistrar.add("HMDConfig.SetMotionPrediction", boost::bind(&LLPanelHMDConfig::onCheckMotionPrediction, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetVerticalFOV", boost::bind(&LLPanelHMDConfig::onSetVerticalFOV, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetXCenterOffset", boost::bind(&LLPanelHMDConfig::onSetXCenterOffset, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetYCenterOffset", boost::bind(&LLPanelHMDConfig::onSetYCenterOffset, this));
@@ -87,7 +87,7 @@ BOOL LLPanelHMDConfig::postBuild()
     mXCenterOffsetSliderCtrl = getChild<LLSlider>("x_center_offset_slider");
     mYCenterOffsetSliderCtrl = getChild<LLSlider>("y_center_offset_slider");
 
-    mMotionPredictionCheckBoxCtrl = getChild<LLCheckBox>("hmd_motion_prediction");
+    mMotionPredictionCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_motion_prediction");
 
 	return LLPanel::postBuild();
 }
@@ -148,7 +148,7 @@ void LLPanelHMDConfig::onSetYCenterOffset()
     llinfos << "Y Center Offset changed to  " << mYCenterOffsetSliderCtrl->getValueF32() << llendl;
 }
 
-void LLPanelHMDConfig::onSetMotionPrediction()
+void LLPanelHMDConfig::onCheckMotionPrediction()
 {
     llinfos << "Motion Prediction changed to  " << mMotionPredictionCheckBoxCtrl->get() << llendl;
 }
