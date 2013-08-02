@@ -28,6 +28,8 @@
 #define LL_LLHMD_H
 
 class LLHMDImpl;
+class LLViewerTexture;
+
 
 // TODO: move some of the data to this class instead of always requiring an extra method call via PIMPL
 class LLHMD
@@ -57,8 +59,9 @@ public:
         kFlag_Initialized               = 1 << 0,
         kFlag_FailedInit                = 1 << 1,
         kFlag_MainIsFullScreen          = 1 << 2,
-        kFlag_Render2DUI                = 1 << 3,
+        kFlag_Render2DUICurvedSurface   = 1 << 3,
         kFlag_IsCalibrated              = 1 << 4,
+        kFlag_ShowDepthUI               = 1 << 5,
     };
 
 public:
@@ -75,10 +78,12 @@ public:
     void failedInit(BOOL b) { if (b) { mFlags |= kFlag_FailedInit; } else { mFlags &= ~kFlag_FailedInit; } }
     BOOL isMainFullScreen() const { return ((mFlags & kFlag_MainIsFullScreen) != 0) ? TRUE : FALSE; }
     void isMainFullScreen(BOOL b) { if (b) { mFlags |= kFlag_MainIsFullScreen; } else { mFlags &= ~kFlag_MainIsFullScreen; } }
-    BOOL shouldRender2DUI() const { return ((mFlags & kFlag_Render2DUI) != 0) ? TRUE : FALSE; }
-    void shouldRender2DUI(BOOL b) { if (b) { mFlags |= kFlag_Render2DUI; } else { mFlags &= ~kFlag_Render2DUI; } }
+    BOOL shouldRender2DUICurvedSurface() const { return ((mFlags & kFlag_Render2DUICurvedSurface) != 0) ? TRUE : FALSE; }
+    void shouldRender2DUICurvedSurface(BOOL b) { if (b) { mFlags |= kFlag_Render2DUICurvedSurface; } else { mFlags &= ~kFlag_Render2DUICurvedSurface; } }
     BOOL isCalibrated() const { return ((mFlags & kFlag_IsCalibrated) != 0) ? TRUE : FALSE; }
     void isCalibrated(BOOL b) { if (b) { mFlags |= kFlag_IsCalibrated; } else { mFlags &= ~kFlag_IsCalibrated; } }
+    BOOL shouldShowDepthUI() const { return ((mFlags & kFlag_ShowDepthUI) != 0) ? TRUE : FALSE; }
+    void shouldShowDepthUI(BOOL b) { if (b) { mFlags |= kFlag_ShowDepthUI; } else { mFlags &= ~kFlag_ShowDepthUI; } }
 
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL shouldRender() const { return mRenderMode != RenderMode_None; }
@@ -156,9 +161,12 @@ public:
     S32 getOptWorldViewRaw() const { return mOptWorldViewRaw; }
     S32 getOptWorldViewScaled() const { return mOptWorldViewScaled; }
     F32 getUISurfaceFudge() const { return mUISurface_Fudge; }
-    void getUISurfaceX(F32& start, F32& end) const { start = mUISurface_B[0]; end = mUISurface_B[1]; }
-    void getUISurfaceY(F32& start, F32& end) const { start = mUISurface_A[0]; end = mUISurface_A[1]; }
+    const LLVector2& getUISurfaceX() const { return mUICurvedSurfaceX; }
+    const LLVector2& getUISurfaceY() const { return mUICurvedSurfaceY; }
     F32 getUISurfaceRadius() const { return mUISurface_R; }
+    const LLVector3& getUIFlatSurfaceScale() const { return mUIFlatSurfaceScale; }
+
+    LLViewerTexture* getCursorImage(U32 cursorType);
 
     static void onChangeInterpupillaryOffsetModifer();
     static void onChangeLensSeparationDistanceModifier();
@@ -170,7 +178,10 @@ public:
     static void onChangeWorldViewRaw();
     static void onChangeWorldViewScaled();
     static void onChangeVerticalFOVModifier();
+    static void onChangeTestCalibration();
+    static void onChangeRender2DUICurvedSurface();
     static void onChangeUISurfaceShape();
+    static void onChangeUIFlatSurfaceScale();
 
 private:
     LLHMDImpl* mImpl;
@@ -191,8 +202,9 @@ private:
     S32 mMainWindowHeight;
     F32 mUISurface_Fudge;
     F32 mUISurface_R;
-    LLVector3 mUISurface_A;
-    LLVector3 mUISurface_B;
+    LLVector2 mUICurvedSurfaceY;
+    LLVector2 mUICurvedSurfaceX;
+    LLVector3 mUIFlatSurfaceScale;
  };
 
 extern LLHMD gHMD;

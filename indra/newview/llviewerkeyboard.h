@@ -50,6 +50,7 @@ typedef enum e_keyboard_mode
 	MODE_EDIT,
 	MODE_EDIT_AVATAR,
 	MODE_SITTING,
+    MODE_FIRST_PERSON_HMD,
 	MODE_COUNT
 } EKeyboardMode;
 
@@ -81,7 +82,8 @@ public:
 							third_person,
 							edit,
 							sitting,
-							edit_avatar;
+							edit_avatar,
+                            first_person_hmd;
 
 		Keys();
 	};
