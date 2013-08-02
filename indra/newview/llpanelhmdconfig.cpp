@@ -41,13 +41,18 @@ LLPanelHMDConfig::LLPanelHMDConfig()
     mCommitCallbackRegistrar.add("HMDConfig.Calibrate", boost::bind(&LLPanelHMDConfig::onClickCalibrate, this));
     mCommitCallbackRegistrar.add("HMDConfig.Cancel", boost::bind(&LLPanelHMDConfig::onClickCancel, this));
     mCommitCallbackRegistrar.add("HMDConfig.Save", boost::bind(&LLPanelHMDConfig::onClickSave, this));
+    mCommitCallbackRegistrar.add("HMDConfig.ResetValues", boost::bind(&LLPanelHMDConfig::onClickResetValues, this));
+    mCommitCallbackRegistrar.add("HMDConfig.RefreshDevices", boost::bind(&LLPanelHMDConfig::onClickRefreshDevices, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetEyeToScreenDistance", boost::bind(&LLPanelHMDConfig::onSetEyeToScreenDistance, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetInterpupillaryOffset", boost::bind(&LLPanelHMDConfig::onSetInterpupillaryOffset, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetLensSeparationDistance", boost::bind(&LLPanelHMDConfig::onSetLensSeparationDistance, this));
-    mCommitCallbackRegistrar.add("HMDConfig.SetMotionPrediction", boost::bind(&LLPanelHMDConfig::onCheckMotionPrediction, this));
+    mCommitCallbackRegistrar.add("HMDConfig.CheckMotionPrediction", boost::bind(&LLPanelHMDConfig::onCheckMotionPrediction, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetVerticalFOV", boost::bind(&LLPanelHMDConfig::onSetVerticalFOV, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetXCenterOffset", boost::bind(&LLPanelHMDConfig::onSetXCenterOffset, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetYCenterOffset", boost::bind(&LLPanelHMDConfig::onSetYCenterOffset, this));
+    mCommitCallbackRegistrar.add("HMDConfig.SetZCenterOffset", boost::bind(&LLPanelHMDConfig::onSetZCenterOffset, this));
+    mCommitCallbackRegistrar.add("HMDConfig.SetMotionPredictionDelta", boost::bind(&LLPanelHMDConfig::onSetMotionPredictionDelta, this));
+    mCommitCallbackRegistrar.add("HMDConfig.CheckAutoCalibration", boost::bind(&LLPanelHMDConfig::onCheckAutoCalibration, this));
 }
 
 LLPanelHMDConfig::~LLPanelHMDConfig()
@@ -86,33 +91,44 @@ BOOL LLPanelHMDConfig::postBuild()
     mVerticalFOVSliderCtrl = getChild<LLSlider>("vertical_fov_slider");
     mXCenterOffsetSliderCtrl = getChild<LLSlider>("x_center_offset_slider");
     mYCenterOffsetSliderCtrl = getChild<LLSlider>("y_center_offset_slider");
-
+    mZCenterOffsetSliderCtrl = getChild<LLSlider>("z_center_offset_slider");
     mMotionPredictionCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_motion_prediction");
+    mMotionPredictionDeltaSliderCtrl = getChild<LLSlider>("motion_prediction_delta_slider");
+    mAutoCalibrationCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_auto_calibration");
 
 	return LLPanel::postBuild();
 }
 
 void LLPanelHMDConfig::draw()
 {
+    // maybe override not needed here - TODO: remove if not.
     LLPanel::draw();
 }
 
 void LLPanelHMDConfig::onClickCalibrate()
 {
+    llinfos << "Calibrate button pressed" << llendl;
+}
 
+void LLPanelHMDConfig::onClickResetValues()
+{
+    llinfos << "Reset Values button pressed" << llendl;
+}
+
+void LLPanelHMDConfig::onClickRefreshDevices()
+{
+    llinfos << "Refresh Devices button pressed" << llendl;
 }
 
 void LLPanelHMDConfig::onClickCancel()
 {
-    // add code to restore current settings if appropriate
-
-    // turn off panel
+    // turn off panel and throw away values
     LLPanelHMDConfig::getInstance()->toggleVisibility();
 }
 
 void LLPanelHMDConfig::onClickSave()
 {
-    // add code to save current settings if appropriate
+    // add code here to save current settings if appropriate
 
     // turn off panel
     LLPanelHMDConfig::getInstance()->toggleVisibility();
@@ -148,7 +164,22 @@ void LLPanelHMDConfig::onSetYCenterOffset()
     llinfos << "Y Center Offset changed to  " << mYCenterOffsetSliderCtrl->getValueF32() << llendl;
 }
 
+void LLPanelHMDConfig::onSetZCenterOffset()
+{
+    llinfos << "Z Center Offset changed to  " << mZCenterOffsetSliderCtrl->getValueF32() << llendl;
+}
+
 void LLPanelHMDConfig::onCheckMotionPrediction()
 {
     llinfos << "Motion Prediction changed to  " << mMotionPredictionCheckBoxCtrl->get() << llendl;
+}
+
+void LLPanelHMDConfig::onCheckAutoCalibration()
+{
+    llinfos << "Auto Calibration changed to  " << mAutoCalibrationCheckBoxCtrl->get() << llendl;
+}
+
+void LLPanelHMDConfig::onSetMotionPredictionDelta()
+{
+    llinfos << "Motion Prediction Delta changed to " << mMotionPredictionDeltaSliderCtrl->getValueF32() << llendl;
 }

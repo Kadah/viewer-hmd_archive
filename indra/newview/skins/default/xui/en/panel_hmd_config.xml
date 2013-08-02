@@ -5,21 +5,21 @@
   border="false"
   chrome="true"
   width="1024"
-  height="180"
+  height="210"
   layout="topleft"
   name="hmd_config">
   <layout_stack
     left="0"
     top="0"
     layout="topleft"
-    height="180"
+    height="210"
     follows="all"
     orientation="horizontal">
     <layout_panel
-      height="180"
+      height="210"
       width="1" />
     <layout_panel
-      height="180"
+      height="210"
       auto_resize="false"
       width="420">
       <layout_stack
@@ -27,7 +27,7 @@
         border_size="0"
         top="0"
         layout="topleft"
-        height="180"
+        height="210"
         follows="all"
         orientation="vertical">
         <layout_panel>
@@ -35,7 +35,7 @@
             border_size="0"
             left="0"
             top="0"
-            height="90"
+            height="70"
             follows="all"
             orientation="horizontal">
             <layout_panel
@@ -172,7 +172,7 @@ FOV
               width="140"
               background_visible="true"
               bg_alpha_color="0.0 0.3 0.3"
-              height="90">
+              height="70">
               <button
                 height="23"
                 label="Calibrate"
@@ -251,7 +251,7 @@ Offset
                 min_val="-1"
                 max_val="1"
                 increment="0.01"
-                initial_value="0"
+                initial_value="0.15"
                 name="y_center_offset_slider"
                 tool_tip="Vertical offset of the eye from the middle of the head"
                 left="5"
@@ -260,6 +260,80 @@ Offset
                   function="HMDConfig.SetYCenterOffset" />
               </slider_bar>
             </layout_panel>
+            <layout_panel
+              width="140"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="10"
+                height="30"
+                width="140"
+                left="0"
+                text_color="white"
+                halign="center">
+Z
+Center
+Offset
+              </text>
+              <slider_bar
+                top_delta="45"
+                min_val="-1"
+                max_val="1"
+                increment="0.01"
+                initial_value="0.09"
+                name="z_center_offset_slider"
+                tool_tip="Protrusion of eye from the center of the head"
+                left="5"
+                width="74">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetZCenterOffset" />
+              </slider_bar>
+            </layout_panel>
+            <layout_panel
+              width="140"
+              background_visible="true"
+              bg_alpha_color="0.0 0.3 0.3">
+              <button
+                height="23"
+                label="Refresh Devices"
+                left="5"
+                name="hmd_refresh_devices_button"
+                follows="top|left"
+                top="48"
+                width="74">
+                <commit_callback
+                  function="HMDConfig.RefreshDevices" />
+              </button>
+            </layout_panel>
+            <layout_panel
+              width="140"
+              background_visible="true"
+              bg_alpha_color="0.0 0.3 0.3">
+              <button
+                height="23"
+                label="Reset Values"
+                left="5"
+                name="hmd_reset_values_button"
+                follows="top|left"
+                top="48"
+                width="74">
+                <commit_callback
+                  function="HMDConfig.ResetValues" />
+              </button>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+        <layout_panel>
+          <layout_stack
+            border_size="0"
+            top="0"
+            follows="all"
+            orientation="horizontal">
+
             <layout_panel
               width="140"
               background_visible="true"
@@ -280,12 +354,77 @@ Prediction
                 height="16"
                 follows="top|left"
                 left="34"
+                initial_value="true"
                 name="hmd_motion_prediction"
                 top_delta="30"
                 tool_tip="Motion prediction attempts to predict headset movement for a smoother, less jerky experience"
                 width="32">
                 <check_box.commit_callback
-                  function="HMDConfig.SetMotionPrediction" />
+                  function="HMDConfig.CheckMotionPrediction" />
+              </check_box>
+            </layout_panel>
+
+            <layout_panel
+              width="140"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="10"
+                height="30"
+                width="140"
+                left="0"
+                text_color="white"
+                halign="center">
+Motion
+Prediction
+Delta
+              </text>
+              <slider_bar
+                top_delta="45"
+                min_val="0"
+                max_val="100"
+                increment="1"
+                initial_value="30"
+                name="motion_prediction_delta_slider"
+                tool_tip="Specifies how much prediction should be applied in milliseconds; it should in general be under the average rendering latency"
+                left="5"
+                width="74">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetMotionPredictionDelta" />
+              </slider_bar>
+            </layout_panel>
+
+            <layout_panel
+              width="140"
+              background_visible="true"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="23"
+                height="30"
+                width="140"
+                left="0"
+                text_color="white"
+                halign="center">
+Auto
+Calibration
+              </text>
+              <check_box
+                height="16"
+                follows="top|left"
+                left="34"
+                name="hmd_auto_calibration"
+                top_delta="30"
+                initial_value="true"
+                tool_tip="Attempts to automatically calibrate HMD based on user movements and initial HMD facing, etc."
+                width="32">
+                <check_box.commit_callback
+                  function="HMDConfig.CheckAutoCalibration" />
               </check_box>
             </layout_panel>
             <layout_panel
@@ -325,7 +464,7 @@ Prediction
       </layout_stack>
     </layout_panel>
     <layout_panel
-      height="180"
+      height="210"
       width="1" />
   </layout_stack>
 </panel>

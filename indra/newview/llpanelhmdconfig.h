@@ -48,13 +48,18 @@ class LLPanelHMDConfig : public LLPanel
     void onClickCalibrate();
     void onClickCancel();
     void onClickSave();
+    void onClickResetValues();
+    void onClickRefreshDevices();
     void onSetEyeToScreenDistance();
     void onSetInterpupillaryOffset();
     void onSetLensSeparationDistance();
     void onSetVerticalFOV();
     void onSetXCenterOffset();
     void onSetYCenterOffset();
+    void onSetZCenterOffset();
     void onCheckMotionPrediction();
+    void onSetMotionPredictionDelta();
+    void onCheckAutoCalibration();
 
  private:
     static LLPanelHMDConfig*  sInstance;
@@ -65,7 +70,10 @@ class LLPanelHMDConfig : public LLPanel
     LLSlider* mVerticalFOVSliderCtrl;
     LLSlider* mXCenterOffsetSliderCtrl;
     LLSlider* mYCenterOffsetSliderCtrl;
+    LLSlider* mZCenterOffsetSliderCtrl;
     LLCheckBoxCtrl* mMotionPredictionCheckBoxCtrl;
+    LLSlider* mMotionPredictionDeltaSliderCtrl;
+    LLCheckBoxCtrl* mAutoCalibrationCheckBoxCtrl;
 };
 
 #endif // LL_LLPANELHMDCONFIG_H

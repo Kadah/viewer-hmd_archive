@@ -99,7 +99,7 @@
     </layout_panel>
   </layout_stack>
   <panel bottom="768"
-          height="180"
+          height="250"
           width="1024"
           follows="left|bottom|right"
           name="hmd_config_panel_holder"
