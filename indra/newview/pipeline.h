@@ -622,6 +622,7 @@ public:
 
     //utilitye buffer for rendering oculus UI surface
     LLPointer<LLVertexBuffer> mOculusUISurface;
+    LLPointer<LLVertexBuffer> mOculusDepthShape;
 
 	LLVector4				mSunClipPlanes;
 	LLVector4				mSunOrthoClipPlanes;

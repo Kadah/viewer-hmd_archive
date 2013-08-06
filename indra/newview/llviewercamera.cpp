@@ -42,6 +42,7 @@
 #include "lltoolmgr.h"
 #include "llviewerjoystick.h"
 #include "llhmd.h"
+#include "llviewerdisplay.h"
 
 // Linden library includes
 #include "lldrawable.h"
@@ -131,8 +132,16 @@ F32 LLViewerCamera::getAspect() const
 {
     if (gHMD.shouldRender())
     {
-        static const F32 kHMDHalfAspect = (float)gHMD.kHMDEyeWidth / (float)gHMD.kHMDHeight;
-        return kHMDHalfAspect;
+        if (gRenderUIMode)
+        {
+            static const F32 kHMDUIAspect = (float)gHMD.kHMDUIWidth / (float)gHMD.kHMDUIHeight;
+            return kHMDUIAspect;
+        }
+        else
+        {
+            static const F32 kHMDHalfAspect = (float)gHMD.kHMDEyeWidth / (float)gHMD.kHMDHeight;
+            return kHMDHalfAspect;
+        }
     }
     else
     {
@@ -256,7 +265,7 @@ void LLViewerCamera::updateFrustumPlanes(LLCamera& camera, BOOL ortho, BOOL zfli
 
 	for (U32 i = 0; i < 16; i++)
 	{
-        if (gHMD.shouldRender())
+        if (gHMD.shouldRender() && !ortho)
         {
             model[i] = (F64)gHMD.getBaseModelView()[i];
             proj[i] = (F64)gHMD.getBaseProjection()[i];
@@ -436,19 +445,10 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
         gHMD.setBaseProjection(proj_mat.m);
         F32 viewCenter = gHMD.getHScreenSize() * 0.25f;
         F32 eyeProjShift = viewCenter - (gHMD.getLensSeparationDistance() * 0.5f);
-        F32 projCtrOffset = (4.0f * eyeProjShift) / gHMD.getHScreenSize();
-        if (sCurrentEye == LEFT_EYE)
-        {
-            glh::matrix4f translate;
-            translate.set_translate(glh::vec3f(projCtrOffset, 0.0f, 0.0f));
-            proj_mat = translate * proj_mat;
-        }
-        else if (sCurrentEye == RIGHT_EYE)
-        {
-            glh::matrix4f translate;
-            translate.set_translate(glh::vec3f(-projCtrOffset, 0.0f, 0.0f));
-            proj_mat = translate * proj_mat;
-        }
+        F32 projCtrOffset = ((4.0f * eyeProjShift) / gHMD.getHScreenSize()) * (sCurrentEye == LEFT_EYE ? 1.0f : -1.0f);
+        glh::matrix4f translate;
+        translate.set_translate(glh::vec3f(projCtrOffset, 0.0f, 0.0f));
+        proj_mat = translate * proj_mat;
     }
 
 	gGL.loadMatrix(proj_mat.m);
