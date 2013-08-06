@@ -161,7 +161,7 @@ public:
     // is private and has no accessors currently.  Hoping to not modify SDK, but may be forced to if we need this value.
     F32 getOrthoPixelOffset() const { return gHMD.isInitialized() ? mCurrentEyeParams.OrthoProjection.M[0][3] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)OVR::Util::Render::StereoEye_Left ? 1.0f : -1.0f)); }
 
-    LLViewerTexture* getCursorImage(U32 idx) { return (idx < mCursorTextures.size()) ? mCursorTextures[idx] : NULL; }
+    LLViewerTexture* getCursorImage(U32 idx) { return (idx < mCursorTextures.size()) ? mCursorTextures[idx].get() : NULL; }
 
     // OVR::Application overrides
     //virtual int  OnStartup(int argc, const char** argv);
