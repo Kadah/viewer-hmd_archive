@@ -30,34 +30,38 @@
 #include "llcheckboxctrl.h"
 #include "llpanelhmdconfig.h"
 #include "llfloaterreg.h"
+#include "llhmd.h"
 
 static LLRegisterPanelClassWrapper<LLPanelHMDConfig> t_panel_hmd_config("panel_hmd_config");
 LLPanelHMDConfig* LLPanelHMDConfig::sInstance = NULL;
 
 LLPanelHMDConfig::LLPanelHMDConfig()
+    : mInterpupillaryOffsetSliderCtrl(NULL)
+    , mInterpupillaryOffsetAmountCtrl(NULL)
+    , mEyeToScreenSliderCtrl(NULL)
+    , mEyeToScreenAmountCtrl(NULL)
+    , mMotionPredictionCheckBoxCtrl(NULL)
+    , mMotionPredictionDeltaSliderCtrl(NULL)
+    , mMotionPredictionDeltaAmountCtrl(NULL)
+    , mInterpupillaryOffsetOriginal(64.0f)
+    , mEyeToScreenDistanceOriginal(41.0f)
+    , mMotionPredictionCheckedOriginal(TRUE)
+    , mMotionPredictionDeltaOriginal(30.0f)
 {
     sInstance = this;
 
+    mCommitCallbackRegistrar.add("HMDConfig.SetInterpupillaryOffset", boost::bind(&LLPanelHMDConfig::onSetInterpupillaryOffset, this));
+    mCommitCallbackRegistrar.add("HMDConfig.SetEyeToScreenDistance", boost::bind(&LLPanelHMDConfig::onSetEyeToScreenDistance, this));
+    mCommitCallbackRegistrar.add("HMDConfig.CheckMotionPrediction", boost::bind(&LLPanelHMDConfig::onCheckMotionPrediction, this));
+    mCommitCallbackRegistrar.add("HMDConfig.SetMotionPredictionDelta", boost::bind(&LLPanelHMDConfig::onSetMotionPredictionDelta, this));
     mCommitCallbackRegistrar.add("HMDConfig.Calibrate", boost::bind(&LLPanelHMDConfig::onClickCalibrate, this));
+    mCommitCallbackRegistrar.add("HMDConfig.ResetValues", boost::bind(&LLPanelHMDConfig::onClickResetValues, this));
     mCommitCallbackRegistrar.add("HMDConfig.Cancel", boost::bind(&LLPanelHMDConfig::onClickCancel, this));
     mCommitCallbackRegistrar.add("HMDConfig.Save", boost::bind(&LLPanelHMDConfig::onClickSave, this));
-    mCommitCallbackRegistrar.add("HMDConfig.ResetValues", boost::bind(&LLPanelHMDConfig::onClickResetValues, this));
-    mCommitCallbackRegistrar.add("HMDConfig.RefreshDevices", boost::bind(&LLPanelHMDConfig::onClickRefreshDevices, this));
-    mCommitCallbackRegistrar.add("HMDConfig.SetEyeToScreenDistance", boost::bind(&LLPanelHMDConfig::onSetEyeToScreenDistance, this));
-    mCommitCallbackRegistrar.add("HMDConfig.SetInterpupillaryOffset", boost::bind(&LLPanelHMDConfig::onSetInterpupillaryOffset, this));
-    mCommitCallbackRegistrar.add("HMDConfig.SetLensSeparationDistance", boost::bind(&LLPanelHMDConfig::onSetLensSeparationDistance, this));
-    mCommitCallbackRegistrar.add("HMDConfig.CheckMotionPrediction", boost::bind(&LLPanelHMDConfig::onCheckMotionPrediction, this));
-    mCommitCallbackRegistrar.add("HMDConfig.SetVerticalFOV", boost::bind(&LLPanelHMDConfig::onSetVerticalFOV, this));
-    mCommitCallbackRegistrar.add("HMDConfig.SetXCenterOffset", boost::bind(&LLPanelHMDConfig::onSetXCenterOffset, this));
-    mCommitCallbackRegistrar.add("HMDConfig.SetYCenterOffset", boost::bind(&LLPanelHMDConfig::onSetYCenterOffset, this));
-    mCommitCallbackRegistrar.add("HMDConfig.SetZCenterOffset", boost::bind(&LLPanelHMDConfig::onSetZCenterOffset, this));
-    mCommitCallbackRegistrar.add("HMDConfig.SetMotionPredictionDelta", boost::bind(&LLPanelHMDConfig::onSetMotionPredictionDelta, this));
-    mCommitCallbackRegistrar.add("HMDConfig.CheckAutoCalibration", boost::bind(&LLPanelHMDConfig::onCheckAutoCalibration, this));
 }
 
 LLPanelHMDConfig::~LLPanelHMDConfig()
 {
-    delete sInstance;
     sInstance = NULL;
 }
 
@@ -73,12 +77,42 @@ LLPanelHMDConfig* LLPanelHMDConfig::getInstance()
 // static
 void LLPanelHMDConfig::toggleVisibility()
 {
-    bool visible = LLPanelHMDConfig::getInstance()->getVisible();
+    LLPanelHMDConfig* pPanel = LLPanelHMDConfig::getInstance();
+    bool visible = pPanel->getVisible();
 
     // turn off main view (other views e.g. tool tips, snapshot are still available)
     LLUI::getRootView()->getChildView("menu_stack")->setVisible( visible );
 
-    LLPanelHMDConfig::getInstance()->setVisible( ! visible );
+    gHMD.shouldShowDepthUI( !visible );
+    pPanel->setVisible( !visible );
+
+    if (pPanel->getVisible())
+    {
+        if (pPanel->mInterpupillaryOffsetSliderCtrl)
+        {
+            pPanel->mInterpupillaryOffsetOriginal = gHMD.getInterpupillaryOffset() * 1000.0f;
+            pPanel->mInterpupillaryOffsetSliderCtrl->setValue(pPanel->mInterpupillaryOffsetOriginal);
+            pPanel->onSetInterpupillaryOffset();
+        }
+        if (pPanel->mEyeToScreenSliderCtrl)
+        {
+            pPanel->mEyeToScreenDistanceOriginal = gHMD.getEyeToScreenDistance() * 1000.0f;
+            pPanel->mEyeToScreenSliderCtrl->setValue(pPanel->mEyeToScreenDistanceOriginal);
+            pPanel->onSetEyeToScreenDistance();
+        }
+        if (pPanel->mMotionPredictionDeltaSliderCtrl)
+        {
+            pPanel->mMotionPredictionDeltaOriginal = gHMD.getMotionPredictionDelta() * 1000.0f;
+            pPanel->mMotionPredictionDeltaSliderCtrl->setValue(pPanel->mMotionPredictionDeltaOriginal);
+            pPanel->onSetMotionPredictionDelta();
+        }
+        if (pPanel->mMotionPredictionCheckBoxCtrl)
+        {
+            pPanel->mMotionPredictionCheckedOriginal = gHMD.useMotionPrediction();
+            pPanel->mMotionPredictionCheckBoxCtrl->setValue(pPanel->mMotionPredictionCheckedOriginal);
+            pPanel->onCheckMotionPrediction();
+        }
+    }
 }
 
 BOOL LLPanelHMDConfig::postBuild()
@@ -86,15 +120,12 @@ BOOL LLPanelHMDConfig::postBuild()
     setVisible(FALSE);
 
     mInterpupillaryOffsetSliderCtrl = getChild<LLSlider>("interpupillary_offset_slider");
-    mLensSeparationDistanceSliderCtrl = getChild<LLSlider>("lens_separation_distance_slider");
+    mInterpupillaryOffsetAmountCtrl = getChild<LLUICtrl>("interpupillary_offset_slider_amount");
     mEyeToScreenSliderCtrl = getChild<LLSlider>("eye_to_screen_distance_slider");
-    mVerticalFOVSliderCtrl = getChild<LLSlider>("vertical_fov_slider");
-    mXCenterOffsetSliderCtrl = getChild<LLSlider>("x_center_offset_slider");
-    mYCenterOffsetSliderCtrl = getChild<LLSlider>("y_center_offset_slider");
-    mZCenterOffsetSliderCtrl = getChild<LLSlider>("z_center_offset_slider");
+    mEyeToScreenAmountCtrl = getChild<LLUICtrl>("eye_to_screen_distance_slider_amount");
     mMotionPredictionCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_motion_prediction");
     mMotionPredictionDeltaSliderCtrl = getChild<LLSlider>("motion_prediction_delta_slider");
-    mAutoCalibrationCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_auto_calibration");
+    mMotionPredictionDeltaAmountCtrl = getChild<LLUICtrl>("motion_prediction_delta_slider_amount");
 
 	return LLPanel::postBuild();
 }
@@ -112,74 +143,66 @@ void LLPanelHMDConfig::onClickCalibrate()
 
 void LLPanelHMDConfig::onClickResetValues()
 {
-    llinfos << "Reset Values button pressed" << llendl;
-}
-
-void LLPanelHMDConfig::onClickRefreshDevices()
-{
-    llinfos << "Refresh Devices button pressed" << llendl;
+    mInterpupillaryOffsetSliderCtrl->setValue(gHMD.getInterpupillaryOffsetDefault() * 1000.0f);
+    onSetInterpupillaryOffset();
+    mEyeToScreenSliderCtrl->setValue(gHMD.getEyeToScreenDistanceDefault() * 1000.0f);
+    onSetEyeToScreenDistance();
+    mMotionPredictionDeltaSliderCtrl->setValue(gHMD.getMotionPredictionDeltaDefault() * 1000.0f);
+    onSetMotionPredictionDelta();
+    mMotionPredictionCheckBoxCtrl->setValue(gHMD.useMotionPredictionDefault());
+    onCheckMotionPrediction();
 }
 
 void LLPanelHMDConfig::onClickCancel()
 {
     // turn off panel and throw away values
+    mInterpupillaryOffsetSliderCtrl->setValue(mInterpupillaryOffsetOriginal);
+    onSetInterpupillaryOffset();
+    mEyeToScreenSliderCtrl->setValue(mEyeToScreenDistanceOriginal);
+    onSetEyeToScreenDistance();
+    mMotionPredictionDeltaSliderCtrl->setValue(mMotionPredictionDeltaOriginal);
+    onSetMotionPredictionDelta();
+    mMotionPredictionCheckBoxCtrl->setValue(mMotionPredictionCheckedOriginal);
+    onCheckMotionPrediction();
     LLPanelHMDConfig::getInstance()->toggleVisibility();
 }
 
 void LLPanelHMDConfig::onClickSave()
 {
-    // add code here to save current settings if appropriate
-
-    // turn off panel
+    // turn off panel - all values are saved already
     LLPanelHMDConfig::getInstance()->toggleVisibility();
-}
-
-void LLPanelHMDConfig::onSetEyeToScreenDistance()
-{
-    llinfos << "Eye To Screen Distance changed to  " << mEyeToScreenSliderCtrl->getValueF32() << llendl;
 }
 
 void LLPanelHMDConfig::onSetInterpupillaryOffset()
 {
-    llinfos << "Interpupillary Offset changed to  " << mInterpupillaryOffsetSliderCtrl->getValueF32() << llendl;
+    F32 f = mInterpupillaryOffsetSliderCtrl->getValueF32();
+    gHMD.setInterpupillaryOffset(f / 1000.0f);
+    std::ostringstream s;
+    s << f << " mm";
+    mInterpupillaryOffsetAmountCtrl->setValue(s.str());
 }
 
-void LLPanelHMDConfig::onSetLensSeparationDistance()
+void LLPanelHMDConfig::onSetEyeToScreenDistance()
 {
-    llinfos << "Lens Separation Distance changed to  " << mLensSeparationDistanceSliderCtrl->getValueF32() << llendl;
-}
-
-void LLPanelHMDConfig::onSetVerticalFOV()
-{
-    llinfos << "Vertical FOV changed to  " << mVerticalFOVSliderCtrl->getValueF32() << llendl;
-}
-
-void LLPanelHMDConfig::onSetXCenterOffset()
-{
-    llinfos << "X Center Offset changed to  " << mXCenterOffsetSliderCtrl->getValueF32() << llendl;
-}
-
-void LLPanelHMDConfig::onSetYCenterOffset()
-{
-    llinfos << "Y Center Offset changed to  " << mYCenterOffsetSliderCtrl->getValueF32() << llendl;
-}
-
-void LLPanelHMDConfig::onSetZCenterOffset()
-{
-    llinfos << "Z Center Offset changed to  " << mZCenterOffsetSliderCtrl->getValueF32() << llendl;
+    F32 f = mEyeToScreenSliderCtrl->getValueF32();
+    gHMD.setEyeToScreenDistance(f / 1000.0f);
+    std::ostringstream s;
+    s << f << " mm";
+    mEyeToScreenAmountCtrl->setValue(s.str());
 }
 
 void LLPanelHMDConfig::onCheckMotionPrediction()
 {
-    llinfos << "Motion Prediction changed to  " << mMotionPredictionCheckBoxCtrl->get() << llendl;
-}
-
-void LLPanelHMDConfig::onCheckAutoCalibration()
-{
-    llinfos << "Auto Calibration changed to  " << mAutoCalibrationCheckBoxCtrl->get() << llendl;
+    BOOL checked = mMotionPredictionCheckBoxCtrl->get();
+    gHMD.useMotionPrediction(checked);
 }
 
 void LLPanelHMDConfig::onSetMotionPredictionDelta()
 {
-    llinfos << "Motion Prediction Delta changed to " << mMotionPredictionDeltaSliderCtrl->getValueF32() << llendl;
+    F32 f = mMotionPredictionDeltaSliderCtrl->getValueF32();
+    gHMD.setMotionPredictionDelta(f / 1000.0f);
+    std::ostringstream s;
+    s << f << " ms";
+    mMotionPredictionDeltaAmountCtrl->setValue(s.str());
+
 }

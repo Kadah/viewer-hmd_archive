@@ -103,11 +103,18 @@ public:
     // size and Lower-Left corner for the viewer of the current eye
     void getViewportInfo(S32& x, S32& y, S32& w, S32& h);
 
-    F32 getHScreenSize() const;
-    F32 getVScreenSize() const;
+    F32 getPhysicalScreenWidth() const;
+    F32 getPhysicalScreenHeight() const; 
     F32 getInterpupillaryOffset() const;
+    F32 getInterpupillaryOffsetDefault() const;
+    void setInterpupillaryOffset(F32 f);
+
     F32 getLensSeparationDistance() const;
+
     F32 getEyeToScreenDistance() const;
+    void setEyeToScreenDistance(F32 f);
+    F32 getEyeToScreenDistanceDefault() const;
+    F32 getVerticalFOV() const;
 
     // coefficients for the distortion function.
     LLVector4 getDistortionConstants() const;
@@ -120,12 +127,16 @@ public:
     // An inverse of this value is applied to sampled UV coordinates (1/Scale).
     F32 getDistortionScale() const;
 
+    BOOL useMotionPrediction() const;
+    BOOL useMotionPredictionDefault() const;
+    void useMotionPrediction(BOOL b);
+    F32 getMotionPredictionDelta() const;
+    F32 getMotionPredictionDeltaDefault() const;
+    void setMotionPredictionDelta(F32 f);
+
     // Get the current HMD orientation
     LLQuaternion getHMDOrient() const;
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
-    const LLVector3& getRawHMDRollPitchYaw() const;
-
-    F32 getVerticalFOV() const;
 
     void setBaseModelView(F32* m) { for (int i = 0; i < 16; ++i) { mBaseModelView[i] = m[i]; } }
     F32* getBaseModelView() { return mBaseModelView; }
@@ -139,13 +150,6 @@ public:
     //// Index [2] - Blue channel constant coefficient.
     //// Index [3] - Blue channel r^2 coefficient.
     //LLVector4 getChromaticAberrationConstants() const;
-
-    //// Translation to be applied to view matrix.
-    //LLMatrix4 getViewAdjustMatrix() const;
-    //// Projection matrix used with the current eye.
-    //LLMatrix4 getProjectionMatrix() const;
-    //// Orthographic projection used with this eye.
-    //LLMatrix4 getOrthoProjectionMatrix() const;
 
     F32 getOrthoPixelOffset() const;
 
@@ -168,16 +172,11 @@ public:
 
     LLViewerTexture* getCursorImage(U32 cursorType);
 
-    static void onChangeInterpupillaryOffsetModifer();
-    static void onChangeLensSeparationDistanceModifier();
-    static void onChangeEyeToScreenDistanceModifier();
     static void onChangeXCenterOffsetModifier();
-    static void onChangeShouldChangeFOV();
     static void onChangeWindowRaw();
     static void onChangeWindowScaled();
     static void onChangeWorldViewRaw();
     static void onChangeWorldViewScaled();
-    static void onChangeVerticalFOVModifier();
     static void onChangeTestCalibration();
     static void onChangeRender2DUICurvedSurface();
     static void onChangeUISurfaceShape();
@@ -185,11 +184,7 @@ public:
 
 private:
     LLHMDImpl* mImpl;
-    F32 mInterpupillaryMod;
-    F32 mLensSepMod;
-    F32 mEyeToScreenMod;
     F32 mXCenterOffsetMod;
-    F32 mVerticalFOVMod;
     U32 mFlags;
     U32 mRenderMode;
     F32 mBaseModelView[16];

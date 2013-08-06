@@ -98,10 +98,10 @@
              tab_stop="false"/>
     </layout_panel>
   </layout_stack>
-  <panel bottom="768"
-          height="250"
+  <panel  height="200"
           width="1024"
-          follows="left|bottom|right"
+          bottom="-1"
+          follows="left|right|bottom"
           name="hmd_config_panel_holder"
           class="panel_hmd_config"
           filename="panel_hmd_config.xml"

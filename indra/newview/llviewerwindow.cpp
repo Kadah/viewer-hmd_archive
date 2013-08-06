@@ -836,18 +836,10 @@ public:
 			}
 		}
 
-		if (gSavedSettings.getBOOL("DebugHMDEnable")
-            //&& gHMD.shouldRender()
-            && gHMD.isInitialized())
+		if (   gHMD.isInitialized()
+            && gHMD.shouldRender()
+            && gSavedSettings.getBOOL("DebugHMDEnable"))
 		{
-			addText(xpos, ypos, llformat("HMD XCenter Offset: %f", gHMD.getXCenterOffset()));
-			ypos += y_inc;
-			addText(xpos, ypos, llformat("HMD Eye To Screen Distance: %f", gHMD.getEyeToScreenDistance()));
-			ypos += y_inc;
-			addText(xpos, ypos, llformat("HMD Interpupillary Offset: %f", gHMD.getInterpupillaryOffset()));
-			ypos += y_inc;
-			addText(xpos, ypos, llformat("HMD Lens Separation Distance: %f", gHMD.getLensSeparationDistance()));
-		    ypos += y_inc;
             F32 roll, pitch, yaw;
             gHMD.getHMDRollPitchYaw(roll, pitch, yaw);
 			addText(xpos, ypos, llformat("HMD Orient Euler: [roll=%f, pitch=%f, yaw=%f]", roll, pitch, yaw));
@@ -3563,9 +3555,9 @@ void LLViewerWindow::renderSelections( BOOL for_gl_pick, BOOL pick_parcel_walls,
             offsetX = 0.0f;
             //if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
             //{
-            //    F32 viewCenter = gHMD.getHScreenSize() * 0.25f;
+            //    F32 viewCenter = gHMD.getPhysicalScreenWidth() * 0.25f;
             //    F32 eyeProjShift = viewCenter - (gHMD.getLensSeparationDistance() * 0.5f);
-            //    offsetX = ((4.0f * eyeProjShift) / gHMD.getHScreenSize()) * (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? 1.0f : -1.0f);
+            //    offsetX = ((4.0f * eyeProjShift) / gHMD.getPhysicalScreenWidth()) * (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? 1.0f : -1.0f);
             //}
 			gGL.translatef(-hud_bbox.getCenterLocal().mV[VX] + (depth *0.5f) + offsetX, 0.f, 0.f);
 		}

@@ -14592,54 +14592,10 @@
       <string />
     </map>
 
-  <key>OculusInterpupillaryOffsetModifier</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL] Oculus adds this value to the interpupillary distance returned</string>
-    <key>Persist</key>
-    <integer>0</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.0</real>
-  </map>
-  <key>OculusLensSeparationDistanceModifier</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL] Oculus adds this value to the lens separation distance returned</string>
-    <key>Persist</key>
-    <integer>0</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.0</real>
-  </map>
-  <key>OculusEyeToScreenDistanceModifier</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL] Oculus adds this value to the Eye-To-Screen Distance returned</string>
-    <key>Persist</key>
-    <integer>0</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.0</real>
-  </map>
   <key>OculusXCenterOffsetModifier</key>
   <map>
     <key>Comment</key>
     <string>[EXPERIMENTAL] Oculus adds this value to the X Center Offset returned</string>
-    <key>Persist</key>
-    <integer>0</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.0</real>
-  </map>
-  <key>OculusVerticalFOVModifier</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL] Oculus adds this value to the vertical FOV default of PI/2.  mod value is in radians</string>
     <key>Persist</key>
     <integer>0</integer>
     <key>Type</key>

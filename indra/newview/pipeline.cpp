@@ -4401,15 +4401,15 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
         static const LLVector3 kMat[][3] =
         {
             // translation                , scale
-            { LLVector3(-0.2f, 0.2f,-0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
-            { LLVector3( 0.0f, 0.2f, 0.0f), LLVector3( 0.5f, 0.5f, 1.0f) },
-            { LLVector3( 0.2f, 0.2f, 0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
-            { LLVector3(-0.2f, 0.0f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
-            { LLVector3( 0.0f, 0.0f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
-            { LLVector3( 0.2f, 0.0f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
-            { LLVector3(-0.3f,-0.3f, 0.0f), LLVector3( 2.0f, 2.0f, 1.0f) },
-            { LLVector3( 0.0f,-0.3f,-0.1f), LLVector3( 2.0f, 2.0f, 1.0f) },
-            { LLVector3( 0.3f,-0.3f,-0.2f), LLVector3( 2.0f, 2.0f, 1.0f) },
+            { LLVector3(-0.2f, 0.4f,-0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
+            { LLVector3( 0.0f, 0.4f, 0.0f), LLVector3( 0.5f, 0.5f, 1.0f) },
+            { LLVector3( 0.2f, 0.4f, 0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
+            { LLVector3(-0.2f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
+            { LLVector3( 0.0f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
+            { LLVector3( 0.2f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
+            { LLVector3(-0.3f,-0.1f, 0.0f), LLVector3( 2.0f, 2.0f, 1.0f) },
+            { LLVector3( 0.0f,-0.1f,-0.1f), LLVector3( 2.0f, 2.0f, 1.0f) },
+            { LLVector3( 0.3f,-0.1f,-0.2f), LLVector3( 2.0f, 2.0f, 1.0f) },
         };
         {
             LLGLDisable cull(GL_CULL_FACE);

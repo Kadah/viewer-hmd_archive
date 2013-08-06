@@ -49,31 +49,25 @@ class LLPanelHMDConfig : public LLPanel
     void onClickCancel();
     void onClickSave();
     void onClickResetValues();
-    void onClickRefreshDevices();
-    void onSetEyeToScreenDistance();
     void onSetInterpupillaryOffset();
-    void onSetLensSeparationDistance();
-    void onSetVerticalFOV();
-    void onSetXCenterOffset();
-    void onSetYCenterOffset();
-    void onSetZCenterOffset();
+    void onSetEyeToScreenDistance();
     void onCheckMotionPrediction();
     void onSetMotionPredictionDelta();
-    void onCheckAutoCalibration();
 
  private:
     static LLPanelHMDConfig*  sInstance;
 
     LLSlider* mInterpupillaryOffsetSliderCtrl;
-    LLSlider* mLensSeparationDistanceSliderCtrl;
+    LLUICtrl* mInterpupillaryOffsetAmountCtrl;
     LLSlider* mEyeToScreenSliderCtrl;
-    LLSlider* mVerticalFOVSliderCtrl;
-    LLSlider* mXCenterOffsetSliderCtrl;
-    LLSlider* mYCenterOffsetSliderCtrl;
-    LLSlider* mZCenterOffsetSliderCtrl;
+    LLUICtrl* mEyeToScreenAmountCtrl;
     LLCheckBoxCtrl* mMotionPredictionCheckBoxCtrl;
     LLSlider* mMotionPredictionDeltaSliderCtrl;
-    LLCheckBoxCtrl* mAutoCalibrationCheckBoxCtrl;
+    LLUICtrl* mMotionPredictionDeltaAmountCtrl;
+    F32 mInterpupillaryOffsetOriginal;
+    F32 mEyeToScreenDistanceOriginal;
+    BOOL mMotionPredictionCheckedOriginal;
+    F32 mMotionPredictionDeltaOriginal;
 };
 
 #endif // LL_LLPANELHMDCONFIG_H
