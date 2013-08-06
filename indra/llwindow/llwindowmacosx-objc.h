@@ -56,7 +56,7 @@ void hideNSCursor();
 void showNSCursor();
 void hideNSCursorTillMove(bool hide);
 
-NSWindowRef createNSWindow(int x, int y, int width, int height);
+NSWindowRef createNSWindow(int x, int y, int width, int height, int screen_index);
 
 #include <OpenGL/OpenGL.h>
 GLViewRef createOpenGLView(NSWindowRef window, unsigned int samples, bool vsync);

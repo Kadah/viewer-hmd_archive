@@ -1769,15 +1769,19 @@ MASK LLWindowMacOSX::modifiersToMask(S16 modifiers)
 	return mask;
 }
 
-// Experimental : dual screen rendering
+// Experimental : dual screen rendering and Mac testing method
 /*virtual*/
 void LLWindowMacOSX::addExtraWindow()
 {
     llinfos << "Merov : Hit the extra window init!" << llendl;
-    //getDisplayInfo(mDisplayName, mDisplayId, mHMDRect, dummy);
+    LLRect second_screen;
+    BOOL is_primary = FALSE;
+    llutf16string display_name = utf8str_to_utf16str("Test");
+    S32 screen_id = (mUseDisplayMirroring ? getDisplayId(0) : getDisplayId(1));
+    getDisplayInfo(display_name, screen_id, second_screen, is_primary);
     //getRenderWindow(mainFullScreen);
     //gHMD.isMainFullScreen(mainFullScreen);
-    if (!initHMDWindow(100, 100, 512, 512))
+    if (!initHMDWindow(0, 0, 1024, 1024))
     {
         llinfos << "Merov : Window creation failed!" << llendl;
     }
@@ -1804,8 +1808,9 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
     
         if (mWindow[1] == NULL)
         {
+            // The Oculus is assumed to be on screen 1 (non primary) in that case
             LL_INFOS("Window") << "Creating the HMD window" << LL_ENDL;
-            mWindow[1] = createNSWindow(left, top, width, height);
+            mWindow[1] = createNSWindow(left, top, width, height, 1);
         }
         
         if (mGLView[1] == NULL)
@@ -1912,7 +1917,7 @@ BOOL LLWindowMacOSX::getDisplayInfo(const llutf16string& displayName, long displ
                 (S32)(screen_size[1]));
     // On Mac, the primary screen is the one with index 0
     isPrimary = (screen_id == 0);
-    return TRUE;
+   return TRUE;
 }
 
 #if LL_OS_DRAGDROP_ENABLED

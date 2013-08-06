@@ -205,10 +205,12 @@ OSErr setImageCursor(CursorRef ref)
 // Now for some unholy juggling between generic pointers and casting them to Obj-C objects!
 // Note: things can get a bit hairy from here.  This is not for the faint of heart.
 
-NSWindowRef createNSWindow(int x, int y, int width, int height)
+NSWindowRef createNSWindow(int x, int y, int width, int height, int screen_index)
 {
+    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_index];
+    
 	LLNSWindow *window = [[LLNSWindow alloc]initWithContentRect:NSMakeRect(x, y, width, height)
-						styleMask:NSTitledWindowMask | NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTexturedBackgroundWindowMask backing:NSBackingStoreBuffered defer:NO];
+                                                      styleMask:NSTitledWindowMask | NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTexturedBackgroundWindowMask backing:NSBackingStoreBuffered defer:NO screen:s];
 	[window makeKeyAndOrderFront:nil];
 	[window setAcceptsMouseMovedEvents:TRUE];
 	return window;
