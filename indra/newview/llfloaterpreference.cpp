@@ -78,6 +78,8 @@
 #include "llvotree.h"
 #include "llvosky.h"
 #include "llfloaterpathfindingconsole.h"
+#include "llpanelhmdconfig.h"
+
 // linden library includes
 #include "llavatarnamecache.h"
 #include "llerror.h"
@@ -347,6 +349,7 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.TranslationSettings",	boost::bind(&LLFloaterPreference::onClickTranslationSettings, this));
 	mCommitCallbackRegistrar.add("Pref.AutoReplace",            boost::bind(&LLFloaterPreference::onClickAutoReplace, this));
 	mCommitCallbackRegistrar.add("Pref.SpellChecker",           boost::bind(&LLFloaterPreference::onClickSpellChecker, this));
+	mCommitCallbackRegistrar.add("Pref.OpenHMDConfig",          boost::bind(&LLFloaterPreference::onClickOpenHMDConfig, this));
 
 	sSkin = gSavedSettings.getString("SkinCurrent");
 
@@ -1665,7 +1668,12 @@ void LLFloaterPreference::onClickAutoReplace()
 
 void LLFloaterPreference::onClickSpellChecker()
 {
-		LLFloaterReg::showInstance("prefs_spellchecker");
+	LLFloaterReg::showInstance("prefs_spellchecker");
+}
+
+void LLFloaterPreference::onClickOpenHMDConfig()
+{
+	LLPanelHMDConfig::toggleVisibility();
 }
 
 void LLFloaterPreference::onClickActionChange()

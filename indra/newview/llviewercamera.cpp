@@ -443,9 +443,9 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
     if (gHMD.shouldRender())
     {
         gHMD.setBaseProjection(proj_mat.m);
-        F32 viewCenter = gHMD.getHScreenSize() * 0.25f;
+        F32 viewCenter = gHMD.getPhysicalScreenWidth() * 0.25f;
         F32 eyeProjShift = viewCenter - (gHMD.getLensSeparationDistance() * 0.5f);
-        F32 projCtrOffset = ((4.0f * eyeProjShift) / gHMD.getHScreenSize()) * (sCurrentEye == LEFT_EYE ? 1.0f : -1.0f);
+        F32 projCtrOffset = ((4.0f * eyeProjShift) / gHMD.getPhysicalScreenWidth()) * (sCurrentEye == LEFT_EYE ? 1.0f : -1.0f);
         glh::matrix4f translate;
         translate.set_translate(glh::vec3f(projCtrOffset, 0.0f, 0.0f));
         proj_mat = translate * proj_mat;

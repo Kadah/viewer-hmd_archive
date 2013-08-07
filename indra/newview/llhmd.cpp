@@ -105,12 +105,18 @@ public:
         h = mCurrentEyeParams.VP.h;
     }
 
-    F32 getHScreenSize() const { return gHMD.isInitialized() ? mHMDInfo.HScreenSize : kDefaultHScreenSize; }
-    F32 getVScreenSize() const { return gHMD.isInitialized() ? mHMDInfo.VScreenSize : kDefaultVScreenSize; }
-    F32 getInterpupillaryOffset() const { return gHMD.isInitialized() ? mHMDInfo.InterpupillaryDistance : kDefaultInterpupillaryOffset; }
-    F32 getLensSeparationDistance() const { return gHMD.isInitialized() ? mHMDInfo.LensSeparationDistance : kDefaultLenSeparationDistance; }
-    F32 getEyeToScreenDistance() const { return gHMD.isInitialized() ? mHMDInfo.EyeToScreenDistance : kDefaultEyeToScreenDistance; }
-    void setEyeToScreenDistance(F32 esd) { if (gHMD.isInitialized()) { mHMDInfo.EyeToScreenDistance = esd; } }
+    F32 getPhysicalScreenWidth() const { return gHMD.isInitialized() ? mStereoConfig.GetHMDInfo().HScreenSize : kDefaultHScreenSize; }
+    F32 getPhysicalScreenHeight() const { return gHMD.isInitialized() ? mStereoConfig.GetHMDInfo().VScreenSize : kDefaultVScreenSize; }
+    F32 getInterpupillaryOffset() const { return gHMD.isInitialized() ? mStereoConfig.GetIPD() : getInterpupillaryOffsetDefault(); }
+    F32 getInterpupillaryOffsetDefault() const { return kDefaultInterpupillaryOffset; }
+    void setInterpupillaryOffset(F32 f) { if (gHMD.isInitialized()) { mStereoConfig.SetIPD(f); } }
+    F32 getLensSeparationDistance() const { return gHMD.isInitialized() ? mStereoConfig.GetHMDInfo().LensSeparationDistance : kDefaultLenSeparationDistance; }
+    F32 getEyeToScreenDistance() const { return gHMD.isInitialized() ? mStereoConfig.GetEyeToScreenDistance() : getEyeToScreenDistanceDefault(); }
+    F32 getEyeToScreenDistanceDefault() const { return kDefaultEyeToScreenDistance; }
+    void setEyeToScreenDistance(F32 f) { if (gHMD.isInitialized()) { mStereoConfig.SetEyeToScreenDistance(f); } }
+
+    //F32 getVerticalFOV() { return gHMD.isInitialized() ? mStereoConfig.GetYFOVRadians() : kDefaultVerticalFOVRadians; }
+    F32 getVerticalFOV() { return kDefaultVerticalFOVRadians; }
 
     LLVector4 getDistortionConstants() const
     {
@@ -133,6 +139,13 @@ public:
     F32 getYCenterOffset() const { return gHMD.isInitialized() ? mCurrentEyeParams.pDistortion->YCenterOffset : kDefaultYCenterOffset; }
     F32 getDistortionScale() const { return gHMD.isInitialized() ? mCurrentEyeParams.pDistortion->Scale : kDefaultDistortionScale; }
 
+    BOOL useMotionPrediction() { return gHMD.isInitialized() ? mSFusion.IsPredictionEnabled() : useMotionPredictionDefault(); }
+    BOOL useMotionPredictionDefault() const { return TRUE; }
+    void useMotionPrediction(BOOL b) { if (gHMD.isInitialized()) { mSFusion.SetPredictionEnabled(b); } }
+    F32 getMotionPredictionDelta() { return gHMD.isInitialized() ? mSFusion.GetPredictionDelta() : getMotionPredictionDeltaDefault(); }
+    F32 getMotionPredictionDeltaDefault() const { return 0.03f; }
+    void setMotionPredictionDelta(F32 f) { if (gHMD.isInitialized()) { mSFusion.SetPrediction(f); } }
+
     LLQuaternion getHMDOrient() const
     {
         LLQuaternion q;
@@ -140,11 +153,6 @@ public:
         return q;
     }
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = mEyeRoll; pitch = mEyePitch; yaw = mEyeYaw; }
-    const LLVector3& getRawHMDRollPitchYaw() const { return mRawHMDRollPitchYaw; }
-
-    F32 getVerticalFOV() const { return kDefaultVerticalFOVRadians; }
-    //F32 getFOV() const { return mStereoConfig.GetYFOVDegrees();
-    //void setFOV(F32 fov) { mStereoConfig.Set2DAreaFov(DegreeToRad(fov)); }
 
     //LLVector4 getChromaticAberrationConstants() const
     //{
@@ -207,7 +215,6 @@ protected:
 private:
     OVR::Util::MagCalibration mMagCal;
     SensorFusion mSFusion;
-    HMDInfo mHMDInfo;
     Util::LatencyTest mLatencyUtil;
     OVR::Util::Render::StereoConfig mStereoConfig;
     OVR::Ptr<DeviceManager> mpDeviceMgr;
@@ -293,12 +300,12 @@ BOOL LLHMDImpl::init()
             // screen size and other variables needed for correct projection.
             // We pass HMD DisplayDeviceName into the renderer to select the
             // correct monitor in full-screen mode.
-            if (mpHMD->GetDeviceInfo(&mHMDInfo))
+            HMDInfo hmd_info;
+            if (mpHMD->GetDeviceInfo(&hmd_info))
             {
-                mDisplayName = utf8str_to_utf16str(mHMDInfo.DisplayDeviceName);
-                mDisplayId = mHMDInfo.DisplayId;
-                //mHMDInfo.EyeToScreenDistance = kDefaultEyeToScreenDistance;
-                mStereoConfig.SetHMDInfo(mHMDInfo);
+                mDisplayName = utf8str_to_utf16str(hmd_info.DisplayDeviceName);
+                mDisplayId = hmd_info.DisplayId;
+                mStereoConfig.SetHMDInfo(hmd_info);
             }
         }
 #if LL_DEBUG
@@ -323,10 +330,10 @@ BOOL LLHMDImpl::init()
 
         detectionMessage = mpHMD ? "Oculus HMD Display detected" : "Oculus HMD Display not detected";
         detectionMessage += mpSensor ? "; Oculus Sensor detected" : "; Oculus Sensor not detected";
-        detectionMessage += (mHMDInfo.DisplayDeviceName[0] != '\0') ? "; HMD Display EDID detected" : "; HMD display EDID not detected";
+        detectionMessage += (mStereoConfig.GetHMDInfo().DisplayDeviceName[0] != '\0') ? "; HMD Display EDID detected" : "; HMD display EDID not detected";
         LL_INFOS("Oculus") << detectionMessage.c_str() << LL_ENDL;
 
-        if (!mpHMD || !mpSensor || mHMDInfo.DisplayDeviceName[0] == '\0')
+        if (!mpHMD || !mpSensor || mStereoConfig.GetHMDInfo().DisplayDeviceName[0] == '\0')
         {
             // TODO: possibly put up a retry/cancel dialog here?
             LL_WARNS("Oculus") << detectionMessage << LL_ENDL;
@@ -335,7 +342,7 @@ BOOL LLHMDImpl::init()
         }
     } while (detectionResult != IDCONTINUE);
 
-    if (mHMDInfo.HResolution == 0 || mHMDInfo.VResolution == 0)
+    if (mStereoConfig.GetHMDInfo().HResolution == 0 || mStereoConfig.GetHMDInfo().VResolution == 0)
     {
         gHMD.failedInit(TRUE);
         return FALSE;
@@ -365,16 +372,16 @@ BOOL LLHMDImpl::init()
     }
 
     // *** Configure Stereo settings.
-    mStereoConfig.SetFullViewport(OVR::Util::Render::Viewport(0,0, mHMDInfo.HResolution, mHMDInfo.VResolution));
+    mStereoConfig.SetFullViewport(OVR::Util::Render::Viewport(0,0, mStereoConfig.GetHMDInfo().HResolution, mStereoConfig.GetHMDInfo().VResolution));
     mStereoConfig.SetStereoMode(OVR::Util::Render::Stereo_LeftRight_Multipass);
 
     // Configure proper Distortion Fit.
     // For 7" screen, fit to touch left side of the view, leaving a bit of invisible
     // screen on the top (saves on rendering cost).
     // For smaller screens (5.5"), fit to the top.
-    if (mHMDInfo.HScreenSize > 0.0f)
+    if (mStereoConfig.GetHMDInfo().HScreenSize > 0.0f)
     {
-        if (mHMDInfo.HScreenSize > 0.140f) // 7"
+        if (mStereoConfig.GetHMDInfo().HScreenSize > 0.140f) // 7"
         {
             mStereoConfig.SetDistortionFitPointVP(-1.0f, 0.0f);
         }
@@ -544,8 +551,7 @@ void LLHMDImpl::onIdle()
     // to allow "additional" yaw manipulation with mouse/controller.
     if (mpSensor)
     {
-        //OVR::Quatf orient = mSFusion.GetOrientation();
-        OVR::Quatf orient = mSFusion.GetPredictedOrientation();
+        OVR::Quatf orient = useMotionPrediction() ? mSFusion.GetPredictedOrientation() : mSFusion.GetOrientation();
         orient.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&mEyeYaw, &mEyePitch, &mEyeRoll);
         mEyeRoll = -mEyeRoll;
         mEyePitch = -mEyePitch;
@@ -623,8 +629,8 @@ void LLHMDImpl::updateManualMagCalibration()
 
             setCurrentEye(OVR::Util::Render::StereoEye_Left);
             LL_INFOS("Oculus") << "Left Eye:" << LL_ENDL;
-            LL_INFOS("Oculus") << "HScreenSize: " << std::fixed << std::setprecision(4) << getHScreenSize() << ", default: " << LLHMDImpl::kDefaultHScreenSize << LL_ENDL;
-            LL_INFOS("Oculus") << "VScreenSize: " << std::fixed << std::setprecision(4) << getVScreenSize() << ", default: " << LLHMDImpl::kDefaultVScreenSize << LL_ENDL;
+            LL_INFOS("Oculus") << "HScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenWidth() << ", default: " << LLHMDImpl::kDefaultHScreenSize << LL_ENDL;
+            LL_INFOS("Oculus") << "VScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenHeight() << ", default: " << LLHMDImpl::kDefaultVScreenSize << LL_ENDL;
             LL_INFOS("Oculus") << "InterpupillaryOffset: " << std::fixed << std::setprecision(4) << getInterpupillaryOffset() << ", default: " << LLHMDImpl::kDefaultInterpupillaryOffset << LL_ENDL;
             LL_INFOS("Oculus") << "LensSeparationDistance: " << std::fixed << std::setprecision(4) << getLensSeparationDistance() << ", default: " << LLHMDImpl::kDefaultLenSeparationDistance << LL_ENDL;
             LL_INFOS("Oculus") << "EyeToScreenDistance: " << std::fixed << std::setprecision(4) << getEyeToScreenDistance() << ", default: " << LLHMDImpl::kDefaultEyeToScreenDistance << LL_ENDL;
@@ -638,8 +644,8 @@ void LLHMDImpl::updateManualMagCalibration()
 
             setCurrentEye(OVR::Util::Render::StereoEye_Right);
             LL_INFOS("Oculus") << "Right Eye:" << LL_ENDL;
-            LL_INFOS("Oculus") << "HScreenSize: " << std::fixed << std::setprecision(4) << getHScreenSize() << ", default: " << LLHMDImpl::kDefaultHScreenSize << LL_ENDL;
-            LL_INFOS("Oculus") << "VScreenSize: " << std::fixed << std::setprecision(4) << getVScreenSize() << ", default: " << LLHMDImpl::kDefaultVScreenSize << LL_ENDL;
+            LL_INFOS("Oculus") << "HScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenWidth() << ", default: " << LLHMDImpl::kDefaultHScreenSize << LL_ENDL;
+            LL_INFOS("Oculus") << "VScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenHeight() << ", default: " << LLHMDImpl::kDefaultVScreenSize << LL_ENDL;
             LL_INFOS("Oculus") << "InterpupillaryOffset: " << std::fixed << std::setprecision(4) << getInterpupillaryOffset() << ", default: " << LLHMDImpl::kDefaultInterpupillaryOffset << LL_ENDL;
             LL_INFOS("Oculus") << "LensSeparationDistance: " << std::fixed << std::setprecision(4) << getLensSeparationDistance() << ", default: " << LLHMDImpl::kDefaultLenSeparationDistance << LL_ENDL;
             LL_INFOS("Oculus") << "EyeToScreenDistance: " << std::fixed << std::setprecision(4) << getEyeToScreenDistance() << ", default: " << LLHMDImpl::kDefaultEyeToScreenDistance << LL_ENDL;
@@ -687,10 +693,7 @@ void LLHMDImpl::OnMessage(const OVR::Message& msg)
 LLHMD gHMD;
 
 LLHMD::LLHMD()
-    : mInterpupillaryMod(0.0f)
-    , mLensSepMod(0.0f)
-    , mEyeToScreenMod(0.0f)
-    , mXCenterOffsetMod(0.0f)
+    : mXCenterOffsetMod(0.0f)
     , mRenderMode(RenderMode_None)
     , mMainWindowWidth(LLHMD::kHMDWidth)
     , mMainWindowHeight(LLHMD::kHMDHeight)
@@ -722,12 +725,6 @@ BOOL LLHMD::init()
     BOOL res = mImpl->init();
     //if (res)
     //{
-    	gSavedSettings.getControl("OculusInterpupillaryOffsetModifier")->getSignal()->connect(boost::bind(&onChangeInterpupillaryOffsetModifer));
-        onChangeInterpupillaryOffsetModifer();
-	    gSavedSettings.getControl("OculusLensSeparationDistanceModifier")->getSignal()->connect(boost::bind(&onChangeLensSeparationDistanceModifier));
-        onChangeLensSeparationDistanceModifier();
-	    gSavedSettings.getControl("OculusEyeToScreenDistanceModifier")->getSignal()->connect(boost::bind(&onChangeEyeToScreenDistanceModifier));
-        onChangeEyeToScreenDistanceModifier();
 	    gSavedSettings.getControl("OculusXCenterOffsetModifier")->getSignal()->connect(boost::bind(&onChangeXCenterOffsetModifier));
         onChangeXCenterOffsetModifier();
         gSavedSettings.getControl("OculusOptWindowRaw")->getSignal()->connect(boost::bind(&onChangeWindowRaw));
@@ -738,8 +735,6 @@ BOOL LLHMD::init()
         onChangeWorldViewRaw();
         gSavedSettings.getControl("OculusOptWorldViewScaled")->getSignal()->connect(boost::bind(&onChangeWorldViewScaled));
         onChangeWorldViewScaled();
-        gSavedSettings.getControl("OculusVerticalFOVModifier")->getSignal()->connect(boost::bind(&onChangeVerticalFOVModifier));
-        onChangeVerticalFOVModifier();
         gSavedSettings.getControl("OculusTestCalibration")->getSignal()->connect(boost::bind(&onChangeTestCalibration));
         onChangeTestCalibration();
         gSavedSettings.getControl("Oculus2DUICurvedSurface")->getSignal()->connect(boost::bind(&onChangeRender2DUICurvedSurface));
@@ -754,16 +749,11 @@ BOOL LLHMD::init()
     //}
     return res;
 }
-
-void LLHMD::onChangeInterpupillaryOffsetModifer() { gHMD.mInterpupillaryMod = gSavedSettings.getF32("OculusInterpupillaryOffsetModifier") * 0.1f; }
-void LLHMD::onChangeLensSeparationDistanceModifier() { gHMD.mLensSepMod = gSavedSettings.getF32("OculusLensSeparationDistanceModifier") * 0.1f; }
-void LLHMD::onChangeEyeToScreenDistanceModifier() { gHMD.mEyeToScreenMod = gSavedSettings.getF32("OculusEyeToScreenDistanceModifier") * 0.1f; }
 void LLHMD::onChangeXCenterOffsetModifier() { gHMD.mXCenterOffsetMod = gSavedSettings.getF32("OculusXCenterOffsetModifier") * 0.1f; }
 void LLHMD::onChangeWindowRaw() { gHMD.mOptWindowRaw = gSavedSettings.getS32("OculusOptWindowRaw"); }
 void LLHMD::onChangeWindowScaled() { gHMD.mOptWindowScaled = gSavedSettings.getS32("OculusOptWindowScaled"); }
 void LLHMD::onChangeWorldViewRaw() { gHMD.mOptWorldViewRaw = gSavedSettings.getS32("OculusOptWorldViewRaw"); }
 void LLHMD::onChangeWorldViewScaled() { gHMD.mOptWorldViewScaled = gSavedSettings.getS32("OculusOptWorldViewScaled"); }
-void LLHMD::onChangeVerticalFOVModifier() { gHMD.mVerticalFOVMod = gSavedSettings.getF32("OculusVerticalFOVModifier"); }
 void LLHMD::onChangeTestCalibration() { gHMD.shouldShowDepthUI(gSavedSettings.getBOOL("OculusTestCalibration")); }
 void LLHMD::onChangeRender2DUICurvedSurface() { gHMD.shouldRender2DUICurvedSurface(gSavedSettings.getBOOL("Oculus2DUICurvedSurface")); }
 void LLHMD::onChangeUIFlatSurfaceScale() { gHMD.mUIFlatSurfaceScale = gSavedSettings.getVector3("OculusUIFlatSurfaceScale"); }
@@ -865,22 +855,28 @@ void LLHMD::setFocusWindowHMD()
 U32 LLHMD::getCurrentEye() const { return mImpl->getCurrentEye(); }
 void LLHMD::setCurrentEye(U32 eye) { mImpl->setCurrentEye(eye); }
 void LLHMD::getViewportInfo(S32& x, S32& y, S32& w, S32& h) { mImpl->getViewportInfo(x, y, w, h); }
-F32 LLHMD::getHScreenSize() const { return mImpl->getHScreenSize(); }
-F32 LLHMD::getVScreenSize() const { return mImpl->getVScreenSize(); }
-F32 LLHMD::getInterpupillaryOffset() const { return mInterpupillaryMod + mImpl->getInterpupillaryOffset(); }
-F32 LLHMD::getLensSeparationDistance() const { return mLensSepMod + mImpl->getLensSeparationDistance(); }
-F32 LLHMD::getEyeToScreenDistance() const { return mEyeToScreenMod + mImpl->getEyeToScreenDistance(); }
+F32 LLHMD::getPhysicalScreenWidth() const { return mImpl->getPhysicalScreenWidth(); }
+F32 LLHMD::getPhysicalScreenHeight() const { return mImpl->getPhysicalScreenHeight(); }
+F32 LLHMD::getInterpupillaryOffset() const { return mImpl->getInterpupillaryOffset(); }
+void LLHMD::setInterpupillaryOffset(F32 f) { mImpl->setInterpupillaryOffset(f); }
+F32 LLHMD::getInterpupillaryOffsetDefault() const { return mImpl->getInterpupillaryOffsetDefault(); }
+F32 LLHMD::getLensSeparationDistance() const { return mImpl->getLensSeparationDistance(); }
+F32 LLHMD::getEyeToScreenDistance() const { return mImpl->getEyeToScreenDistance(); }
+F32 LLHMD::getEyeToScreenDistanceDefault() const { return mImpl->getEyeToScreenDistanceDefault(); }
+void LLHMD::setEyeToScreenDistance(F32 f) { mImpl->setEyeToScreenDistance(f); }
 LLVector4 LLHMD::getDistortionConstants() const { return mImpl->getDistortionConstants(); }
 F32 LLHMD::getXCenterOffset() const { return mXCenterOffsetMod + mImpl->getXCenterOffset(); }
 F32 LLHMD::getYCenterOffset() const { return mImpl->getYCenterOffset(); }
 F32 LLHMD::getDistortionScale() const { return mImpl->getDistortionScale(); }
 LLQuaternion LLHMD::getHMDOrient() const { return mImpl->getHMDOrient(); }
 void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); }
-const LLVector3& LLHMD::getRawHMDRollPitchYaw() const { return mImpl->getRawHMDRollPitchYaw(); }
-F32 LLHMD::getVerticalFOV() const { return mVerticalFOVMod + mImpl->getVerticalFOV(); }
+F32 LLHMD::getVerticalFOV() const { return mImpl->getVerticalFOV(); }
+BOOL LLHMD::useMotionPrediction() const { return mImpl->useMotionPrediction(); }
+void LLHMD::useMotionPrediction(BOOL b) { mImpl->useMotionPrediction(b); }
+BOOL LLHMD::useMotionPredictionDefault() const { return mImpl->useMotionPredictionDefault(); }
+F32 LLHMD::getMotionPredictionDelta() const { return mImpl->getMotionPredictionDelta(); }
+F32 LLHMD::getMotionPredictionDeltaDefault() const { return mImpl->getMotionPredictionDeltaDefault(); }
+void LLHMD::setMotionPredictionDelta(F32 f) { mImpl->setMotionPredictionDelta(f); }
 //LLVector4 LLHMD::getChromaticAberrationConstants() const { return mImpl->getChromaticAberrationConstants(); }
-//LLMatrix4 LLHMD::getViewAdjustMatrix() const { return mImpl->getViewAdjustMatrix(); }
-//LLMatrix4 LLHMD::getProjectionMatrix() const { return mImpl->getProjectionMatrix(); }
-//LLMatrix4 LLHMD::getOrthoProjectionMatrix() const { return mImpl->getOrthoProjectionMatrix(); }
 F32 LLHMD::getOrthoPixelOffset() const { return mImpl->getOrthoPixelOffset(); }
 LLViewerTexture* LLHMD::getCursorImage(U32 cursorType) { return mImpl->getCursorImage(cursorType); }

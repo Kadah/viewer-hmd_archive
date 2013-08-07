@@ -405,6 +405,7 @@ set(viewer_SOURCE_FILES
     llpanelgroupnotices.cpp
     llpanelgrouproles.cpp
     llpanelhome.cpp
+    llpanelhmdconfig.cpp
     llpanelland.cpp
     llpanellandaudio.cpp
     llpanellandmarkinfo.cpp
@@ -981,6 +982,7 @@ set(viewer_HEADER_FILES
     llpanelgroupnotices.h
     llpanelgrouproles.h
     llpanelhome.h
+    llpanelhmdconfig.h
     llpanelland.h
     llpanellandaudio.h
     llpanellandmarkinfo.h

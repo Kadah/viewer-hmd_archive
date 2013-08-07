@@ -483,6 +483,7 @@ private:
 	LLHandle<LLView> mToolBarHolder;		// container for toolbars
 	LLHandle<LLView> mHintHolder;			// container for hints
 	LLHandle<LLView> mLoginPanelHolder;		// container for login panel
+	LLHandle<LLView> mHMDConfigHolder;		// container for HMD config screen
 	LLPopupView*	mPopupView;			// container for transient popups
 	
 	class LLDebugText* mDebugText; // Internal class for debug text
