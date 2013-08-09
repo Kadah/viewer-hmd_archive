@@ -1851,7 +1851,7 @@ BOOL LLWindowMacOSX::destroyHMDWindow()
 /*virtual*/
 BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
 {
-    LL_INFOS("Window") << "setRenderWindow : start" << LL_ENDL;
+    LL_DEBUGS("Window") << "setRenderWindow : start" << LL_ENDL;
     if ((idx < 0) || (idx > 1) || !mGLView[idx])
     {
         return FALSE;
@@ -1875,7 +1875,7 @@ BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
         }
     }
     
-    LL_INFOS("Window") << "setRenderWindow : successful" << LL_ENDL;
+    LL_DEBUGS("Window") << "setRenderWindow : successful" << LL_ENDL;
     mCurRCIdx = idx;
     return TRUE;
 }
