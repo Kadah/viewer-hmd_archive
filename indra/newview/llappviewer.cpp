@@ -97,6 +97,7 @@
 #include "llfloatertexturefetchdebugger.h"
 #include "llspellcheck.h"
 #include "llavatarrenderinfoaccountant.h"
+#include "llhmd.h"
 
 // Linden library includes
 #include "llavatarnamecache.h"
@@ -1691,8 +1692,11 @@ bool LLAppViewer::cleanup()
 	disconnectViewer();
 
 	llinfos << "Viewer disconnected" << llendflush;
+    
+    // Shuts down notifications after the viewer is disconnected
+    LLNotifications::cleanUp();
 
-	display_cleanup(); 
+	display_cleanup();
 
 	release_start_screen(); // just in case
 
@@ -1801,6 +1805,11 @@ bool LLAppViewer::cleanup()
 	// Clean up before GL is shut down because we might be holding on to objects with texture references
 	LLSelectMgr::cleanupGlobals();
 	
+    if (gHMD.isInitialized())
+    {
+        gHMD.shutdown();
+    }
+
 	llinfos << "Shutting down OpenGL" << llendflush;
 
 	// Shut down OpenGL
@@ -3324,10 +3333,10 @@ void LLAppViewer::writeSystemInfo()
 	gDebugInfo["SLLog"] = LLError::logFileName();
 
 	gDebugInfo["ClientInfo"]["Name"] = LLVersionInfo::getChannel();
-	gDebugInfo["ClientInfo"]["MajorVersion"] = LLVersionInfo::getMajor();
-	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::getMinor();
-	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::getPatch();
-	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::getBuild();
+	gDebugInfo["ClientInfo"]["MajorVersion"] = (S32)(LLVersionInfo::getMajor());
+	gDebugInfo["ClientInfo"]["MinorVersion"] = (S32)(LLVersionInfo::getMinor());
+	gDebugInfo["ClientInfo"]["PatchVersion"] = (S32)(LLVersionInfo::getPatch());
+	gDebugInfo["ClientInfo"]["BuildVersion"] = (S32)(LLVersionInfo::getBuild());
 
 	gDebugInfo["CAFilename"] = gDirUtilp->getCAFile();
 
@@ -3430,10 +3439,10 @@ void LLAppViewer::handleViewerCrash()
 	//to check against no matter what
 	gDebugInfo["ClientInfo"]["Name"] = LLVersionInfo::getChannel();
 
-	gDebugInfo["ClientInfo"]["MajorVersion"] = LLVersionInfo::getMajor();
-	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::getMinor();
-	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::getPatch();
-	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::getBuild();
+	gDebugInfo["ClientInfo"]["MajorVersion"] = (S32)(LLVersionInfo::getMajor());
+	gDebugInfo["ClientInfo"]["MinorVersion"] = (S32)(LLVersionInfo::getMinor());
+	gDebugInfo["ClientInfo"]["PatchVersion"] = (S32)(LLVersionInfo::getPatch());
+	gDebugInfo["ClientInfo"]["BuildVersion"] = (S32)(LLVersionInfo::getBuild());
 
 	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
 	if ( parcel && parcel->getMusicURL()[0])
@@ -4558,6 +4567,18 @@ void LLAppViewer::idle()
 		// Update spaceserver timeinfo
 	    LLWorld::getInstance()->setSpaceTimeUSec(LLWorld::getInstance()->getSpaceTimeUSec() + (U32)(dt_raw * SEC_TO_MICROSEC));
     
+        // TODO: move the init step so that it happens in the LLHMD::onMessage 
+        if (!gHMD.isInitialized() && !gHMD.failedInit())
+        {
+            if (!gHMD.init())
+            {
+                LL_WARNS("Oculus") << "Oculus Rift initialization Failed!" << LL_ENDL;
+            }
+        }
+        if (gHMD.isInitialized())
+        {
+            gHMD.onIdle();
+        }
     
 	    //////////////////////////////////////
 	    //
@@ -5372,10 +5393,10 @@ void LLAppViewer::handleLoginComplete()
 	// Store some data to DebugInfo in case of a freeze.
 	gDebugInfo["ClientInfo"]["Name"] = LLVersionInfo::getChannel();
 
-	gDebugInfo["ClientInfo"]["MajorVersion"] = LLVersionInfo::getMajor();
-	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::getMinor();
-	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::getPatch();
-	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::getBuild();
+	gDebugInfo["ClientInfo"]["MajorVersion"] = (S32)(LLVersionInfo::getMajor());
+	gDebugInfo["ClientInfo"]["MinorVersion"] = (S32)(LLVersionInfo::getMinor());
+	gDebugInfo["ClientInfo"]["PatchVersion"] = (S32)(LLVersionInfo::getPatch());
+	gDebugInfo["ClientInfo"]["BuildVersion"] = (S32)(LLVersionInfo::getBuild());
 
 	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
 	if ( parcel && parcel->getMusicURL()[0])

@@ -2062,7 +2062,7 @@ void LLVOAvatar::idleUpdateVoiceVisualizer(bool voice_enabled)
 	// Don't render the user's own voice visualizer when in mouselook, or when opening the mic is disabled.
 	if(isSelf())
 	{
-		if(gAgentCamera.cameraMouselook() || gSavedSettings.getBOOL("VoiceDisableMic"))
+		if(gAgentCamera.cameraMouselook() || gAgentCamera.cameraFirstPerson() || gSavedSettings.getBOOL("VoiceDisableMic"))
 		{
 			render_visualizer = false;
 		}
@@ -2533,6 +2533,7 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 	{
 		render_name = render_name
 			&& !gAgentCamera.cameraMouselook()
+            && !gAgentCamera.cameraFirstPerson()
 			&& (visible_chat || (gSavedSettings.getBOOL("RenderNameShowSelf") 
 								 && gSavedSettings.getS32("AvatarNameTagMode") ));
 	}
@@ -3379,7 +3380,7 @@ BOOL LLVOAvatar::updateCharacter(LLAgent &agent)
 			// When moving very slow, the pelvis is allowed to deviate from the
 			// forward direction to allow it to hold it's position while the torso
 			// and head turn.  Once in motion, it must conform however.
-			BOOL self_in_mouselook = isSelf() && gAgentCamera.cameraMouselook();
+			BOOL self_in_mouselook = isSelf() && (gAgentCamera.cameraMouselook() || gAgentCamera.cameraFirstPerson());
 
 			LLVector3 pelvisDir( mRoot->getWorldMatrix().getFwdRow4().mV );
 
@@ -5354,7 +5355,7 @@ BOOL LLVOAvatar::updateJointLODs()
 
 		if (isSelf())
 		{
-			if(gAgentCamera.cameraCustomizeAvatar() || gAgentCamera.cameraMouselook())
+			if(gAgentCamera.cameraCustomizeAvatar() || gAgentCamera.cameraMouselook() || gAgentCamera.cameraFirstPerson())
 			{
 				mAdjustedPixelArea = MAX_PIXEL_AREA;
 			}

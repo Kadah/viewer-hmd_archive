@@ -2125,6 +2125,17 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
+    <key>DebugHMDEnable</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable Head Mounted Display Debugging Mode.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
     <key>DebugInventoryFilters</key>
     <map>
       <key>Comment</key>
@@ -9453,17 +9464,6 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-    <key>RenderUIBuffer</key>
-    <map>
-      <key>Comment</key>
-      <string>Cache ui render in a screen aligned buffer.</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-    </map>
     <key>RenderUnloadedAvatar</key>
     <map>
       <key>Comment</key>
@@ -9562,7 +9562,7 @@
     <string>Boolean</string>
     <key>Value</key>
     <integer>0</integer>
-  </map>    
+  </map>
   <key>RenderAutoHideSurfaceAreaLimit</key>
   <map>
     <key>Comment</key>
@@ -14621,6 +14621,163 @@
       <key>Value</key>
       <string />
     </map>
+
+  <key>OculusXCenterOffsetModifier</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus adds this value to the X Center Offset returned</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>0.0</real>
+  </map>
+  <key>OculusUseMirroring</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus : Do turn this on when using the Rift in display mirroring instead of second screen (Mac only)</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  <key>OculusOptWindowRaw</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus Option for WindowRectRaw</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>S32</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  <key>OculusOptWindowScaled</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus Option for WindowRectScaled</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>S32</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  <key>OculusOptWorldViewRaw</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus Option for WorldViewRaw</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>S32</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  <key>OculusOptWorldViewScaled</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Oculus Option for WorldViewScaled</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>S32</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  <key>OculusUISurfaceFudge</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Amount to fudge UI distortion by for spherical projection correction</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>1.0</real>
+  </map>
+  <key>OculusUISurfaceX</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] X = middle X, Y = width, Z = left-width-mult</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Vector3</string>
+    <key>Value</key>
+    <array>
+      <real>1.5</real>
+      <real>0.85</real>
+      <real>0.5</real>
+    </array>
+  </map>
+  <key>OculusUISurfaceY</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] X = middle Y, Y = height, Z = top-height-mult</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Vector3</string>
+    <key>Value</key>
+    <array>
+      <real>0.45</real>
+      <real>0.425</real>
+      <real>0.5</real>
+    </array>
+  </map>
+  <key>OculusUISurfaceRadius</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Radius of UI Toroid</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>2.0</real>
+  </map>
+  <key>OculusTestCalibration</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] Test rednering for Oculus 3D Depth calibration</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <real>0</real>
+  </map>
+  <key>Oculus2DUICurvedSurface</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] TRUE = render 2D UI on a toroid surface. FALSE = render 2D UI on a flat surface.</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <real>1</real>
+  </map>
+  <key>OculusUIFlatSurfaceScale</key>
+  <map>
+    <key>Comment</key>
+    <string>[EXPERIMENTAL] x = * 1.6, y = * 1.0, z = * -1.0</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Vector3</string>
+    <key>Value</key>
+    <array>
+      <real>1.5</real>
+      <real>1.5</real>
+      <real>1.5</real>
+    </array>
+  </map>
+
 </map>
 </llsd>
 

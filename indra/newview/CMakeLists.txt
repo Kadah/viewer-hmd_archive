@@ -47,6 +47,7 @@ include(VisualLeakDetector)
 include(GLOD)
 include(CMakeCopyIfDifferent)
 include(LLAppearance)
+include(LibOVR)
 
 if (NOT HAVOK_TPV)
    # When using HAVOK_TPV, the library is precompiled, so no need for this
@@ -87,6 +88,7 @@ include_directories(
     ${OPENAL_LIB_INCLUDE_DIRS}
     ${LIBS_PREBUILT_DIR}/include/collada/1.4
     ${LLAPPEARANCE_INCLUDE_DIRS}
+    ${LIBOVR_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
@@ -305,6 +307,7 @@ set(viewer_SOURCE_FILES
     llgroupmgr.cpp
     llhasheduniqueid.cpp
     llhints.cpp
+    llhmd.cpp
     llhomelocationresponder.cpp
     llhudeffect.cpp
     llhudeffectbeam.cpp
@@ -405,6 +408,7 @@ set(viewer_SOURCE_FILES
     llpanelgroupnotices.cpp
     llpanelgrouproles.cpp
     llpanelhome.cpp
+    llpanelhmdconfig.cpp
     llpanelland.cpp
     llpanellandaudio.cpp
     llpanellandmarkinfo.cpp
@@ -889,6 +893,7 @@ set(viewer_HEADER_FILES
     llhasheduniqueid.h
     llhints.h
     llhomelocationresponder.h
+    llhmd.h
     llhudeffect.h
     llhudeffectbeam.h
     llhudeffectlookat.h
@@ -982,6 +987,7 @@ set(viewer_HEADER_FILES
     llpanelgroupnotices.h
     llpanelgrouproles.h
     llpanelhome.h
+    llpanelhmdconfig.h
     llpanelland.h
     llpanellandaudio.h
     llpanellandmarkinfo.h
@@ -1899,6 +1905,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${LLPHYSICSEXTENSIONS_LIBRARIES}
     ${TCMALLOC_LIBRARIES}
     ${LLAPPEARANCE_LIBRARIES}
+    ${LIBOVR_LIBRARIES}
     )
 
 set(ARTWORK_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH

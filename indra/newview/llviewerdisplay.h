@@ -41,5 +41,6 @@ extern LLFrameTimer	gTeleportDisplayTimer;
 extern BOOL			gForceRenderLandFence;
 extern BOOL gResizeScreenTexture;
 extern BOOL gWindowResized;
+extern BOOL gRenderUIMode;
 
 #endif // LL_LLVIEWERDISPLAY_H

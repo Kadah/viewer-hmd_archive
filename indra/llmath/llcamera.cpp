@@ -29,6 +29,7 @@
 #include "llmath.h"
 #include "llcamera.h"
 
+
 // ---------------- Constructors and destructors ----------------
 
 LLCamera::LLCamera() :
@@ -80,16 +81,18 @@ LLCamera::~LLCamera()
 F32 LLCamera::getMinView() const 
 {
 	// minimum vertical fov needs to be constrained in narrow windows.
-	return mAspect > 1
+    F32 aspect = getAspect();
+	return aspect > 1.0f
 		? MIN_FIELD_OF_VIEW // wide views
-		: MIN_FIELD_OF_VIEW * 1/mAspect; // clamps minimum width in narrow views
+		: MIN_FIELD_OF_VIEW * 1.0f / aspect; // clamps minimum width in narrow views
 }
 
 F32 LLCamera::getMaxView() const 
 {
 	// maximum vertical fov needs to be constrained in wide windows.
-	return mAspect > 1 
-		? MAX_FIELD_OF_VIEW / mAspect  // clamps maximum width in wide views
+    F32 aspect = getAspect();
+	return aspect > 1.0f
+		? MAX_FIELD_OF_VIEW / aspect  // clamps maximum width in wide views
 		: MAX_FIELD_OF_VIEW; // narrow views
 }
 
@@ -126,7 +129,6 @@ void LLCamera::setAspect(F32 aspect_ratio)
 	mAspect = llclamp(aspect_ratio, MIN_ASPECT_RATIO, MAX_ASPECT_RATIO);
 	calculateFrustumPlanes();
 }
-
 
 void LLCamera::setNear(F32 near_plane) 
 {
@@ -393,7 +395,8 @@ F32 LLCamera::heightInPixels(const LLVector3 &center, F32 radius ) const
 	if (radius == 0.f) return 0.f;
 
 	// If height initialized
-	if (mViewHeightInPixels > -1)
+    S32 vhip = getViewHeightInPixels();
+	if (vhip > -1)
 	{
 		// Convert sphere to coord system with 0,0,0 at camera
 		LLVector3 vec = center - mOrigin;
@@ -408,7 +411,7 @@ F32 LLCamera::heightInPixels(const LLVector3 &center, F32 radius ) const
 		F32 fraction_of_fov = angle / mView;
 
 		// Compute number of pixels tall, based on vertical field of view
-		return (fraction_of_fov * mViewHeightInPixels);
+		return (fraction_of_fov * vhip);
 	}
 	else
 	{
@@ -521,7 +524,7 @@ void LLCamera::calculateFrustumPlanes()
 	F32 left,right,top,bottom;
 	top = mFarPlane * (F32)tanf(0.5f * mView);
 	bottom = -top;
-	left = top * mAspect;
+	left = top * getAspect();
 	right = -left;
 
 	calculateFrustumPlanes(left, right, top, bottom);
@@ -621,7 +624,7 @@ void LLCamera::calculateFrustumPlanesFromWindow(F32 x1, F32 y1, F32 x2, F32 y2)
 {
 	F32 bottom, top, left, right;
 	F32 view_height = (F32)tanf(0.5f * mView) * mFarPlane;
-	F32 view_width = view_height * mAspect;
+	F32 view_width = view_height * getAspect();
 	
 	left = 	 x1 * -2.f * view_width;
 	right =  x2 * -2.f * view_width;

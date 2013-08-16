@@ -87,6 +87,8 @@ LLGLSLShader	gClipProgram;
 LLGLSLShader	gDownsampleDepthProgram;
 LLGLSLShader	gDownsampleDepthRectProgram;
 LLGLSLShader	gAlphaMaskProgram;
+LLGLSLShader	gBarrelDistortProgram;
+LLGLSLShader	gBarrelDistortRectProgram;
 
 //object shaders
 LLGLSLShader		gObjectSimpleProgram;
@@ -663,6 +665,8 @@ void LLViewerShaderMgr::unloadShaders()
 	gCustomAlphaProgram.unload();
 	gGlowCombineProgram.unload();
 	gSplatTextureRectProgram.unload();
+	gBarrelDistortProgram.unload();
+    gBarrelDistortRectProgram.unload();
 	gGlowCombineFXAAProgram.unload();
 	gTwoTextureAddProgram.unload();
 	gOneTextureNoColorProgram.unload();
@@ -2821,6 +2825,38 @@ BOOL LLViewerShaderMgr::loadShadersInterface()
 	}
 
 	if (success)
+	{
+		gBarrelDistortProgram.mName = "Barrel Distort Shader";
+		gBarrelDistortProgram.mShaderFiles.clear();
+		gBarrelDistortProgram.mShaderFiles.push_back(make_pair("interface/barreldistortV.glsl", GL_VERTEX_SHADER_ARB));
+		gBarrelDistortProgram.mShaderFiles.push_back(make_pair("interface/barreldistortF.glsl", GL_FRAGMENT_SHADER_ARB));
+		gBarrelDistortProgram.mShaderLevel = mVertexShaderLevel[SHADER_INTERFACE];
+		success = gBarrelDistortProgram.createShader(NULL, NULL);
+		if (success)
+		{
+			gBarrelDistortProgram.bind();
+			gBarrelDistortProgram.uniform1i(sScreenMap, 0);
+			gBarrelDistortProgram.unbind();
+		}
+	}
+
+    if (success)
+    {
+        gBarrelDistortRectProgram.mName = "Barrel Distort Rect Shader";
+        gBarrelDistortRectProgram.mShaderFiles.clear();
+        gBarrelDistortRectProgram.mShaderFiles.push_back(make_pair("interface/barreldistortRectV.glsl", GL_VERTEX_SHADER_ARB));
+        gBarrelDistortRectProgram.mShaderFiles.push_back(make_pair("interface/barreldistortRectF.glsl", GL_FRAGMENT_SHADER_ARB));
+        gBarrelDistortRectProgram.mShaderLevel = mVertexShaderLevel[SHADER_INTERFACE];
+        success = gBarrelDistortRectProgram.createShader(NULL, NULL);
+        if (success)
+        {
+            gBarrelDistortRectProgram.bind();
+            gBarrelDistortRectProgram.uniform1i(sScreenMap, 0);
+            gBarrelDistortRectProgram.unbind();
+        }
+    }
+
+    if (success)
 	{
 		gGlowCombineProgram.mName = "Glow Combine Shader";
 		gGlowCombineProgram.mShaderFiles.clear();

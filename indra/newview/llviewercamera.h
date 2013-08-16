@@ -80,9 +80,20 @@ public:
 		NUM_CAMERAS
 	} eCameraID;
 
+	typedef enum
+	{
+        CENTER_EYE = 0,
+		LEFT_EYE = 1,
+		RIGHT_EYE = 2,
+	} eCameraEye;
+
 	static U32 sCurCameraID;
+	static U32 sCurrentEye;
 
 	LLViewerCamera();
+
+    virtual S32 getViewHeightInPixels() const;
+    virtual F32 getAspect() const;
 
 	void updateCameraLocation(const LLVector3 &center,
 								const LLVector3 &up_direction,
@@ -113,8 +124,8 @@ public:
 	// Sets the current matrix
 	/* virtual */ void setView(F32 vertical_fov_rads);
 
-	void setDefaultFOV(F32 fov) ;
-	F32 getDefaultFOV() { return mCameraFOVDefault; }
+	void setDefaultFOV(F32 fov);
+	F32 getDefaultFOV() const;
 
 	BOOL cameraUnderWater() const;
 
@@ -126,6 +137,8 @@ public:
 	void setZoomParameters(F32 factor, S16 subregion) { mZoomFactor = factor; mZoomSubregion = subregion; }
 	F32 getZoomFactor() { return mZoomFactor; }                             
 	S16 getZoomSubRegion() { return mZoomSubregion; } 
+
+    const LLMatrix4& getPreHMDViewMatrix() const { return mPreHMDViewMatrix; }
 
 protected:
 	void calcProjection(const F32 far_distance) const;
@@ -145,6 +158,7 @@ protected:
 	S32					mScreenPixelArea; // Pixel area of entire window
 	F32					mZoomFactor;
 	S16					mZoomSubregion;
+    LLMatrix4           mPreHMDViewMatrix;
 
 public:
 } LL_ALIGN_POSTFIX(16);

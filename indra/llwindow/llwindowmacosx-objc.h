@@ -71,10 +71,11 @@ void hideNSCursorTillMove(bool hide);
 void requestUserAttention();
 long showAlert(std::string title, std::string text, int type);
 
-NSWindowRef createNSWindow(int x, int y, int width, int height);
+NSWindowRef createNSWindow(int x, int y, int width, int height, int screen_index);
 
 #include <OpenGL/OpenGL.h>
 GLViewRef createOpenGLView(NSWindowRef window, unsigned int samples, bool vsync);
+GLViewRef createOpenGLViewTest(NSWindowRef window, int width, int height);
 void glSwapBuffers(void* context);
 CGLContextObj getCGLContextObj(GLViewRef view);
 unsigned long getVramSize(GLViewRef view);
@@ -143,3 +144,9 @@ NSWindowRef getMainAppWindow();
 GLViewRef getGLView();
 
 unsigned int getModifiers();
+
+// Implemented for HMD support
+int getDisplayCountObjC();
+long getDisplayId(int screen_id);
+void getScreenSize(int screen_id, float* size);
+

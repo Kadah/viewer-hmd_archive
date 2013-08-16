@@ -113,6 +113,14 @@ public:
 
 	LLWindowCallbacks::DragNDropResult completeDragNDropRequest( const LLCoordGL gl_coord, const MASK mask, LLWindowCallbacks::DragNDropAction action, const std::string url );
 
+    // HMD support
+    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height);
+    /*virtual*/ BOOL destroyHMDWindow();
+    /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
+    /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping);
+    /*virtual*/ S32 getDisplayCount();
+    /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary);
+
 	static std::vector<std::string> getDynamicFallbackFontList();
 
 protected:
@@ -149,6 +157,9 @@ protected:
 	void	handleCompositionMessage(U32 indexes);
 	BOOL	handleImeRequests(U32 request, U32 param, LRESULT *result);
 
+    BOOL    getCurrentClientRect(RECT& r, RECT* pActualRect = NULL);
+    BOOL    getCurrentWindowRect(RECT& r, RECT* pActualRect = NULL);
+
 protected:
 	//
 	// Platform specific methods
@@ -167,9 +178,11 @@ protected:
 	WCHAR		*mWindowTitle;
 	WCHAR		*mWindowClassName;
 
-	HWND		mWindowHandle;	// window handle
-	HGLRC		mhRC;			// OpenGL rendering context
-	HDC			mhDC;			// Windows Device context handle
+	HWND		mWindowHandle[2];   // window handle
+	HDC		    mhDC[2];            // Windows Device context handle
+	U32         mPixelFormat;
+    PIXELFORMATDESCRIPTOR mPixelFormatDescriptor;
+	HGLRC		mhRC;           // OpenGL rendering context
 	HINSTANCE	mhInstance;		// handle to application instance
 	WNDPROC		mWndProc;		// user-installable window proc
 	RECT		mOldMouseClip;  // Screen rect to which the mouse cursor was globally constrained before we changed it in clipMouse()
@@ -189,6 +202,8 @@ protected:
 	LPWSTR		mIconResource;
 	BOOL		mMousePositionModified;
 	BOOL		mInputProcessingPaused;
+    BOOL        mHMDMode;
+    S32         mHMDRenderWindowIdx;
 
 	// The following variables are for Language Text Input control.
 	// They are all static, since one context is shared by all LLWindowWin32

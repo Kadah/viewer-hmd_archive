@@ -645,6 +645,11 @@ BOOL LLViewerKeyboard::modeFromString(const std::string& string, S32 *mode)
 		*mode = MODE_SITTING;
 		return TRUE;
 	}
+    else if (string == "FIRST_PERSON_HMD")
+    {
+        *mode = MODE_FIRST_PERSON_HMD;
+        return TRUE;
+    }
 	else
 	{
 		*mode = MODE_THIRD_PERSON;
@@ -654,6 +659,7 @@ BOOL LLViewerKeyboard::modeFromString(const std::string& string, S32 *mode)
 
 BOOL LLViewerKeyboard::handleKey(KEY translated_key,  MASK translated_mask, BOOL repeated)
 {
+	LL_DEBUGS("Keyboard Handling") << "Handling key " << translated_key << LL_ENDL;
 	// check for re-map
 	EKeyboardMode mode = gViewerKeyboard.getMode();
 	U32 keyidx = (translated_mask<<16) | translated_key;
@@ -676,7 +682,7 @@ BOOL LLViewerKeyboard::handleKey(KEY translated_key,  MASK translated_mask, BOOL
 	if(mKeysSkippedByUI.find(translated_key) != mKeysSkippedByUI.end()) 
 	{
 		mKeyHandledByUI[translated_key] = FALSE;
-		LL_INFOS("Keyboard Handling") << "Key wasn't handled by UI!" << LL_ENDL;
+		LL_DEBUGS("Keyboard Handling") << "Key wasn't handled by UI!" << LL_ENDL;
 	}
 	else
 	{
@@ -774,7 +780,8 @@ LLViewerKeyboard::Keys::Keys()
 	third_person("third_person", KeyMode(MODE_THIRD_PERSON)),
 	edit("edit", KeyMode(MODE_EDIT)),
 	sitting("sitting", KeyMode(MODE_SITTING)),
-	edit_avatar("edit_avatar", KeyMode(MODE_EDIT_AVATAR))
+	edit_avatar("edit_avatar", KeyMode(MODE_EDIT_AVATAR)),
+    first_person_hmd("first_person_hmd", KeyMode(MODE_FIRST_PERSON_HMD))
 {}
 
 S32 LLViewerKeyboard::loadBindingsXML(const std::string& filename)
@@ -791,6 +798,7 @@ S32 LLViewerKeyboard::loadBindingsXML(const std::string& filename)
 		binding_count += loadBindingMode(keys.edit);
 		binding_count += loadBindingMode(keys.sitting);
 		binding_count += loadBindingMode(keys.edit_avatar);
+        binding_count += loadBindingMode(keys.first_person_hmd);
 	}
 	return binding_count;
 }
@@ -879,7 +887,7 @@ S32 LLViewerKeyboard::loadBindings(const std::string& filename)
 		if (!modeFromString(mode_string, &mode))
 		{
 			llinfos << "Unknown mode on line " << line_count << " of key binding file " << filename << llendl;
-			llinfos << "Mode must be one of FIRST_PERSON, THIRD_PERSON, EDIT, EDIT_AVATAR" << llendl;
+			llinfos << "Mode must be one of FIRST_PERSON, THIRD_PERSON, EDIT, EDIT_AVATAR, FIRST_PERSON_HMD" << llendl;
 			continue;
 		}
 
@@ -916,6 +924,10 @@ EKeyboardMode LLViewerKeyboard::getMode()
 	{
 		return MODE_FIRST_PERSON;
 	}
+    else if (gAgentCamera.cameraFirstPerson())
+    {
+        return MODE_FIRST_PERSON_HMD;
+    }
 	else if ( gMorphView && gMorphView->getVisible())
 	{
 		return MODE_EDIT_AVATAR;

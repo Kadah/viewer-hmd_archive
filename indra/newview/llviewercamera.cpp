@@ -41,6 +41,8 @@
 #include "llworld.h"
 #include "lltoolmgr.h"
 #include "llviewerjoystick.h"
+#include "llhmd.h"
+#include "llviewerdisplay.h"
 
 // Linden library includes
 #include "lldrawable.h"
@@ -54,6 +56,7 @@
 #include <iomanip> // for setprecision
 
 U32 LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
+U32 LLViewerCamera::sCurrentEye = LLViewerCamera::CENTER_EYE;
 
 //glu pick matrix implementation borrowed from Mesa3D
 glh::matrix4f gl_pick_matrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height, GLint* viewport)
@@ -119,12 +122,39 @@ LLViewerCamera::LLViewerCamera() : LLCamera()
 	gSavedSettings.getControl("CameraAngle")->getCommitSignal()->connect(boost::bind(&LLViewerCamera::updateCameraAngle, this, _2));
 }
 
+
+S32 LLViewerCamera::getViewHeightInPixels() const
+{
+    return gHMD.shouldRender() ? gHMD.kHMDHeight : mViewHeightInPixels;
+}
+
+F32 LLViewerCamera::getAspect() const
+{
+    if (gHMD.shouldRender())
+    {
+        if (gRenderUIMode)
+        {
+            static const F32 kHMDUIAspect = (float)gHMD.kHMDUIWidth / (float)gHMD.kHMDUIHeight;
+            return kHMDUIAspect;
+        }
+        else
+        {
+            static const F32 kHMDHalfAspect = (float)gHMD.kHMDEyeWidth / (float)gHMD.kHMDHeight;
+            return kHMDHalfAspect;
+        }
+    }
+    else
+    {
+        return mAspect;
+    }
+}
+
 void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
 											const LLVector3 &up_direction,
 											const LLVector3 &point_of_interest)
 {
 	// do not update if avatar didn't move
-	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate())
+	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate() && (!gHMD.isInitialized() || !gHMD.shouldRender()))
 	{
 		return;
 	}
@@ -149,7 +179,22 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
 		origin.mV[2] = llmin(origin.mV[2], water_height-0.20f);
 	}
 
-	setOriginAndLookAt(origin, up_direction, point_of_interest);
+    LLVector3 up = up_direction;
+    LLVector3 poi = point_of_interest;
+    setOriginAndLookAt(origin, up, poi);
+    if (gHMD.isInitialized() && gHMD.shouldRender())
+    {
+        mPreHMDViewMatrix = getModelview();
+        mPreHMDViewMatrix.invert();
+        float r, p, y;
+        gHMD.getHMDRollPitchYaw(r, p, y);
+        LLQuaternion qr(r, mXAxis);
+        LLQuaternion qp(p, mYAxis);
+        LLQuaternion qy(y, mZAxis);
+        qr *= qp;
+        qr *= qy;
+        rotate(qr);
+    }
 
 	mVelocityDir = center - last_position ; 
 	F32 dpos = mVelocityDir.normVec() ;
@@ -220,8 +265,16 @@ void LLViewerCamera::updateFrustumPlanes(LLCamera& camera, BOOL ortho, BOOL zfli
 
 	for (U32 i = 0; i < 16; i++)
 	{
-		model[i] = (F64) gGLModelView[i];
-		proj[i] = (F64) gGLProjection[i];
+        if (gHMD.shouldRender() && !ortho)
+        {
+            model[i] = (F64)gHMD.getBaseModelView()[i];
+            proj[i] = (F64)gHMD.getBaseProjection()[i];
+        }
+        else
+        {
+		    model[i] = (F64) gGLModelView[i];
+		    proj[i] = (F64) gGLProjection[i];
+        }
 	}
 
 	GLdouble objX,objY,objZ;
@@ -313,8 +366,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 									BOOL limit_select_distance,
 									F32 z_near, F32 z_far)
 {
-	F32 fov_y, aspect;
-	fov_y = RAD_TO_DEG * getView();
+    F32 fov_y = RAD_TO_DEG * getView();
 	BOOL z_default_far = FALSE;
 	if (z_far <= 0)
 	{
@@ -325,7 +377,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 	{
 		z_near = getNear();
 	}
-	aspect = getAspect();
+	F32 aspect = getAspect();
 
 	// Load camera view matrix
 	gGL.matrixMode(LLRender::MM_PROJECTION);
@@ -388,6 +440,17 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 
 	proj_mat *= gl_perspective(fov_y,aspect,z_near,z_far);
 
+    if (gHMD.shouldRender())
+    {
+        gHMD.setBaseProjection(proj_mat.m);
+        F32 viewCenter = gHMD.getPhysicalScreenWidth() * 0.25f;
+        F32 eyeProjShift = viewCenter - (gHMD.getLensSeparationDistance() * 0.5f);
+        F32 projCtrOffset = ((4.0f * eyeProjShift) / gHMD.getPhysicalScreenWidth()) * (sCurrentEye == LEFT_EYE ? 1.0f : -1.0f);
+        glh::matrix4f translate;
+        translate.set_translate(glh::vec3f(projCtrOffset, 0.0f, 0.0f));
+        proj_mat = translate * proj_mat;
+    }
+
 	gGL.loadMatrix(proj_mat.m);
 
 	for (U32 i = 0; i < 16; i++)
@@ -404,6 +467,15 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 	getOpenGLTransform(ogl_matrix);
 
 	modelview *= glh::matrix4f(ogl_matrix);
+
+    if (gHMD.shouldRender())
+    {
+        gHMD.setBaseModelView(modelview.m);
+        F32 viewOffset = gHMD.getInterpupillaryOffset();
+        glh::matrix4f translate;
+        translate.set_translate(glh::vec3f(sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f, 0.0f));
+        modelview = translate * modelview;
+    }
 	
 	gGL.loadMatrix(modelview.m);
 	
@@ -878,6 +950,11 @@ void LLViewerCamera::setDefaultFOV(F32 vertical_fov_rads)
 	mCosHalfCameraFOV = cosf(mCameraFOVDefault * 0.5f);
 }
 
+
+F32 LLViewerCamera::getDefaultFOV() const
+{
+    return gHMD.shouldRender() ? gHMD.getVerticalFOV() : mCameraFOVDefault;
+}
 
 // static
 void LLViewerCamera::updateCameraAngle( void* user_data, const LLSD& value)

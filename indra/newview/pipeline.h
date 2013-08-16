@@ -425,6 +425,8 @@ public:
 	void hideObject( const LLUUID& id );
 	void restoreHiddenObject( const LLUUID& id );
 
+    void postRender(LLRenderTarget* pLeft = NULL, LLRenderTarget* pRight = NULL, BOOL writeAlpha = FALSE, S32 viewportWidth = 0);
+
 private:
 	void unloadShaders();
 	void addToQuickLookup( LLDrawPool* new_poolp );
@@ -610,6 +612,9 @@ public:
 	U32 					mScreenWidth;
 	U32 					mScreenHeight;
 	
+	LLRenderTarget			mLeftEye;
+	LLRenderTarget			mRightEye;
+
 	LLRenderTarget			mScreen;
 	LLRenderTarget			mUIScreen;
 	LLRenderTarget			mDeferredScreen;
@@ -651,6 +656,10 @@ public:
 	LLPointer<LLDrawable>				mShadowSpotLight[2];
 	F32									mSpotLightFade[2];
 	LLPointer<LLDrawable>				mTargetShadowSpotLight[2];
+
+    //utilitye buffer for rendering oculus UI surface
+    LLPointer<LLVertexBuffer> mOculusUISurface;
+    LLPointer<LLVertexBuffer> mOculusDepthShape;
 
 	LLVector4				mSunClipPlanes;
 	LLVector4				mSunOrthoClipPlanes;
@@ -884,7 +893,6 @@ public:
 	static F32 RenderDeferredSunWash;
 	static U32 RenderFSAASamples;
 	static U32 RenderResolutionDivisor;
-	static BOOL RenderUIBuffer;
 	static S32 RenderShadowDetail;
 	static BOOL RenderDeferredSSAO;
 	static F32 RenderShadowResolutionScale;

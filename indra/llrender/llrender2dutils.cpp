@@ -62,15 +62,23 @@ BOOL ui_point_in_rect(S32 x, S32 y, S32 left, S32 top, S32 right, S32 bottom)
 
 // Puts GL into 2D drawing mode by turning off lighting, setting to an
 // orthographic projection, etc.
-void gl_state_for_2d(S32 width, S32 height)
+void gl_state_for_2d(S32 width, S32 height, S32 left, F32 offsetX)
 {
 	stop_glerror();
-	F32 window_width = (F32) width;//gViewerWindow->getWindowWidth();
-	F32 window_height = (F32) height;//gViewerWindow->getWindowHeight();
-
 	gGL.matrixMode(LLRender::MM_PROJECTION);
 	gGL.loadIdentity();
-	gGL.ortho(0.0f, llmax(window_width, 1.f), 0.0f, llmax(window_height,1.f), -1.0f, 1.0f);
+    F32 l = (F32)left;
+    F32 r = llmax((F32)width, 1.f);
+    F32 b = 0.0f;
+    F32 t = llmax((F32)height,1.f);
+    F32 n = -1.0f;
+    F32 f = 1.0f;
+    glh::matrix4f proj( 
+        2.f/(r-l),0,0,	-(r+l)/(r-l) + offsetX,
+        0,2.f/(t-b),0,	-(t+b)/(t-b),
+        0,0,-2.f/(f-n),	-(f+n)/(f-n),
+        0,0,0,1);
+    gGL.loadMatrix(proj.m);
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
 	gGL.loadIdentity();
 	stop_glerror();

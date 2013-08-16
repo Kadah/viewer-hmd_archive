@@ -165,6 +165,17 @@ public:
 	// Provide native key event data
 	virtual LLSD getNativeKeyData() { return LLSD::emptyMap(); }
 
+    // HMD support
+    virtual BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height) = 0;
+    virtual BOOL destroyHMDWindow() = 0;
+    S32 getRenderWindow(BOOL& fullScreen) const { fullScreen = mFullscreen; return mCurRCIdx; }
+    virtual BOOL setRenderWindow(S32 idx, BOOL fullscreen) = 0;
+    virtual BOOL setFocusWindow(S32 idx, BOOL clipping) = 0;
+    virtual S32 getDisplayCount() = 0;
+    virtual BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary) = 0;
+    // Experimental : allow testing of Mac code for dual screen mode without Oculus Rift plugged in
+    virtual void addExtraWindow() { }
+    
 protected:
 	LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags);
 	virtual ~LLWindow();
@@ -198,6 +209,10 @@ protected:
 	U16			mHighSurrogate;
 	S32			mMinWindowWidth;
 	S32			mMinWindowHeight;
+
+    // HMD support
+    S32         mCurRCIdx;
+    bool        mUseDisplayMirroring;   // Experimental: used for Mac while we're fixing the second display issues
 
  	// Handle a UTF-16 encoding unit received from keyboard.
  	// Converting the series of UTF-16 encoding units to UTF-32 data,

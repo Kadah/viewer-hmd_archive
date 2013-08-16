@@ -45,27 +45,27 @@ const char * const LL_CHANNEL = LL_VIEWER_CHANNEL;
 //
 
 //static
-S32 LLVersionInfo::getMajor()
+U32 LLVersionInfo::getMajor()
 {
-	return LL_VIEWER_VERSION_MAJOR;
+	return (U32)(LL_VIEWER_VERSION_MAJOR);
 }
 
 //static
-S32 LLVersionInfo::getMinor()
+U32 LLVersionInfo::getMinor()
 {
-	return LL_VIEWER_VERSION_MINOR;
+	return (U32)(LL_VIEWER_VERSION_MINOR);
 }
 
 //static
-S32 LLVersionInfo::getPatch()
+U32 LLVersionInfo::getPatch()
 {
-	return LL_VIEWER_VERSION_PATCH;
+	return (U32)(LL_VIEWER_VERSION_PATCH);
 }
 
 //static
-S32 LLVersionInfo::getBuild()
+U32 LLVersionInfo::getBuild()
 {
-	return LL_VIEWER_VERSION_BUILD;
+	return (U32)(LL_VIEWER_VERSION_BUILD);
 }
 
 //static
@@ -90,9 +90,9 @@ const std::string &LLVersionInfo::getShortVersion()
 	{
 		// cache the version string
 		std::ostringstream stream;
-		stream << LL_VIEWER_VERSION_MAJOR << "."
-		       << LL_VIEWER_VERSION_MINOR << "."
-		       << LL_VIEWER_VERSION_PATCH;
+		stream << (U32)(LL_VIEWER_VERSION_MAJOR) << "."
+		       << (U32)(LL_VIEWER_VERSION_MINOR) << "."
+		       << (U32)(LL_VIEWER_VERSION_PATCH);
 		short_version = stream.str();
 	}
 	return short_version;

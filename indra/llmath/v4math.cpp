@@ -34,6 +34,22 @@
 #include "llquaternion.h"
 
 // LLVector4
+// WARNING: Don't use these for global const definitions!
+// For example: 
+//		const LLQuaternion(LLVector4::zero);
+// at the top of a *.cpp file might not give you what you think.
+const LLVector4 LLVector4::zero(0,0,0,0);
+const LLVector4 LLVector4::x_axis(1.f, 0, 0, 0);
+const LLVector4 LLVector4::y_axis(0, 1.f, 0, 0);
+const LLVector4 LLVector4::z_axis(0, 0, 1.f, 0);
+const LLVector4 LLVector4::w_axis(0, 0, 0, 1.f);
+const LLVector4 LLVector4::x_axis_neg(-1.f, 0, 0, 0);
+const LLVector4 LLVector4::y_axis_neg(0, -1.f, 0, 0);
+const LLVector4 LLVector4::z_axis_neg(0, 0, -1.f, 0);
+const LLVector4 LLVector4::w_axis_neg(0, 0, 0, -1.f);
+const LLVector4 LLVector4::all_one(1.f,1.f,1.f,1.f);
+
+// LLVector4
 
 // Axis-Angle rotations
 
@@ -140,3 +156,21 @@ LLVector4 vec3to4(const LLVector3 &vec)
 	return LLVector4(vec.mV[VX], vec.mV[VY], vec.mV[VZ]);
 }
 
+// static 
+BOOL LLVector4::parseVector4(const std::string& buf, LLVector4* value)
+{
+	if( buf.empty() || value == NULL)
+	{
+		return FALSE;
+	}
+
+	LLVector4 v;
+	S32 count = sscanf( buf.c_str(), "%f %f %f %f", v.mV + 0, v.mV + 1, v.mV + 2, v.mV + 3 );
+	if( 4 == count )
+	{
+		value->setVec( v );
+		return TRUE;
+	}
+
+	return FALSE;
+}

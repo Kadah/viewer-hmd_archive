@@ -227,26 +227,35 @@ public:
 	LLRect			getWorldViewRectScaled() const;
 	S32				getWorldViewHeightScaled() const;
 	S32				getWorldViewWidthScaled() const;
+    S32             getWorldViewLeftScaled() const;
+    S32             getWorldViewBottomScaled() const;
 
 	// 3D world area, in raw unscaled pixels
-	LLRect			getWorldViewRectRaw() const		{ return mWorldViewRectRaw; }
+	LLRect			getWorldViewRectRaw() const;
 	S32 			getWorldViewHeightRaw() const;
 	S32 			getWorldViewWidthRaw() const;
+    S32             getWorldViewLeftRaw() const;
+    S32             getWorldViewBottomRaw() const;
 
 	// Window in scaled pixels (via UI scale), use for most UI computations
-	LLRect			getWindowRectScaled() const		{ return mWindowRectScaled; }
+	LLRect			getWindowRectScaled() const;
 	S32				getWindowHeightScaled() const;
 	S32				getWindowWidthScaled() const;
+    S32             getWindowLeftScaled() const;
+    S32             getWindowBottomScaled() const;
 
 	// Window in raw pixels as seen on screen.
-	LLRect			getWindowRectRaw() const		{ return mWindowRectRaw; }
+	LLRect			getWindowRectRaw() const;
 	S32				getWindowHeightRaw() const;
 	S32				getWindowWidthRaw() const;
+    S32             getWindowLeftRaw() const;
+    S32             getWindowBottomRaw() const;
 
 	LLWindow*		getWindow()			const	{ return mWindow; }
 	void*			getPlatformWindow() const;
 	void*			getMediaWindow() 	const;
 	void			focusClient()		const;
+    void            addExtraWindow();
 
 	LLCoordGL		getLastMouse()		const	{ return mLastMousePoint; }
 	S32				getLastMouseX()		const	{ return mLastMousePoint.mX; }
@@ -264,8 +273,8 @@ public:
 
 	const LLPickInfo&	getLastPick() const { return mLastPick; }
 
-	void			setup2DViewport(S32 x_offset = 0, S32 y_offset = 0);
-	void			setup3DViewport(S32 x_offset = 0, S32 y_offset = 0);
+	void			setup2DViewport(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0);
+	void			setup3DViewport(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0);
 	void			setup3DRender();
 	void			setup2DRender();
 
@@ -475,6 +484,7 @@ private:
 	LLHandle<LLView> mToolBarHolder;		// container for toolbars
 	LLHandle<LLView> mHintHolder;			// container for hints
 	LLHandle<LLView> mLoginPanelHolder;		// container for login panel
+	LLHandle<LLView> mHMDConfigHolder;		// container for HMD config screen
 	LLPopupView*	mPopupView;			// container for transient popups
 	
 	class LLDebugText* mDebugText; // Internal class for debug text

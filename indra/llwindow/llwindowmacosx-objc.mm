@@ -55,7 +55,7 @@ void setupCocoa()
 		// ie. running './secondlife -set Language fr' would cause a pop-up saying can't open document 'fr'
 		// when init'ing the Cocoa App window.
 		[[NSUserDefaults standardUserDefaults] setObject:@"NO" forKey:@"NSTreatUnknownArgumentsAsOpen"];
-		
+
 		[pool release];
 		
 		inited = true;
@@ -206,10 +206,12 @@ OSErr setImageCursor(CursorRef ref)
 // Now for some unholy juggling between generic pointers and casting them to Obj-C objects!
 // Note: things can get a bit hairy from here.  This is not for the faint of heart.
 
-NSWindowRef createNSWindow(int x, int y, int width, int height)
+NSWindowRef createNSWindow(int x, int y, int width, int height, int screen_index)
 {
+    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_index];
+
 	LLNSWindow *window = [[LLNSWindow alloc]initWithContentRect:NSMakeRect(x, y, width, height)
-													  styleMask:NSTitledWindowMask | NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTexturedBackgroundWindowMask backing:NSBackingStoreBuffered defer:NO];
+                                                      styleMask:NSTitledWindowMask | NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTexturedBackgroundWindowMask backing:NSBackingStoreBuffered defer:NO screen:s];
 	[window makeKeyAndOrderFront:nil];
 	[window setAcceptsMouseMovedEvents:TRUE];
 	return window;
@@ -218,6 +220,18 @@ NSWindowRef createNSWindow(int x, int y, int width, int height)
 GLViewRef createOpenGLView(NSWindowRef window, unsigned int samples, bool vsync)
 {
 	LLOpenGLView *glview = [[LLOpenGLView alloc]initWithFrame:[(LLNSWindow*)window frame] withSamples:samples andVsync:vsync];
+	[(LLNSWindow*)window setContentView:glview];
+	return glview;
+}
+
+GLViewRef createOpenGLViewTest(NSWindowRef window, int width, int height)
+{
+    NSRect winrect;
+    winrect.origin.x = 0;
+    winrect.origin.y = 0;
+    winrect.size.width = width;
+    winrect.size.height = height;
+	LLOpenGLView *glview = [[LLOpenGLView alloc]initWithFrame:winrect];
 	[(LLNSWindow*)window setContentView:glview];
 	return glview;
 }
@@ -449,4 +463,28 @@ long showAlert(std::string text, std::string title, int type)
 unsigned int getModifiers()
 {
 	return [NSEvent modifierFlags];
+}
+
+// Implemented for HMD support
+int getDisplayCountObjC()
+{
+    return (int)[[NSScreen screens] count];
+}
+
+long getDisplayId(int screen_id)
+{
+    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_id];
+    NSNumber* didref = (NSNumber*)[[s deviceDescription] objectForKey:@"NSScreenNumber"];
+    CGDirectDisplayID disp = (CGDirectDisplayID)[didref longValue];
+    return long(disp);
+}
+
+void getScreenSize(int screen_id, float* size)
+{
+    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_id];
+	NSRect frame = [s frame];
+	size[0] = frame.origin.x;
+	size[1] = frame.origin.y;
+	size[2] = frame.size.width;
+	size[3] = frame.size.height;
 }

@@ -1234,7 +1234,7 @@ LLVector3 LLAgent::getReferenceUpVector()
 			// make the up vector point to the absolute +z axis
 			up_vector = up_vector * ~((LLViewerObject*)gAgentAvatarp->getParent())->getRenderRotation();
 		}
-		else if (camera_mode == CAMERA_MODE_MOUSELOOK)
+		else if (camera_mode == CAMERA_MODE_MOUSELOOK || camera_mode == CAMERA_MODE_FIRST_PERSON)
 		{
 			// make the up vector point to the avatar's +z axis
 			up_vector = up_vector * gAgentAvatarp->mDrawable->getRotation();
@@ -1883,7 +1883,7 @@ std::ostream& operator<<(std::ostream &s, const LLAgent &agent)
 //-----------------------------------------------------------------------------
 BOOL LLAgent::needsRenderAvatar()
 {
-	if (gAgentCamera.cameraMouselook() && !LLVOAvatar::sVisibleInFirstPerson)
+	if ((gAgentCamera.cameraMouselook() || gAgentCamera.cameraFirstPerson()) && !LLVOAvatar::sVisibleInFirstPerson)
 	{
 		return FALSE;
 	}
@@ -1894,7 +1894,7 @@ BOOL LLAgent::needsRenderAvatar()
 // TRUE if we need to render your own avatar's head.
 BOOL LLAgent::needsRenderHead()
 {
-	return (LLVOAvatar::sVisibleInFirstPerson && LLPipeline::sReflectionRender) || (mShowAvatar && !gAgentCamera.cameraMouselook());
+	return (LLVOAvatar::sVisibleInFirstPerson && LLPipeline::sReflectionRender) || (mShowAvatar && !gAgentCamera.cameraMouselook() && !gAgentCamera.cameraFirstPerson());
 }
 
 //-----------------------------------------------------------------------------

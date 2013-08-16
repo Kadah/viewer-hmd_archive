@@ -1020,6 +1020,7 @@ void LLVOAvatarSelf::updateAttachmentVisibility(U32 camera_mode)
 			switch (camera_mode)
 			{
 				case CAMERA_MODE_MOUSELOOK:
+                case CAMERA_MODE_FIRST_PERSON:
 					if (LLVOAvatar::sVisibleInFirstPerson && attachment->getVisibleInFirstPerson())
 					{
 						attachment->setAttachmentVisibility(TRUE);

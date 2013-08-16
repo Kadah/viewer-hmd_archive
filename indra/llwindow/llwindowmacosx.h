@@ -118,7 +118,7 @@ public:
 	// Provide native key event data
 	/*virtual*/ LLSD getNativeKeyData();
 	
-	void* getWindow() { return mWindow; }
+	void* getWindow() { return mWindow[mCurRCIdx]; }
 	LLWindowCallbacks* getCallbacks() { return mCallbacks; }
 	LLPreeditor* getPreeditor() { return mPreeditor; }
 	
@@ -129,6 +129,17 @@ public:
     
     bool allowsLanguageInput() { return mLanguageTextInputAllowed; }
 
+    // HMD support
+    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height);
+    /*virtual*/ BOOL destroyHMDWindow();
+    /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
+    /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping);
+    /*virtual*/ S32 getDisplayCount();
+    /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary);
+
+    // Experimental : allow testing of dual screen code sans Oculus Rift
+    /*virtual*/ void addExtraWindow();
+    
 protected:
 	LLWindowMacOSX(LLWindowCallbacks* callbacks,
 		const std::string& title, const std::string& name, int x, int y, int width, int height, U32 flags,
@@ -179,8 +190,8 @@ protected:
 	//
 	
 	// Use generic pointers here.  This lets us do some funky Obj-C interop using Obj-C objects without having to worry about any compilation problems that may arise.
-	NSWindowRef			mWindow;
-	GLViewRef			mGLView;
+	NSWindowRef			mWindow[2];
+	GLViewRef			mGLView[2];
 	CGLContextObj		mContext;
 	CGLPixelFormatObj	mPixelFormat;
 	CGDirectDisplayID	mDisplay;

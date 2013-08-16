@@ -37,6 +37,9 @@
 #include "llglheaders.h"
 #include "llviewerwindow.h"
 #include "llui.h"
+#include "llhmd.h"
+#include "llviewerdisplay.h"
+
 
 void hud_render_utf8text(const std::string &str, const LLVector3 &pos_agent,
 					 const LLFontGL &font,
@@ -79,24 +82,11 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	{
 		camera->getPixelVectors(pos_agent, up_axis, right_axis);
 	}
-	LLCoordFrame render_frame = *camera;
-	LLQuaternion rot;
-	if (!orthographic)
-	{
-		rot = render_frame.getQuaternion();
-		rot = rot * LLQuaternion(-F_PI_BY_TWO, camera->getYAxis());
-		rot = rot * LLQuaternion(F_PI_BY_TWO, camera->getXAxis());
-	}
-	else
-	{
-		rot = LLQuaternion(-F_PI_BY_TWO, LLVector3(0.f, 0.f, 1.f));
-		rot = rot * LLQuaternion(-F_PI_BY_TWO, LLVector3(0.f, 1.f, 0.f));
-	}
-	F32 angle;
-	LLVector3 axis;
-	rot.getAngleAxis(&angle, axis);
 
 	LLVector3 render_pos = pos_agent + (floorf(x_offset) * right_axis) + (floorf(y_offset) * up_axis);
+
+    LLVector3 textToCameraDir = (camera->getOrigin() - render_pos);
+    F32 textToCameraDist = textToCameraDir.length();
 
 	//get the render_pos in screen space
 	
@@ -121,18 +111,29 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 				mdlv, proj, (GLint*) viewport,
 				&winX, &winY, &winZ);
 		
-	//fonts all render orthographically, set up projection``
+	//fonts all render orthographically, set up projection
 	gGL.matrixMode(LLRender::MM_PROJECTION);
 	gGL.pushMatrix();
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
 	gGL.pushMatrix();
 	LLUI::pushMatrix();
-		
-	gl_state_for_2d(world_view_rect.getWidth(), world_view_rect.getHeight());
-	gViewerWindow->setup3DViewport();
+
+    // setup ortho camera
+    S32 left = 0;
+    F32 offsetX = 0.0f;
+    if (gHMD.shouldRender())
+    {
+        offsetX = gHMD.getOrthoPixelOffset() / 10.0f;
+        if (textToCameraDist != 0.0f)
+        {
+            offsetX /= textToCameraDist;
+        }
+    }
+    gl_state_for_2d(viewport[2], viewport[3], left, offsetX);
+    gViewerWindow->setup3DViewport(0, 0, gHMD.shouldRender() ? LLHMD::kHMDEyeWidth : 0);
 	
-	winX -= world_view_rect.mLeft;
-	winY -= world_view_rect.mBottom;
+	winX -= viewport[0]; // world_view_rect.mLeft;
+	winY -= viewport[1]; // world_view_rect.mBottom;
 	LLUI::loadIdentity();
 	gGL.loadIdentity();
 	LLUI::translate((F32) winX*1.0f/LLFontGL::sScaleX, (F32) winY*1.0f/(LLFontGL::sScaleY), -(((F32) winZ*2.f)-1.f));

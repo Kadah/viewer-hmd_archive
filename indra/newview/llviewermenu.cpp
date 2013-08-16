@@ -124,6 +124,7 @@
 #include "llwindow.h"
 #include "llpathfindingmanager.h"
 #include "boost/unordered_map.hpp"
+#include "llhmd.h"
 
 using namespace LLAvatarAppearanceDefines;
 
@@ -318,6 +319,7 @@ BOOL enable_save_into_task_inventory(void*);
 BOOL enable_detach(const LLSD& = LLSD());
 void menu_toggle_attached_lights(void* user_data);
 void menu_toggle_attached_particles(void* user_data);
+void menu_toggle_render_debug_hmd(void* user_data);
 
 class LLMenuParcelObserver : public LLParcelObserver
 {
@@ -3986,9 +3988,16 @@ class LLViewMouselook : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		if (!gAgentCamera.cameraMouselook())
+		if (!gAgentCamera.cameraMouselook() && !gAgentCamera.cameraFirstPerson())
 		{
-			gAgentCamera.changeCameraToMouselook();
+            if (gHMD.shouldRender())
+            {
+                gAgentCamera.changeCameraToFirstPerson();
+            }
+            else
+            {
+			    gAgentCamera.changeCameraToMouselook();
+            }
 		}
 		else
 		{
@@ -4048,6 +4057,42 @@ class LLViewToggleUI : public view_listener_t
 			gSavedSettings.setBOOL("HideUIControls",!gSavedSettings.getBOOL("HideUIControls"));
 		}
 	}
+};
+
+class LLViewCycleDisplay : public view_listener_t
+{
+    bool handleEvent(const LLSD& userdata)
+    {
+		static LLCachedControl<bool> debug_hmd(gSavedSettings, "DebugHMDEnable");
+
+        U32 curRenderMode = gHMD.getRenderMode();
+        U32 nextRenderMode = LLHMD::RenderMode_None;
+        switch (curRenderMode)
+        {
+        case LLHMD::RenderMode_None:
+            nextRenderMode = gHMD.isInitialized() ? LLHMD::RenderMode_HMD : debug_hmd ? LLHMD::RenderMode_ScreenStereoDistort : LLHMD::RenderMode_None;
+            break;
+        case LLHMD::RenderMode_HMD:
+        case LLHMD::RenderMode_ScreenStereo:
+            nextRenderMode = debug_hmd ? LLHMD::RenderMode_ScreenStereoDistort : LLHMD::RenderMode_None;
+            break;
+        case LLHMD::RenderMode_ScreenStereoDistort:
+        default:
+            nextRenderMode = LLHMD::RenderMode_None;
+            break;
+        }
+        gHMD.setRenderMode(nextRenderMode);
+        return true;
+    }
+};
+
+class LLAddExtraMonitor : public view_listener_t
+{
+    bool handleEvent(const LLSD& userdata)
+    {
+        gViewerWindow->addExtraWindow();
+        return true;
+    }
 };
 
 class LLEditDuplicate : public view_listener_t
@@ -8457,6 +8502,8 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLZoomer(DEFAULT_FIELD_OF_VIEW, false), "View.ZoomDefault");
 	view_listener_t::addMenu(new LLViewDefaultUISize(), "View.DefaultUISize");
 	view_listener_t::addMenu(new LLViewToggleUI(), "View.ToggleUI");
+    view_listener_t::addMenu(new LLViewCycleDisplay(), "View.CycleDisplay");
+    view_listener_t::addMenu(new LLAddExtraMonitor(), "View.AddExtraMonitor");
 
 	view_listener_t::addMenu(new LLViewEnableMouselook(), "View.EnableMouselook");
 	view_listener_t::addMenu(new LLViewEnableJoystickFlycam(), "View.EnableJoystickFlycam");

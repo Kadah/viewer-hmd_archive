@@ -91,6 +91,13 @@ public:
 	/*virtual*/ void *getPlatformWindow() { return 0; };
 	/*virtual*/ void bringToFront() {};
 	
+    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height) { return FALSE; };
+    /*virtual*/ BOOL destroyHMDWindow() { return FALSE; };
+    /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen) { return FALSE; };
+    /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping) { return FALSE; };
+    /*virtual*/ S32 getDisplayCount() { return 1; };
+    /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary) { return FALSE; };
+
 	LLWindowHeadless(LLWindowCallbacks* callbacks,
 		const std::string& title, const std::string& name,
 		S32 x, S32 y, 
