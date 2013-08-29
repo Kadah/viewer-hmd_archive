@@ -87,8 +87,15 @@ public:
     LLHMDImpl();
     ~LLHMDImpl();
 
+
+
+///////////////////////////////////////////////////////////////////
+public:
     BOOL init();
-    void shutdown();
+    BOOL preInit();
+    BOOL postDetectionInit();
+    void handleMessages();
+    bool isReady();    void shutdown();
     void onIdle();
     U32 getCurrentEye() const { return mCurrentEye; }
     void setCurrentEye(U32 eye)
@@ -139,12 +146,12 @@ public:
     F32 getYCenterOffset() const { return gHMD.isInitialized() ? mCurrentEyeParams.pDistortion->YCenterOffset : kDefaultYCenterOffset; }
     F32 getDistortionScale() const { return gHMD.isInitialized() ? mCurrentEyeParams.pDistortion->Scale : kDefaultDistortionScale; }
 
-    BOOL useMotionPrediction() { return gHMD.isInitialized() ? mSFusion.IsPredictionEnabled() : useMotionPredictionDefault(); }
+    BOOL useMotionPrediction() { return gHMD.isInitialized() ? mSensorFusion.IsPredictionEnabled() : useMotionPredictionDefault(); }
     BOOL useMotionPredictionDefault() const { return TRUE; }
-    void useMotionPrediction(BOOL b) { if (gHMD.isInitialized()) { mSFusion.SetPredictionEnabled(b); } }
-    F32 getMotionPredictionDelta() { return gHMD.isInitialized() ? mSFusion.GetPredictionDelta() : getMotionPredictionDeltaDefault(); }
+    void useMotionPrediction(BOOL b) { if (gHMD.isInitialized()) { mSensorFusion.SetPredictionEnabled(b); } }
+    F32 getMotionPredictionDelta() { return gHMD.isInitialized() ? mSensorFusion.GetPredictionDelta() : getMotionPredictionDeltaDefault(); }
     F32 getMotionPredictionDeltaDefault() const { return 0.03f; }
-    void setMotionPredictionDelta(F32 f) { if (gHMD.isInitialized()) { mSFusion.SetPrediction(f); } }
+    void setMotionPredictionDelta(F32 f) { if (gHMD.isInitialized()) { mSensorFusion.SetPrediction(f); } }
 
     LLQuaternion getHMDOrient() const
     {
@@ -185,13 +192,13 @@ public:
 
     void BeginAutoCalibration()
     {
-        mSFusion.Reset();
-        mMagCal.BeginAutoCalibration(mSFusion);
+        mSensorFusion.Reset();
+        mMagCal.BeginAutoCalibration(mSensorFusion);
     }
 
     void BeginManualCalibration()
     {
-        mMagCal.BeginManualCalibration(mSFusion);
+        mMagCal.BeginManualCalibration(mSensorFusion);
     }
 
     static LLMatrix4 matrixOVRtoLL(const OVR::Matrix4f& m2)
@@ -214,12 +221,30 @@ protected:
 
 private:
     OVR::Util::MagCalibration mMagCal;
-    SensorFusion mSFusion;
     Util::LatencyTest mLatencyUtil;
+    OVR::Ptr <OVR::DeviceManager> mDeviceManager;
+    OVR::Ptr <OVR::HMDDevice> mHMD;
+    OVR::HMDInfo mHMDInfo;
+    OVR::SensorFusion mSensorFusion;
+    OVR::Ptr <OVR::SensorDevice> mSensorDevice;
     OVR::Util::Render::StereoConfig mStereoConfig;
-    OVR::Ptr<DeviceManager> mpDeviceMgr;
-    OVR::Ptr<SensorDevice> mpSensor;
-    OVR::Ptr<HMDDevice> mpHMD;
+    bool mHMDConnected;
+
+    struct DeviceStatusNotificationDesc
+    {
+        OVR::DeviceHandle Handle;
+        OVR::MessageType Action;
+
+        DeviceStatusNotificationDesc():Action (OVR::Message_None) { }
+
+        DeviceStatusNotificationDesc(OVR::MessageType mt, const OVR::DeviceHandle& dev) :
+            Handle (dev),
+            Action (mt)
+        {
+        }
+    };
+    OVR::Array <DeviceStatusNotificationDesc> DeviceStatusNotificationsQueue;
+
     OVR::Ptr<LatencyTestDevice> mpLatencyTester;
     llutf16string mDisplayName;     // Identity of the Oculus on Windows
     long mDisplayId;                // Identity of the Oculus on Mac
@@ -265,97 +290,181 @@ LLHMDImpl::~LLHMDImpl()
     shutdown();
 }
 
-
-BOOL LLHMDImpl::init()
+BOOL LLHMDImpl::preInit()
 {
-    if (gHMD.isInitialized())
-    {
+    if ( gHMD.isPreDetectionInitialized())
         return TRUE;
+
+    OVR::System::Init(OVR::Log::ConfigureDefaultLog(OVR::LogMask_None));
+
+    mDeviceManager = *OVR::DeviceManager::Create();
+    if (! mDeviceManager)
+    {
+        gHMD.isInitialized(FALSE);
+        gHMD.isPreDetectionInitialized(FALSE);
+        return false;
     }
 
-    OVR::System::Init(OVR::Log::ConfigureDefaultLog(OVR::LogMask_All));
+    mDeviceManager->SetMessageHandler(this);
 
-    if (!mpDeviceMgr)
+    mHMD = *mDeviceManager->EnumerateDevices<OVR::HMDDevice>().CreateDevice();
+    if (! mHMD)
     {
-        mpDeviceMgr = *OVR::DeviceManager::Create();
+        gHMD.isPreDetectionInitialized(TRUE); // consider ourselves pre-initialized if we get here
+        gHMD.isInitialized(FALSE);
+        return false;
     }
-	mpDeviceMgr->SetMessageHandler(this);
 
-    S32 detectionResult = IDCONTINUE;
-    std::string detectionMessage;
-
-    do 
+    if (mHMD)
     {
-        // Release Sensor/HMD in case this is a retry.
-        mpSensor.Clear();
-        mpHMD.Clear();
-        mDisplayName.clear();
-        mDisplayId = 0;
-        mpHMD  = *(mpDeviceMgr->EnumerateDevices<OVR::HMDDevice>().CreateDevice());
-        if (mpHMD)
+        mHMD->GetDeviceInfo(&mHMDInfo);
+        mHMDConnected = true;
+    }
+
+    mSensorDevice = 0;
+    
+    gHMD.isInitialized(TRUE);
+    gHMD.isPreDetectionInitialized(TRUE); 
+
+    return true;
+}
+
+void LLHMDImpl::handleMessages()
+{
+    bool queue_is_empty = false;
+
+    while (! queue_is_empty)
+    {
+        DeviceStatusNotificationDesc desc;
         {
-            mpSensor = *(mpHMD->GetSensor());
+            OVR::Lock::Locker lock(mDeviceManager->GetHandlerLock());
+            if (DeviceStatusNotificationsQueue.GetSize() == 0)
+                break;
+            desc = DeviceStatusNotificationsQueue.Front();
 
-            // This will initialize HMDInfo with information about configured IPD,
-            // screen size and other variables needed for correct projection.
-            // We pass HMD DisplayDeviceName into the renderer to select the
-            // correct monitor in full-screen mode.
-            HMDInfo hmd_info;
-            if (mpHMD->GetDeviceInfo(&hmd_info))
+            DeviceStatusNotificationsQueue.RemoveAt(0);
+            queue_is_empty = (DeviceStatusNotificationsQueue.GetSize() == 0);
+        }
+        
+        bool was_already_created = desc.Handle.IsCreated();
+        
+        if (desc.Action == OVR::Message_DeviceAdded)
+        {
+            switch(desc.Handle.GetType())
             {
-                mDisplayName = utf8str_to_utf16str(hmd_info.DisplayDeviceName);
-                mDisplayId = hmd_info.DisplayId;
-                mStereoConfig.SetHMDInfo(hmd_info);
+                case OVR::Device_Sensor:
+                    if (desc.Handle.IsAvailable() && !desc.Handle.IsCreated())
+                    {
+                        if (! mSensorDevice)
+                        {
+                            mSensorDevice = *desc.Handle.CreateDeviceTyped<OVR::SensorDevice>();
+                            mSensorFusion.AttachToSensor(mSensorDevice);
+                        }
+                        else
+                        if (! was_already_created )
+                        {
+                            // A new sensor has been detected, but it is not currently used.
+                        }
+                    }
+                    break;
+
+                case OVR::Device_HMD:
+                {
+                    OVR::HMDInfo info;
+                    desc.Handle.GetDeviceInfo(&info);
+
+                    if (strlen(info.DisplayDeviceName) > 0 && (! mHMD || ! info.IsSameDisplay(mHMDInfo)))
+                    {
+                        if ( ! mHMD || !desc.Handle.IsDevice(mHMD))
+                        {
+                            mHMD = *desc.Handle.CreateDeviceTyped<OVR::HMDDevice>();
+                        }
+
+                        if (mHMD && mHMD->GetDeviceInfo(&mHMDInfo))
+                        {
+                            mStereoConfig.SetHMDInfo(mHMDInfo);
+                        }
+
+                        mHMDConnected = true;
+                    }
+                    break;
+                }
+                default:
+                {
+                }
             }
         }
-#if LL_DEBUG
+        else 
+        if (desc.Action == OVR::Message_DeviceRemoved)
+        {
+            if (desc.Handle.IsDevice(mSensorDevice))
+            {
+                mSensorFusion.AttachToSensor(NULL);
+                mSensorDevice.Clear();
+            }
+            else if (desc.Handle.IsDevice(mHMD))
+            {
+                mHMDConnected = false;
+
+                if (mHMD && ! mHMD->IsDisconnected())
+                {
+                    mHMD = mHMD->Disconnect(mSensorDevice);
+
+                    if (mHMD && mHMD->GetDeviceInfo(&mHMDInfo))
+                    {
+                        mStereoConfig.SetHMDInfo(mHMDInfo);
+                    }
+                }
+            }
+        }
         else
-        {            
-            // If we didn't detect an HMD, try to create the sensor directly.
-            // This is useful for debugging sensor interaction; it is not needed in
-            // a shipping app.
-            mpSensor = *(mpDeviceMgr->EnumerateDevices<SensorDevice>().CreateDevice());
-        }
-#endif
-
-        // Create the Latency Tester device and assign it to the LatencyTesterUtil object.
-        mpLatencyTester = *(mpDeviceMgr->EnumerateDevices<LatencyTestDevice>().CreateDevice());
-        if (mpLatencyTester)
         {
-            mLatencyUtil.SetDevice(mpLatencyTester);
+            // unknown action - TODO: what do we do here if anything?
         }
-
-        // If there was a problem detecting the Rift, display appropriate message.
-        detectionResult  = IDCONTINUE;
-
-        detectionMessage = mpHMD ? "Oculus HMD Display detected" : "Oculus HMD Display not detected";
-        detectionMessage += mpSensor ? "; Oculus Sensor detected" : "; Oculus Sensor not detected";
-        detectionMessage += (mStereoConfig.GetHMDInfo().DisplayDeviceName[0] != '\0') ? "; HMD Display EDID detected" : "; HMD display EDID not detected";
-        LL_INFOS("Oculus") << detectionMessage.c_str() << LL_ENDL;
-
-        if (!mpHMD || !mpSensor || mStereoConfig.GetHMDInfo().DisplayDeviceName[0] == '\0')
-        {
-            // TODO: possibly put up a retry/cancel dialog here?
-            LL_WARNS("Oculus") << detectionMessage << LL_ENDL;
-            gHMD.failedInit(TRUE);
-            return FALSE;
-        }
-    } while (detectionResult != IDCONTINUE);
-
-    if (mStereoConfig.GetHMDInfo().HResolution == 0 || mStereoConfig.GetHMDInfo().VResolution == 0)
-    {
-        gHMD.failedInit(TRUE);
-        return FALSE;
     }
-    
-    if (mpSensor)
+}
+
+// virtual
+void LLHMDImpl::OnMessage(const OVR::Message& msg)
+{
+    if (msg.Type == OVR::Message_DeviceAdded || msg.Type == OVR::Message_DeviceRemoved)
     {
-        // We need to attach sensor to SensorFusion object for it to receive 
-        // body frame messages and update orientation. mSFusion.GetOrientation() 
-        // is used in OnIdle() to orient the view.
-        mSFusion.AttachToSensor(mpSensor);
-        mSFusion.SetDelegateMessageHandler(this);
-        mSFusion.SetPredictionEnabled(true);
+        if (msg.pDevice == mDeviceManager)
+        {
+            const OVR::MessageDeviceStatus& statusMsg = static_cast<const OVR::MessageDeviceStatus&>(msg);
+            {
+                OVR::Lock::Locker lock(mDeviceManager->GetHandlerLock());
+                DeviceStatusNotificationsQueue.PushBack(DeviceStatusNotificationDesc(statusMsg.Type, statusMsg.Handle));
+            }
+
+            switch (statusMsg.Type)
+            {
+                case OVR::Message_DeviceAdded:
+                    break;
+
+                case OVR::Message_DeviceRemoved:
+                    break;
+
+                default:
+                {
+                    // DeviceManager reported unknown action.
+                }
+            }
+        }
+    }
+}
+
+bool LLHMDImpl::isReady()
+{
+    return mHMD && mSensorDevice && mHMDConnected;
+}
+
+BOOL LLHMDImpl::postDetectionInit()
+{
+    mpLatencyTester = *(mDeviceManager->EnumerateDevices<LatencyTestDevice>().CreateDevice());
+    if (mpLatencyTester)
+    {
+        mLatencyUtil.SetDevice(mpLatencyTester);
     }
 
     // get device's "monitor" info
@@ -489,7 +598,6 @@ BOOL LLHMDImpl::init()
     return TRUE;
 }
 
-
 void LLHMDImpl::shutdown()
 {
     if (!gHMD.isInitialized())
@@ -499,8 +607,8 @@ void LLHMDImpl::shutdown()
     gHMD.isInitialized(FALSE);
     gViewerWindow->getWindow()->destroyHMDWindow();
     RemoveHandlerFromDevices();
-    mpSensor.Clear();
-    mpHMD.Clear();
+   // mpSensor.Clear();
+    //mpHMD.Clear();
     mCursorTextures.clear();
 
     // This causes a deadlock.  No idea why.   Disabling it as it doesn't seem to be necessary unless we're actually RE-initializing the HMD
@@ -508,12 +616,31 @@ void LLHMDImpl::shutdown()
     //OVR::System::Destroy();
 }
 
-
 void LLHMDImpl::onIdle()
 {
-	static LLCachedControl<bool> debug_hmd(gSavedSettings, "DebugHMDEnable");
-    if (!gHMD.isInitialized() || (!debug_hmd && !gHMD.shouldRender()))
+    static LLCachedControl<bool> debug_hmd(gSavedSettings, "DebugHMDEnable");
+    if ( ! debug_hmd && ! gHMD.shouldRender() )
     {
+        return;
+    }
+
+    if ( ! gHMD.isPreDetectionInitialized() )
+    {
+        return;
+    }
+
+    handleMessages();
+
+    // still waiting for device to initialize
+    if (! isReady())
+    {
+        return;
+    }
+
+    if ( ! gHMD.isPostDetectionInitialized())
+    {
+        BOOL result = postDetectionInit();
+        gHMD.isPostDetectionInitialized(result);
         return;
     }
 
@@ -536,35 +663,34 @@ void LLHMDImpl::onIdle()
         }
         else if (mMagCal.IsAutoCalibrating()) 
         {
-            mMagCal.UpdateAutoCalibration(mSFusion);
-            //if (mMagCal.IsCalibrated())
-            //{
-            //    Vector3f mc = MagCal.GetMagCenter();
+            mMagCal.UpdateAutoCalibration(mSensorFusion);
+            // if (mMagCal.IsCalibrated())
+            // {
+            //    Vector3f mc = mMagCal.GetMagCenter();
             //    SetAdjustMessage("   Magnetometer Calibration Complete   \nCenter: %f %f %f",mc.x,mc.y,mc.z);
-            //}
-            //SetAdjustMessage("Mag has been successfully calibrated");
+            // }
+            // SetAdjustMessage("Mag has been successfully calibrated");
         }
     }
 
     // Handle Sensor motion.
     // We extract Yaw, Pitch, Roll instead of directly using the orientation
     // to allow "additional" yaw manipulation with mouse/controller.
-    if (mpSensor)
+    if (mSensorDevice)
     {
-        OVR::Quatf orient = useMotionPrediction() ? mSFusion.GetPredictedOrientation() : mSFusion.GetOrientation();
+        OVR::Quatf orient = useMotionPrediction() ? mSensorFusion.GetPredictedOrientation() : mSensorFusion.GetOrientation();
         orient.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&mEyeYaw, &mEyePitch, &mEyeRoll);
         mEyeRoll = -mEyeRoll;
         mEyePitch = -mEyePitch;
-    }    
+    }
 }
-
 
 void LLHMDImpl::updateManualMagCalibration()
 {
     F32 yaw, pitch, roll;
-    OVR::Quatf hmdOrient = mSFusion.GetOrientation();
+    OVR::Quatf hmdOrient = mSensorFusion.GetOrientation();
     hmdOrient.GetEulerAngles<Axis_X, Axis_Z, Axis_Y>(&pitch, &roll, &yaw);
-    OVR::Vector3f mag = mSFusion.GetMagnetometer();
+    OVR::Vector3f mag = mSensorFusion.GetMagnetometer();
     float dtr = OVR::Math<float>::DegreeToRadFactor;
 
     switch(mMagCal.NumberOfSamples())
@@ -620,7 +746,7 @@ void LLHMDImpl::updateManualMagCalibration()
     case 4:
         if (!mMagCal.IsCalibrated()) 
         {
-            mMagCal.SetCalibration(mSFusion);
+            mMagCal.SetCalibration(mSensorFusion);
             Vector3f mc = mMagCal.GetMagCenter();
             LL_INFOS("Oculus") << "Magnetometer Calibration Complete   \nCenter: " << mc.x << "," << mc.y << "," << mc.z << LL_ENDL;
             mLastCalibrationStep = 4;
@@ -662,30 +788,6 @@ void LLHMDImpl::updateManualMagCalibration()
     }
 }
 
-
-void LLHMDImpl::OnMessage(const OVR::Message& msg)
-{
-    // TODO: take init out of llappviewer::idle() and add calls here so that init
-    // is dynamic based on adding/removing the HMD
-    if (msg.Type == Message_DeviceAdded && msg.pDevice == mpDeviceMgr)
-    {
-        LL_INFOS("Oculus") << "DeviceManager reported device added" << LL_ENDL;
-    }
-    else if (msg.Type == Message_DeviceRemoved && msg.pDevice == mpDeviceMgr)
-    {
-        LL_INFOS("Oculus") << "DeviceManager reported device removed" << LL_ENDL;
-    }
-    else if (msg.Type == Message_DeviceAdded && msg.pDevice == mpSensor)
-    {
-        LL_INFOS("Oculus") << "Sensor reported device added.\n" << LL_ENDL;
-    }
-    else if (msg.Type == Message_DeviceRemoved && msg.pDevice == mpSensor)
-    {
-        LL_INFOS("Oculus") << "Sensor reported device removed.\n" << LL_ENDL;
-    }
-}
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // LLHMD
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -722,33 +824,9 @@ LLHMD::~LLHMD()
 
 BOOL LLHMD::init()
 {
-    BOOL res = mImpl->init();
-    //if (res)
-    //{
-	    gSavedSettings.getControl("OculusXCenterOffsetModifier")->getSignal()->connect(boost::bind(&onChangeXCenterOffsetModifier));
-        onChangeXCenterOffsetModifier();
-        gSavedSettings.getControl("OculusOptWindowRaw")->getSignal()->connect(boost::bind(&onChangeWindowRaw));
-        onChangeWindowRaw();
-        gSavedSettings.getControl("OculusOptWindowScaled")->getSignal()->connect(boost::bind(&onChangeWindowScaled));
-        onChangeWindowScaled();
-        gSavedSettings.getControl("OculusOptWorldViewRaw")->getSignal()->connect(boost::bind(&onChangeWorldViewRaw));
-        onChangeWorldViewRaw();
-        gSavedSettings.getControl("OculusOptWorldViewScaled")->getSignal()->connect(boost::bind(&onChangeWorldViewScaled));
-        onChangeWorldViewScaled();
-        gSavedSettings.getControl("OculusTestCalibration")->getSignal()->connect(boost::bind(&onChangeTestCalibration));
-        onChangeTestCalibration();
-        gSavedSettings.getControl("Oculus2DUICurvedSurface")->getSignal()->connect(boost::bind(&onChangeRender2DUICurvedSurface));
-        onChangeRender2DUICurvedSurface();
-        gSavedSettings.getControl("OculusUISurfaceFudge")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
-        gSavedSettings.getControl("OculusUISurfaceX")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
-        gSavedSettings.getControl("OculusUISurfaceY")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
-        gSavedSettings.getControl("OculusUISurfaceRadius")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
-        onChangeUISurfaceShape();
-        gSavedSettings.getControl("OculusUIFlatSurfaceScale")->getSignal()->connect(boost::bind(&onChangeUIFlatSurfaceScale));
-        onChangeUIFlatSurfaceScale();
-    //}
-    return res;
+    return mImpl->preInit();    
 }
+
 void LLHMD::onChangeXCenterOffsetModifier() { gHMD.mXCenterOffsetMod = gSavedSettings.getF32("OculusXCenterOffsetModifier") * 0.1f; }
 void LLHMD::onChangeWindowRaw() { gHMD.mOptWindowRaw = gSavedSettings.getS32("OculusOptWindowRaw"); }
 void LLHMD::onChangeWindowScaled() { gHMD.mOptWindowScaled = gSavedSettings.getS32("OculusOptWindowScaled"); }

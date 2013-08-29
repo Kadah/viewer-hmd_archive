@@ -4568,18 +4568,31 @@ void LLAppViewer::idle()
 	    LLWorld::getInstance()->setSpaceTimeUSec(LLWorld::getInstance()->getSpaceTimeUSec() + (U32)(dt_raw * SEC_TO_MICROSEC));
     
         // TODO: move the init step so that it happens in the LLHMD::onMessage 
-        if (!gHMD.isInitialized() && !gHMD.failedInit())
+        // if (!gHMD.isInitialized() && !gHMD.failedInit())
+        // {
+        //     if (!gHMD.init())
+        //     {
+        //         LL_WARNS("Oculus") << "Oculus Rift initialization Failed!" << LL_ENDL;
+        //     }
+        // }
+        // if (gHMD.isInitialized())
+        // {
+        //     gHMD.onIdle();
+        // }
+
+        if (!gHMD.isInitialized())
         {
             if (!gHMD.init())
             {
                 LL_WARNS("Oculus") << "Oculus Rift initialization Failed!" << LL_ENDL;
             }
         }
+
         if (gHMD.isInitialized())
         {
             gHMD.onIdle();
         }
-    
+
 	    //////////////////////////////////////
 	    //
 	    // Update simulator agent state

@@ -57,11 +57,13 @@ public:
     {
         kFlag_None                      = 0,
         kFlag_Initialized               = 1 << 0,
-        kFlag_FailedInit                = 1 << 1,
-        kFlag_MainIsFullScreen          = 1 << 2,
-        kFlag_Render2DUICurvedSurface   = 1 << 3,
-        kFlag_IsCalibrated              = 1 << 4,
-        kFlag_ShowDepthUI               = 1 << 5,
+        kFlag_Pre_Initialized           = 1 << 1,
+        kFlag_Post_Initialized          = 1 << 2,
+        kFlag_FailedInit                = 1 << 3,
+        kFlag_MainIsFullScreen          = 1 << 4,
+        kFlag_Render2DUICurvedSurface   = 1 << 5,
+        kFlag_IsCalibrated              = 1 << 6,
+        kFlag_ShowDepthUI               = 1 << 7,
     };
 
 public:
@@ -74,6 +76,10 @@ public:
 
     BOOL isInitialized() const { return ((mFlags & kFlag_Initialized) != 0) ? TRUE : FALSE; }
     void isInitialized(BOOL b) { if (b) { mFlags |= kFlag_Initialized; } else { mFlags &= ~kFlag_Initialized; } }
+    BOOL isPreDetectionInitialized() const { return ((mFlags & kFlag_Pre_Initialized) != 0) ? TRUE : FALSE; }
+    void isPreDetectionInitialized(BOOL b) { if (b) { mFlags |= kFlag_Pre_Initialized; } else { mFlags &= ~kFlag_Pre_Initialized; } }
+    BOOL isPostDetectionInitialized() const { return ((mFlags & kFlag_Post_Initialized) != 0) ? TRUE : FALSE; }
+    void isPostDetectionInitialized(BOOL b) { if (b) { mFlags |= kFlag_Post_Initialized; } else { mFlags &= ~kFlag_Post_Initialized; } }
     BOOL failedInit() const { return ((mFlags & kFlag_FailedInit) != 0) ? TRUE : FALSE; }
     void failedInit(BOOL b) { if (b) { mFlags |= kFlag_FailedInit; } else { mFlags &= ~kFlag_FailedInit; } }
     BOOL isMainFullScreen() const { return ((mFlags & kFlag_MainIsFullScreen) != 0) ? TRUE : FALSE; }
