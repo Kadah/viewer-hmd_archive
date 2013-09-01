@@ -144,6 +144,10 @@ public:
     LLQuaternion getHMDOrient() const;
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
 
+    // head correction (difference in rotation between head and body)
+    LLQuaternion getHeadRotationCorrection() const;
+    void addHeadRotationCorrection(LLQuaternion quat);
+
     void setBaseModelView(F32* m) { for (int i = 0; i < 16; ++i) { mBaseModelView[i] = m[i]; } }
     F32* getBaseModelView() { return mBaseModelView; }
     void setBaseProjection(F32* m) { for (int i = 0; i < 16; ++i) { mBaseProjection[i] = m[i]; } }

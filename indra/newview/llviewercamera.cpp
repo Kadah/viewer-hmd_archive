@@ -186,6 +186,7 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
     {
         mPreHMDViewMatrix = getModelview();
         mPreHMDViewMatrix.invert();
+        
         float r, p, y;
         gHMD.getHMDRollPitchYaw(r, p, y);
         LLQuaternion qr(r, mXAxis);
@@ -193,6 +194,10 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
         LLQuaternion qy(y, mZAxis);
         qr *= qp;
         qr *= qy;
+
+		LLQuaternion head_correction = gHMD.getHeadRotationCorrection();
+        qr *= head_correction;
+
         rotate(qr);
     }
 

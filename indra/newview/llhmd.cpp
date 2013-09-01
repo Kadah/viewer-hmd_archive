@@ -161,6 +161,16 @@ public:
     }
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = mEyeRoll; pitch = mEyePitch; yaw = mEyeYaw; }
 
+    LLQuaternion getHeadRotationCorrection() const
+    {
+        return mHeadRotationCorrection;
+    }
+
+    void addHeadRotationCorrection(LLQuaternion quat)
+    {
+        mHeadRotationCorrection *= quat;
+    }
+
     //LLVector4 getChromaticAberrationConstants() const
     //{
     //    return LLVector4(   mCurrentEyeParams.pDistortion->ChromaticAberration[0],
@@ -229,6 +239,7 @@ private:
     OVR::Ptr <OVR::SensorDevice> mSensorDevice;
     OVR::Util::Render::StereoConfig mStereoConfig;
     bool mHMDConnected;
+    LLQuaternion mHeadRotationCorrection;
 
     struct DeviceStatusNotificationDesc
     {
@@ -923,7 +934,6 @@ void LLHMD::setFocusWindowMain()
     }
 }
 
-
 void LLHMD::setFocusWindowHMD()
 {
     gViewerWindow->getWindow()->setFocusWindow(1, TRUE);
@@ -947,6 +957,8 @@ F32 LLHMD::getXCenterOffset() const { return mXCenterOffsetMod + mImpl->getXCent
 F32 LLHMD::getYCenterOffset() const { return mImpl->getYCenterOffset(); }
 F32 LLHMD::getDistortionScale() const { return mImpl->getDistortionScale(); }
 LLQuaternion LLHMD::getHMDOrient() const { return mImpl->getHMDOrient(); }
+LLQuaternion LLHMD::getHeadRotationCorrection() const { return mImpl->getHeadRotationCorrection(); }
+void LLHMD::addHeadRotationCorrection(LLQuaternion quat) { return mImpl->addHeadRotationCorrection(quat); }
 void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); }
 F32 LLHMD::getVerticalFOV() const { return mImpl->getVerticalFOV(); }
 BOOL LLHMD::useMotionPrediction() const { return mImpl->useMotionPrediction(); }

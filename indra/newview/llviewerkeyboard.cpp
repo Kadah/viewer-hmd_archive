@@ -41,7 +41,9 @@
 #include "llviewerwindow.h"
 #include "llvoavatarself.h"
 #include "llfloatercamera.h"
+#include "llviewercamera.h"
 #include "llinitparam.h"
+#include "llhmd.h"
 
 //
 // Constants
@@ -162,6 +164,27 @@ void agent_push_backward( EKeystate s )
 		return;
 	}
 	agent_push_forwardbackward(s, -1, LLAgent::DOUBLETAP_BACKWARD);
+}
+
+void align_hips_to_eyes( EKeystate state )
+{
+	if (KEYSTATE_DOWN == state )
+	{
+		if ( gHMD.getRenderMode() != LLHMD::RenderMode_None )
+		{
+            float r, p, y;
+            gHMD.getHMDRollPitchYaw(r, p, y);
+            LLQuaternion current_head_yaw(y, gAgent.getUpAxis());
+            current_head_yaw *= gHMD.getHeadRotationCorrection();
+            gAgent.rotate(current_head_yaw);
+
+            gHMD.addHeadRotationCorrection(~current_head_yaw);
+		}
+		else
+		{
+			// not supported in non-rift modes
+		}
+	}
 }
 
 static void agent_slide_leftright( EKeystate s, S32 direction, LLAgent::EDoubleTapRunMode mode )
@@ -598,6 +621,8 @@ REGISTER_KEYBOARD_ACTION("edit_avatar_move_backward", edit_avatar_move_backward)
 REGISTER_KEYBOARD_ACTION("stop_moving", stop_moving);
 REGISTER_KEYBOARD_ACTION("start_chat", start_chat);
 REGISTER_KEYBOARD_ACTION("start_gesture", start_gesture);
+REGISTER_KEYBOARD_ACTION("align_hips_to_eyes", align_hips_to_eyes);
+
 #undef REGISTER_KEYBOARD_ACTION
 
 LLViewerKeyboard::LLViewerKeyboard()
