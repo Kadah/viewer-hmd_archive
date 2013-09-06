@@ -14622,17 +14622,6 @@
       <string />
     </map>
 
-  <key>OculusXCenterOffsetModifier</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL] Oculus adds this value to the X Center Offset returned</string>
-    <key>Persist</key>
-    <integer>0</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.0</real>
-  </map>
   <key>OculusUseMirroring</key>
   <map>
     <key>Comment</key>
@@ -14644,54 +14633,70 @@
     <key>Value</key>
     <real>0</real>
   </map>
-  <key>OculusOptWindowRaw</key>
+  <key>OculusUISurfaceArc</key>
   <map>
     <key>Comment</key>
-    <string>[EXPERIMENTAL] Oculus Option for WindowRectRaw</string>
+    <string>[EXPERIMENTAL] X = horizontal arc, Y = vertical arc</string>
     <key>Persist</key>
-    <integer>0</integer>
+    <integer>1</integer>
     <key>Type</key>
-    <string>S32</string>
+    <string>Vector3</string>
     <key>Value</key>
-    <real>0</real>
+    <array>
+      <real>1.0</real>
+      <real>0.6</real>
+      <real>0.0</real>
+    </array>
   </map>
-  <key>OculusOptWindowScaled</key>
+  <key>OculusUISurfaceToroidRadius</key>
   <map>
     <key>Comment</key>
-    <string>[EXPERIMENTAL] Oculus Option for WindowRectScaled</string>
+    <string>[EXPERIMENTAL] Radius of UI Toroid: X = Horizontal toroid radius (width), Y = Depth toroid radius (depth)</string>
     <key>Persist</key>
-    <integer>0</integer>
+    <integer>1</integer>
     <key>Type</key>
-    <string>S32</string>
+    <string>Vector3</string>
     <key>Value</key>
-    <real>0</real>
+    <array>
+      <real>0.3</real>
+      <real>0.6</real>
+      <real>0.0</real>
+    </array>
   </map>
-  <key>OculusOptWorldViewRaw</key>
+  <key>OculusUISurfaceCrossSectionRadius</key>
   <map>
     <key>Comment</key>
-    <string>[EXPERIMENTAL] Oculus Option for WorldViewRaw</string>
+    <string>[EXPERIMENTAL] Radius of UI Toroid Cross Section: X = cross section length/width radius (width/depth), Y = cross section height radius (height)</string>
     <key>Persist</key>
-    <integer>0</integer>
+    <integer>1</integer>
     <key>Type</key>
-    <string>S32</string>
+    <string>Vector3</string>
     <key>Value</key>
-    <real>0</real>
+    <array>
+      <real>0.5</real>
+      <real>0.7</real>
+      <real>0.0</real>
+    </array>
   </map>
-  <key>OculusOptWorldViewScaled</key>
+  <key>OculusUISurfaceOffsets</key>
   <map>
     <key>Comment</key>
-    <string>[EXPERIMENTAL] Oculus Option for WorldViewScaled</string>
+    <string>[EXPERIMENTAL] Offsets (local-space) to add to final coordinates of curved UI surface</string>
     <key>Persist</key>
-    <integer>0</integer>
+    <integer>1</integer>
     <key>Type</key>
-    <string>S32</string>
+    <string>Vector3</string>
     <key>Value</key>
-    <real>0</real>
+    <array>
+      <real>0.0</real>
+      <real>0.0</real>
+      <real>0.0</real>
+    </array>
   </map>
-  <key>OculusUISurfaceFudge</key>
+  <key>OculusOrthoPixelOffsetMult</key>
   <map>
     <key>Comment</key>
-    <string>[EXPERIMENTAL] Amount to fudge UI distortion by for spherical projection correction</string>
+    <string>[EXPERIMENTAL] amount to multiply OrthoPixelOffset</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
@@ -14699,83 +14704,27 @@
     <key>Value</key>
     <real>1.0</real>
   </map>
-  <key>OculusUISurfaceX</key>
+  <key>OculusEyeDepth</key>
   <map>
     <key>Comment</key>
-    <string>[EXPERIMENTAL] X = middle X, Y = width, Z = left-width-mult</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Vector3</string>
-    <key>Value</key>
-    <array>
-      <real>1.5</real>
-      <real>0.85</real>
-      <real>0.5</real>
-    </array>
-  </map>
-  <key>OculusUISurfaceY</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL] X = middle Y, Y = height, Z = top-height-mult</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Vector3</string>
-    <key>Value</key>
-    <array>
-      <real>0.45</real>
-      <real>0.425</real>
-      <real>0.5</real>
-    </array>
-  </map>
-  <key>OculusUISurfaceRadius</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL] Radius of UI Toroid</string>
+    <string>[EXPERIMENTAL] amount (in mm) that the eyes are positioned in front of the center of the head.</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
     <string>F32</string>
     <key>Value</key>
-    <real>2.0</real>
+    <real>75.0</real>
   </map>
-  <key>OculusTestCalibration</key>
+  <key>OculusUIEyeDepth</key>
   <map>
     <key>Comment</key>
-    <string>[EXPERIMENTAL] Test rednering for Oculus 3D Depth calibration</string>
-    <key>Persist</key>
-    <integer>0</integer>
-    <key>Type</key>
-    <string>Boolean</string>
-    <key>Value</key>
-    <real>0</real>
-  </map>
-  <key>Oculus2DUICurvedSurface</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL] TRUE = render 2D UI on a toroid surface. FALSE = render 2D UI on a flat surface.</string>
-    <key>Persist</key>
-    <integer>0</integer>
-    <key>Type</key>
-    <string>Boolean</string>
-    <key>Value</key>
-    <real>1</real>
-  </map>
-  <key>OculusUIFlatSurfaceScale</key>
-  <map>
-    <key>Comment</key>
-    <string>[EXPERIMENTAL] x = * 1.6, y = * 1.0, z = * -1.0</string>
+    <string>[EXPERIMENTAL] extra amount (in mm) that the eyes are positioned in front of the center of the head for viewing the UI.  Helps with text readability.</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
-    <string>Vector3</string>
+    <string>F32</string>
     <key>Value</key>
-    <array>
-      <real>1.5</real>
-      <real>1.5</real>
-      <real>1.5</real>
-    </array>
+    <real>0.0</real>
   </map>
 
 </map>

@@ -179,14 +179,24 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
 		origin.mV[2] = llmin(origin.mV[2], water_height-0.20f);
 	}
 
-    LLVector3 up = up_direction;
-    LLVector3 poi = point_of_interest;
-    setOriginAndLookAt(origin, up, poi);
-    if (gHMD.isInitialized() && gHMD.shouldRender())
+    if (gHMD.shouldRender())
     {
+        LLVector3 up = up_direction;
+        U32 camera_mode = gAgentCamera.getCameraAnimating() ? gAgentCamera.getLastCameraMode() : gAgentCamera.getCameraMode();
+        if (camera_mode == CAMERA_MODE_FOLLOW && gAgentCamera.getFocusOnAvatar())
+        {
+            // in follow mode, we don't want the UI to be slanted downward toward the avatar.
+            // The UI (as opposed to the camera view) should have a normal "up" rotation.
+            up = LLVector3::z_axis;
+        }
+        LLVector3 poi(point_of_interest[VX], point_of_interest[VY], origin[VZ]);
+        setOriginAndLookAt(origin, up, poi);
         mPreHMDViewMatrix = getModelview();
         mPreHMDViewMatrix.invert();
-        
+    }
+    setOriginAndLookAt(origin, up_direction, point_of_interest);
+    if (gHMD.shouldRender() && gHMD.isInitialized())
+    {
         float r, p, y;
         gHMD.getHMDRollPitchYaw(r, p, y);
         LLQuaternion qr(r, mXAxis);
@@ -194,15 +204,13 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
         LLQuaternion qy(y, mZAxis);
         qr *= qp;
         qr *= qy;
-
 		LLQuaternion head_correction = gHMD.getHeadRotationCorrection();
         qr *= head_correction;
-
         rotate(qr);
     }
 
-	mVelocityDir = center - last_position ; 
-	F32 dpos = mVelocityDir.normVec() ;
+	mVelocityDir = center - last_position;
+	F32 dpos = mVelocityDir.normVec();
 	LLQuaternion rotation;
 	rotation.shortestArc(last_axis, getAtAxis());
 
@@ -476,10 +484,16 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
     if (gHMD.shouldRender())
     {
         gHMD.setBaseModelView(modelview.m);
-        F32 viewOffset = gHMD.getInterpupillaryOffset();
+        glh::matrix4f uiView = modelview;
+
         glh::matrix4f translate;
-        translate.set_translate(glh::vec3f(sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f, 0.0f));
+        F32 viewOffset = gHMD.getInterpupillaryOffset();
+        translate.set_translate(glh::vec3f(sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f, gHMD.getEyeDepth()));
         modelview = translate * modelview;
+
+        translate.set_translate(glh::vec3f(sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f, gHMD.getUIEyeDepth()));
+        uiView = translate * uiView;
+        mHMDUIViewMatrix = LLMatrix4(uiView.m);
     }
 	
 	gGL.loadMatrix(modelview.m);

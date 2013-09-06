@@ -845,8 +845,8 @@ BOOL LLWindowWin32::getCurrentClientRect(RECT& r, RECT* pActualRect)
     if (mHMDMode)
     {
         // TODO: can't access LLHMD from here - where to get these constants from?
-        r.right = (LONG)llmin((S32)r.right, (S32)(r.left + 1280));
-        r.top = (LONG)llmax((S32)r.top, (S32)(r.bottom - 800));
+        r.right = (LONG)llmin((S32)r.right, (S32)(r.left + mHMDWidth));
+        r.top = (LONG)llmax((S32)r.top, (S32)(r.bottom - mHMDHeight));
     }
     return TRUE;
 }
@@ -865,8 +865,8 @@ BOOL LLWindowWin32::getCurrentWindowRect(RECT& r, RECT* pActualRect)
     if (mHMDMode)
     {
         // TODO: can't access LLHMD from here - where to get these constants from?
-        r.right = (LONG)llmin((S32)r.right, (S32)(r.left + 1280));
-        r.top = (LONG)llmax((S32)r.top, (S32)(r.bottom - 800));
+        r.right = (LONG)llmin((S32)r.right, (S32)(r.left + mHMDWidth));
+        r.top = (LONG)llmax((S32)r.top, (S32)(r.bottom - mHMDHeight));
     }
     return TRUE;
 }
@@ -4022,7 +4022,7 @@ BOOL LLWindowWin32::setRenderWindow(S32 idx, BOOL fullScreen)
 }
 
 
-BOOL LLWindowWin32::setFocusWindow(S32 idx, BOOL clipping)
+BOOL LLWindowWin32::setFocusWindow(S32 idx, BOOL clipping, S32 w, S32 h)
 {
     if (idx < 0 || idx > 1 || !mWindowHandle[idx])
     {
@@ -4030,6 +4030,8 @@ BOOL LLWindowWin32::setFocusWindow(S32 idx, BOOL clipping)
     }
     mHMDMode = clipping;
     mHMDRenderWindowIdx = idx;
+    mHMDWidth = mHMDMode ? w : 0;
+    mHMDHeight = mHMDMode ? h : 0;
     SetForegroundWindow(mWindowHandle[idx]);
     SetFocus(mWindowHandle[idx]);
     return TRUE;

@@ -117,7 +117,7 @@ public:
     /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height);
     /*virtual*/ BOOL destroyHMDWindow();
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
-    /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping);
+    /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping, S32 w = 0, S32 h = 0);
     /*virtual*/ S32 getDisplayCount();
     /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary);
 
@@ -204,6 +204,8 @@ protected:
 	BOOL		mInputProcessingPaused;
     BOOL        mHMDMode;
     S32         mHMDRenderWindowIdx;
+    S32         mHMDWidth;
+    S32         mHMDHeight;
 
 	// The following variables are for Language Text Input control.
 	// They are all static, since one context is shared by all LLWindowWin32

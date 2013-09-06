@@ -4035,7 +4035,7 @@ void LLPipeline::postSort(LLCamera& camera)
 void render_hud_elements()
 {
 	LLFastTimer t(FTM_RENDER_UI);
-	gPipeline.disableLights();		
+	gPipeline.disableLights();
 	
 	LLGLDisable fog(GL_FOG);
 	LLGLSUIDefault gls_ui;
@@ -4649,71 +4649,105 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
             gPipeline.mOculusDepthShape = buff;
         }
 
-        gGL.matrixMode(LLRender::MM_MODELVIEW);
-        gGL.pushMatrix();
-        LLViewerCamera* pViewerCamera = LLViewerCamera::getInstance();
-        const LLMatrix4& m1 = pViewerCamera->getPreHMDViewMatrix();
-        gGL.multMatrix((GLfloat*)m1.mMatrix);
-
-        gOneTextureNoColorProgram.bind();
-        gGL.setColorMask(true, true);
-        LLGLEnable blend_on(GL_BLEND);
-        gGL.blendFunc(LLRender::BF_ONE, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
-        gGL.color4f(1,1,1,1);
-        // TODO: use a better high-contrast texture for the background
-        gGL.getTexUnit(0)->bind(LLViewerTexture::sCheckerBoardImagep);
-        gGL.begin(LLRender::QUADS);
-        for (int i = 0; i < 4; ++i)
+        if (!gHMD.isCalibrated())
         {
-            for (int j = 0; j < 4; ++j)
+            gGL.matrixMode(LLRender::MM_MODELVIEW);
+            gGL.pushMatrix();
+            gGL.matrixMode(LLRender::MM_PROJECTION);
+            gGL.pushMatrix();
+            gl_state_for_2d(gViewerWindow->getWorldViewWidthRaw(), gViewerWindow->getWorldViewHeightRaw(), 0.0f, gHMD.getOrthoPixelOffset());
+            gPipeline.disableLights();
+            LLGLDisable fog(GL_FOG);
+            LLGLSUIDefault gls_ui;
+            LLGLEnable stencil(GL_STENCIL_TEST);
+            glStencilFunc(GL_ALWAYS, 255, 0xFFFFFFFF);
+            glStencilMask(0xFFFFFFFF);
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+            gGL.color4f(1,1,1,1);
+            if (LLGLSLShader::sNoFixedFunction)
             {
-                //right top, left top, left bottom, right bottom
-                gGL.texCoord2f(1, 1);  gGL.vertex3f( -1.0f + (F32)j, 2.0f - (F32)i, -3.0f);
-                gGL.texCoord2f(0, 1);  gGL.vertex3f( -2.0f + (F32)j, 2.0f - (F32)i, -3.0f);
-                gGL.texCoord2f(0, 0);  gGL.vertex3f( -2.0f + (F32)j, 1.0f - (F32)i, -3.0f);
-                gGL.texCoord2f(1, 0);  gGL.vertex3f( -1.0f + (F32)j, 1.0f - (F32)i, -3.0f);
+                gUIProgram.bind();
             }
-        }
-        gGL.end();
-        gGL.flush();
-
-        // render 9 copies of the VB, offset in a "grid" pattern so that users can get a good sense of depth perception
-        // TODO: use a different texture for the cubes
-        static const LLVector3 kMat[][3] =
-        {
-            // translation                , scale
-            { LLVector3(-0.2f, 0.4f,-0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
-            { LLVector3( 0.0f, 0.4f, 0.0f), LLVector3( 0.5f, 0.5f, 1.0f) },
-            { LLVector3( 0.2f, 0.4f, 0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
-            { LLVector3(-0.2f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
-            { LLVector3( 0.0f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
-            { LLVector3( 0.2f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
-            { LLVector3(-0.3f,-0.1f, 0.0f), LLVector3( 2.0f, 2.0f, 1.0f) },
-            { LLVector3( 0.0f,-0.1f,-0.1f), LLVector3( 2.0f, 2.0f, 1.0f) },
-            { LLVector3( 0.3f,-0.1f,-0.2f), LLVector3( 2.0f, 2.0f, 1.0f) },
-        };
-        {
-            LLGLDisable cull(GL_CULL_FACE);
-            LLGLEnable blend(GL_BLEND);
-            LLVertexBuffer* buff = gPipeline.mOculusDepthShape;
-            buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
-            for (int i = 0; i < 9; ++i)
+            LLGLDepthTest depth(GL_TRUE, GL_FALSE);
+            const LLFontGL* font = LLFontGL::getFontSansSerifBold();
+            const std::string& t = gHMD.getCalibrationText();
+            font->renderUTF8(t, 0, llround(gViewerWindow->getWorldViewWidthRaw() / 2.0f), llround(gViewerWindow->getWorldViewHeightRaw() / 2.0f), LLColor4( 1.0f, 1.0f, 1.0f, 1.0f ), LLFontGL::HCENTER, LLFontGL::TOP);
+            stop_glerror();
+            if (LLGLSLShader::sNoFixedFunction)
             {
-                gGL.matrixMode(LLRender::MM_MODELVIEW);
-                gGL.pushMatrix();
-                LLMatrix4 m2;
-                m2.initScale(kMat[i][1]);
-                m2.setTranslation(kMat[i][0]);
-                gGL.multMatrix((GLfloat*)m2.mMatrix);
-                buff->drawRange(LLRender::TRIANGLE_STRIP, 0, buff->getNumVerts()-1, buff->getNumIndices(), 0);
-                gGL.popMatrix();
+                gUIProgram.unbind();
             }
+            gGL.flush();
+            gGL.matrixMode(LLRender::MM_PROJECTION);
+            gGL.popMatrix();
+            gGL.matrixMode(LLRender::MM_MODELVIEW);
+            gGL.popMatrix();
         }
-        gGL.flush();
-        gOneTextureNoColorProgram.unbind();
+        else
+        {
+            gGL.matrixMode(LLRender::MM_MODELVIEW);
+            gGL.pushMatrix();
+            gGL.multMatrix((GLfloat*)(LLViewerCamera::getInstance()->getPreHMDViewMatrix().mMatrix));
 
-        gGL.matrixMode(LLRender::MM_MODELVIEW);
-        gGL.popMatrix();
+            gOneTextureNoColorProgram.bind();
+            gGL.setColorMask(true, true);
+            LLGLEnable blend_on(GL_BLEND);
+            gGL.blendFunc(LLRender::BF_ONE, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
+            gGL.color4f(1,1,1,1);
+            // TODO: use a better high-contrast texture for the background
+            gGL.getTexUnit(0)->bind(LLViewerTexture::sCheckerBoardImagep);
+            gGL.begin(LLRender::QUADS);
+            for (int i = 0; i < 4; ++i)
+            {
+                for (int j = 0; j < 4; ++j)
+                {
+                    //right top, left top, left bottom, right bottom
+                    gGL.texCoord2f(1, 1);  gGL.vertex3f( -1.0f + (F32)j, 2.0f - (F32)i, -3.0f);
+                    gGL.texCoord2f(0, 1);  gGL.vertex3f( -2.0f + (F32)j, 2.0f - (F32)i, -3.0f);
+                    gGL.texCoord2f(0, 0);  gGL.vertex3f( -2.0f + (F32)j, 1.0f - (F32)i, -3.0f);
+                    gGL.texCoord2f(1, 0);  gGL.vertex3f( -1.0f + (F32)j, 1.0f - (F32)i, -3.0f);
+                }
+            }
+            gGL.end();
+            gGL.flush();
+
+            // render 9 copies of the VB, offset in a "grid" pattern so that users can get a good sense of depth perception
+            // TODO: use a different texture for the cubes
+            static const LLVector3 kMat[][3] =
+            {
+                // translation                , scale
+                { LLVector3(-0.2f, 0.4f,-0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
+                { LLVector3( 0.0f, 0.4f, 0.0f), LLVector3( 0.5f, 0.5f, 1.0f) },
+                { LLVector3( 0.2f, 0.4f, 0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
+                { LLVector3(-0.2f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
+                { LLVector3( 0.0f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
+                { LLVector3( 0.2f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
+                { LLVector3(-0.3f,-0.1f, 0.0f), LLVector3( 2.0f, 2.0f, 1.0f) },
+                { LLVector3( 0.0f,-0.1f,-0.1f), LLVector3( 2.0f, 2.0f, 1.0f) },
+                { LLVector3( 0.3f,-0.1f,-0.2f), LLVector3( 2.0f, 2.0f, 1.0f) },
+            };
+            {
+                LLGLDisable cull(GL_CULL_FACE);
+                LLGLEnable blend(GL_BLEND);
+                LLVertexBuffer* buff = gPipeline.mOculusDepthShape;
+                buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
+                for (int i = 0; i < 9; ++i)
+                {
+                    gGL.matrixMode(LLRender::MM_MODELVIEW);
+                    gGL.pushMatrix();
+                    LLMatrix4 m2;
+                    m2.initScale(kMat[i][1]);
+                    m2.setTranslation(kMat[i][0]);
+                    gGL.multMatrix((GLfloat*)m2.mMatrix);
+                    buff->drawRange(LLRender::TRIANGLE_STRIP, 0, buff->getNumVerts()-1, buff->getNumIndices(), 0);
+                    gGL.popMatrix();
+                }
+            }
+            gGL.flush();
+            gOneTextureNoColorProgram.unbind();
+            gGL.matrixMode(LLRender::MM_MODELVIEW);
+            gGL.popMatrix();
+        }
     }
     else
     {

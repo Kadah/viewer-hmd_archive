@@ -85,9 +85,6 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 
 	LLVector3 render_pos = pos_agent + (floorf(x_offset) * right_axis) + (floorf(y_offset) * up_axis);
 
-    LLVector3 textToCameraDir = (camera->getOrigin() - render_pos);
-    F32 textToCameraDist = textToCameraDir.length();
-
 	//get the render_pos in screen space
 	
 	F64 winX, winY, winZ;
@@ -119,17 +116,7 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	LLUI::pushMatrix();
 
     // setup ortho camera
-    S32 left = 0;
-    F32 offsetX = 0.0f;
-    if (gHMD.shouldRender())
-    {
-        offsetX = gHMD.getOrthoPixelOffset() / 10.0f;
-        if (textToCameraDist != 0.0f)
-        {
-            offsetX /= textToCameraDist;
-        }
-    }
-    gl_state_for_2d(viewport[2], viewport[3], left, offsetX);
+    gl_state_for_2d(viewport[2], viewport[3]);
     gViewerWindow->setup3DViewport(0, 0, gHMD.shouldRender() ? LLHMD::kHMDEyeWidth : 0);
 	
 	winX -= viewport[0]; // world_view_rect.mLeft;

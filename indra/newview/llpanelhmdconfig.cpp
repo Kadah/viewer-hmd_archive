@@ -138,7 +138,7 @@ void LLPanelHMDConfig::draw()
 
 void LLPanelHMDConfig::onClickCalibrate()
 {
-    llinfos << "Calibrate button pressed" << llendl;
+    gHMD.BeginManualCalibration();
 }
 
 void LLPanelHMDConfig::onClickResetValues()

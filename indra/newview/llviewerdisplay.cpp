@@ -249,27 +249,12 @@ void renderUnusedMainWindow()
     if (!gSavedSettings.getBOOL("OculusUseMirroring"))
     {
 #endif
-    gHMD.setRenderWindowMain();
-    // just clear the main window, write some text, continue
-    gViewerWindow->setup3DViewport();
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    // write text "press CTRL-SHIFT-D to switch back to main view"
-    //const std::string instructions = LLTrans::getString("LeaveMouselook");
-    //const LLFontGL* font = LLFontGL::getFont(LLFontDescriptor("SansSerif", "Large", LLFontGL::BOLD));
-
-    ////to be on top of Bottom bar when it is opened
-    //const S32 INSTRUCTIONS_PAD = 50;
-
-    //font->renderUTF8(
-    //    instructions, 0,
-    //    getWorldViewRectScaled().getCenterX(),
-    //    getWorldViewRectScaled().mBottom + INSTRUCTIONS_PAD,
-    //    LLColor4( 1.0f, 1.0f, 1.0f, 0.5f ),
-    //    LLFontGL::HCENTER, LLFontGL::TOP,
-    //    LLFontGL::NORMAL,LLFontGL::DROP_SHADOW);
-
-    gViewerWindow->getWindow()->swapBuffers();
+        gHMD.setRenderWindowMain();
+        gViewerWindow->setup3DViewport();
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        gViewerWindow->getWindow()->swapBuffers();
+        gDisplaySwapBuffers = TRUE;
 #if LL_DARWIN
     }
 #endif
@@ -1308,7 +1293,7 @@ bool get_hud_matrices(const LLRect& screen_region, glh::matrix4f &proj, glh::mat
         if (gHMD.shouldRender())
         {
             mat.make_identity();
-            mat.set_translate(glh::vec3f(gHMD.getOrthoPixelOffset(), 0.0f, 0.0f));
+            mat.set_translate(glh::vec3f(gHMD.getInterpupillaryOffset(), 0.0f, 0.0f));
             proj = mat * proj;
         }
 
@@ -1363,7 +1348,19 @@ BOOL setup_hud_matrices(const LLRect& screen_region)
 
 static LLFastTimer::DeclareTimer FTM_SWAP("Swap");
 
-LLVertexBuffer* ll_create_toroidal_ui_surface(F32 start_x, F32 end_x, F32 start_y, F32 end_y, F32 r, F32 fudge)
+// Creates a surface that is part of an outer shell of a torus.
+// Results are in local-space with -z forward, y up (i.e. standard OpenGL)
+// The center of the toroid section (assuming that xa and ya are centered at 0), will
+// be at [offset[X], offset[Y], offset[Z] - (r[0] + r[2])]
+//
+// arc = [X] = length of horizontal arc, [Y] = length of vertical arc (all in radians)
+// r = radius of toroid.
+//     [0] = Center of toroid to center of cross-section (width)
+//     [1] = Center of toroid to center of cross-section (depth)
+//     [2] = cross-section vertical (height)
+//     [3] = cross-section horizontal (width/depth)
+// offsets = offsets to add to final coordinates (x,y,z)
+LLVertexBuffer* ll_create_toroidal_ui_surface(const LLVector2& arc, const LLVector4& r, const LLVector3& offsets)
 {
     LLVertexBuffer* buff = new LLVertexBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0, GL_STATIC_DRAW_ARB);
     U32 resX = 32;
@@ -1375,48 +1372,57 @@ LLVertexBuffer* ll_create_toroidal_ui_surface(F32 start_x, F32 end_x, F32 start_
     LLStrider<LLVector2> tc;
     buff->getVertexStrider(v);
     buff->getTexCoord0Strider(tc);
-    F32 dx = 1.f/(resX - 1);
-    F32 dy = 1.f/(resY - 1);
-    F32 y = 0.0f;
-    F32 target_width = r*(end_x-start_x);
-    F32 mid_x = (start_x+end_x) * 0.5f;
+    F32 du = 1.f/(resX - 1);
+    F32 dv = 1.f/(resY - 1);
+    F32 dx = arc[0] / ((F32)resX - 1.0f);
+    F32 dy = arc[1] / ((F32)resY - 1.0f);
+    //LL_INFOS("Oculus")  << "XA: [" << xa[0] << "," << xa[1] << "], "
+    //                    << "YA: [" << ya[0] << "," << ya[1] << "], "
+    //                    << "r: [" << r[0] << "," << r[1] << "], "
+    //                    << "offsets: [" << offsets[0] << "," << offsets[1] << "," << offsets[2] << "]"
+    //                    << LL_ENDL;
+    //LL_INFOS("Oculus")  << "dX: " << dx << ", "
+    //                    << "dY: " << dy << ", "
+    //                    << "du: " << du << ", "
+    //                    << "dv: " << dv
+    //                    << LL_ENDL;
+
     for (U32 i = 0; i < resY; ++i)
     {
-        F32 x = 0.f;
-        F32 a = start_y + (end_y-start_y)*y;
-        F32 b = start_x;
-        F32 sa = sinf(a);
-        F32 ca = cosf(a);
-        F32 sb = sinf(b);
-        F32 cb = cosf(b);
-        LLVector2 dt(r*sa*cb, r*sa*sb);
-        F32 cur_rad = dt.length();
-        F32 cur_range = target_width/cur_rad;
-        F32 cur_start_x = mid_x - cur_range*0.5f;
-        F32 cur_end_x = mid_x + cur_range*0.5f;
-        cur_start_x = cur_start_x + (start_x-cur_start_x)*fudge;
-        cur_end_x = cur_end_x + (end_x-cur_end_x)*fudge;
-        for (U32 j = 0; j < resX; j++)
+        F32 ty = (F32)i * dv;
+        F32 va = (F_PI - (arc[1] * 0.5f)) + ((F32)i * dy);
+        F32 cva = cos(va);
+        F32 sva = sin(va);
+        for (U32 j = 0; j < resX; ++j)
         {
-            b = cur_start_x + (cur_end_x-cur_start_x)*x;
-            sb = sinf(b);
-            cb = cosf(b);
-            LLVector4a t(r*sa*cb, r*ca, r*sa*sb);
+            F32 tx = (F32)j * du;
+            F32 ha = (arc[0] * -0.5f) + ((F32)j * dx);
+            F32 cha = cos(ha);
+            F32 sha = sin(ha);
+            F32 x = (sha * (r[0] - (cva * r[3]))) + offsets[0];
+            F32 y = (r[2] * -sva) + offsets[1];
+            //F32 z = (-0.5f * ((r[1] * cha) - (cva * r[3]))) + offsets[2];
+            F32 z = (-1.0f * ((r[1] * cha) - (cva * r[3]))) + offsets[2];
+            LLVector4a t(x, y, z);
             *v++ = t;
-            LLVector2 cur_tc(x, 1.f-y);
+            LLVector2 cur_tc(tx, ty);
             *tc++ = cur_tc;
-            //LL_INFOS("Oculus") << "Vtx " << ((i * resX) + j) << ": [" << t.getScalarAt<0>().getF32() << "," << t.getScalarAt<1>().getF32() << "," << t.getScalarAt<2>().getF32() << "], tc = [" << cur_tc[0] << "," << cur_tc[1] << "]" << LL_ENDL;
-            x += dx;
+            //LL_INFOS("Oculus")  << "Vtx " << ((i * resX) + j) << " [" << i << "," << j << "]: "
+            //                    << "[" << t.getScalarAt<0>().getF32() << "," << t.getScalarAt<1>().getF32() << "," << t.getScalarAt<2>().getF32() << "], "
+            //                    << "tc = [" << cur_tc[0] << "," << cur_tc[1] << "], "
+            //                    << "ha = " << ha << ", "
+            //                    << "va = " << va
+            //                    << LL_ENDL;
         }
-        y += dy;
     }
+
     LLStrider<U16> idx;
     buff->getIndexStrider(idx);
-    for (U32 i = 0; i < resY-1; ++i)
+    for (S32 i = resY - 2; i >= 0; --i)
     {
-        for (U32 j = 0; j < resX-1; ++j)
+        for (S32 j = 0; j < resX-1; ++j)
         {
-            U16 cur_idx = i*resX+j;
+            U16 cur_idx = (i * resX) + j;
             U16 right = cur_idx + 1;
             U16 bottom = cur_idx + resX;
             U16 bottom_right = bottom+1;
@@ -1426,12 +1432,82 @@ LLVertexBuffer* ll_create_toroidal_ui_surface(F32 start_x, F32 end_x, F32 start_
             *idx++ = right;
             *idx++ = bottom;
             *idx++ = bottom_right;
+            //LL_INFOS("Oculus")  << "Vtx " << ((i * resX) + j) << " [" << i << "," << j << "]: "
+            //                    << "[" << cur_idx << "," << bottom << "," << right << "], "
+            //                    << "[" << right << "," << bottom << "," << bottom_right << "]"
+            //                    << LL_ENDL;
         }
     }
+
     buff->flush();
     return buff;
-}
 
+    //F32 kMidX = r[0] * F_PI; // * 1.3f;
+    //F32 kMidY = r[2] * F_PI; // * 0.45f;
+    //F32 kRadius = r[1]; // 2.0f;
+    //F32 start_x = kMidX - (arc[0] * 0.5f);
+    //F32 end_x = kMidX + (arc[0] * 0.5f);
+    //F32 start_y = kMidY - (arc[1] * 0.5f);
+    //F32 end_y = kMidY + (arc[1] * 0.5f);
+
+    //F32 dx = 1.f/(resX - 1);
+    //F32 dy = 1.f/(resY - 1);
+    //F32 y = 0.0f;
+    //F32 target_width = kRadius*(end_x-start_x);
+    //F32 mid_x = (start_x+end_x) * 0.5f;
+    //for (U32 i = 0; i < resY; ++i)
+    //{
+    //    F32 x = 0.f;
+    //    F32 a = start_y + (end_y-start_y)*y;
+    //    F32 b = start_x;
+    //    F32 sa = sinf(a);
+    //    F32 ca = cosf(a);
+    //    F32 sb = sinf(b);
+    //    F32 cb = cosf(b);
+    //    LLVector2 dt(kRadius*sa*cb, kRadius*sa*sb);
+    //    F32 cur_rad = dt.length();
+    //    F32 cur_range = target_width/cur_rad;
+    //    F32 cur_start_x = mid_x - cur_range*0.5f;
+    //    F32 cur_end_x = mid_x + cur_range*0.5f;
+    //    cur_start_x = cur_start_x + (start_x-cur_start_x);
+    //    cur_end_x = cur_end_x + (end_x-cur_end_x);
+    //    for (U32 j = 0; j < resX; j++)
+    //    {
+    //        b = cur_start_x + (cur_end_x-cur_start_x)*x;
+    //        sb = sinf(b);
+    //        cb = cosf(b);
+    //        LLVector4a t((kRadius*sa*cb) + offsets[0], (kRadius*ca) + offsets[1], (kRadius*sa*sb) + offsets[2]);
+    //        *v++ = t;
+    //        LLVector2 cur_tc(x, 1.f-y);
+    //        *tc++ = cur_tc;
+    //        //LL_INFOS("Oculus") << "Vtx " << ((i * resX) + j) << ": [" << t.getScalarAt<0>().getF32() << "," << t.getScalarAt<1>().getF32() << "," << t.getScalarAt<2>().getF32() << "], tc = [" << cur_tc[0] << "," << cur_tc[1] << "]" << LL_ENDL;
+    //        x += dx;
+    //    }
+    //    y += dy;
+    //}
+
+    //LLStrider<U16> idx;
+    //buff->getIndexStrider(idx);
+    //for (U32 i = 0; i < resY-1; ++i)
+    //{
+    //    for (U32 j = 0; j < resX-1; ++j)
+    //    {
+    //        U16 cur_idx = i*resX+j;
+    //        U16 right = cur_idx + 1;
+    //        U16 bottom = cur_idx + resX;
+    //        U16 bottom_right = bottom+1;
+    //        *idx++ = cur_idx;
+    //        *idx++ = bottom;
+    //        *idx++ = right;
+    //        *idx++ = right;
+    //        *idx++ = bottom;
+    //        *idx++ = bottom_right;
+    //    }
+    //}
+
+    //buff->flush();
+    //return buff;
+}
 
 void render_hmd_mouse_cursor()
 {
@@ -1528,57 +1604,45 @@ void render_ui(F32 zoom_factor, int subfield)
 
             if (gPipeline.mUIScreen.isComplete())
             {
-                if (gHMD.shouldRender2DUICurvedSurface())
+                if (gPipeline.mOculusUISurface.isNull())
                 {
-                    if (gPipeline.mOculusUISurface.isNull())
-                    {
-                        gPipeline.mOculusUISurface = ll_create_toroidal_ui_surface(gHMD.getUISurfaceX()[VX], gHMD.getUISurfaceX()[VY], gHMD.getUISurfaceY()[VX], gHMD.getUISurfaceY()[VY], gHMD.getUISurfaceRadius(), gHMD.getUISurfaceFudge());
-                    }
+                    gPipeline.mOculusUISurface = ll_create_toroidal_ui_surface(gHMD.getUISurfaceArc(), gHMD.getUISurfaceRadius(), gHMD.getUISurfaceOffsets());
                 }
 
+                LLViewerCamera* pViewerCamera = LLViewerCamera::getInstance();
+
+                gGL.matrixMode(LLRender::MM_PROJECTION);
+                gGL.pushMatrix();
                 gGL.matrixMode(LLRender::MM_MODELVIEW);
                 gGL.pushMatrix();
-                LLViewerCamera* pViewerCamera = LLViewerCamera::getInstance();
-                const LLMatrix4& m1 = pViewerCamera->getPreHMDViewMatrix();
-                gGL.multMatrix((GLfloat*)m1.mMatrix);
+                glh::matrix4f curMV = glh_get_current_modelview();
+                glh::matrix4f curProj = glh_get_current_projection();
+                gGL.matrixMode(LLRender::MM_MODELVIEW);
+                LLMatrix4 m2 = pViewerCamera->getPreHMDViewMatrix();
+                m2 *= pViewerCamera->getHMDUIViewMatrix();
+                gGL.loadMatrix((GLfloat*)m2.mMatrix);
 
-                if (gHMD.shouldRender2DUICurvedSurface())
+                gOneTextureNoColorProgram.bind();
+                gGL.setColorMask(true, true);
+                gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+                LLVertexBuffer* buff = gPipeline.mOculusUISurface;
                 {
-                    gOneTextureNoColorProgram.bind();
-                    gGL.setColorMask(true, true);
-                    gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
-                    LLVertexBuffer* buff = gPipeline.mOculusUISurface;
-                    {
-                        LLGLDisable cull(GL_CULL_FACE);
-                        LLGLEnable blend(GL_BLEND);
-                        buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
-                        buff->drawRange(LLRender::TRIANGLES, 0, buff->getNumVerts()-1, buff->getNumIndices(), 0);
-                    }
-                    gOneTextureNoColorProgram.unbind();
+                    LLGLDisable cull(GL_CULL_FACE);
+                    LLGLEnable blend(GL_BLEND);
+                    buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
+                    buff->drawRange(LLRender::TRIANGLES, 0, buff->getNumVerts()-1, buff->getNumIndices(), 0);
                 }
-                else
-                {
-                    const LLVector3& vs = gHMD.getUIFlatSurfaceScale();
-                    gUIProgram.bind();
-                    LLGLEnable blend_on(GL_BLEND);
-                    gGL.blendFunc(LLRender::BF_ONE, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
-                    //            LLGLDisable cull(GL_CULL_FACE);
-                    gGL.setColorMask(true, true);
-                    gGL.color4f(1,1,1,1);
-                    gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
-                    gGL.begin(LLRender::TRIANGLE_STRIP);
-                    //bottom left, bottom right, top left, top right
-                    gGL.texCoord2f(0, 0);       gGL.vertex3f( -1.6f * vs.mV[VX], -1.0f * vs.mV[VY], -1.0f * vs.mV[VZ]);
-                    gGL.texCoord2f(1, 0);       gGL.vertex3f(  1.6f * vs.mV[VX], -1.0f * vs.mV[VY], -1.0f * vs.mV[VZ]);
-                    gGL.texCoord2f(0, 1);       gGL.vertex3f( -1.6f * vs.mV[VX],  1.0f * vs.mV[VY], -1.0f * vs.mV[VZ]);
-                    gGL.texCoord2f(1, 1);       gGL.vertex3f(  1.6f * vs.mV[VX],  1.0f * vs.mV[VY], -1.0f * vs.mV[VZ]);
-                    gGL.end();
-                    gGL.flush();
-                    gUIProgram.unbind();
-                }
+                gOneTextureNoColorProgram.unbind();
+
+                glh_set_current_modelview(curMV);
+                glh_set_current_projection(curProj);
 
                 gGL.matrixMode(LLRender::MM_MODELVIEW);
                 gGL.popMatrix();
+                gGL.loadMatrix(curMV.m);
+                gGL.matrixMode(LLRender::MM_PROJECTION);
+                gGL.popMatrix();
+                gGL.loadMatrix(curProj.m);
             }
             else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
             {
@@ -1621,29 +1685,6 @@ void render_ui(F32 zoom_factor, int subfield)
     {
         render_hud_elements();  // in-world text, labels, nametags
     }
-    //if (!renderHMDDepthUI)
-    //{
-    //    //if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
-    //    //{
-    //    //    //gRenderUIMode = TRUE;
-    //    //    //if (LLGLSLShader::sNoFixedFunction)
-    //    //    //{
-    //    //    //    gDebugProgram.bind();
-    //    //    //    //gUIProgram.bind();
-    //    //    //}
-    //    //}
-    //    render_hud_attachments();   // huds worn by avatar
-    //    //if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
-    //    //{
-    //    //    //if (LLGLSLShader::sNoFixedFunction)
-    //    //    //{
-    //    //    //    gDebugProgram.unbind();
-    //    //    //    //gUIProgram.unbind();
-    //    //    //}
-    //    //    //gGL.flush();
-    //    //    //gRenderUIMode = FALSE;
-    //    //}
-    //}
     if (LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE)
     {
         if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
@@ -1656,26 +1697,7 @@ void render_ui(F32 zoom_factor, int subfield)
         }
         if (!renderHMDDepthUI)
         {
-            if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
-            {
-                gRenderUIMode = TRUE;
-                //if (LLGLSLShader::sNoFixedFunction)
-                //{
-                //    gDebugProgram.bind();
-                //    //gUIProgram.bind();
-                //}
-            }
             render_hud_attachments();   // huds worn by avatar
-            if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
-            {
-                //if (LLGLSLShader::sNoFixedFunction)
-                //{
-                //    gDebugProgram.unbind();
-                //    //gUIProgram.unbind();
-                //}
-                //gGL.flush();
-                gRenderUIMode = FALSE;
-            }
         }
 	    LLGLSDefault gls_default;
 	    LLGLSUIDefault gls_ui;
@@ -1708,10 +1730,10 @@ void render_ui(F32 zoom_factor, int subfield)
         {
             gViewerWindow->drawDebugText(); // debugging text
         }
+        gRenderUIMode = FALSE;
 
         render_hmd_mouse_cursor();
 
-        gRenderUIMode = FALSE;
         if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
         {
             gPipeline.mUIScreen.flush();

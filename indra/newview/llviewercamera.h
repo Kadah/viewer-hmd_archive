@@ -139,6 +139,7 @@ public:
 	S16 getZoomSubRegion() { return mZoomSubregion; } 
 
     const LLMatrix4& getPreHMDViewMatrix() const { return mPreHMDViewMatrix; }
+    const LLMatrix4& getHMDUIViewMatrix() const { return mHMDUIViewMatrix; }
 
 protected:
 	void calcProjection(const F32 far_distance) const;
@@ -159,6 +160,7 @@ protected:
 	F32					mZoomFactor;
 	S16					mZoomSubregion;
     LLMatrix4           mPreHMDViewMatrix;
+    LLMatrix4           mHMDUIViewMatrix;
 
 public:
 } LL_ALIGN_POSTFIX(16);

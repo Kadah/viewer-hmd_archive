@@ -1,7 +1,8 @@
 /** 
 * @file llhmd.cpp
 * @brief Implementation of llhmd
-* @author Lee@lindenlab.com
+* @author voidpointer@lindenlab.com
+* @author callum@lindenlab.com
 *
 * $LicenseInfo:firstyear=2013&license=viewerlgpl$
 * Second Life Viewer Source Code
@@ -82,6 +83,9 @@ public:
     static const F32 kDefaultDistortionScale;
     static const F32 kDefaultOrthoPixelOffset;
     static const F32 kDefaultVerticalFOVRadians;
+    static const F32 kDefaultAspect;
+    static const F32 kDefaultAspectMult;
+    static const F32 kUIEyeDepthMult;
 
 public:
     LLHMDImpl();
@@ -95,7 +99,8 @@ public:
     BOOL preInit();
     BOOL postDetectionInit();
     void handleMessages();
-    bool isReady();    void shutdown();
+    bool isReady() { return mHMD && mSensorDevice && mHMDConnected; }
+    void shutdown();
     void onIdle();
     U32 getCurrentEye() const { return mCurrentEye; }
     void setCurrentEye(U32 eye)
@@ -120,10 +125,22 @@ public:
     F32 getLensSeparationDistance() const { return gHMD.isInitialized() ? mStereoConfig.GetHMDInfo().LensSeparationDistance : kDefaultLenSeparationDistance; }
     F32 getEyeToScreenDistance() const { return gHMD.isInitialized() ? mStereoConfig.GetEyeToScreenDistance() : getEyeToScreenDistanceDefault(); }
     F32 getEyeToScreenDistanceDefault() const { return kDefaultEyeToScreenDistance; }
-    void setEyeToScreenDistance(F32 f) { if (gHMD.isInitialized()) { mStereoConfig.SetEyeToScreenDistance(f); } }
+    void setEyeToScreenDistance(F32 f)
+    {
+        if (gHMD.isInitialized())
+        {
+            mStereoConfig.SetEyeToScreenDistance(f);
+            gHMD.isUIEyeDepthCalculated(FALSE);
+            gHMD.onChangeUISurfaceShape();
+            //LL_INFOS("Oculus") << "EyeToScreenDistance: " << std::fixed << std::setprecision(4) << getEyeToScreenDistance() << ", default: " << LLHMDImpl::kDefaultEyeToScreenDistance << LL_ENDL;
+            //LL_INFOS("Oculus") << "Vertical FOV: " << std::fixed << std::setprecision(4) << mStereoConfig.GetYFOVRadians() << ", default: " << kDefaultVerticalFOVRadians << LL_ENDL;
+        }
+    }
 
-    //F32 getVerticalFOV() { return gHMD.isInitialized() ? mStereoConfig.GetYFOVRadians() : kDefaultVerticalFOVRadians; }
-    F32 getVerticalFOV() { return kDefaultVerticalFOVRadians; }
+    F32 getVerticalFOV() { return gHMD.isInitialized() ? mStereoConfig.GetYFOVRadians() : kDefaultVerticalFOVRadians; }
+    F32 getAspect() { return gHMD.isInitialized() ? mStereoConfig.GetAspect() : kDefaultAspect; }
+    F32 getAspectMultiplier() { return gHMD.isInitialized() ? mStereoConfig.GetAspectMultiplier() : kDefaultAspectMult; }
+    void setAspectMultiplier(F32 f) { if (gHMD.isInitialized()) { mStereoConfig.SetAspectMultiplier(f); } }
 
     LLVector4 getDistortionConstants() const
     {
@@ -182,9 +199,10 @@ public:
     //LLMatrix4 getProjectionMatrix() const { return matrixOVRtoLL(mCurrentEyeParams.Projection); }
     //LLMatrix4 getOrthoProjectionMatrix() const { return matrixOVRtoLL(mCurrentEyeParams.OrthoProjection); }
 
-    // TODO: this returns an incorrect value.  need more info from SDK though to get correct value, however since the data needed
-    // is private and has no accessors currently.  Hoping to not modify SDK, but may be forced to if we need this value.
     F32 getOrthoPixelOffset() const { return gHMD.isInitialized() ? mCurrentEyeParams.OrthoProjection.M[0][3] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)OVR::Util::Render::StereoEye_Left ? 1.0f : -1.0f)); }
+
+    BOOL isManuallyCalibrating() const { return gHMD.isInitialized() ? mMagCal.IsManuallyCalibrating() : FALSE; }
+    const std::string& getCalibrationText() const { return mCalibrationText; }
 
     LLViewerTexture* getCursorImage(U32 idx) { return (idx < mCursorTextures.size()) ? mCursorTextures[idx].get() : NULL; }
 
@@ -208,6 +226,8 @@ public:
 
     void BeginManualCalibration()
     {
+        mMagCal.ClearCalibration(mSensorFusion);
+        mSensorFusion.Reset();
         mMagCal.BeginManualCalibration(mSensorFusion);
     }
 
@@ -268,6 +288,7 @@ private:
     LLRect mHMDRect;
     S32 mLastCalibrationStep;
     std::vector<LLPointer<LLViewerTexture> > mCursorTextures;
+    std::string mCalibrationText;
 };
 
 const F32 LLHMDImpl::kDefaultHScreenSize = 0.14976f;
@@ -283,7 +304,19 @@ const F32 LLHMDImpl::kDefaultXCenterOffset = 0.152f;
 const F32 LLHMDImpl::kDefaultYCenterOffset = 0.0f;
 const F32 LLHMDImpl::kDefaultDistortionScale = 1.7146f;
 const F32 LLHMDImpl::kDefaultOrthoPixelOffset = 0.1775f; // -0.1775f Right Eye
-const F32 LLHMDImpl::kDefaultVerticalFOVRadians = 1.5707963f; // -0.1775f Right Eye
+const F32 LLHMDImpl::kDefaultVerticalFOVRadians = 1.5707963f;
+const F32 LLHMDImpl::kDefaultAspect = 0.8f;
+const F32 LLHMDImpl::kDefaultAspectMult = 1.0f;
+const F32 LLHMDImpl::kUIEyeDepthMult = -14.285714f;
+// formula:  X = N / ((DESD - MESD) * 1000.0)
+// WHERE
+//  X = result 
+//  N = desired UIEyeDepth when at default Eye-To-Screen-Distance
+//  DESD = default_eye_to_screen_dist
+//  MESD = eye_to_screen_dist_where_X_should_be_zero
+//  in the current case:
+//  -14.285714 = 600 / ((0.041 - 0.083) * 1000)
+
 
 
 LLHMDImpl::LLHMDImpl()
@@ -292,6 +325,7 @@ LLHMDImpl::LLHMDImpl()
     , mEyeYaw(0.0f)
     , mCurrentEye(OVR::Util::Render::StereoEye_Center)
     , mLastCalibrationStep(-1)
+    , mCalibrationText("")
 {
 }
 
@@ -300,6 +334,7 @@ LLHMDImpl::~LLHMDImpl()
 {
     shutdown();
 }
+
 
 BOOL LLHMDImpl::preInit()
 {
@@ -329,6 +364,9 @@ BOOL LLHMDImpl::preInit()
     if (mHMD)
     {
         mHMD->GetDeviceInfo(&mHMDInfo);
+        mDisplayName = utf8str_to_utf16str(mHMDInfo.DisplayDeviceName);
+        mDisplayId = mHMDInfo.DisplayId;
+        mStereoConfig.SetHMDInfo(mHMDInfo);
         mHMDConnected = true;
     }
 
@@ -339,6 +377,7 @@ BOOL LLHMDImpl::preInit()
 
     return true;
 }
+
 
 void LLHMDImpl::handleMessages()
 {
@@ -370,6 +409,8 @@ void LLHMDImpl::handleMessages()
                         {
                             mSensorDevice = *desc.Handle.CreateDeviceTyped<OVR::SensorDevice>();
                             mSensorFusion.AttachToSensor(mSensorDevice);
+                            mSensorFusion.SetDelegateMessageHandler(this);
+                            mSensorFusion.SetPredictionEnabled(true);
                         }
                         else
                         if (! was_already_created )
@@ -394,6 +435,8 @@ void LLHMDImpl::handleMessages()
                         if (mHMD && mHMD->GetDeviceInfo(&mHMDInfo))
                         {
                             mStereoConfig.SetHMDInfo(mHMDInfo);
+                            mDisplayName = utf8str_to_utf16str(mHMDInfo.DisplayDeviceName);
+                            mDisplayId = mHMDInfo.DisplayId;
                         }
 
                         mHMDConnected = true;
@@ -424,6 +467,8 @@ void LLHMDImpl::handleMessages()
                     if (mHMD && mHMD->GetDeviceInfo(&mHMDInfo))
                     {
                         mStereoConfig.SetHMDInfo(mHMDInfo);
+                        mDisplayName = utf8str_to_utf16str(mHMDInfo.DisplayDeviceName);
+                        mDisplayId = mHMDInfo.DisplayId;
                     }
                 }
             }
@@ -434,6 +479,7 @@ void LLHMDImpl::handleMessages()
         }
     }
 }
+
 
 // virtual
 void LLHMDImpl::OnMessage(const OVR::Message& msg)
@@ -465,10 +511,6 @@ void LLHMDImpl::OnMessage(const OVR::Message& msg)
     }
 }
 
-bool LLHMDImpl::isReady()
-{
-    return mHMD && mSensorDevice && mHMDConnected;
-}
 
 BOOL LLHMDImpl::postDetectionInit()
 {
@@ -609,6 +651,7 @@ BOOL LLHMDImpl::postDetectionInit()
     return TRUE;
 }
 
+
 void LLHMDImpl::shutdown()
 {
     if (!gHMD.isInitialized())
@@ -618,14 +661,13 @@ void LLHMDImpl::shutdown()
     gHMD.isInitialized(FALSE);
     gViewerWindow->getWindow()->destroyHMDWindow();
     RemoveHandlerFromDevices();
-   // mpSensor.Clear();
-    //mpHMD.Clear();
     mCursorTextures.clear();
 
     // This causes a deadlock.  No idea why.   Disabling it as it doesn't seem to be necessary unless we're actually RE-initializing the HMD
     // without shutting down.   For now, to init HMD, we have to restart the viewer.
     //OVR::System::Destroy();
 }
+
 
 void LLHMDImpl::onIdle()
 {
@@ -696,6 +738,7 @@ void LLHMDImpl::onIdle()
     }
 }
 
+
 void LLHMDImpl::updateManualMagCalibration()
 {
     F32 yaw, pitch, roll;
@@ -709,10 +752,10 @@ void LLHMDImpl::updateManualMagCalibration()
     case 0:
         if (mLastCalibrationStep != 0)
         {
-            LL_INFOS("Oculus") << "Magnetometer Calibration\n** Step 1: Please Look Forward **" << LL_ENDL;
+            mCalibrationText = "** Step 1: Please Look Forward **";
+            LL_INFOS("Oculus") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
             mLastCalibrationStep = 0;
         }
-        //SetAdjustMessage("Magnetometer Calibration\n** Step 1: Please Look Forward **");
         if ((fabs(yaw) < 10.0f * dtr) && (fabs(pitch) < 10.0f * dtr))
         {
             mMagCal.InsertIfAcceptable(hmdOrient, mag);
@@ -721,10 +764,10 @@ void LLHMDImpl::updateManualMagCalibration()
     case 1:
         if (mLastCalibrationStep != 1)
         {
-            LL_INFOS("Oculus") << "Magnetometer Calibration\n** Step2: Please Look Up **" << LL_ENDL;
+            mCalibrationText = "** Step 2: Please Look Up **";
+            LL_INFOS("Oculus") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
             mLastCalibrationStep = 1;
         }
-        //SetAdjustMessage("Magnetometer Calibration\n** Step 2: Please Look Up **");
         if (pitch > 30.0f * dtr)
         {
             mMagCal.InsertIfAcceptable(hmdOrient, mag);
@@ -733,10 +776,10 @@ void LLHMDImpl::updateManualMagCalibration()
     case 2:
         if (mLastCalibrationStep != 2)
         {
-            LL_INFOS("Oculus") << "Magnetometer Calibration\n** Step3: Please Look Left **" << LL_ENDL;
+            mCalibrationText = "** Step 3: Please Look Left **";
+            LL_INFOS("Oculus") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
             mLastCalibrationStep = 2;
         }
-        //SetAdjustMessage("Magnetometer Calibration\n** Step 3: Please Look Left **");
         if (yaw > 30.0f * dtr)
         {
             mMagCal.InsertIfAcceptable(hmdOrient, mag);
@@ -745,10 +788,10 @@ void LLHMDImpl::updateManualMagCalibration()
     case 3:
         if (mLastCalibrationStep != 3)
         {
-            LL_INFOS("Oculus") << "Magnetometer Calibration\n** Step4: Please Look Right **" << LL_ENDL;
+            mCalibrationText = "** Step 4: Please Look Right **";
+            LL_INFOS("Oculus") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
             mLastCalibrationStep = 3;
         }
-        //SetAdjustMessage("Magnetometer Calibration\n** Step 4: Please Look Right **");
         if (yaw < -30.0f * dtr)
         {
             mMagCal.InsertIfAcceptable(hmdOrient, mag);
@@ -762,7 +805,7 @@ void LLHMDImpl::updateManualMagCalibration()
             LL_INFOS("Oculus") << "Magnetometer Calibration Complete   \nCenter: " << mc.x << "," << mc.y << "," << mc.z << LL_ENDL;
             mLastCalibrationStep = 4;
             gHMD.isCalibrated(TRUE);
-            //SetAdjustMessage("   Magnetometer Calibration Complete   \nCenter: %f %f %f",mc.x,mc.y,mc.z);
+            mCalibrationText = "";
 
             setCurrentEye(OVR::Util::Render::StereoEye_Left);
             LL_INFOS("Oculus") << "Left Eye:" << LL_ENDL;
@@ -799,6 +842,7 @@ void LLHMDImpl::updateManualMagCalibration()
     }
 }
 
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 // LLHMD
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -806,10 +850,13 @@ void LLHMDImpl::updateManualMagCalibration()
 LLHMD gHMD;
 
 LLHMD::LLHMD()
-    : mXCenterOffsetMod(0.0f)
-    , mRenderMode(RenderMode_None)
+    : mRenderMode(RenderMode_None)
     , mMainWindowWidth(LLHMD::kHMDWidth)
     , mMainWindowHeight(LLHMD::kHMDHeight)
+    , mOrthoPixelOffsetMult(1.0f)
+    , mEyeDepth(0.075f)
+    , mUIEyeDepth(0.6f)
+    , mUIEyeDepthMod(0.0f)
 {
     mImpl = new LLHMDImpl();
 }
@@ -817,15 +864,6 @@ LLHMD::LLHMD()
 
 LLHMD::~LLHMD()
 {
-    //if (isInitialized())
-    //{
-    //	gSavedSettings.getControl("OculusInterpupillaryOffsetModifier")->getSignal()->disconnect_all_slots();
-	   // gSavedSettings.getControl("OculusLensSeparationDistanceModifier")->getSignal()->disconnect_all_slots();
-	   // gSavedSettings.getControl("OculusEyeToScreenDistanceModifier")->getSignal()->disconnect_all_slots();
-	   // gSavedSettings.getControl("OculusXCenterOffsetModifier")->getSignal()->disconnect_all_slots();
-    //    gSavedSettings.getControl("OculusUIRenderSkip")->getSignal()->disconnect_all_slots();
-    //}
-    
     if (gHMD.isInitialized())
     {
         delete mImpl;
@@ -835,26 +873,32 @@ LLHMD::~LLHMD()
 
 BOOL LLHMD::init()
 {
+    gSavedSettings.getControl("OculusUISurfaceArc")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
+    gSavedSettings.getControl("OculusUISurfaceToroidRadius")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
+    gSavedSettings.getControl("OculusUISurfaceCrossSectionRadius")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
+    gSavedSettings.getControl("OculusUISurfaceOffsets")->getSignal()->connect(boost::bind(&onChangeUISurfaceShape));
+    onChangeUISurfaceShape();
+    gSavedSettings.getControl("OculusOrthoPixelOffsetMult")->getSignal()->connect(boost::bind(&onChangeOrthoPixelOffsetMult));
+    onChangeOrthoPixelOffsetMult();
+    gSavedSettings.getControl("OculusEyeDepth")->getSignal()->connect(boost::bind(&onChangeEyeDepth));
+    onChangeEyeDepth();
+    gSavedSettings.getControl("OculusUIEyeDepth")->getSignal()->connect(boost::bind(&onChangeUIEyeDepth));
+    onChangeUIEyeDepth();
+
     return mImpl->preInit();    
 }
 
-void LLHMD::onChangeXCenterOffsetModifier() { gHMD.mXCenterOffsetMod = gSavedSettings.getF32("OculusXCenterOffsetModifier") * 0.1f; }
-void LLHMD::onChangeWindowRaw() { gHMD.mOptWindowRaw = gSavedSettings.getS32("OculusOptWindowRaw"); }
-void LLHMD::onChangeWindowScaled() { gHMD.mOptWindowScaled = gSavedSettings.getS32("OculusOptWindowScaled"); }
-void LLHMD::onChangeWorldViewRaw() { gHMD.mOptWorldViewRaw = gSavedSettings.getS32("OculusOptWorldViewRaw"); }
-void LLHMD::onChangeWorldViewScaled() { gHMD.mOptWorldViewScaled = gSavedSettings.getS32("OculusOptWorldViewScaled"); }
-void LLHMD::onChangeTestCalibration() { gHMD.shouldShowDepthUI(gSavedSettings.getBOOL("OculusTestCalibration")); }
-void LLHMD::onChangeRender2DUICurvedSurface() { gHMD.shouldRender2DUICurvedSurface(gSavedSettings.getBOOL("Oculus2DUICurvedSurface")); }
-void LLHMD::onChangeUIFlatSurfaceScale() { gHMD.mUIFlatSurfaceScale = gSavedSettings.getVector3("OculusUIFlatSurfaceScale"); }
-
+void LLHMD::onChangeOrthoPixelOffsetMult() { gHMD.mOrthoPixelOffsetMult = gSavedSettings.getF32("OculusOrthoPixelOffsetMult"); }
+void LLHMD::onChangeEyeDepth() { gHMD.mEyeDepth = gSavedSettings.getF32("OculusEyeDepth") * .001f; }
+void LLHMD::onChangeUIEyeDepth() { gHMD.mUIEyeDepthMod = gSavedSettings.getF32("OculusUIEyeDepth") * .001f; }
 void LLHMD::onChangeUISurfaceShape()
 {
-    gHMD.mUISurface_Fudge = gSavedSettings.getF32("OculusUISurfaceFudge");
-    gHMD.mUISurface_R = gSavedSettings.getF32("OculusUISurfaceRadius");
-    LLVector3 csx = gSavedSettings.getVector3("OculusUISurfaceX");
-    LLVector3 csy = gSavedSettings.getVector3("OculusUISurfaceY");
-    gHMD.mUICurvedSurfaceX.set(F_PI * (csx[VX] - (csx[VY] * csx[VZ])), F_PI * (csx[VX] + (csx[VY] * (1.0f - csx[VZ]))));
-    gHMD.mUICurvedSurfaceY.set(F_PI * (csy[VX] - (csy[VY] * csy[VZ])), F_PI * (csy[VX] + (csy[VY] * (1.0f - csy[VZ]))));
+    gHMD.mUICurvedSurfaceArc.set(gSavedSettings.getVector3("OculusUISurfaceArc").mV);
+    gHMD.mUICurvedSurfaceArc *= F_PI;
+    LLVector3 tr = gSavedSettings.getVector3("OculusUISurfaceToroidRadius");
+    LLVector3 csr = gSavedSettings.getVector3("OculusUISurfaceCrossSectionRadius");
+    gHMD.mUICurvedSurfaceRadius.set(tr[0], tr[1], csr[1], csr[0]);
+    gHMD.mUICurvedSurfaceOffsets = gSavedSettings.getVector3("OculusUISurfaceOffsets");
     gPipeline.mOculusUISurface = NULL;
 }
 
@@ -923,7 +967,8 @@ void LLHMD::setRenderWindowHMD()
 
 void LLHMD::setFocusWindowMain()
 {
-    gViewerWindow->getWindow()->setFocusWindow(0, gHMD.shouldRender());
+    BOOL shouldRender = gHMD.shouldRender();
+    gViewerWindow->getWindow()->setFocusWindow(0, shouldRender, shouldRender ? LLHMD::kHMDUIWidth : 0, shouldRender ? LLHMD::kHMDUIHeight : 0);
     if (gHMD.shouldRender())
     {
         gViewerWindow->hideCursor();
@@ -936,7 +981,7 @@ void LLHMD::setFocusWindowMain()
 
 void LLHMD::setFocusWindowHMD()
 {
-    gViewerWindow->getWindow()->setFocusWindow(1, TRUE);
+    gViewerWindow->getWindow()->setFocusWindow(1, TRUE, LLHMD::kHMDUIWidth, LLHMD::kHMDUIHeight);
     gViewerWindow->hideCursor();
 }
 
@@ -952,8 +997,9 @@ F32 LLHMD::getLensSeparationDistance() const { return mImpl->getLensSeparationDi
 F32 LLHMD::getEyeToScreenDistance() const { return mImpl->getEyeToScreenDistance(); }
 F32 LLHMD::getEyeToScreenDistanceDefault() const { return mImpl->getEyeToScreenDistanceDefault(); }
 void LLHMD::setEyeToScreenDistance(F32 f) { mImpl->setEyeToScreenDistance(f); }
+F32 LLHMD::getUIEyeDepth() { return (isUIEyeDepthCalculated() ? mUIEyeDepth : calculateUIEyeDepth()) + mUIEyeDepthMod; }
 LLVector4 LLHMD::getDistortionConstants() const { return mImpl->getDistortionConstants(); }
-F32 LLHMD::getXCenterOffset() const { return mXCenterOffsetMod + mImpl->getXCenterOffset(); }
+F32 LLHMD::getXCenterOffset() const { return mImpl->getXCenterOffset(); }
 F32 LLHMD::getYCenterOffset() const { return mImpl->getYCenterOffset(); }
 F32 LLHMD::getDistortionScale() const { return mImpl->getDistortionScale(); }
 LLQuaternion LLHMD::getHMDOrient() const { return mImpl->getHMDOrient(); }
@@ -968,5 +1014,14 @@ F32 LLHMD::getMotionPredictionDelta() const { return mImpl->getMotionPredictionD
 F32 LLHMD::getMotionPredictionDeltaDefault() const { return mImpl->getMotionPredictionDeltaDefault(); }
 void LLHMD::setMotionPredictionDelta(F32 f) { mImpl->setMotionPredictionDelta(f); }
 //LLVector4 LLHMD::getChromaticAberrationConstants() const { return mImpl->getChromaticAberrationConstants(); }
-F32 LLHMD::getOrthoPixelOffset() const { return mImpl->getOrthoPixelOffset(); }
+F32 LLHMD::getOrthoPixelOffset() const { return mImpl->getOrthoPixelOffset() * mOrthoPixelOffsetMult; }
+void LLHMD::BeginManualCalibration() { isCalibrated(FALSE); mImpl->BeginManualCalibration(); }
+const std::string& LLHMD::getCalibrationText() const { return mImpl->getCalibrationText(); }
 LLViewerTexture* LLHMD::getCursorImage(U32 cursorType) { return mImpl->getCursorImage(cursorType); }
+
+F32 LLHMD::calculateUIEyeDepth()
+{
+    mUIEyeDepth = ((mImpl->getEyeToScreenDistance() - 0.083f) * LLHMDImpl::kUIEyeDepthMult);
+    gHMD.isUIEyeDepthCalculated(TRUE);
+    return mUIEyeDepth;
+}

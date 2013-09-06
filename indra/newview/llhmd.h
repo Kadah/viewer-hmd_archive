@@ -1,7 +1,7 @@
 /** 
 * @file   llhmd.h
 * @brief  Header file for llhmd
-* @author Lee@lindenlab.com
+* @author voidpointer@lindenlab.com
 *
 * $LicenseInfo:firstyear=2013&license=viewerlgpl$
 * Second Life Viewer Source Code
@@ -61,9 +61,9 @@ public:
         kFlag_Post_Initialized          = 1 << 2,
         kFlag_FailedInit                = 1 << 3,
         kFlag_MainIsFullScreen          = 1 << 4,
-        kFlag_Render2DUICurvedSurface   = 1 << 5,
-        kFlag_IsCalibrated              = 1 << 6,
-        kFlag_ShowDepthUI               = 1 << 7,
+        kFlag_IsCalibrated              = 1 << 5,
+        kFlag_ShowDepthUI               = 1 << 6,
+        kFlag_UIEyeDepthCalculated      = 1 << 7,
     };
 
 public:
@@ -84,12 +84,17 @@ public:
     void failedInit(BOOL b) { if (b) { mFlags |= kFlag_FailedInit; } else { mFlags &= ~kFlag_FailedInit; } }
     BOOL isMainFullScreen() const { return ((mFlags & kFlag_MainIsFullScreen) != 0) ? TRUE : FALSE; }
     void isMainFullScreen(BOOL b) { if (b) { mFlags |= kFlag_MainIsFullScreen; } else { mFlags &= ~kFlag_MainIsFullScreen; } }
-    BOOL shouldRender2DUICurvedSurface() const { return ((mFlags & kFlag_Render2DUICurvedSurface) != 0) ? TRUE : FALSE; }
-    void shouldRender2DUICurvedSurface(BOOL b) { if (b) { mFlags |= kFlag_Render2DUICurvedSurface; } else { mFlags &= ~kFlag_Render2DUICurvedSurface; } }
     BOOL isCalibrated() const { return ((mFlags & kFlag_IsCalibrated) != 0) ? TRUE : FALSE; }
     void isCalibrated(BOOL b) { if (b) { mFlags |= kFlag_IsCalibrated; } else { mFlags &= ~kFlag_IsCalibrated; } }
     BOOL shouldShowDepthUI() const { return ((mFlags & kFlag_ShowDepthUI) != 0) ? TRUE : FALSE; }
     void shouldShowDepthUI(BOOL b) { if (b) { mFlags |= kFlag_ShowDepthUI; } else { mFlags &= ~kFlag_ShowDepthUI; } }
+    BOOL isUIEyeDepthCalculated() const { return ((mFlags & kFlag_UIEyeDepthCalculated) != 0) ? TRUE : FALSE; }
+    void isUIEyeDepthCalculated(BOOL b) { if (b) { mFlags |= kFlag_UIEyeDepthCalculated; } else { mFlags &= ~kFlag_UIEyeDepthCalculated; } }
+    
+
+    BOOL isManuallyCalibrating() const;
+    void BeginManualCalibration();
+    const std::string& getCalibrationText() const;
 
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL shouldRender() const { return mRenderMode != RenderMode_None; }
@@ -121,6 +126,9 @@ public:
     void setEyeToScreenDistance(F32 f);
     F32 getEyeToScreenDistanceDefault() const;
     F32 getVerticalFOV() const;
+
+    F32 getEyeDepth() const { return mEyeDepth; }
+    F32 getUIEyeDepth();
 
     // coefficients for the distortion function.
     LLVector4 getDistortionConstants() const;
@@ -170,47 +178,38 @@ public:
     void getMainWindowSize(S32& w, S32& h) { w = mMainWindowWidth; h = mMainWindowHeight; }
     void setMainWindowSize(S32 w, S32 h) { mMainWindowWidth = w; mMainWindowHeight = h; }
 
-    S32 getOptWindowRaw() const { return mOptWindowRaw; }
-    S32 getOptWindowScaled() const { return mOptWindowScaled; }
-    S32 getOptWorldViewRaw() const { return mOptWorldViewRaw; }
-    S32 getOptWorldViewScaled() const { return mOptWorldViewScaled; }
-    F32 getUISurfaceFudge() const { return mUISurface_Fudge; }
-    const LLVector2& getUISurfaceX() const { return mUICurvedSurfaceX; }
-    const LLVector2& getUISurfaceY() const { return mUICurvedSurfaceY; }
-    F32 getUISurfaceRadius() const { return mUISurface_R; }
-    const LLVector3& getUIFlatSurfaceScale() const { return mUIFlatSurfaceScale; }
+    const LLVector2& getUISurfaceArc() const { return mUICurvedSurfaceArc; }
+    const LLVector4& getUISurfaceRadius() const { return mUICurvedSurfaceRadius; }
+    const LLVector3& getUISurfaceOffsets() const { return mUICurvedSurfaceOffsets; }
 
     LLViewerTexture* getCursorImage(U32 cursorType);
 
-    static void onChangeXCenterOffsetModifier();
-    static void onChangeWindowRaw();
-    static void onChangeWindowScaled();
-    static void onChangeWorldViewRaw();
-    static void onChangeWorldViewScaled();
-    static void onChangeTestCalibration();
-    static void onChangeRender2DUICurvedSurface();
+    F32 getOrthoPixelOffsetMult() const { return mOrthoPixelOffsetMult; }
+
     static void onChangeUISurfaceShape();
-    static void onChangeUIFlatSurfaceScale();
+    static void onChangeOrthoPixelOffsetMult();
+    static void onChangeEyeDepth();
+    static void onChangeUIEyeDepth();
+
+private:
+    F32 calculateUIEyeDepth();
 
 private:
     LLHMDImpl* mImpl;
-    F32 mXCenterOffsetMod;
     U32 mFlags;
     U32 mRenderMode;
     F32 mBaseModelView[16];
     F32 mBaseProjection[16];
-    S32 mOptWindowRaw;
-    S32 mOptWindowScaled;
-    S32 mOptWorldViewRaw;
-    S32 mOptWorldViewScaled;
     S32 mMainWindowWidth;
     S32 mMainWindowHeight;
-    F32 mUISurface_Fudge;
-    F32 mUISurface_R;
-    LLVector2 mUICurvedSurfaceY;
-    LLVector2 mUICurvedSurfaceX;
-    LLVector3 mUIFlatSurfaceScale;
- };
+    LLVector2 mUICurvedSurfaceArc;
+    LLVector4 mUICurvedSurfaceRadius;
+    LLVector3 mUICurvedSurfaceOffsets;
+    F32 mOrthoPixelOffsetMult;
+    F32 mEyeDepth;
+    F32 mUIEyeDepth;
+    F32 mUIEyeDepthMod;
+};
 
 extern LLHMD gHMD;
 

@@ -4667,45 +4667,17 @@ LLRootView*	LLViewerWindow::getRootView() const
 
 LLRect LLViewerWindow::getWorldViewRectScaled() const
 {
-    switch (gHMD.getOptWorldViewScaled())
-    {
-    case 3: case 4: case 5:
-    case 12: case 13: case 14:
-        return gHMD.shouldRender() ? LLRect(0, gRenderUIMode ? LLHMD::kHMDUIHeight : LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDUIWidth : LLHMD::kHMDEyeWidth, 0) : mWorldViewRectScaled;
-    case 6: case 7: case 8:
-    case 15: case 16: case 17:
-        return gHMD.shouldRender() ? LLRect(0, gRenderUIMode ? LLHMD::kHMDUIHeight : LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDUIWidth, 0) : mWorldViewRectScaled;
-    case 0: case 1: case 2:
-    case 9: case 10: case 11:
-    default:
-        return mWorldViewRectScaled;
-    }
+    return mWorldViewRectScaled;
 }
 
 S32 LLViewerWindow::getWorldViewHeightScaled() const
 {
-    switch (gHMD.getOptWorldViewScaled())
-    {
-    case 9:     case 10:    case 11:    case 12:    case 13:    case 14:    case 15:    case 16:    case 17:
-        return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDUIHeight : LLHMD::kHMDHeight : mWorldViewRectScaled.getHeight();
-    case 0:     case 1:     case 2:     case 3:     case 4:     case 5:     case 6:     case 7:     case 8:
-    default:
-        return mWorldViewRectScaled.getHeight();
-    }
+    return mWorldViewRectScaled.getHeight();
 }
 
 S32 LLViewerWindow::getWorldViewWidthScaled() const
 {
-    switch (gHMD.getOptWorldViewScaled())
-    {
-    case 1:     case 4:     case 7:     case 10:    case 13:    case 16:
-        return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDUIWidth : mWorldViewRectScaled.getWidth();
-    case 2:     case 5:     case 8:     case 11:    case 14:    case 17:
-        mWorldViewRectScaled.getWidth();
-    case 0:     case 3:     case 6:     case 9:     case 12:    case 15:
-    default:
-        return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDUIWidth : LLHMD::kHMDEyeWidth : mWorldViewRectScaled.getWidth();
-    }
+    return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDUIWidth : LLHMD::kHMDEyeWidth : mWorldViewRectScaled.getWidth();
 }
 
 S32 LLViewerWindow::getWorldViewLeftScaled() const
@@ -4720,45 +4692,17 @@ S32 LLViewerWindow::getWorldViewBottomScaled() const
 
 LLRect LLViewerWindow::getWorldViewRectRaw() const
 {
-    switch (gHMD.getOptWorldViewRaw())
-    {
-    case 3: case 4: case 5:
-    case 12: case 13: case 14:
-        return gHMD.shouldRender() ? LLRect(0, LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth, 0) : mWorldViewRectRaw;
-    case 6: case 7: case 8:
-    case 15: case 16: case 17:
-        return mWorldViewRectRaw;
-    case 0: case 1: case 2:
-    case 9: case 10: case 11:
-    default:
-        return gHMD.shouldRender() ? LLRect(0, LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDWidth : LLHMD::kHMDEyeWidth, 0) : mWorldViewRectRaw;
-    }
+    return gHMD.shouldRender() ? LLRect(0, LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDWidth : LLHMD::kHMDEyeWidth, 0) : mWorldViewRectRaw;
 }
 
 S32 LLViewerWindow::getWorldViewHeightRaw() const
 {
-    switch (gHMD.getOptWorldViewRaw())
-    {
-    case 9:     case 10:    case 11:    case 12:    case 13:    case 14:    case 15:    case 16:    case 17:
-        return gHMD.shouldRender() ? LLHMD::kHMDHeight : mWorldViewRectRaw.getHeight();
-    case 0:     case 1:     case 2:     case 3:     case 4:     case 5:     case 6:     case 7:     case 8:
-    default:
-        return mWorldViewRectRaw.getHeight();
-    }
+    return mWorldViewRectRaw.getHeight();
 }
 
 S32 LLViewerWindow::getWorldViewWidthRaw() const
 {
-    switch (gHMD.getOptWorldViewRaw())
-    {
-    case 1:     case 4:     case 7:     case 10:    case 13:    case 16:
-        return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth : mWorldViewRectRaw.getWidth();
-    case 2:     case 5:     case 8:     case 11:    case 14:    case 17:
-        return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDWidth : LLHMD::kHMDEyeWidth : mWorldViewRectRaw.getWidth();
-    case 0:     case 3:     case 6:     case 9:     case 12:    case 15:
-    default:
-        return mWorldViewRectRaw.getWidth();
-    }
+    return mWorldViewRectRaw.getWidth();
 }
 
 S32 LLViewerWindow::getWorldViewLeftRaw() const
@@ -4773,45 +4717,17 @@ S32 LLViewerWindow::getWorldViewBottomRaw() const
 
 LLRect LLViewerWindow::getWindowRectScaled() const
 {
-    switch (gHMD.getOptWindowScaled())
-    {
-    case 3: case 4: case 5:
-    case 12: case 13: case 14:
-        return mWindowRectScaled;
-    case 6: case 7: case 8:
-    case 15: case 16: case 17:
-        return gHMD.shouldRender() ? LLRect(0, gRenderUIMode ? LLHMD::kHMDUIHeight : LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDUIWidth : LLHMD::kHMDEyeWidth, 0) : mWindowRectScaled;
-    case 0: case 1: case 2:
-    case 9: case 10: case 11:
-    default:
-        return gHMD.shouldRender() ? LLRect(0, gRenderUIMode ? LLHMD::kHMDUIHeight : LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDUIWidth, 0) : mWindowRectScaled;
-    }
+    return gHMD.shouldRender() ? LLRect(0, gRenderUIMode ? LLHMD::kHMDUIHeight : LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDUIWidth, 0) : mWindowRectScaled;
 }
 
 S32	LLViewerWindow::getWindowHeightScaled()	const 	
 {
-    switch (gHMD.getOptWindowScaled())
-    {
-    case 9:     case 10:    case 11:    case 12:    case 13:    case 14:    case 15:    case 16:    case 17:
-        return mWindowRectScaled.getHeight();
-    case 0:     case 1:     case 2:     case 3:     case 4:     case 5:     case 6:     case 7:     case 8:
-    default:
-        return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDUIHeight : LLHMD::kHMDHeight : mWindowRectScaled.getHeight();
-    }
+    return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDUIHeight : LLHMD::kHMDHeight : mWindowRectScaled.getHeight();
 }
 
 S32	LLViewerWindow::getWindowWidthScaled() const 	
 {
-    switch (gHMD.getOptWindowScaled())
-    {
-    case 1:     case 4:     case 7:     case 10:    case 13:    case 16:
-        return mWindowRectScaled.getWidth();
-    case 2:     case 5:     case 8:     case 11:    case 14:    case 17:
-        return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDUIWidth : LLHMD::kHMDEyeWidth : mWindowRectScaled.getWidth();
-    case 0:     case 3:     case 6:     case 9:     case 12:    case 15:
-    default:
-        return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDUIWidth : mWindowRectScaled.getWidth();
-    }
+    return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDUIWidth : mWindowRectScaled.getWidth();
 }
 
 S32 LLViewerWindow::getWindowLeftScaled() const
@@ -4826,45 +4742,17 @@ S32 LLViewerWindow::getWindowBottomScaled() const
 
 LLRect LLViewerWindow::getWindowRectRaw() const
 {
-    switch (gHMD.getOptWindowRaw())
-    {
-    case 3: case 4: case 5:
-    case 12: case 13: case 14:
-        return mWindowRectRaw;
-    case 6: case 7: case 8:
-    case 15: case 16: case 17:
-        return gHMD.shouldRender() ? LLRect(0, LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDWidth : LLHMD::kHMDEyeWidth, 0) : mWindowRectRaw;
-    case 0: case 1: case 2:
-    case 9: case 10: case 11:
-    default:
-        return gHMD.shouldRender() ? LLRect(0, LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth, 0) : mWindowRectRaw;
-    }
+    return gHMD.shouldRender() ? LLRect(0, LLHMD::kHMDHeight, gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth, 0) : mWindowRectRaw;
 }
 
 S32	LLViewerWindow::getWindowHeightRaw() const
 {
-    switch (gHMD.getOptWindowRaw())
-    {
-    case 9:     case 10:    case 11:    case 12:    case 13:    case 14:    case 15:    case 16:    case 17:
-        return mWindowRectRaw.getHeight();
-    case 0:     case 1:     case 2:     case 3:     case 4:     case 5:     case 6:     case 7:     case 8:
-    default:
-        return gHMD.shouldRender() ? LLHMD::kHMDHeight : mWindowRectRaw.getHeight();
-    }
+    return gHMD.shouldRender() ? LLHMD::kHMDHeight : mWindowRectRaw.getHeight();
 }
 
 S32	LLViewerWindow::getWindowWidthRaw() const 	
 {
-    switch (gHMD.getOptWindowRaw())
-    {
-    case 1:     case 4:     case 7:     case 10:    case 13:    case 16:
-        return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDEyeWidth : LLHMD::kHMDWidth : mWindowRectRaw.getWidth();
-    case 2:     case 5:     case 8:     case 11:    case 14:    case 17:
-        mWindowRectRaw.getWidth();
-    case 0:     case 3:     case 6:     case 9:     case 12:    case 15:
-    default:
-        return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDWidth : LLHMD::kHMDEyeWidth : mWindowRectRaw.getWidth();
-    }
+    return gHMD.shouldRender() ? gRenderUIMode ? LLHMD::kHMDWidth : LLHMD::kHMDEyeWidth : mWindowRectRaw.getWidth();
 }
 
 S32 LLViewerWindow::getWindowLeftRaw() const
@@ -4879,14 +4767,7 @@ S32 LLViewerWindow::getWindowBottomRaw() const
 
 void LLViewerWindow::setup2DRender()
 {
-	// setup ortho camera
-    S32 left = 0;
-    F32 offsetX = 0.0f;
-    //if (gHMD.shouldRender())
-    //{
-    //    offsetX = gHMD.getOrthoPixelOffset();
-    //}
-	gl_state_for_2d(getWindowWidthRaw(), getWindowHeightRaw(), left, offsetX);
+	gl_state_for_2d(getWindowWidthRaw(), getWindowHeightRaw());
 	setup2DViewport();
 }
 
