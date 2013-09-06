@@ -32,7 +32,7 @@
               <key>hash</key>
               <string>74cf6af9110f186e196215210d5f17f8</string>
               <key>url</key>
-              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-libovr/rev/280687/arch/Darwin/installer/libovr-0.2.4-darwin-20130906.tar.bz2</string>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-libovr/rev/280687/arch/CYGWIN/installer/libovr-0.2.4-windows-20130906.tar.bz2</string>
             </map>
             <key>name</key>
             <string>windows</string>
