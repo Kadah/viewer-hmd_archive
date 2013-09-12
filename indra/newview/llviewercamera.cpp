@@ -204,8 +204,23 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
         LLQuaternion qy(y, mZAxis);
         qr *= qp;
         qr *= qy;
-		LLQuaternion head_correction = gHMD.getHeadRotationCorrection();
-        qr *= head_correction;
+
+        LLQuaternion head_correction = gHMD.getHeadRotationCorrection();
+
+        bool follow_look_dir_in_mouselook = false;
+        if ( follow_look_dir_in_mouselook )
+        {
+            LLQuaternion current_head_yaw(y, gAgent.getUpAxis());
+            current_head_yaw *= head_correction;
+            gAgent.rotate(current_head_yaw);
+            gHMD.addHeadRotationCorrection(~current_head_yaw);
+            qr *= gHMD.getHeadRotationCorrection();        
+        }
+        else
+        {
+            qr *= head_correction;
+        }
+
         rotate(qr);
     }
 

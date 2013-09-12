@@ -460,6 +460,8 @@
     <binding key="W" mask="CTL_ALT_SHIFT" command="pan_up"/>
     <binding key="S" mask="CTL_ALT_SHIFT" command="pan_down"/>
 
+    <binding key="Q" mask="NONE" command="align_hips_to_eyes"/>
+
     <binding key="LEFT" mask="CTL_ALT_SHIFT" command="pan_left"/>
     <binding key="RIGHT" mask="CTL_ALT_SHIFT" command="pan_right"/>
     <binding key="UP" mask="CTL_ALT_SHIFT" command="pan_up"/>
