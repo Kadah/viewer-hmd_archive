@@ -43,6 +43,7 @@
 #include "pipeline.h"
 #include "llagentcamera.h"
 #include "llviewertexture.h"
+#include "raytrace.h"
 
 #include "OVR.h"
 #include "Kernel/OVR_Timer.h"
@@ -557,13 +558,13 @@ BOOL LLHMDImpl::postDetectionInit()
     {
         mCursorTextures.clear();
         //UI_CURSOR_ARROW  (TODO: Need actual texture)
-        mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/arrow.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_arrow.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
         //UI_CURSOR_WAIT  (TODO: Need actual texture)
-        mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/arrow.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_waiting.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
         //UI_CURSOR_HAND  (TODO: Need actual texture)
-        mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/arrow.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_hand.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
         //UI_CURSOR_IBEAM  (TODO: Need actual texture)
-        mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/arrow.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_ibeam.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
         //UI_CURSOR_CROSS  (TODO: Need actual texture)
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/arrow.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
         //UI_CURSOR_SIZENWSE  (TODO: Need actual texture)
@@ -1024,4 +1025,212 @@ F32 LLHMD::calculateUIEyeDepth()
     mUIEyeDepth = ((mImpl->getEyeToScreenDistance() - 0.083f) * LLHMDImpl::kUIEyeDepthMult);
     gHMD.isUIEyeDepthCalculated(TRUE);
     return mUIEyeDepth;
+}
+
+
+// Creates a surface that is part of an outer shell of a torus.
+// Results are in local-space with -z forward, y up (i.e. standard OpenGL)
+// The center of the toroid section (assuming that xa and ya are centered at 0), will
+// be at [offset[X], offset[Y], offset[Z] - (r[0] + r[2])]
+//
+// mUICurvedSurfaceArc = how much arc of the toroid surface is used
+//     [X] = length of horizontal arc
+//     [Y] = length of vertical arc (all in radians)
+// mUICurvedSurfaceRadius = radius of toroid.
+//     [0] = Center of toroid to center of cross-section (width)
+//     [1] = Center of toroid to center of cross-section (depth)
+//     [2] = cross-section vertical (height)
+//     [3] = cross-section horizontal (width/depth)
+// mUICurvedSurfaceOffsets = offsets to add to final coordinates (x,y,z)
+LLVertexBuffer* LLHMD::createUISurface()
+{
+    LLVertexBuffer* buff = new LLVertexBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0, GL_STATIC_DRAW_ARB);
+    U32 resX = 32;
+    U32 resY = 16;
+    U32 numVerts = resX * resY;
+    U32 numIndices = 6 * (resX - 1) * (resY - 1);
+    buff->allocateBuffer(numVerts, numIndices, true);
+    LLStrider<LLVector4a> v;
+    LLStrider<LLVector2> tc;
+    buff->getVertexStrider(v);
+    buff->getTexCoord0Strider(tc);
+    F32 dx = mUICurvedSurfaceArc[VX] / ((F32)resX - 1.0f);
+    F32 dy = mUICurvedSurfaceArc[VY] / ((F32)resY - 1.0f);
+    //LL_INFOS("Oculus")  << "XA: [" << xa[0] << "," << xa[1] << "], "
+    //                    << "YA: [" << ya[0] << "," << ya[1] << "], "
+    //                    << "r: [" << r[0] << "," << r[1] << "], "
+    //                    << "offsets: [" << offsets[0] << "," << offsets[1] << "," << offsets[2] << "]"
+    //                    << LL_ENDL;
+    //LL_INFOS("Oculus")  << "dX: " << dx << ", "
+    //                    << "dY: " << dy
+    //                    << LL_ENDL;
+
+    LLVector4a t;
+    LLVector2 uv;
+    for (U32 i = 0; i < resY; ++i)
+    {
+        F32 va = (F_PI - (mUICurvedSurfaceArc[VY] * 0.5f)) + ((F32)i * dy);
+        for (U32 j = 0; j < resX; ++j)
+        {
+            F32 ha = (mUICurvedSurfaceArc[VX] * -0.5f) + ((F32)j * dx);
+            LLVector4 t2;
+            getUISurfaceCoordinates(ha, va, t2, uv);
+            t.loadua(t2.mV);
+            *v++ = t;
+            *tc++ = uv;
+        }
+    }
+
+    LLStrider<U16> idx;
+    buff->getIndexStrider(idx);
+    for (S32 i = resY - 2; i >= 0; --i)
+    {
+        for (S32 j = 0; j < resX-1; ++j)
+        {
+            U16 cur_idx = (i * resX) + j;
+            U16 right = cur_idx + 1;
+            U16 bottom = cur_idx + resX;
+            U16 bottom_right = bottom+1;
+            *idx++ = cur_idx;
+            *idx++ = bottom;
+            *idx++ = right;
+            *idx++ = right;
+            *idx++ = bottom;
+            *idx++ = bottom_right;
+            //LL_INFOS("Oculus")  << "Vtx " << ((i * resX) + j) << " [" << i << "," << j << "]: "
+            //                    << "[" << cur_idx << "," << bottom << "," << right << "], "
+            //                    << "[" << right << "," << bottom << "," << bottom_right << "]"
+            //                    << LL_ENDL;
+        }
+    }
+
+    if (gSavedSettings.getBOOL("DebugHMDEnable"))
+    {
+        LLVector2 uv;
+        F32 hha = mUICurvedSurfaceArc[VX] * 0.5f;
+        F32 hva = mUICurvedSurfaceArc[VY] * 0.5f;
+
+        LLVector4 ul;
+        getUISurfaceCoordinates(-hha, F_PI + hva, ul, uv);
+        LLVector4 cl;
+        getUISurfaceCoordinates(-hha, F_PI, cl, uv);
+        LLVector4 ll;
+        getUISurfaceCoordinates(-hha, F_PI - hva, ll, uv);
+        LLVector4 uc;
+        getUISurfaceCoordinates(0.0f, F_PI + hva, uc, uv);
+        LLVector4 cc;
+        getUISurfaceCoordinates(0.0f, F_PI, cc, uv);
+        LLVector4 lc;
+        getUISurfaceCoordinates(0.0f, F_PI - hva, lc, uv);
+        LLVector4 ur;
+        getUISurfaceCoordinates(hha, F_PI + hva, ur, uv);
+        LLVector4 cr;
+        getUISurfaceCoordinates(hha, F_PI, cr, uv);
+        LLVector4 lr;
+        getUISurfaceCoordinates(hha, F_PI - hva, lr, uv);
+
+        LL_INFOS("Oculus")  << "UISurface Bounds:" << LL_ENDL;
+        LL_INFOS("Oculus")  << "UpperLeft : " << ul << ",\tUpperCenter: " << uc << ",\tUpperRight : " << ur << LL_ENDL;
+        LL_INFOS("Oculus")  << "MiddleLeft: " << cl << ",\t     Center: " << cc << ",\tMiddleRight: " << cr << LL_ENDL;
+        LL_INFOS("Oculus")  << "LowerLeft : " << ll << ",\tLowerCenter: " << lc << ",\tLowerRight : " << lr << LL_ENDL;
+    }
+
+    buff->flush();
+    return buff;
+}
+
+
+void LLHMD::getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2& uv)
+{
+    F32 cva = cos(va);
+    pos.set(    (sin(ha) * (mUICurvedSurfaceRadius[0] - (cva * mUICurvedSurfaceRadius[3]))) + mUICurvedSurfaceOffsets[VX],
+                (mUICurvedSurfaceRadius[2] * -sin(va)) + mUICurvedSurfaceOffsets[VY],
+                (-1.0f * ((mUICurvedSurfaceRadius[1] * cos(ha)) - (cva * mUICurvedSurfaceRadius[3]))) + mUICurvedSurfaceOffsets[VZ],
+                1.0f);
+    uv.set((ha - (mUICurvedSurfaceArc[VX] * -0.5f))/mUICurvedSurfaceArc[VX], (va - (F_PI - (mUICurvedSurfaceArc[VY] * 0.5f)))/mUICurvedSurfaceArc[VY]);
+}
+
+
+BOOL LLHMD::getWorldMouseCoordinatesFromUIScreen(S32 ui_x, S32 ui_y, S32& world_x, S32& world_y)
+{
+    if (!shouldRender())
+    {
+        world_x = ui_x;
+        world_y = ui_y;
+
+        //LLViewerCamera* pCamera = LLViewerCamera::getInstance();
+        //LLVector3 origin = pCamera->getOrigin();
+        //LLMatrix4 m1 = pCamera->getModelview();
+        //LLMatrix4 proj = pCamera->getProjection();
+
+        //GLdouble x, y, z;
+        //F64 mdlv[16];
+        //F64 prj[16];
+        //for (U32 i = 0; i < 16; i++)
+        //{
+        //    mdlv[i] = (F64)(*(((GLfloat*)m1.mMatrix) + i));
+        //    prj[i] = (F64)(*(((GLfloat*)proj.mMatrix) + i));
+        //}
+        //GLint vp[4] = {0,0,gViewerWindow->getWorldViewWidthScaled(), gViewerWindow->getWorldViewHeightScaled()};
+        //gluUnProject(
+        //    GLdouble(world_x), GLdouble(world_y), 0.0,
+        //    mdlv, prj, vp,
+        //    &x, &y, &z );
+        //LLVector4 worldPos(x, y, z, 1.0f);
+        ////pos_agent->setVec( (F32)x, (F32)y, (F32)z );
+
+        //LL_INFOS("Oculus") << "Mouse2D: [" << ui_x << "," << ui_y << "], Mouse3D [" << world_x << "," << world_y << std::setprecision(6) << "], origin: " << origin << ", worldPos: " << worldPos << LL_ENDL;
+        ////LL_INFOS("Oculus") << "spp: " << screenSpacePos << ", Flat spp: " << scrPos << ", world: " << worldPos << LL_ENDL;
+
+        return FALSE;
+    }
+
+    // 1. determine horizontal and vertical angle on toroid based on ui_x, ui_y
+    F32 nx = llclamp((F32)ui_x / (F32)LLHMD::kHMDUIWidth, 0.0f, 1.0f);
+    F32 ny = llclamp((F32)ui_y / (F32)LLHMD::kHMDUIHeight, 0.0f, 1.0f);
+    F32 ha = ((mUICurvedSurfaceArc[VX] * -0.5f) + (nx * mUICurvedSurfaceArc[VX]));
+    F32 va = (F_PI - (mUICurvedSurfaceArc[VY] * 0.5f)) + (ny * mUICurvedSurfaceArc[VY]);
+    // 2. determine clip-space x,y,z for ha, va (-z forward/depth)
+    LLVector4 screenSpacePos;
+    LLVector2 uv;
+    getUISurfaceCoordinates(ha, va, screenSpacePos, uv);
+    // 3. Convert clip-space to screen coordinates (as if you were looking straight at the center of the UI surface)
+    //LLMatrix4 t;
+    //t.translate(LLVector3(0.0f, 0.0f, getUIEyeDepth()));
+    LLMatrix4 m1(mUIModelView);
+    //m1 *= t;
+    LLMatrix4 proj(mBaseProjection);
+    LLVector4 scrPos = screenSpacePos * proj;
+    LLVector4 sp2(scrPos[VX] / scrPos[VZ], scrPos[VY] / scrPos[VZ], 0.0f, 1.0f);
+    scrPos[VX] = ((sp2[VX] + 1.0f) * 0.5f) * (F32)kHMDUIWidth;
+    scrPos[VY] = ((sp2[VY] + 1.0f) * 0.5f) * (F32)kHMDUIHeight;
+    S32 intermediate_wx = llround(scrPos[VX]);
+    S32 intermediate_wy = llround(scrPos[VY]);
+    // 4. Find the world coordinates for those screen coordinates (still based on the looking-straight-at-UI-center viewpoint)
+	GLdouble x, y, z;
+	F64 mdlv[16];
+	F64 prj[16];
+	for (U32 i = 0; i < 16; i++)
+	{
+		mdlv[i] = (F64)(*(((GLfloat*)m1.mMatrix) + i));
+		prj[i] = (F64)(*(((GLfloat*)proj.mMatrix) + i));
+	}
+    GLint vp[4] = {0,0,LLHMD::kHMDEyeWidth,LLHMD::kHMDHeight};
+	gluUnProject(GLdouble(intermediate_wx), GLdouble(intermediate_wy), 0.5f, mdlv, prj, vp, &x, &y, &z);
+    LLVector4 worldPos(x, y, z, 1.0f);
+    // 5. Adjust for actual camera position to find clip-space coordinates of the actual position on the screen with the mouse cursor
+    LLMatrix4 m2(mBaseModelViewInv);
+    LLVector4 adjWorldPos = worldPos * m2;
+    LLVector4 adjWp2 = adjWorldPos * proj;
+    adjWp2 /= adjWp2[VW];
+    LLMatrix3 m3 = m2.getMat3();
+    m3.invert();
+    LLVector3 adjScrPos((F32)intermediate_wx, (F32)intermediate_wy, 1.0f);
+    adjScrPos = adjScrPos * m3;
+
+    LL_INFOS("Oculus") << "Mouse2D: [" << ui_x << "," << ui_y << "], IntMouse3D [" << intermediate_wx << "," << intermediate_wy << "], Final2D: " << adjScrPos << LL_ENDL;
+    //LL_INFOS("Oculus") << std::setprecision(6) << "spp: " << screenSpacePos << ", Flat spp: " << scrPos << LL_ENDL;
+    LL_INFOS("Oculus") << std::setprecision(6) << "origin: " << LLViewerCamera::getInstance()->getOrigin() << ", world: " << worldPos << ", adjWorldPos: " << adjWorldPos << ", adjWp2: " << adjWp2 << LL_ENDL;
+
+    return TRUE;
 }

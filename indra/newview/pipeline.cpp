@@ -4687,7 +4687,8 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
         {
             gGL.matrixMode(LLRender::MM_MODELVIEW);
             gGL.pushMatrix();
-            gGL.multMatrix((GLfloat*)(LLViewerCamera::getInstance()->getPreHMDViewMatrix().mMatrix));
+            LLMatrix4 m1(gHMD.getUIModelViewInv());
+            gGL.multMatrix((GLfloat*)(m1.mMatrix));
 
             gOneTextureNoColorProgram.bind();
             gGL.setColorMask(true, true);
