@@ -897,7 +897,7 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 
 	// only send mouse clicks to UI if UI is visible
 	if(gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
-	{	
+	{
 
 		if (down)
 		{
@@ -3506,6 +3506,11 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 	{
 		mCurrentMousePoint.mY = point.mY;
 	}
+
+    //if (gHMD.shouldRender())
+    //{
+    //    gHMD.getWorldMouseCoordinatesFromUIScreen(mCurrentMousePoint.mX, mCurrentMousePoint.mY, mCurrentMousePointHMD.mX, mCurrentMousePointHMD.mY);
+    //}
 }
 
 

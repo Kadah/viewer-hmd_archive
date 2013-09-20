@@ -189,10 +189,14 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
             // The UI (as opposed to the camera view) should have a normal "up" rotation.
             up = LLVector3::z_axis;
         }
+        // make z same as origin so that we guarantee no pitch in the forward axis.  This ensures that the UI surface is not slanted in relation to the viewpoint.
         LLVector3 poi(point_of_interest[VX], point_of_interest[VY], origin[VZ]);
         setOriginAndLookAt(origin, up, poi);
-        mPreHMDViewMatrix = getModelview();
-        mPreHMDViewMatrix.invert();
+        LLMatrix4 uiview = getModelview();
+        LLMatrix4 uiviewInv = uiview;
+        uiviewInv.invert();
+        gHMD.setUIModelView((F32*)uiview.mMatrix);
+        gHMD.setUIModelViewInv((F32*)uiviewInv.mMatrix);
     }
     setOriginAndLookAt(origin, up_direction, point_of_interest);
     if (gHMD.shouldRender() && gHMD.isInitialized())
@@ -490,25 +494,26 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 
 	glh::matrix4f modelview((GLfloat*) OGL_TO_CFR_ROTATION);
 
-	GLfloat			ogl_matrix[16];
+    GLfloat			ogl_matrix[16];
 
 	getOpenGLTransform(ogl_matrix);
 
-	modelview *= glh::matrix4f(ogl_matrix);
+    glh::matrix4f ogl(ogl_matrix);
+	modelview *= ogl;
 
     if (gHMD.shouldRender())
     {
         gHMD.setBaseModelView(modelview.m);
-        glh::matrix4f uiView = modelview;
+        glh::matrix4f oglcfrinv((GLfloat*) OGL_TO_CFR_ROTATION);
+        oglcfrinv = oglcfrinv.transpose();
+        glh::matrix4f oglinv = ogl.inverse();
+        oglinv.mult_right(oglcfrinv);
+        gHMD.setBaseModelViewInv(oglinv.m);
 
         glh::matrix4f translate;
         F32 viewOffset = gHMD.getInterpupillaryOffset();
         translate.set_translate(glh::vec3f(sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f, gHMD.getEyeDepth()));
         modelview = translate * modelview;
-
-        translate.set_translate(glh::vec3f(sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f, gHMD.getUIEyeDepth()));
-        uiView = translate * uiView;
-        mHMDUIViewMatrix = LLMatrix4(uiView.m);
     }
 	
 	gGL.loadMatrix(modelview.m);

@@ -29,6 +29,7 @@
 
 class LLHMDImpl;
 class LLViewerTexture;
+class LLVertexBuffer;
 
 
 // TODO: move some of the data to this class instead of always requiring an extra method call via PIMPL
@@ -158,8 +159,14 @@ public:
 
     void setBaseModelView(F32* m) { for (int i = 0; i < 16; ++i) { mBaseModelView[i] = m[i]; } }
     F32* getBaseModelView() { return mBaseModelView; }
+    void setBaseModelViewInv(F32* m) { for (int i = 0; i < 16; ++i) { mBaseModelViewInv[i] = m[i]; } }
+    F32* getBaseModelViewInv() { return mBaseModelViewInv; }
     void setBaseProjection(F32* m) { for (int i = 0; i < 16; ++i) { mBaseProjection[i] = m[i]; } }
     F32* getBaseProjection() { return mBaseProjection; }
+    void setUIModelView(F32* m) { for (int i = 0; i < 16; ++i) { mUIModelView[i] = m[i]; } }
+    F32* getUIModelView() { return mUIModelView; }
+    void setUIModelViewInv(F32* m) { for (int i = 0; i < 16; ++i) { mUIModelViewInv[i] = m[i]; } }
+    F32* getUIModelViewInv() { return mUIModelViewInv; }
     
     //// array of parameters for controlling additional Red and Blue scaling in order to reduce chromatic aberration
     //// caused by the Rift lenses.  Additional per-channel scaling is applied after distortion:
@@ -186,6 +193,10 @@ public:
 
     F32 getOrthoPixelOffsetMult() const { return mOrthoPixelOffsetMult; }
 
+    LLVertexBuffer* createUISurface();
+    void getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2& uv);
+    BOOL getWorldMouseCoordinatesFromUIScreen(S32 ui_x, S32 ui_y, S32& world_x, S32& world_y);
+
     static void onChangeUISurfaceShape();
     static void onChangeOrthoPixelOffsetMult();
     static void onChangeEyeDepth();
@@ -199,7 +210,10 @@ private:
     U32 mFlags;
     U32 mRenderMode;
     F32 mBaseModelView[16];
+    F32 mBaseModelViewInv[16];
     F32 mBaseProjection[16];
+    F32 mUIModelView[16];
+    F32 mUIModelViewInv[16];
     S32 mMainWindowWidth;
     S32 mMainWindowHeight;
     LLVector2 mUICurvedSurfaceArc;
