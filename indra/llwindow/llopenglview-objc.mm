@@ -231,6 +231,18 @@ attributedStringInfo getSegments(NSAttributedString *str)
 	return (CGLContextObj)[ctx CGLContextObj];
 }
 
+// Switches the view for the current context to self
+// Notes:
+// * This is more reliable (and faster) than trying to switch between contexts
+// * It assumes however that you want to essentially render the same OpenGL context in a different view (e.g. another screen)
+
+- (void) setCGLCurrentContext
+{
+	NSOpenGLContext *ctx = [NSOpenGLContext currentContext];
+	[self setOpenGLContext:ctx];
+	[ctx setView:self];
+}
+
 - (CGLPixelFormatObj*)getCGLPixelFormatObj
 {
 	NSOpenGLPixelFormat *fmt = [self pixelFormat];

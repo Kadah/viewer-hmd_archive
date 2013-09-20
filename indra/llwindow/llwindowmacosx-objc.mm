@@ -236,6 +236,46 @@ GLViewRef createOpenGLViewTest(NSWindowRef window, int width, int height)
 	return glview;
 }
 
+// Full screen window and view creation
+// Adapted from https://developer.apple.com/library/mac/documentation/graphicsimaging/Conceptual/OpenGL-MacProgGuide/opengl_fullscreen/opengl_cgl.html
+
+NSWindowRef createFullScreenWindow(int screen_index)
+{
+    // Create a screen-sized window on the display you want to take over
+    NSScreen* current_screen = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_index];
+    NSRect display_rect = [current_screen frame];
+    LLNSWindow *full_screen_window = [[LLNSWindow alloc] initWithContentRect: display_rect styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:YES];
+    
+    // Set the window level to be above the menu bar
+    [full_screen_window setLevel:NSMainMenuWindowLevel+1];
+    
+    // Perform any other window configuration you desire
+    [full_screen_window setOpaque:YES];
+    [full_screen_window setHidesOnDeactivate:YES];
+    
+    return full_screen_window;
+}
+
+GLViewRef createFullScreenView(NSWindowRef window)
+{
+    NSRect display_rect = [(LLNSWindow*)window frame];
+
+    // Create a view with a double-buffered OpenGL context and attach it to the window
+    NSOpenGLPixelFormatAttribute attrs[] =
+    {
+        NSOpenGLPFADoubleBuffer,
+        0
+    };
+    
+    NSOpenGLPixelFormat* pixel_format = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
+    
+    NSRect view_rect = NSMakeRect(0.0, 0.0, display_rect.size.width, display_rect.size.height);
+    LLOpenGLView *full_screen_view = [[LLOpenGLView alloc] initWithFrame:view_rect pixelFormat: pixel_format];
+    [(LLNSWindow*)window setContentView: full_screen_view];
+    
+    return full_screen_view;
+}
+
 void glSwapBuffers(void* context)
 {
 	[(NSOpenGLContext*)context flushBuffer];
@@ -244,6 +284,11 @@ void glSwapBuffers(void* context)
 CGLContextObj getCGLContextObj(GLViewRef view)
 {
 	return [(LLOpenGLView *)view getCGLContextObj];
+}
+
+void setCGLCurrentContext(GLViewRef view)
+{
+	return [(LLOpenGLView *)view setCGLCurrentContext];
 }
 
 CGLPixelFormatObj* getCGLPixelFormatObj(NSWindowRef window)

@@ -551,8 +551,6 @@ BOOL LLWindowMacOSX::createContext(int x, int y, int width, int height, int bits
 
 	if(mContext != NULL)
 	{
-		
-		
 		U32 err = CGLSetCurrentContext(mContext);
 		if (err != kCGLNoError)
 		{
@@ -1840,6 +1838,7 @@ void LLWindowMacOSX::addExtraWindow()
     else
     {
         llinfos << "Merov : Window creation successful!" << llendl;
+        setRenderWindow(1, TRUE);
     }
     return;
 }
@@ -1857,22 +1856,23 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
     }
     else
     {
-    
         if (mWindow[1] == NULL)
         {
             // The Oculus is assumed to be on screen 1 (non primary) in that case
             LL_INFOS("Window") << "Creating the HMD window" << LL_ENDL;
-            mWindow[1] = createNSWindow(left, top, width, height, 1);
+            mWindow[1] = createFullScreenWindow(1);
         }
-        
-        if (mGLView[1] == NULL)
+        if ((mWindow[1] != NULL) && (mGLView[1] == NULL))
         {
             LL_INFOS("Window") << "Creating the HMD GL view" << LL_ENDL;
-            //mGLView[1] = createOpenGLView(mWindow[1], mFSAASamples, true);
-            mGLView[1] = createOpenGLViewTest(mWindow[1], width, height);
+            mGLView[1] = createFullScreenView(mWindow[1]);
+        }
+        if ((mWindow[1] == NULL) || (mGLView[1] == NULL))
+        {
+            LL_INFOS("Window") << "Error creating HMD window" << LL_ENDL;
+            return FALSE;
         }
     }
-    
     return TRUE;
 }
 
@@ -1903,29 +1903,26 @@ BOOL LLWindowMacOSX::destroyHMDWindow()
 /*virtual*/
 BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
 {
-    LL_DEBUGS("Window") << "setRenderWindow : start" << LL_ENDL;
     if ((idx < 0) || (idx > 1) || !mGLView[idx])
     {
+        // Incorrect parameter or no view -> error
         return FALSE;
     }
+    if (mCurRCIdx == idx)
+    {
+        // Already set to the correct window, nothing to do
+        return TRUE;
+    }
+    LL_DEBUGS("Window") << "setRenderWindow : start" << LL_ENDL;
 
     if (!mUseDisplayMirroring)
     {
-        // Set the context
-        mContext = getCGLContextObj(mGLView[idx]);
-   
-        // Hook up the context to a drawable
-        if (mContext != NULL)
-        {
-            U32 err = CGLSetCurrentContext(mContext);
-            if (err != kCGLNoError)
-            {
-                LL_INFOS("Window") << "setRenderWindow : Error setting the context" << LL_ENDL;
-                setupFailure("Can't activate GL rendering context", "Error", OSMB_OK);
-                return FALSE;
-            }
-        }
+        // Set the view on the current context
+        setCGLCurrentContext(mGLView[idx]);
     }
+    
+	makeFirstResponder(mWindow[idx], mGLView[idx]);
+    makeWindowOrderFront(mWindow[idx]);
     
     LL_DEBUGS("Window") << "setRenderWindow : successful" << LL_ENDL;
     mCurRCIdx = idx;
