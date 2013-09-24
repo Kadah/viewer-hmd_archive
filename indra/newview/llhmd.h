@@ -63,8 +63,9 @@ public:
         kFlag_FailedInit                = 1 << 3,
         kFlag_MainIsFullScreen          = 1 << 4,
         kFlag_IsCalibrated              = 1 << 5,
-        kFlag_ShowDepthUI               = 1 << 6,
+        kFlag_ShowDepthVisual           = 1 << 6,
         kFlag_UIEyeDepthCalculated      = 1 << 7,
+        kFlag_ShowCalibrationUI         = 1 << 8,
     };
 
 public:
@@ -87,10 +88,12 @@ public:
     void isMainFullScreen(BOOL b) { if (b) { mFlags |= kFlag_MainIsFullScreen; } else { mFlags &= ~kFlag_MainIsFullScreen; } }
     BOOL isCalibrated() const { return ((mFlags & kFlag_IsCalibrated) != 0) ? TRUE : FALSE; }
     void isCalibrated(BOOL b) { if (b) { mFlags |= kFlag_IsCalibrated; } else { mFlags &= ~kFlag_IsCalibrated; } }
-    BOOL shouldShowDepthUI() const { return ((mFlags & kFlag_ShowDepthUI) != 0) ? TRUE : FALSE; }
-    void shouldShowDepthUI(BOOL b) { if (b) { mFlags |= kFlag_ShowDepthUI; } else { mFlags &= ~kFlag_ShowDepthUI; } }
+    BOOL shouldShowDepthVisual() const { return ((mFlags & kFlag_ShowDepthVisual) != 0) ? TRUE : FALSE; }
+    void shouldShowDepthVisual(BOOL b) { if (b) { mFlags |= kFlag_ShowDepthVisual; } else { mFlags &= ~kFlag_ShowDepthVisual; } }
     BOOL isUIEyeDepthCalculated() const { return ((mFlags & kFlag_UIEyeDepthCalculated) != 0) ? TRUE : FALSE; }
     void isUIEyeDepthCalculated(BOOL b) { if (b) { mFlags |= kFlag_UIEyeDepthCalculated; } else { mFlags &= ~kFlag_UIEyeDepthCalculated; } }
+    BOOL shouldShowCalibrationUI() const { return ((mFlags & kFlag_ShowCalibrationUI) != 0) ? TRUE : FALSE; }
+    void shouldShowCalibrationUI(BOOL b) { if (b) { mFlags |= kFlag_ShowCalibrationUI; } else { mFlags &= ~kFlag_ShowCalibrationUI; } }
     
 
     BOOL isManuallyCalibrating() const;
@@ -130,6 +133,8 @@ public:
 
     F32 getEyeDepth() const { return mEyeDepth; }
     F32 getUIEyeDepth();
+    F32 getUIMagnification() { return mUIMagnification; }
+    void setUIMagnification(F32 f) { mUIMagnification = f; isUIEyeDepthCalculated(FALSE); }
 
     // coefficients for the distortion function.
     LLVector4 getDistortionConstants() const;
@@ -186,21 +191,38 @@ public:
     void setMainWindowSize(S32 w, S32 h) { mMainWindowWidth = w; mMainWindowHeight = h; }
 
     const LLVector2& getUISurfaceArc() const { return mUICurvedSurfaceArc; }
+    F32 getUISurfaceArcHorizontal() const { return mUICurvedSurfaceArc[VX]; }
+    void setUISurfaceArcHorizontal(F32 f) { mUICurvedSurfaceArc[VX] = f; onChangeUISurfaceShape(); }
+    F32 getUISurfaceArcVertical() const { return mUICurvedSurfaceArc[VY]; }
+    void setUISurfaceArcVertical(F32 f) { mUICurvedSurfaceArc[VY] = f; onChangeUISurfaceShape(); }
     const LLVector4& getUISurfaceRadius() const { return mUICurvedSurfaceRadius; }
+    F32 getUISurfaceToroidRadiusWidth() const { return mUICurvedSurfaceRadius[0]; }
+    void setUISurfaceToroidRadiusWidth(F32 f) { mUICurvedSurfaceRadius[0] =  f; onChangeUISurfaceShape(); }
+    F32 getUISurfaceToroidRadiusDepth() const { return mUICurvedSurfaceRadius[1]; }
+    void setUISurfaceToroidRadiusDepth(F32 f) { mUICurvedSurfaceRadius[1] =  f; onChangeUISurfaceShape(); }
+    F32 getUISurfaceToroidCrossSectionRadiusWidth() const { return mUICurvedSurfaceRadius[3]; }
+    void setUISurfaceToroidCrossSectionRadiusWidth(F32 f) { mUICurvedSurfaceRadius[3] =  f; onChangeUISurfaceShape(); }
+    F32 getUISurfaceToroidCrossSectionRadiusHeight() const { return mUICurvedSurfaceRadius[2]; }
+    void setUISurfaceToroidCrossSectionRadiusHeight(F32 f) { mUICurvedSurfaceRadius[2] =  f; onChangeUISurfaceShape(); }
     const LLVector3& getUISurfaceOffsets() const { return mUICurvedSurfaceOffsets; }
+    void setUISurfaceOffsetWidth(F32 f) { mUICurvedSurfaceOffsets[VX] = f; onChangeUISurfaceShape(); }
+    void setUISurfaceOffsetHeight(F32 f) { mUICurvedSurfaceOffsets[VY] = f; onChangeUISurfaceShape(); }
+    void setUISurfaceOffsetDepth(F32 f) { mUICurvedSurfaceOffsets[VZ] = f; onChangeUISurfaceShape(); }
 
     LLViewerTexture* getCursorImage(U32 cursorType);
-
-    F32 getOrthoPixelOffsetMult() const { return mOrthoPixelOffsetMult; }
+    LLViewerTexture* getCalibrateBackground();
+    LLViewerTexture* getCalibrateForeground();
 
     LLVertexBuffer* createUISurface();
     void getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2& uv);
     BOOL getWorldMouseCoordinatesFromUIScreen(S32 ui_x, S32 ui_y, S32& world_x, S32& world_y);
 
+    void saveSettings();
+
+    static void onChangeUISurfaceSavedParams();
     static void onChangeUISurfaceShape();
-    static void onChangeOrthoPixelOffsetMult();
     static void onChangeEyeDepth();
-    static void onChangeUIEyeDepth();
+    static void onChangeUIMagnification();
 
 private:
     F32 calculateUIEyeDepth();
@@ -219,10 +241,9 @@ private:
     LLVector2 mUICurvedSurfaceArc;
     LLVector4 mUICurvedSurfaceRadius;
     LLVector3 mUICurvedSurfaceOffsets;
-    F32 mOrthoPixelOffsetMult;
     F32 mEyeDepth;
+    F32 mUIMagnification;
     F32 mUIEyeDepth;
-    F32 mUIEyeDepthMod;
 };
 
 extern LLHMD gHMD;

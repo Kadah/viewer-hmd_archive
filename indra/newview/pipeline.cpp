@@ -4598,8 +4598,8 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
 
 	gGL.setColorMask(true, true);
 
-    BOOL renderHMDDepthUI = gHMD.shouldRender() && gHMD.shouldShowDepthUI();
-    if (renderHMDDepthUI)
+    BOOL renderHMDDepthVisual = gHMD.shouldRender() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
+    if (renderHMDDepthVisual)
     {
         LLVertexBuffer::unbind();
         if (gPipeline.mOculusDepthShape.isNull())
@@ -4689,14 +4689,14 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
             gGL.pushMatrix();
             LLMatrix4 m1(gHMD.getUIModelViewInv());
             gGL.multMatrix((GLfloat*)(m1.mMatrix));
-
+            LLGLDisable fog(GL_FOG);
+            LLGLEnable blend_on(GL_BLEND);
+            gPipeline.disableLights();
             gOneTextureNoColorProgram.bind();
             gGL.setColorMask(true, true);
-            LLGLEnable blend_on(GL_BLEND);
             gGL.blendFunc(LLRender::BF_ONE, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
             gGL.color4f(1,1,1,1);
-            // TODO: use a better high-contrast texture for the background
-            gGL.getTexUnit(0)->bind(LLViewerTexture::sCheckerBoardImagep);
+            gGL.getTexUnit(0)->bind(gHMD.getCalibrateBackground());
             gGL.begin(LLRender::QUADS);
             for (int i = 0; i < 4; ++i)
             {
@@ -4713,7 +4713,6 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
             gGL.flush();
 
             // render 9 copies of the VB, offset in a "grid" pattern so that users can get a good sense of depth perception
-            // TODO: use a different texture for the cubes
             static const LLVector3 kMat[][3] =
             {
                 // translation                , scale
@@ -4728,10 +4727,13 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
                 { LLVector3( 0.3f,-0.1f,-0.2f), LLVector3( 2.0f, 2.0f, 1.0f) },
             };
             {
+                LLGLDisable fog(GL_FOG);
                 LLGLDisable cull(GL_CULL_FACE);
                 LLGLEnable blend(GL_BLEND);
+                gPipeline.disableLights();
                 LLVertexBuffer* buff = gPipeline.mOculusDepthShape;
                 buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
+                gGL.getTexUnit(0)->bind(gHMD.getCalibrateForeground());
                 for (int i = 0; i < 9; ++i)
                 {
                     gGL.matrixMode(LLRender::MM_MODELVIEW);
@@ -4818,8 +4820,8 @@ void LLPipeline::renderGeomPostDeferred(LLCamera& camera, bool do_occlusion)
 {
 	LLFastTimer t(FTM_POST_DEFERRED_POOLS);
 
-    BOOL renderHMDDepthUI = gHMD.shouldRender() && gHMD.shouldShowDepthUI();
-    if (renderHMDDepthUI)
+    BOOL renderHMDDepthVisual = gHMD.shouldRender() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
+    if (renderHMDDepthVisual)
     {
         return;
     }

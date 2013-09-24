@@ -14932,16 +14932,27 @@
       <real>0.0</real>
     </array>
   </map>
-  <key>OculusOrthoPixelOffsetMult</key>
+  <key>OculusInterpupillaryDistance</key>
   <map>
     <key>Comment</key>
-    <string>[EXPERIMENTAL] amount to multiply OrthoPixelOffset</string>
+    <string>Saved Value of Interpupillary Distance for HMD</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
     <string>F32</string>
     <key>Value</key>
-    <real>1.0</real>
+    <real>0.064</real>
+  </map>
+  <key>OculusEyeToScreenDistance</key>
+  <map>
+    <key>Comment</key>
+    <string>Saved Value of Eye To Screen Distance for HMD</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>F32</string>
+    <key>Value</key>
+    <real>0.041</real>
   </map>
   <key>OculusEyeDepth</key>
   <map>
@@ -14954,16 +14965,27 @@
     <key>Value</key>
     <real>75.0</real>
   </map>
-  <key>OculusUIEyeDepth</key>
+  <key>OculusUIMagnification</key>
   <map>
     <key>Comment</key>
-    <string>[EXPERIMENTAL] extra amount (in mm) that the eyes are positioned in front of the center of the head for viewing the UI.  Helps with text readability.</string>
+    <string>Amount (in mm) that the eyes are positioned in front of the center of the head for viewing the UI at default eye-to-screen distance.  Helps with text readability.</string>
     <key>Persist</key>
     <integer>1</integer>
     <key>Type</key>
     <string>F32</string>
     <key>Value</key>
-    <real>0.0</real>
+    <real>600.0</real>
+  </map>
+  <key>OculusUseMotionPrediction</key>
+  <map>
+    <key>Comment</key>
+    <string>Saved Value of whether to use Motion Prediction for HMD.</string>
+    <key>Persist</key>
+    <integer>0</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>1</integer>
   </map>
 
 </map>

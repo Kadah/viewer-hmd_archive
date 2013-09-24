@@ -3321,6 +3321,11 @@ void handle_avatar_eject(const LLSD& avatar_id)
 		}
 }
 
+bool hmd_mode_running()
+{
+    return gHMD.shouldRender();
+}
+
 bool my_profile_visible()
 {
 	LLFloater* floaterp = LLAvatarActions::getProfileFloater(gAgentID);
@@ -8503,6 +8508,10 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLViewDefaultUISize(), "View.DefaultUISize");
 	view_listener_t::addMenu(new LLViewToggleUI(), "View.ToggleUI");
     view_listener_t::addMenu(new LLViewCycleDisplay(), "View.CycleDisplay");
+    enable.add("HMD.IsHMDMode", boost::bind(&hmd_mode_running));
+    //is_enabled_function="HMD.IsHMDModeAllowed"
+    //enable.add("HMD.IsHMDModeAllowed", boost::bind(&LLHMD::isInitialized, gHMD));
+
     view_listener_t::addMenu(new LLAddExtraMonitor(), "View.AddExtraMonitor");
 
 	view_listener_t::addMenu(new LLViewEnableMouselook(), "View.EnableMouselook");

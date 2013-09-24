@@ -5,44 +5,45 @@
   border="false"
   chrome="true"
   width="512"
-  height="200"
+  height="440"
   layout="topleft"
   name="hmd_config">
   <layout_stack
     left="0"
     top="0"
     layout="topleft"
-    height="200"
+    height="440"
     follows="all"
     orientation="horizontal">
     <layout_panel
-      height="200"
+      height="440"
       width="1" />
     <layout_panel
-      height="200"
+      height="440"
       auto_resize="false"
-      width="500">
+      width="400">
       <layout_stack
         left="0"
         border_size="0"
         top="0"
         layout="topleft"
-        height="200"
+        height="440"
         follows="all"
         orientation="vertical">
+
         <layout_panel
-         height="50"
+         height="40"
          auto_resize="false"
-         width="500">
+         width="400">
           <layout_stack
             border_size="0"
             left="0"
             top="0"
-            height="50"
+            height="40"
             follows="all"
             orientation="horizontal">
             <layout_panel
-              width="500"
+              width="400"
               text_color="white"
               background_visible="true"
               follows="all"
@@ -72,9 +73,9 @@ Interpupillary Distance
               </text>
               <slider_bar
                 top_delta="18"
-                min_val="0"
-                max_val="100"
-                increment="0.5"
+                min_val="50"
+                max_val="75"
+                increment="0.1"
                 initial_value="64"
                 name="interpupillary_offset_slider"
                 tool_tip="Configured distance between the user's eye centers, in millimeters"
@@ -83,32 +84,22 @@ Interpupillary Distance
                 <slider_bar.commit_callback
                   function="HMDConfig.SetInterpupillaryOffset" />
               </slider_bar>
-              <button
-                height="23"
-                label="Calibrate"
-                left="405"
-                name="hmd_calibrate_button"
-                follows="top|left"
-                top="10"
-                width="90">
-                <commit_callback
-                  function="HMDConfig.Calibrate" />
-              </button>
             </layout_panel>
           </layout_stack>
         </layout_panel>
+        
         <layout_panel
-         height="50"
+         height="40"
          auto_resize="false"
-         width="500">
+         width="400">
           <layout_stack
             border_size="0"
             top="0"
-            height="50"
+            height="40"
             follows="all"
             orientation="horizontal">
             <layout_panel
-              width="500"
+              width="400"
               text_color="white"
               background_visible="true"
               follows="all"
@@ -149,32 +140,22 @@ Eye to Screen Distance (FOV)
                 <slider_bar.commit_callback
                   function="HMDConfig.SetEyeToScreenDistance" />
               </slider_bar>
-              <button
-                height="23"
-                label="Reset Values"
-                left="405"
-                name="hmd_reset_values_button"
-                follows="top|left"
-                top="10"
-                width="90">
-                <commit_callback
-                  function="HMDConfig.ResetValues" />
-              </button>
             </layout_panel>
           </layout_stack>
         </layout_panel>
+        
         <layout_panel
-         height="100"
+         height="40"
          auto_resize="false"
-         width="500">
+         width="400">
           <layout_stack
             border_size="0"
             top="0"
-            height="100"
+            height="40"
             follows="all"
             orientation="horizontal">
             <layout_panel
-              width="500"
+              width="400"
               text_color="white"
               background_visible="true"
               follows="all"
@@ -238,35 +219,541 @@ Motion Prediction Delta
                 <slider_bar.commit_callback
                   function="HMDConfig.SetMotionPredictionDelta" />
               </slider_bar>
-              <button
-                height="23"
-                label="Cancel"
-                left="405"
-                name="hmd_cancel_button"
-                follows="top|left"
-                top="10"
-                width="90">
-                <commit_callback
-                  function="HMDConfig.Cancel" />
-              </button>
-              <button
-                height="23"
-                label="Save"
-                left="405"
-                name="hmd_save_button"
-                follows="top|left"
-                top="60"
-                width="90">
-                <commit_callback
-                  function="HMDConfig.Save" />
-              </button>
             </layout_panel>
           </layout_stack>
         </layout_panel>
+
+        <layout_panel
+         height="40"
+         auto_resize="false"
+         width="400">
+          <layout_stack
+            border_size="0"
+            left="0"
+            top="0"
+            height="40"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="400"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="300"
+                left="0"
+                text_color="white"
+                halign="center">
+UI Surface Offset Depth
+              </text>
+              <text
+                name="uisurface_offset_depth_slider_amount"
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="70"
+                left="320"
+                text_color="white"
+                halign="right">
+0.0
+              </text>
+              <slider_bar
+                top_delta="18"
+                min_val="-1.0"
+                max_val="1.0"
+                increment="0.01"
+                initial_value="0.0"
+                name="uisurface_offset_depth_slider"
+                tool_tip="Forward Offset for UI Surface"
+                left="5"
+                width="390">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetUISurfaceOffsetDepth" />
+              </slider_bar>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+
+        <layout_panel
+         height="40"
+         auto_resize="false"
+         width="400">
+          <layout_stack
+            border_size="0"
+            top="0"
+            height="40"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="400"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="300"
+                left="0"
+                text_color="white"
+                halign="center">
+Toroid Radius (Width)
+              </text>
+              <text
+                name="uisurface_toroid_radius_width_slider_amount"
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="70"
+                left="320"
+                text_color="white"
+                halign="right">
+0.3
+              </text>
+              <slider_bar
+                top_delta="18"
+                min_val="0.1"
+                max_val="10.0"
+                increment="0.1"
+                initial_value="0.3"
+                name="uisurface_toroid_radius_width_slider"
+                tool_tip="Toroid Radius (Width)"
+                left="5"
+                width="390">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetUISurfaceToroidRadiusWidth" />
+              </slider_bar>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+
+        <layout_panel
+         height="40"
+         auto_resize="false"
+         width="400">
+          <layout_stack
+            border_size="0"
+            top="0"
+            height="40"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="400"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="300"
+                left="0"
+                text_color="white"
+                halign="center">
+Toroid Radius (Depth)
+              </text>
+              <text
+                name="uisurface_toroid_radius_depth_slider_amount"
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="40"
+                left="350"
+                text_color="white"
+                halign="right">
+0.6
+              </text>
+              <slider_bar
+                top_delta="18"
+                min_val="0.1"
+                max_val="10.0"
+                increment="0.1"
+                initial_value="0.6"
+                name="uisurface_toroid_radius_depth_slider"
+                tool_tip="Toroid Radius (Depth)"
+                left="5"
+                width="390">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetUISurfaceToroidRadiusDepth" />
+              </slider_bar>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+
+        <layout_panel
+         height="40"
+         auto_resize="false"
+         width="400">
+          <layout_stack
+            border_size="0"
+            top="0"
+            height="40"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="400"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="300"
+                left="0"
+                text_color="white"
+                halign="center">
+Toroid Cross-Section Radius (Width)
+              </text>
+              <text
+                name="uisurface_toroid_cross_section_radius_width_slider_amount"
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="70"
+                left="320"
+                text_color="white"
+                halign="right">
+0.5
+              </text>
+              <slider_bar
+                top_delta="18"
+                min_val="0.1"
+                max_val="10.0"
+                increment="0.1"
+                initial_value="0.5"
+                name="uisurface_toroid_cross_section_radius_width_slider"
+                tool_tip="Toroid Cross-Section Radius (Width)"
+                left="5"
+                width="390">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetUISurfaceToroidCrossSectionRadiusWidth" />
+              </slider_bar>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+
+        <layout_panel
+         height="40"
+         auto_resize="false"
+         width="400">
+          <layout_stack
+            border_size="0"
+            top="0"
+            height="40"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="400"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="300"
+                left="0"
+                text_color="white"
+                halign="center">
+Toroid Cross-Section Radius (Height)
+              </text>
+              <text
+                name="uisurface_toroid_cross_section_radius_height_slider_amount"
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="40"
+                left="350"
+                text_color="white"
+                halign="right">
+0.7
+              </text>
+              <slider_bar
+                top_delta="18"
+                min_val="0.1"
+                max_val="10.0"
+                increment="0.1"
+                initial_value="0.7"
+                name="uisurface_toroid_cross_section_radius_height_slider"
+                tool_tip="Toroid Cross-Section Radius (Height)"
+                left="5"
+                width="390">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetUISurfaceToroidCrossSectionRadiusHeight" />
+              </slider_bar>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+
+        <layout_panel
+         height="40"
+         auto_resize="false"
+         width="400">
+          <layout_stack
+            border_size="0"
+            top="0"
+            height="40"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="400"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="300"
+                left="0"
+                text_color="white"
+                halign="center">
+UI Surface Arc (Horizontal)
+              </text>
+              <text
+                name="uisurface_toroid_arc_horizontal_slider_amount"
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="70"
+                left="320"
+                text_color="white"
+                halign="right">
+1.0 PI
+              </text>
+              <slider_bar
+                top_delta="18"
+                min_val="0.1"
+                max_val="1.5"
+                increment="0.01"
+                initial_value="1.0"
+                name="uisurface_toroid_arc_horizontal_slider"
+                tool_tip="UI Surface Arc (Horizontal)"
+                left="5"
+                width="390">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetUISurfaceToroidArcHorizontal" />
+              </slider_bar>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+
+        <layout_panel
+         height="40"
+         auto_resize="false"
+         width="400">
+          <layout_stack
+            border_size="0"
+            top="0"
+            height="40"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="400"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="300"
+                left="0"
+                text_color="white"
+                halign="center">
+UI Surface Arc (Vertical)
+              </text>
+              <text
+                name="uisurface_toroid_arc_vertical_slider_amount"
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="40"
+                left="350"
+                text_color="white"
+                halign="right">
+0.6 PI
+              </text>
+              <slider_bar
+                top_delta="18"
+                min_val="0.1"
+                max_val="1.0"
+                increment="0.01"
+                initial_value="0.6"
+                name="uisurface_toroid_arc_vertical_slider"
+                tool_tip="UI Surface Arc (Vertical)"
+                left="5"
+                width="390">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetUISurfaceToroidArcVertical" />
+              </slider_bar>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+
+        <layout_panel
+         height="40"
+         auto_resize="false"
+         width="400">
+          <layout_stack
+            border_size="0"
+            top="0"
+            height="40"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="400"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="300"
+                left="0"
+                text_color="white"
+                halign="center">
+UI Magnification
+              </text>
+              <text
+                name="ui_magnification_slider_amount"
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="70"
+                left="320"
+                text_color="white"
+                halign="right">
+600
+              </text>
+              <slider_bar
+                top_delta="18"
+                min_val="0.0"
+                max_val="1000"
+                increment="10.0"
+                initial_value="600.0"
+                name="ui_magnification_slider"
+                tool_tip="UI Magnification at default Eye-To-Screen distance"
+                left="5"
+                width="390">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetUIMagnification" />
+              </slider_bar>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+
       </layout_stack>
     </layout_panel>
+    
     <layout_panel
-      height="200"
+      height="440"
+      auto_resize="false"
+      width="100">
+      <layout_stack
+        left="0"
+        border_size="0"
+        top="0"
+        layout="topleft"
+        height="440"
+        follows="all"
+        orientation="vertical">
+        <layout_panel
+          width="100"
+          text_color="white"
+          background_visible="true"
+          follows="all"
+          bg_alpha_color="0.0 0.3 0.3">
+          <button
+            height="23"
+            label="View World"
+            left="5"
+            name="hmd_toggle_world_view_button"
+            follows="top|left"
+            top="10"
+            width="90">
+            <commit_callback
+              function="HMDConfig.ToggleWorldView" />
+          </button>
+          <button
+            height="23"
+            label="Calibrate"
+            left="5"
+            name="hmd_calibrate_button"
+            follows="top|left"
+            top="50"
+            width="90">
+            <commit_callback
+              function="HMDConfig.Calibrate" />
+          </button>
+          <button
+            height="23"
+            label="Reset Values"
+            left="5"
+            name="hmd_reset_values_button"
+            follows="top|left"
+            top="90"
+            width="90">
+            <commit_callback
+              function="HMDConfig.ResetValues" />
+          </button>
+          <button
+            height="23"
+            label="Cancel"
+            left="5"
+            name="hmd_cancel_button"
+            follows="top|left"
+            top="130"
+            width="90">
+            <commit_callback
+              function="HMDConfig.Cancel" />
+          </button>
+          <button
+            height="23"
+            label="Save"
+            left="5"
+            name="hmd_save_button"
+            follows="top|left"
+            top="170"
+            width="90">
+            <commit_callback
+              function="HMDConfig.Save" />
+          </button>
+        </layout_panel>
+      </layout_stack>
+    </layout_panel>
+    
+    <layout_panel
+      height="440"
       width="1" />
   </layout_stack>
 </panel>

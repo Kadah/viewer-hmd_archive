@@ -45,6 +45,7 @@ class LLPanelHMDConfig : public LLPanel
     static void toggleVisibility();
     static LLPanelHMDConfig* getInstance();
 
+    void onClickToggleWorldView();
     void onClickCalibrate();
     void onClickCancel();
     void onClickSave();
@@ -53,10 +54,19 @@ class LLPanelHMDConfig : public LLPanel
     void onSetEyeToScreenDistance();
     void onCheckMotionPrediction();
     void onSetMotionPredictionDelta();
+    void onSetUISurfaceOffsetDepth();
+    void onSetUISurfaceToroidRadiusWidth();
+    void onSetUISurfaceToroidRadiusDepth();
+    void onSetUISurfaceToroidCrossSectionRadiusWidth();
+    void onSetUISurfaceToroidCrossSectionRadiusHeight();
+    void onSetUISurfaceToroidArcHorizontal();
+    void onSetUISurfaceToroidArcVertical();
+    void onSetUIMagnification();
 
  private:
     static LLPanelHMDConfig*  sInstance;
 
+    LLButton* mToggleViewButton;
     LLSlider* mInterpupillaryOffsetSliderCtrl;
     LLUICtrl* mInterpupillaryOffsetAmountCtrl;
     LLSlider* mEyeToScreenSliderCtrl;
@@ -68,6 +78,30 @@ class LLPanelHMDConfig : public LLPanel
     F32 mEyeToScreenDistanceOriginal;
     BOOL mMotionPredictionCheckedOriginal;
     F32 mMotionPredictionDeltaOriginal;
+    LLSlider* mUISurfaceOffsetDepthSliderCtrl;
+    LLUICtrl* mUISurfaceOffsetDepthAmountCtrl;
+    F32 mUISurfaceOffsetDepthOriginal;
+    LLSlider* mUISurfaceToroidRadiusWidthSliderCtrl;
+    LLUICtrl* mUISurfaceToroidRadiusWidthAmountCtrl;
+    F32 mUISurfaceToroidRadiusWidthOriginal;
+    LLSlider* mUISurfaceToroidRadiusDepthSliderCtrl;
+    LLUICtrl* mUISurfaceToroidRadiusDepthAmountCtrl;
+    F32 mUISurfaceToroidRadiusDepthOriginal;
+    LLSlider* mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl;
+    LLUICtrl* mUISurfaceToroidCrossSectionRadiusWidthAmountCtrl;
+    F32 mUISurfaceToroidCrossSectionRadiusWidthOriginal;
+    LLSlider* mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl;
+    LLUICtrl* mUISurfaceToroidCrossSectionRadiusHeightAmountCtrl;
+    F32 mUISurfaceToroidCrossSectionRadiusHeightOriginal;
+    LLSlider* mUISurfaceToroidArcHorizontalSliderCtrl;
+    LLUICtrl* mUISurfaceToroidArcHorizontalAmountCtrl;
+    F32 mUISurfaceToroidArcHorizontalOriginal;
+    LLSlider* mUISurfaceToroidArcVerticalSliderCtrl;
+    LLUICtrl* mUISurfaceToroidArcVerticalAmountCtrl;
+    F32 mUISurfaceToroidArcVerticalOriginal;
+    LLSlider* mUIMagnificationSliderCtrl;
+    LLUICtrl* mUIMagnificationAmountCtrl;
+    F32 mUIMagnificationOriginal;
 };
 
 #endif // LL_LLPANELHMDCONFIG_H

@@ -961,7 +961,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			//}
 
 			LLPipeline::sUnderWaterRender = LLViewerCamera::getInstance()->cameraUnderWater() ? TRUE : FALSE;
-		    BOOL renderHMDDepthUI = gHMD.shouldRender() && gHMD.shouldShowDepthUI();
+		    BOOL renderHMDDepthVisual = gHMD.shouldRender() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
 
 			LLGLState::checkStates();
 			LLGLState::checkClientArrays();
@@ -978,7 +978,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 				if (LLPipeline::sRenderDeferred && !LLPipeline::sUnderWaterRender)
 				{
 					gPipeline.mDeferredScreen.bindTarget();
-                    if (renderHMDDepthUI)
+                    if (renderHMDDepthVisual)
                     {
 					    glClearColor(0,0,0,0);
                     }
@@ -991,7 +991,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 				else
 				{
 					gPipeline.mScreen.bindTarget();
-					if (LLPipeline::sUnderWaterRender && !gPipeline.canUseWindLightShaders() && !renderHMDDepthUI)
+					if (LLPipeline::sUnderWaterRender && !gPipeline.canUseWindLightShaders() && !renderHMDDepthVisual)
 					{
 						const LLColor4 &col = LLDrawPoolWater::sWaterFogColor;
 						glClearColor(col.mV[0], col.mV[1], col.mV[2], 0.f);
@@ -1008,7 +1008,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			{
 				LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 
-				if (gSavedSettings.getBOOL("RenderDepthPrePass") && LLGLSLShader::sNoFixedFunction && !renderHMDDepthUI)
+				if (gSavedSettings.getBOOL("RenderDepthPrePass") && LLGLSLShader::sNoFixedFunction && !renderHMDDepthVisual)
 				{
 					gGL.setColorMask(false, false);
 				
@@ -1408,7 +1408,7 @@ void render_ui(F32 zoom_factor, int subfield)
 		glh_set_current_modelview(glh_copy_matrix(gGLLastModelView));
 	}
 	
-    BOOL renderHMDDepthUI = gHMD.shouldRender() && gHMD.shouldShowDepthUI();
+    BOOL renderHMDDepthVisual = gHMD.shouldRender() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
     BOOL to_texture = gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow;
 	if (to_texture)
 	{
@@ -1427,7 +1427,7 @@ void render_ui(F32 zoom_factor, int subfield)
             gGL.matrixMode(LLRender::MM_MODELVIEW);
             gGL.popMatrix();
             
-            if (!renderHMDDepthUI)
+            if (!renderHMDDepthVisual)
             {
                 render_hud_elements();  // in-world text, labels, nametags
                 if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
@@ -1524,7 +1524,7 @@ void render_ui(F32 zoom_factor, int subfield)
             gPipeline.mUIScreen.clear();
             gGL.color4f(1,1,1,1);
         }
-        if (!renderHMDDepthUI)
+        if (!renderHMDDepthVisual)
         {
             render_hud_attachments();   // huds worn by avatar
         }
@@ -1555,7 +1555,7 @@ void render_ui(F32 zoom_factor, int subfield)
         gRenderUIMode = TRUE;
         gViewerWindow->setup2DRender();
         gViewerWindow->updateDebugText();
-        if (!renderHMDDepthUI)
+        if (!renderHMDDepthVisual)
         {
             gViewerWindow->drawDebugText(); // debugging text
         }

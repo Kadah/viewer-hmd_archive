@@ -3845,6 +3845,7 @@ Try enclosing path to the editor with double quotes.
   <string name="Command_Compass_Label">Compass</string>
   <string name="Command_Destinations_Label">Destinations</string>
   <string name="Command_Gestures_Label">Gestures</string>
+  <string name="Command_HMD_Mode_Label">HMD Mode</string>
   <string name="Command_HowTo_Label">How to</string>
   <string name="Command_Inventory_Label">Inventory</string>
   <string name="Command_Map_Label">Map</string>
@@ -3872,6 +3873,7 @@ Try enclosing path to the editor with double quotes.
   <string name="Command_Compass_Tooltip">Compass</string>
   <string name="Command_Destinations_Tooltip">Destinations of interest</string>
   <string name="Command_Gestures_Tooltip">Gestures for your avatar</string>
+  <string name="Command_HMD_Mode_Tooltip">Use Head-Mounted Display (HMD) Rendering Mode</string>
   <string name="Command_HowTo_Tooltip">How to do common tasks</string>
   <string name="Command_Inventory_Tooltip">View and use your belongings</string>
   <string name="Command_Map_Tooltip">Map of the world</string>
