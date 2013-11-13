@@ -192,15 +192,12 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
         // make z same as origin so that we guarantee no pitch in the forward axis.  This ensures that the UI surface is not slanted in relation to the viewpoint.
         LLVector3 poi(point_of_interest[VX], point_of_interest[VY], origin[VZ]);
         setOriginAndLookAt(origin, up, poi);
-        LLMatrix4 uiview = getModelview();
-        LLMatrix4 uiviewInv = uiview;
-        uiviewInv.invert();
-        gHMD.setUIModelView((F32*)uiview.mMatrix);
-        gHMD.setUIModelViewInv((F32*)uiviewInv.mMatrix);
+        gHMD.setUIModelView((F32*)getModelview().mMatrix);
     }
     setOriginAndLookAt(origin, up_direction, point_of_interest);
     if (gHMD.shouldRender() && gHMD.isInitialized())
     {
+        gHMD.setBaseLookAt((F32*)getModelview().mMatrix);
         float r, p, y;
         gHMD.getHMDRollPitchYaw(r, p, y);
         LLQuaternion qr(r, mXAxis);
@@ -504,12 +501,6 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
     if (gHMD.shouldRender())
     {
         gHMD.setBaseModelView(modelview.m);
-        glh::matrix4f oglcfrinv((GLfloat*) OGL_TO_CFR_ROTATION);
-        oglcfrinv = oglcfrinv.transpose();
-        glh::matrix4f oglinv = ogl.inverse();
-        oglinv.mult_right(oglcfrinv);
-        gHMD.setBaseModelViewInv(oglinv.m);
-
         glh::matrix4f translate;
         F32 viewOffset = gHMD.getInterpupillaryOffset();
         translate.set_translate(glh::vec3f(sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f, gHMD.getEyeDepth()));

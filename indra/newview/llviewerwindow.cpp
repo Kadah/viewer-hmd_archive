@@ -836,10 +836,13 @@ public:
 			}
 		}
 
-		if (   gHMD.isInitialized()
-            && gHMD.shouldRender()
-            && gSavedSettings.getBOOL("DebugHMDEnable"))
+		if (gHMD.isInitialized() && gSavedSettings.getBOOL("DebugHMDEnable"))
 		{
+            if (gHMD.shouldRender())
+            {
+		        xpos = llmax((mWindow->getWorldViewWidthScaled() / 2) - 200, 0);
+		        ypos = (mWindow->getWorldViewHeightScaled() / 2) - (y_inc / 2);
+            }
             F32 roll, pitch, yaw;
             gHMD.getHMDRollPitchYaw(roll, pitch, yaw);
 			addText(xpos, ypos, llformat("HMD Orient Euler: [roll=%f, pitch=%f, yaw=%f]", roll, pitch, yaw));
@@ -853,10 +856,19 @@ public:
 			 iter != mLineList.end(); ++iter)
 		{
 			const Line& line = *iter;
-			LLFontGL::getFontMonospace()->renderUTF8(line.text, 0, (F32)line.x, (F32)line.y, mTextColor,
-											 LLFontGL::LEFT, LLFontGL::TOP,
-											 LLFontGL::NORMAL, LLFontGL::NO_SHADOW, S32_MAX, S32_MAX, NULL, FALSE);
-		}
+            if (gHMD.shouldRender())
+            {
+                LLFontGL::getFontSansSerifBold()->renderUTF8(   line.text, 0, (F32)line.x, (F32)line.y, mTextColor,
+                                                                LLFontGL::LEFT, LLFontGL::TOP,
+                                                                LLFontGL::NORMAL, LLFontGL::NO_SHADOW, S32_MAX, S32_MAX, NULL, FALSE);
+            }
+            else
+            {
+			    LLFontGL::getFontMonospace()->renderUTF8(   line.text, 0, (F32)line.x, (F32)line.y, mTextColor,
+                                                            LLFontGL::LEFT, LLFontGL::TOP,
+                                                            LLFontGL::NORMAL, LLFontGL::NO_SHADOW, S32_MAX, S32_MAX, NULL, FALSE);
+            }
+        }
 		mLineList.clear();
 	}
 
@@ -2895,13 +2907,15 @@ void LLViewerWindow::updateUI()
 	updateWorldViewRect(world_view_uses_full_window);
 
 	LLView::sMouseHandlerMessage.clear();
+    gHMD.cursorIntersectsWorld(FALSE);
+    gHMD.cursorIntersectsUI(FALSE);
 
 	S32 x = mCurrentMousePoint.mX;
 	S32 y = mCurrentMousePoint.mY;
 
 	MASK	mask = gKeyboard->currentMask(TRUE);
 
-	if (gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_RAYCAST))
+	if (gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_RAYCAST) || gHMD.shouldRender())
 	{
 		gDebugRaycastFaceHit = -1;
 		gDebugRaycastObject = cursorIntersect(-1, -1, 512.f, NULL, -1, FALSE,
@@ -2912,12 +2926,26 @@ void LLViewerWindow::updateUI()
 											  &gDebugRaycastTangent,
 											  &gDebugRaycastStart,
 											  &gDebugRaycastEnd);
+        if (gHMD.shouldRender())
+        {
+            gHMD.setMouseWorldEnd(gDebugRaycastEnd);
+            if (gDebugRaycastObject &&
+                gDebugRaycastObject->mDrawable &&
+                gDebugRaycastObject->mDrawable->getNumFaces())
+            {
+                gHMD.cursorIntersectsWorld(TRUE);
+                gHMD.setMouseWorldIntersection(gDebugRaycastIntersection, gDebugRaycastNormal, gDebugRaycastTangent);
+            }
+        }
 
 		gDebugRaycastParticle = gPipeline.lineSegmentIntersectParticle(gDebugRaycastStart, gDebugRaycastEnd, &gDebugRaycastParticleIntersection, NULL);
 	}
 
+    BOOL oldRenderUIMode = gRenderUIMode;
+    gRenderUIMode = TRUE;
 	updateMouseDelta();
 	updateKeyboardFocus();
+    gRenderUIMode = oldRenderUIMode;
 
 	BOOL handled = FALSE;
 
@@ -3088,6 +3116,7 @@ void LLViewerWindow::updateUI()
 			S32 local_y; 
 			mouse_captor->screenPointToLocal( x, y, &local_x, &local_y );
 			handled = mouse_captor->handleHover(local_x, local_y, mask);
+            gHMD.cursorIntersectsUI(handled);
 			if (LLView::sDebugMouseHandling)
 			{
 				llinfos << "Hover handled by captor " << mouse_captor->getName() << llendl;
@@ -3130,6 +3159,8 @@ void LLViewerWindow::updateUI()
 				}
 			}
 		
+            gHMD.cursorIntersectsUI(handled);
+
 			if (!handled)
 			{
 				LLTool *tool = LLToolMgr::getInstance()->getCurrentTool();
@@ -3507,10 +3538,10 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 		mCurrentMousePoint.mY = point.mY;
 	}
 
-    //if (gHMD.shouldRender())
-    //{
-    //    gHMD.getWorldMouseCoordinatesFromUIScreen(mCurrentMousePoint.mX, mCurrentMousePoint.mY, mCurrentMousePointHMD.mX, mCurrentMousePointHMD.mY);
-    //}
+    if (gHMD.shouldRender())
+    {
+        gHMD.updateHMDMouseInfo(mCurrentMousePoint.mX, mCurrentMousePoint.mY);
+    }
 }
 
 
@@ -3555,10 +3586,6 @@ void LLViewerWindow::renderSelections( BOOL for_gl_pick, BOOL pick_parcel_walls,
 			gGL.pushMatrix();
 			gGL.loadIdentity();
 			F32 depth = llmax(1.f, hud_bbox.getExtentLocal().mV[VX] * 1.1f);
-            //if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
-            //{
-            //    offsetX = gHMD.getOrthoPixelOffset() * (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? 1.0f : -1.0f);
-            //}
 			gGL.ortho((-0.5f * LLViewerCamera::getInstance()->getAspect()) + offsetX, (0.5f * LLViewerCamera::getInstance()->getAspect()) + offsetX, -0.5f, 0.5f, 0.f, depth);
 			
 			gGL.matrixMode(LLRender::MM_MODELVIEW);
@@ -3566,12 +3593,6 @@ void LLViewerWindow::renderSelections( BOOL for_gl_pick, BOOL pick_parcel_walls,
 			gGL.loadIdentity();
 			gGL.loadMatrix(OGL_TO_CFR_ROTATION);		// Load Cory's favorite reference frame
             offsetX = 0.0f;
-            //if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
-            //{
-            //    F32 viewCenter = gHMD.getPhysicalScreenWidth() * 0.25f;
-            //    F32 eyeProjShift = viewCenter - (gHMD.getLensSeparationDistance() * 0.5f);
-            //    offsetX = ((4.0f * eyeProjShift) / gHMD.getPhysicalScreenWidth()) * (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? 1.0f : -1.0f);
-            //}
 			gGL.translatef(-hud_bbox.getCenterLocal().mV[VX] + (depth *0.5f) + offsetX, 0.f, 0.f);
 		}
 
@@ -3877,24 +3898,34 @@ LLViewerObject* LLViewerWindow::cursorIntersect(S32 mouse_x, S32 mouse_y, F32 de
 	LLVector3 mouse_hud_start = mouse_point_hud - LLVector3(depth, 0, 0);
 	LLVector3 mouse_hud_end   = mouse_point_hud + LLVector3(depth, 0, 0);
 	
-	// world coordinates of mouse
-	LLVector3 mouse_direction_global = mouseDirectionGlobal(x,y);
-	LLVector3 mouse_point_global = LLViewerCamera::getInstance()->getOrigin();
-	
-	//get near clip plane
-	LLVector3 n = LLViewerCamera::getInstance()->getAtAxis();
-	LLVector3 p = mouse_point_global + n * LLViewerCamera::getInstance()->getNear();
+    //get near clip plane
+    LLVector3 origin = LLViewerCamera::getInstance()->getOrigin();
+    LLVector3 lookDir = LLViewerCamera::getInstance()->getAtAxis();
+    LLVector3 p = origin + lookDir * LLViewerCamera::getInstance()->getNear();
 
-	//project mouse point onto plane
-	LLVector3 pos;
-	line_plane(mouse_point_global, mouse_direction_global, p, n, pos);
-	mouse_point_global = pos;
+    LLVector3 mouse_direction_global;
+    if (gHMD.shouldRender())
+    {
+        //get dir from viewpoint to mouse_world
+        const LLVector3& mouse_world = gHMD.getMouseWorld();
+	    LLVector3 viewPoint = origin + (lookDir * gHMD.getUIEyeDepth());
+	    mouse_direction_global = mouse_world - viewPoint;
+        mouse_direction_global.normalize();
+    }
+    else
+    {
+        //get direction from center of screen to position of mousecursor on screen
+	    mouse_direction_global = mouseDirectionGlobal(x,y);
+    }
 
-	LLVector3 mouse_world_start = mouse_point_global;
-	LLVector3 mouse_world_end   = mouse_point_global + mouse_direction_global * depth;
+    //project mouse point onto plane
+    LLVector3 mouse_world_start;
+    line_plane(origin, mouse_direction_global, p, lookDir, mouse_world_start);
+    LLVector3 mouse_world_end = mouse_world_start + (mouse_direction_global * depth);
 
 	if (!LLViewerJoystick::getInstance()->getOverrideCamera())
-	{ //always set raycast intersection to mouse_world_end unless
+	{
+        //always set raycast intersection to mouse_world_end unless
 		//flycam is on (for DoF effect)
 		gDebugRaycastIntersection.load3(mouse_world_end.mV);
 	}

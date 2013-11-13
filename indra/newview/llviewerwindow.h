@@ -452,9 +452,6 @@ private:
 	BOOL			mMiddleMouseDown;
 	BOOL			mRightMouseDown;
 
-    LLCoordGL		mCurrentMousePointHMD;      // last mouse position in GL coords adjusted for head movement in HMD
-    LLCoordGL		mLastMousePointHMD;         // Mouse point at last frame adjusted for head movement in HMD
-
 	LLProgressView	*mProgressView;
 
 	LLFrameTimer	mToolTipFadeTimer;

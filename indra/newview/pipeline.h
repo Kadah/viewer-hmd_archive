@@ -657,7 +657,7 @@ public:
 	F32									mSpotLightFade[2];
 	LLPointer<LLDrawable>				mTargetShadowSpotLight[2];
 
-    //utilitye buffer for rendering oculus UI surface
+    //utility buffers for rendering various HMD (e.g. Oculus Rift) surfaces
     LLPointer<LLVertexBuffer> mOculusUISurface;
     LLPointer<LLVertexBuffer> mOculusDepthShape;
 

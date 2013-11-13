@@ -115,6 +115,7 @@ void render_hud_attachments();
 void render_ui_3d();
 void render_ui_2d();
 void render_disconnected_background();
+void drawBox(const LLVector3& c, const LLVector3& r);
 
 void display_startup()
 {
@@ -1352,24 +1353,69 @@ BOOL setup_hud_matrices(const LLRect& screen_region)
 
 static LLFastTimer::DeclareTimer FTM_SWAP("Swap");
 
-void render_hmd_mouse_cursor()
+void render_hmd_mouse_cursor_3d()
 {
-    if (gHMD.shouldRender())
+    if (gHMD.shouldRender() && !gHMD.cursorIntersectsUI())
     {
-        // Draw "3D" mouse cursor onto UI RT so that it gets "warped" when placed on
-        // toroid surface and matches what is visible.
+        LLViewerCamera* camera = LLViewerCamera::getInstance();
+        LLVector3 origin = camera->getOrigin();
+        LLVector3 pt;
+        if (gHMD.cursorIntersectsWorld())
+        {
+            pt.set(gHMD.getMouseWorldRaycastIntersection().getF32ptr());
+        }
+        else
+        {
+            pt.set(gHMD.getMouseWorldEnd().getF32ptr());
+        }
+        LLVector3 delta = pt - origin;
+        F32 dist = delta.magVec();
+        F32 tanA = tanf(DEG_TO_RAD * gHMD.getWorldCursorSizeMult());
+        F32 scalingFactor = dist * tanA;
+
+        gGL.matrixMode(LLRender::MM_MODELVIEW);
         gGL.pushMatrix();
-        gGL.pushUIMatrix();
-        S32 mx = gViewerWindow->getCurrentMouseX();
-        S32 my = gViewerWindow->getCurrentMouseY();
+        gGL.loadMatrix(gGLModelView);
+
+        LLVertexBuffer::unbind();
+        LLGLSUIDefault s1;
+        LLGLDisable fog(GL_FOG);
+        gPipeline.disableLights();
+
         LLViewerTexture* pCursorTexture = gHMD.getCursorImage((U32)gViewerWindow->getWindow()->getCursor());
-        if (pCursorTexture)
+        if (false && pCursorTexture)
         {
             if (LLGLSLShader::sNoFixedFunction)
             {
                 gOneTextureNoColorProgram.bind();
             }
-            gl_draw_scaled_image(mx, my - 32, 32, 32, pCursorTexture);
+            gGL.setColorMask(true, false);
+            gGL.color4f(1.0f,1.0f,1.0f,1.0f);
+            gGL.getTexUnit(0)->bind(pCursorTexture);
+
+            LLVector3 l	= camera->getLeftAxis() * scalingFactor;
+            LLVector3 u	= camera->getUpAxis()   * scalingFactor;
+            // mouse-pointer upper-left is at the intersection point,
+            // thus the rect is offset right and down from the center
+            LLVector3 bottomLeft	= pt - u;
+            LLVector3 bottomRight	= pt - l - u;
+            LLVector3 topLeft		= pt;
+            LLVector3 topRight		= pt - l;
+            // only go to 0.98 of the texture width so that annoying lines on right side are not drawn.
+            // Even though the textures are blank on the right side, we still render a thin white line for no
+            // apparent reason.  Only going to 0.98 of the texture width seems to solve this problem and since
+            // no mouse cursor textures go all the way to the right side anyway, there's no loss of quality.
+            gGL.begin( LLRender::TRIANGLE_STRIP );
+                gGL.texCoord2f( 0.0f,  0.0f ); gGL.vertex3fv( bottomLeft.mV );
+                gGL.texCoord2f( 0.98f, 0.0f	); gGL.vertex3fv( bottomRight.mV );
+                gGL.texCoord2f( 0.0f,  1.0f ); gGL.vertex3fv( topLeft.mV );
+            gGL.end();
+            gGL.begin( LLRender::TRIANGLE_STRIP );
+                gGL.texCoord2f( 0.98f, 0.0f	); gGL.vertex3fv( bottomRight.mV );
+                gGL.texCoord2f( 0.98f, 1.0f ); gGL.vertex3fv( topRight.mV );
+                gGL.texCoord2f( 0.0f,  1.0f ); gGL.vertex3fv( topLeft.mV );
+            gGL.end();
+            gGL.flush();
             if (LLGLSLShader::sNoFixedFunction)
             {
                 gOneTextureNoColorProgram.unbind();
@@ -1377,20 +1423,77 @@ void render_hmd_mouse_cursor()
         }
         else
         {
+            LLVector3 translate(gHMD.getMouseWorldRaycastIntersection().getF32ptr());
+            gGL.translatef(translate.mV[0], translate.mV[1], translate.mV[2]);
+
+            LLVector4a debug_binormal;
+            debug_binormal.setCross3(gHMD.getMouseWorldRaycastNormal(), gHMD.getMouseWorldRaycastTangent());
+            debug_binormal.mul(gHMD.getMouseWorldRaycastTangent().getF32ptr()[3]);
+            LLVector3 normal(gHMD.getMouseWorldRaycastNormal().getF32ptr());
+            LLVector3 binormal(debug_binormal.getF32ptr());
+
+            LLCoordFrame orient;
+            orient.lookDir(normal, binormal);
+            LLMatrix4 rotation;
+            orient.getRotMatrixToParent(rotation);
+            gGL.multMatrix((float*)rotation.mMatrix);
+
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+		        gDebugProgram.bind();
+            }
+	        gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
+
+            gGL.diffuseColor4f(1,0,0,0.5f);
+            drawBox(LLVector3::zero, LLVector3(0.1f * scalingFactor, 0.022f * scalingFactor, 0.022f * scalingFactor));
+            gGL.diffuseColor4f(0,1,0,0.5f);
+            drawBox(LLVector3::zero, LLVector3(0.021f * scalingFactor, 0.1f * scalingFactor, 0.021f * scalingFactor));
+            gGL.diffuseColor4f(0,0,1,0.5f);
+            drawBox(LLVector3::zero, LLVector3(0.02f * scalingFactor, 0.02f * scalingFactor, 0.1f * scalingFactor));
+
+            gGL.flush();
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+		        gDebugProgram.unbind();
+            }
+        }
+        gGL.matrixMode(LLRender::MM_MODELVIEW);
+        gGL.popMatrix();
+    }
+}
+
+void render_hmd_mouse_cursor_2d()
+{
+    if (gHMD.shouldRender())
+    {
+        if (gHMD.cursorIntersectsUI())
+        {
+            gGL.pushMatrix();
+            gGL.pushUIMatrix();
             if (LLGLSLShader::sNoFixedFunction)
             {
                 gUIProgram.bind();
             }
-            gl_line_2d(mx - 10, my, mx + 10, my, LLColor4(1.0f, 0.0f, 0.0f));
-            gl_line_2d(mx, my - 10, mx, my + 10, LLColor4(0.0f, 1.0f, 0.0f));
+            S32 mx = gViewerWindow->getCurrentMouseX();
+            S32 my = gViewerWindow->getCurrentMouseY();
+            LLViewerTexture* pCursorTexture = gHMD.getCursorImage((U32)gViewerWindow->getWindow()->getCursor());
+            if (pCursorTexture)
+            {
+                gl_draw_scaled_image(mx, my - 32, 32, 32, pCursorTexture);
+            }
+            else
+            {
+                gl_line_2d(mx - 10, my, mx + 10, my, LLColor4(1.0f, 0.0f, 0.0f));
+                gl_line_2d(mx, my - 10, mx, my + 10, LLColor4(0.0f, 1.0f, 0.0f));
+            }
+            gGL.popUIMatrix();
+            gGL.popMatrix();
+            gGL.flush();
             if (LLGLSLShader::sNoFixedFunction)
             {
                 gUIProgram.unbind();
             }
         }
-        gGL.popUIMatrix();
-        gGL.popMatrix();
-        gGL.flush();
     }
 }
 
@@ -1443,6 +1546,7 @@ void render_ui(F32 zoom_factor, int subfield)
                         render_disconnected_background();
                     }
                 }
+                render_hmd_mouse_cursor_3d();
             }
 
             if (gPipeline.mUIScreen.isComplete())
@@ -1561,7 +1665,7 @@ void render_ui(F32 zoom_factor, int subfield)
         }
         gRenderUIMode = FALSE;
 
-        render_hmd_mouse_cursor();
+        render_hmd_mouse_cursor_2d();
 
         if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
         {

@@ -11156,7 +11156,6 @@ void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL 
         }
 
         gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w - gHMD.getXCenterOffset()) * 0.5f, h * 0.5f);
-        gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
         if (pRight)
         {
             gGL.getTexUnit(0)->bind(pRight);

@@ -64,8 +64,9 @@ public:
         kFlag_MainIsFullScreen          = 1 << 4,
         kFlag_IsCalibrated              = 1 << 5,
         kFlag_ShowDepthVisual           = 1 << 6,
-        kFlag_UIEyeDepthCalculated      = 1 << 7,
-        kFlag_ShowCalibrationUI         = 1 << 8,
+        kFlag_ShowCalibrationUI         = 1 << 7,
+        kFlag_CursorIntersectsWorld     = 1 << 8,
+        kFlag_CursorIntersectsUI        = 1 << 9,
     };
 
 public:
@@ -90,12 +91,13 @@ public:
     void isCalibrated(BOOL b) { if (b) { mFlags |= kFlag_IsCalibrated; } else { mFlags &= ~kFlag_IsCalibrated; } }
     BOOL shouldShowDepthVisual() const { return ((mFlags & kFlag_ShowDepthVisual) != 0) ? TRUE : FALSE; }
     void shouldShowDepthVisual(BOOL b) { if (b) { mFlags |= kFlag_ShowDepthVisual; } else { mFlags &= ~kFlag_ShowDepthVisual; } }
-    BOOL isUIEyeDepthCalculated() const { return ((mFlags & kFlag_UIEyeDepthCalculated) != 0) ? TRUE : FALSE; }
-    void isUIEyeDepthCalculated(BOOL b) { if (b) { mFlags |= kFlag_UIEyeDepthCalculated; } else { mFlags &= ~kFlag_UIEyeDepthCalculated; } }
     BOOL shouldShowCalibrationUI() const { return ((mFlags & kFlag_ShowCalibrationUI) != 0) ? TRUE : FALSE; }
     void shouldShowCalibrationUI(BOOL b) { if (b) { mFlags |= kFlag_ShowCalibrationUI; } else { mFlags &= ~kFlag_ShowCalibrationUI; } }
+    BOOL cursorIntersectsWorld() const { return ((mFlags & kFlag_CursorIntersectsWorld) != 0) ? TRUE : FALSE; }
+    void cursorIntersectsWorld(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsWorld; } else { mFlags &= ~kFlag_CursorIntersectsWorld; } }
+    BOOL cursorIntersectsUI() const { return ((mFlags & kFlag_CursorIntersectsUI) != 0) ? TRUE : FALSE; }
+    void cursorIntersectsUI(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsUI; } else { mFlags &= ~kFlag_CursorIntersectsUI; } }
     
-
     BOOL isManuallyCalibrating() const;
     void BeginManualCalibration();
     const std::string& getCalibrationText() const;
@@ -134,7 +136,7 @@ public:
     F32 getEyeDepth() const { return mEyeDepth; }
     F32 getUIEyeDepth();
     F32 getUIMagnification() { return mUIMagnification; }
-    void setUIMagnification(F32 f) { mUIMagnification = f; isUIEyeDepthCalculated(FALSE); }
+    void setUIMagnification(F32 f) { mUIMagnification = f; calculateUIEyeDepth(); }
 
     // coefficients for the distortion function.
     LLVector4 getDistortionConstants() const;
@@ -162,16 +164,16 @@ public:
     LLQuaternion getHeadRotationCorrection() const;
     void addHeadRotationCorrection(LLQuaternion quat);
 
-    void setBaseModelView(F32* m) { for (int i = 0; i < 16; ++i) { mBaseModelView[i] = m[i]; } }
+    void setBaseModelView(F32* m);
     F32* getBaseModelView() { return mBaseModelView; }
-    void setBaseModelViewInv(F32* m) { for (int i = 0; i < 16; ++i) { mBaseModelViewInv[i] = m[i]; } }
     F32* getBaseModelViewInv() { return mBaseModelViewInv; }
     void setBaseProjection(F32* m) { for (int i = 0; i < 16; ++i) { mBaseProjection[i] = m[i]; } }
     F32* getBaseProjection() { return mBaseProjection; }
-    void setUIModelView(F32* m) { for (int i = 0; i < 16; ++i) { mUIModelView[i] = m[i]; } }
+    void setUIModelView(F32* m);
     F32* getUIModelView() { return mUIModelView; }
-    void setUIModelViewInv(F32* m) { for (int i = 0; i < 16; ++i) { mUIModelViewInv[i] = m[i]; } }
     F32* getUIModelViewInv() { return mUIModelViewInv; }
+    void setBaseLookAt(F32* m) { for (int i = 0; i < 16; ++i) { mBaseLookAt[i] = m[i]; } }
+    F32* getBaseLookAt() { return mBaseLookAt; }
     
     //// array of parameters for controlling additional Red and Blue scaling in order to reduce chromatic aberration
     //// caused by the Rift lenses.  Additional per-channel scaling is applied after distortion:
@@ -214,8 +216,22 @@ public:
     LLViewerTexture* getCalibrateForeground();
 
     LLVertexBuffer* createUISurface();
-    void getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2& uv);
-    BOOL getWorldMouseCoordinatesFromUIScreen(S32 ui_x, S32 ui_y, S32& world_x, S32& world_y);
+    void getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* uv = NULL);
+    void updateHMDMouseInfo(S32 ui_x, S32 ui_y);
+    const LLVector3& getMouseWorld() const { return mMouseWorld; }
+    void setMouseWorldEnd(const LLVector4a& mwe) { mMouseWorldEnd = mwe; }
+    const LLVector4a& getMouseWorldEnd() const { return mMouseWorldEnd; }
+    void setMouseWorldIntersection(const LLVector4a& intersection, const LLVector4a& normal, const LLVector4a& tangent)
+    {
+        mMouseWorldRaycastIntersection = intersection;
+        mMouseWorldRaycastNormal = normal;
+        mMouseWorldRaycastTangent = tangent;
+    }
+    const LLVector4a& getMouseWorldRaycastIntersection() const { return mMouseWorldRaycastIntersection; }
+    const LLVector4a& getMouseWorldRaycastNormal() const { return mMouseWorldRaycastNormal; }
+    const LLVector4a& getMouseWorldRaycastTangent() const { return mMouseWorldRaycastTangent; }
+
+    F32 getWorldCursorSizeMult() const { return mMouseWorldSizeMult; }
 
     void saveSettings();
 
@@ -223,9 +239,10 @@ public:
     static void onChangeUISurfaceShape();
     static void onChangeEyeDepth();
     static void onChangeUIMagnification();
+    static void onChangeWorldCursorSizeMult();
 
 private:
-    F32 calculateUIEyeDepth();
+    void calculateUIEyeDepth();
 
 private:
     LLHMDImpl* mImpl;
@@ -236,6 +253,7 @@ private:
     F32 mBaseProjection[16];
     F32 mUIModelView[16];
     F32 mUIModelViewInv[16];
+    F32 mBaseLookAt[16];
     S32 mMainWindowWidth;
     S32 mMainWindowHeight;
     LLVector2 mUICurvedSurfaceArc;
@@ -244,6 +262,16 @@ private:
     F32 mEyeDepth;
     F32 mUIMagnification;
     F32 mUIEyeDepth;
+    // in-world coordinates of mouse pointer on the UI surface
+    LLVector3 mMouseWorld;
+    // in-world coordinates of raycast from viewpoint into world, assuming no collisions.
+    // Used for rendering in-world cursor over sky, etc.
+    LLVector4a mMouseWorldEnd;
+    // gDebugRaycastIntersection - i.e. where ray from eye to the world (through (mMouseWorld) meets landscape (or an object)
+    LLVector4a mMouseWorldRaycastIntersection;
+    LLVector4a mMouseWorldRaycastNormal;
+    LLVector4a mMouseWorldRaycastTangent;
+    F32 mMouseWorldSizeMult;
 };
 
 extern LLHMD gHMD;
