@@ -49,6 +49,7 @@
 #include "llappviewer.h"
 #include "llrendersphere.h"
 #include "llviewerpartsim.h"
+#include "llviewercontrol.h" // for gSavedSettings
 
 static U32 sDataMask = LLDrawPoolAvatar::VERTEX_DATA_MASK;
 static U32 sBufferUsage = GL_STREAM_DRAW_ARB;
@@ -310,6 +311,11 @@ void LLDrawPoolAvatar::beginDeferredRiggedMaterialAlpha(S32 pass)
 
 	sVertexProgram = &gDeferredMaterialProgram[pass];
 
+	if (LLPipeline::sUnderWaterRender)
+	{
+		sVertexProgram = &(gDeferredMaterialWaterProgram[pass]);
+	}
+
 	gPipeline.bindDeferredShader(*sVertexProgram);
 	sDiffuseChannel = sVertexProgram->enableTexture(LLViewerShaderMgr::DIFFUSE_MAP);
 	normal_channel = sVertexProgram->enableTexture(LLViewerShaderMgr::BUMP_MAP);
@@ -502,7 +508,7 @@ S32 LLDrawPoolAvatar::getNumDeferredPasses()
 {
 	if (LLPipeline::sImpostorRender)
 	{
-		return 3;
+		return 19;
 	}
 	else
 	{
@@ -688,11 +694,9 @@ void LLDrawPoolAvatar::beginDeferredImpostor()
 	}
 
 	sVertexProgram = &gDeferredImpostorProgram;
-
 	specular_channel = sVertexProgram->enableTexture(LLViewerShaderMgr::SPECULAR_MAP);
 	normal_channel = sVertexProgram->enableTexture(LLViewerShaderMgr::DEFERRED_NORMAL);
 	sDiffuseChannel = sVertexProgram->enableTexture(LLViewerShaderMgr::DIFFUSE_MAP);
-
 	sVertexProgram->bind();
 	sVertexProgram->setMinimumAlpha(0.01f);
 }
@@ -703,8 +707,9 @@ void LLDrawPoolAvatar::endDeferredImpostor()
 	sVertexProgram->disableTexture(LLViewerShaderMgr::DEFERRED_NORMAL);
 	sVertexProgram->disableTexture(LLViewerShaderMgr::SPECULAR_MAP);
 	sVertexProgram->disableTexture(LLViewerShaderMgr::DIFFUSE_MAP);
-	sVertexProgram->unbind();
-	gGL.getTexUnit(0)->activate();
+	gPipeline.unbindDeferredShader(*sVertexProgram);
+   sVertexProgram = NULL;
+   sDiffuseChannel = 0;
 }
 
 void LLDrawPoolAvatar::beginDeferredRigid()
@@ -892,6 +897,8 @@ void LLDrawPoolAvatar::beginRiggedGlow()
 		sVertexProgram->bind();
 
 		sVertexProgram->uniform1f(LLShaderMgr::TEXTURE_GAMMA, LLPipeline::sRenderDeferred ? 2.2f : 1.1f);
+		F32 gamma = gSavedSettings.getF32("RenderDeferredDisplayGamma");
+		sVertexProgram->uniform1f(LLShaderMgr::DISPLAY_GAMMA, (gamma > 0.1f) ? 1.0f / gamma : (1.0f/2.2f));
 	}
 }
 
@@ -944,6 +951,9 @@ void LLDrawPoolAvatar::beginRiggedFullbright()
 		else 
 		{
 			sVertexProgram->uniform1f(LLShaderMgr::TEXTURE_GAMMA, 2.2f);
+
+			F32 gamma = gSavedSettings.getF32("RenderDeferredDisplayGamma");
+			sVertexProgram->uniform1f(LLShaderMgr::DISPLAY_GAMMA, (gamma > 0.1f) ? 1.0f / gamma : (1.0f/2.2f));
 		}
 	}
 }
@@ -1045,6 +1055,8 @@ void LLDrawPoolAvatar::beginRiggedFullbrightShiny()
 		else 
 		{
 			sVertexProgram->uniform1f(LLShaderMgr::TEXTURE_GAMMA, 2.2f);
+			F32 gamma = gSavedSettings.getF32("RenderDeferredDisplayGamma");
+			sVertexProgram->uniform1f(LLShaderMgr::DISPLAY_GAMMA, (gamma > 0.1f) ? 1.0f / gamma : (1.0f/2.2f));
 		}
 	}
 }
@@ -1104,6 +1116,12 @@ void LLDrawPoolAvatar::beginDeferredRiggedMaterial(S32 pass)
 		return;
 	}
 	sVertexProgram = &gDeferredMaterialProgram[pass+LLMaterial::SHADER_COUNT];
+
+	if (LLPipeline::sUnderWaterRender)
+	{
+		sVertexProgram = &(gDeferredMaterialWaterProgram[pass+LLMaterial::SHADER_COUNT]);
+	}
+
 	sVertexProgram->bind();
 	normal_channel = sVertexProgram->enableTexture(LLViewerShaderMgr::BUMP_MAP);
 	specular_channel = sVertexProgram->enableTexture(LLViewerShaderMgr::SPECULAR_MAP);
@@ -1248,10 +1266,7 @@ void LLDrawPoolAvatar::renderAvatars(LLVOAvatar* single_avatar, S32 pass)
 
 		if (impostor)
 		{
-			if (LLPipeline::sRenderDeferred && //rendering a deferred impostor
-				!LLPipeline::sReflectionRender && 
-				avatarp->mImpostor.isComplete() && //impostor has required data channels
-				avatarp->mImpostor.getNumTextures() >= 3) 
+			if (LLPipeline::sRenderDeferred && !LLPipeline::sReflectionRender && avatarp->mImpostor.isComplete()) 
 			{
 				if (normal_channel > -1)
 				{

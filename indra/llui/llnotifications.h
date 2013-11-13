@@ -98,6 +98,8 @@
 #include "llrefcount.h"
 #include "llsdparam.h"
 
+#include "llnotificationslistener.h"
+
 class LLAvatarName;
 typedef enum e_notification_priority
 {
@@ -874,6 +876,13 @@ class LLNotifications :
 
 	friend class LLSingleton<LLNotifications>;
 public:
+
+    // Needed to clear up RefCounted things prior to actual destruction
+    // as the singleton nature of the class makes them do "bad things"
+    // on at least Mac, if not all 3 platforms
+    //
+    void clear();
+
 	// load all notification descriptions from file
 	// calling more than once will overwrite existing templates
 	// but never delete a template
@@ -942,8 +951,6 @@ public:
 	bool getIgnoreAllNotifications();
 
 	bool isVisibleByRules(LLNotificationPtr pNotification);
-    
-    static void cleanUp();
 	
 private:
 	// we're a singleton, so we don't have a public constructor
@@ -957,6 +964,8 @@ private:
 	bool uniqueFilter(LLNotificationPtr pNotification);
 	bool uniqueHandler(const LLSD& payload);
 	bool failedUniquenessTest(const LLSD& payload);
+	LLNotificationChannelPtr pHistoryChannel;
+	LLNotificationChannelPtr pExpirationChannel;
 	
 	TemplateMap mTemplates;
 
@@ -970,6 +979,8 @@ private:
 	GlobalStringMap mGlobalStrings;
 
 	bool mIgnoreAllNotifications;
+
+	boost::scoped_ptr<LLNotificationsListener> mListener;
 
 	std::vector<LLNotificationChannelPtr> mDefaultChannels;
 };

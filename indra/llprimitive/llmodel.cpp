@@ -166,6 +166,7 @@ LLModel::EModelStatus load_face_from_dom_triangles(std::vector<LLVolumeFace>& fa
 
 	if ( !get_dom_sources(inputs, pos_offset, tc_offset, norm_offset, idx_stride, pos_source, tc_source, norm_source) || !pos_source )
 	{
+		llwarns << "Could not find dom sources for basic geo data; invalid model." << llendl;
 		return LLModel::BAD_ELEMENT;
 	}
 
@@ -201,6 +202,7 @@ LLModel::EModelStatus load_face_from_dom_triangles(std::vector<LLVolumeFace>& fa
 			if (((i + pos_offset) > index_count)
 			 || ((idx[i+pos_offset]*3+2) > vertex_count))
 			{
+				llwarns << "Out of range index data; invalid model." << llendl;
 				return LLModel::BAD_ELEMENT;
 			}
 
@@ -210,6 +212,7 @@ LLModel::EModelStatus load_face_from_dom_triangles(std::vector<LLVolumeFace>& fa
 
 			if (!cv.getPosition().isFinite3())
 			{
+				llwarns << "Nan positional data, invalid model." << llendl;
 				return LLModel::BAD_ELEMENT;
 			}
 		}
@@ -218,9 +221,11 @@ LLModel::EModelStatus load_face_from_dom_triangles(std::vector<LLVolumeFace>& fa
 		{
 			// guard against model data specifiying out of range indices or tcs
 			//
+			
 			if (((i + tc_offset) > index_count)
-			 || ((idx[i+pos_offset]*2+1) > tc_count))
+			 || ((idx[i+tc_offset]*2+1) > tc_count))
 			{
+				llwarns << "Out of range TC indices." << llendl;
 				return LLModel::BAD_ELEMENT;
 			}
 
@@ -241,6 +246,7 @@ LLModel::EModelStatus load_face_from_dom_triangles(std::vector<LLVolumeFace>& fa
 			if (((i + norm_offset) > index_count)
 				|| ((idx[i+norm_offset]*3+2) > norm_count))
 			{
+				llwarns << "Found out of range norm indices, invalid model." << llendl;
 				return LLModel::BAD_ELEMENT;
 			}
 
@@ -379,6 +385,7 @@ LLModel::EModelStatus load_face_from_dom_polylist(std::vector<LLVolumeFace>& fac
 
 	if (!get_dom_sources(inputs, pos_offset, tc_offset, norm_offset, idx_stride, pos_source, tc_source, norm_source))
 	{
+		llwarns << "Could not get DOM sources for basic geo data, invalid model." << llendl;
 		return LLModel::BAD_ELEMENT;
 	}
 
@@ -429,9 +436,10 @@ LLModel::EModelStatus load_face_from_dom_polylist(std::vector<LLVolumeFace>& fac
 			{
 				// guard against model data specifiying out of range indices or verts
 				//
-				if (((i + pos_offset) > index_count)
-				 || ((idx[i+pos_offset]*3+2) > vertex_count))
+				if (((cur_idx + pos_offset) > index_count)
+				 || ((idx[cur_idx+pos_offset]*3+2) > vertex_count))
 				{
+					llwarns << "Out of range position indices, invalid model." << llendl;
 					return LLModel::BAD_ELEMENT;
 				}
 
@@ -451,9 +459,10 @@ LLModel::EModelStatus load_face_from_dom_polylist(std::vector<LLVolumeFace>& fac
 			{
 				// guard against model data specifiying out of range indices or tcs
 				//
-				if (((i + pos_offset) > index_count)
+				if (((cur_idx + tc_offset) > index_count)
 				 || ((idx[cur_idx+tc_offset]*2+1) > tc_count))
 				{
+					llwarns << "Out of range TC indices, invalid model." << llendl;
 					return LLModel::BAD_ELEMENT;
 				}
 
@@ -471,9 +480,10 @@ LLModel::EModelStatus load_face_from_dom_polylist(std::vector<LLVolumeFace>& fac
 			{
 				// guard against model data specifiying out of range indices or norms
 				//
-				if (((i + pos_offset) > index_count)
+				if (((cur_idx + norm_offset) > index_count)
 				 || ((idx[cur_idx+norm_offset]*3+2) > norm_count))
 				{
+					llwarns << "Out of range norm indices, invalid model." << llendl;
 					return LLModel::BAD_ELEMENT;
 				}
 
@@ -652,6 +662,7 @@ LLModel::EModelStatus load_face_from_dom_polygons(std::vector<LLVolumeFace>& fac
 			domVertices* vertices = (domVertices*) elem.cast();
 			if (!vertices)
 			{
+				llwarns << "Could not find vertex source, invalid model." << llendl;
 				return LLModel::BAD_ELEMENT;
 			}
 			domInputLocal_Array& v_inp = vertices->getInput_array();
@@ -665,6 +676,7 @@ LLModel::EModelStatus load_face_from_dom_polygons(std::vector<LLVolumeFace>& fac
 					domSource* src = (domSource*) elem.cast();
 					if (!src)
 					{
+						llwarns << "Could not find DOM source, invalid model." << llendl;
 						return LLModel::BAD_ELEMENT;
 					}
 					v = &(src->getFloat_array()->getValue());
@@ -680,6 +692,7 @@ LLModel::EModelStatus load_face_from_dom_polygons(std::vector<LLVolumeFace>& fac
 			domSource* src = (domSource*) elem.cast();
 			if (!src)
 			{
+				llwarns << "Could not find DOM source, invalid model." << llendl;
 				return LLModel::BAD_ELEMENT;
 			}
 			n = &(src->getFloat_array()->getValue());
@@ -692,6 +705,7 @@ LLModel::EModelStatus load_face_from_dom_polygons(std::vector<LLVolumeFace>& fac
 			domSource* src = (domSource*) elem.cast();
 			if (!src)
 			{
+				llwarns << "Could not find DOM source, invalid model." << llendl;
 				return LLModel::BAD_ELEMENT;
 			}
 			t = &(src->getFloat_array()->getValue());

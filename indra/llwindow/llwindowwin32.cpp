@@ -4094,4 +4094,5 @@ std::vector<std::string> LLWindowWin32::getDynamicFallbackFontList()
 	return std::vector<std::string>();
 }
 
+
 #endif // LL_WINDOWS

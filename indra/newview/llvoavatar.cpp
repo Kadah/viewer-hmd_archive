@@ -670,8 +670,6 @@ LLVOAvatar::LLVOAvatar(const LLUUID& id,
 	mAttachmentGeometryBytes(-1),
 	mAttachmentSurfaceArea(-1.f),
 	mReportedVisualComplexity(-1),
-	mReportedAttachmentGeometryBytes(-1),
-	mReportedAttachmentSurfaceArea(-1.f),
 	mTurning(FALSE),
 	mLastSkeletonSerialNum( 0 ),
 	mIsSitting(FALSE),
@@ -709,7 +707,7 @@ LLVOAvatar::LLVOAvatar(const LLUUID& id,
 	mVisualComplexityStale(TRUE),
 	mLoadedCallbacksPaused(FALSE),
 	mHasPelvisOffset( FALSE ),
-	mRenderUnloadedAvatar(LLCachedControl<bool>(gSavedSettings, "RenderUnloadedAvatar")),
+	mRenderUnloadedAvatar(LLCachedControl<bool>(gSavedSettings, "RenderUnloadedAvatar", false)),
 	mLastRezzedStatus(-1),
 	mIsEditingAppearance(FALSE),
 	mUseLocalAppearance(FALSE),
@@ -936,7 +934,7 @@ void LLVOAvatar::deleteLayerSetCaches(bool clearAll)
 		}
 		if (mBakedTextureDatas[i].mMaskTexName)
 		{
-			LLImageGL::deleteTextures(LLTexUnit::TT_TEXTURE, 0, -1, 1, (GLuint*)&(mBakedTextureDatas[i].mMaskTexName));
+			LLImageGL::deleteTextures(1, (GLuint*)&(mBakedTextureDatas[i].mMaskTexName));
 			mBakedTextureDatas[i].mMaskTexName = 0 ;
 		}
 	}
@@ -2710,8 +2708,8 @@ void LLVOAvatar::idleUpdateNameTagText(BOOL new_name)
 				LLFontGL::getFontSansSerifSmall());
 		}
 
-		static LLUICachedControl<bool> show_display_names("NameTagShowDisplayNames");
-		static LLUICachedControl<bool> show_usernames("NameTagShowUsernames");
+		static LLUICachedControl<bool> show_display_names("NameTagShowDisplayNames", true);
+		static LLUICachedControl<bool> show_usernames("NameTagShowUsernames", true);
 
 		if (LLAvatarName::useDisplayNames())
 		{
@@ -2937,7 +2935,7 @@ void LLVOAvatar::idleUpdateNameTagAlpha(BOOL new_name, F32 alpha)
 
 LLColor4 LLVOAvatar::getNameTagColor(bool is_friend)
 {
-	static LLUICachedControl<bool> show_friends("NameTagShowFriends");
+	static LLUICachedControl<bool> show_friends("NameTagShowFriends", false);
 	const char* color_name;
 	if (show_friends && is_friend)
 	{
@@ -2990,80 +2988,89 @@ bool LLVOAvatar::isVisuallyMuted()
 {
 	bool muted = false;
 
-	// Priority order (highest priority first)
-	// * own avatar is never visually muted
-	// * if on the "always draw normally" list, draw them normally
-	// * if on the "always visually mute" list, mute them
-	// * draw them normally if they meet the following criteria:
-	//       - within the closest N avatars OR on friends list OR in an IM chat
-	//       - AND aren't over the thresholds
-	// * otherwise visually mute all other avatars
-
 	if (!isSelf())
 	{
-		static LLCachedControl<F32> render_mute_threshold(gSavedSettings, "RenderAutoMuteThreshold");
-		static LLCachedControl<U32> max_attachment_bytes(gSavedSettings, "RenderAutoMuteByteLimit");
-		static LLCachedControl<F32> max_attachment_area(gSavedSettings, "RenderAutoMuteSurfaceAreaLimit");
-		static LLCachedControl<U32> max_render_cost(gSavedSettings, "RenderAutoMuteRenderCostLimit");
-
-		if (mVisuallyMuteSetting == ALWAYS_VISUAL_MUTE)
-		{	// Always want to see this AV as an imposter
-			muted = true;
-		}
-		else if (mVisuallyMuteSetting == NEVER_VISUAL_MUTE)
-		{	// Never show as imposter
-			muted = false;
-		}
-		else if (LLVOAvatar::sLODFactor <= render_mute_threshold)
+		static LLCachedControl<U32> render_auto_mute_functions(gSavedSettings, "RenderAutoMuteFunctions", 0);
+		if (render_auto_mute_functions)		// Hacky debug switch for developing feature
 		{
-			F64 now = LLFrameTimer::getTotalSeconds();
+			// Priority order (highest priority first)
+			// * own avatar is never visually muted
+			// * if on the "always draw normally" list, draw them normally
+			// * if on the "always visually mute" list, mute them
+			// * draw them normally if they meet the following criteria:
+			//       - within the closest N avatars OR on friends list OR in an IM chat
+			//       - AND aren't over the thresholds
+			// * otherwise visually mute all other avatars
 
-			if (now < mCachedVisualMuteUpdateTime)
-			{	// Use cached mute value
-				muted = mCachedVisualMute;
+			static LLCachedControl<U32> max_attachment_bytes(gSavedSettings, "RenderAutoMuteByteLimit", 0);
+			static LLCachedControl<F32> max_attachment_area(gSavedSettings, "RenderAutoMuteSurfaceAreaLimit", 0.0);
+			static LLCachedControl<U32> max_render_cost(gSavedSettings, "RenderAutoMuteRenderWeightLimit", 0);
+
+			if (mVisuallyMuteSetting == ALWAYS_VISUAL_MUTE)
+			{	// Always want to see this AV as an impostor
+				muted = true;
 			}
-			else
-			{	// Determine if visually muted or not
+			else if (mVisuallyMuteSetting == NEVER_VISUAL_MUTE)
+			{	// Never show as impostor
+				muted = false;
+			}
+			else 
+			{
+				F64 now = LLFrameTimer::getTotalSeconds();
 
-				U32 max_cost = (U32) (max_render_cost*(LLVOAvatar::sLODFactor+0.5));
+				if (now < mCachedVisualMuteUpdateTime)
+				{	// Use cached mute value
+					muted = mCachedVisualMute;
+				}
+				else
+				{	// Determine if visually muted or not
 
-				muted = LLMuteList::getInstance()->isMuted(getID()) ||
-					(mAttachmentGeometryBytes > max_attachment_bytes && max_attachment_bytes > 0) ||
-					(mAttachmentSurfaceArea > max_attachment_area && max_attachment_area > 0.f) ||
-					(mVisualComplexity > max_cost && max_render_cost > 0);
+					U32 max_cost = (U32) (max_render_cost*(LLVOAvatar::sLODFactor+0.5));
 
-				// Could be part of the grand || collection above, but yanked out to make the logic visible
-				if (!muted)
-				{
-					if (sMaxVisible > 0)
-					{	// They are above the visibilty rank - mute them
-						muted = (mVisibilityRank > sMaxVisible);
-					}
-			
-					/* Not used - always draw friends or those in IMs.  Works nicely, needs UI?
-					if (muted ||					// Don't mute friends or IMs
-						sMaxVisible == 0)
+					muted = LLMuteList::getInstance()->isMuted(getID()) ||
+						(mAttachmentGeometryBytes > max_attachment_bytes && max_attachment_bytes > 0) ||
+						(mAttachmentSurfaceArea > max_attachment_area && max_attachment_area > 0.f) ||
+						(mVisualComplexity > max_cost && max_render_cost > 0);
+
+					// Could be part of the grand || collection above, but yanked out to make the logic visible
+					if (!muted)
 					{
-						muted = !(LLAvatarTracker::instance().isBuddy(getID()));
-						if (muted)
-						{	// Not a friend, so they are muted ... are they in an IM?
-							LLUUID session_id = gIMMgr->computeSessionID(IM_NOTHING_SPECIAL,getID());
-							muted = !gIMMgr->hasSession(session_id);
+						if (sMaxVisible > 0)
+						{	// They are above the visibilty rank - mute them
+							muted = (mVisibilityRank > sMaxVisible);
+						}
+			
+						// Always draw friends or those in IMs.  Needs UI?
+						if ((render_auto_mute_functions & 0x02) &&
+							(muted || sMaxVisible == 0))		// Don't mute friends or IMs							
+						{
+							muted = !(LLAvatarTracker::instance().isBuddy(getID()));
+							if (muted)
+							{	// Not a friend, so they are muted ... are they in an IM?
+								LLUUID session_id = gIMMgr->computeSessionID(IM_NOTHING_SPECIAL,getID());
+								muted = !gIMMgr->hasSession(session_id);
+							}
 						}
 					}
-					*/
-				}
 
-				// Save visual mute state and set interval for updating
-				const F64 SECONDS_BETWEEN_RENDER_AUTO_MUTE_UPDATES = 1.5;
-				mCachedVisualMuteUpdateTime = now + SECONDS_BETWEEN_RENDER_AUTO_MUTE_UPDATES;		
-				mCachedVisualMute = muted;
-			} 
+					// Save visual mute state and set interval for updating
+					const F64 SECONDS_BETWEEN_RENDER_AUTO_MUTE_UPDATES = 1.5;
+					mCachedVisualMuteUpdateTime = now + SECONDS_BETWEEN_RENDER_AUTO_MUTE_UPDATES;		
+					mCachedVisualMute = muted;
+				} 
+			}
 		}
 	}
 
 	return muted;
 }
+
+void	LLVOAvatar::forceUpdateVisualMuteSettings()
+{	
+	// Set the cache time so it's updated ASAP
+	mCachedVisualMuteUpdateTime = LLFrameTimer::getTotalSeconds() - 1.0;
+}
+
 
 //------------------------------------------------------------------------
 // updateCharacter()
@@ -3384,8 +3391,8 @@ BOOL LLVOAvatar::updateCharacter(LLAgent &agent)
 
 			LLVector3 pelvisDir( mRoot->getWorldMatrix().getFwdRow4().mV );
 
-			static LLCachedControl<F32> s_pelvis_rot_threshold_slow(gSavedSettings, "AvatarRotateThresholdSlow");
-			static LLCachedControl<F32> s_pelvis_rot_threshold_fast(gSavedSettings, "AvatarRotateThresholdFast");
+			static LLCachedControl<F32> s_pelvis_rot_threshold_slow(gSavedSettings, "AvatarRotateThresholdSlow", 60.0);
+			static LLCachedControl<F32> s_pelvis_rot_threshold_fast(gSavedSettings, "AvatarRotateThresholdFast", 2.0);
 
 			F32 pelvis_rot_threshold = clamp_rescale(speed, 0.1f, 1.0f, s_pelvis_rot_threshold_slow, s_pelvis_rot_threshold_fast);
 						
@@ -3809,11 +3816,11 @@ U32 LLVOAvatar::renderSkinned(EAvatarRenderPass pass)
 	{	//LOD changed or new mesh created, allocate new vertex buffer if needed
 		if (needs_rebuild || mDirtyMesh >= 2 || mVisibilityRank <= 4)
 		{
-		updateMeshData();
+			updateMeshData();
 			mDirtyMesh = 0;
-		mNeedsSkin = TRUE;
-		mDrawable->clearState(LLDrawable::REBUILD_GEOMETRY);
-	}
+			mNeedsSkin = TRUE;
+			mDrawable->clearState(LLDrawable::REBUILD_GEOMETRY);
+		}
 	}
 
 	if (LLViewerShaderMgr::instance()->getVertexShaderLevel(LLViewerShaderMgr::SHADER_AVATAR) <= 0)
@@ -5515,7 +5522,15 @@ void LLVOAvatar::addChild(LLViewerObject *childp)
 	LLViewerObject::addChild(childp);
 	if (childp->mDrawable)
 	{
-		attachObject(childp);
+		if (!attachObject(childp))
+		{
+			llwarns << "addChild() failed for " 
+					<< childp->getID()
+					<< " item " << childp->getAttachmentItemID()
+					<< llendl;
+			// MAINT-3312 backout
+			// mPendingAttachment.push_back(childp);
+		}
 	}
 	else
 	{
@@ -5548,8 +5563,27 @@ LLViewerJointAttachment* LLVOAvatar::getTargetAttachmentPoint(LLViewerObject* vi
 
 	if (!attachment)
 	{
-		llwarns << "Object attachment point invalid: " << attachmentID << llendl;
-		attachment = get_if_there(mAttachmentPoints, 1, (LLViewerJointAttachment*)NULL); // Arbitrary using 1 (chest)
+		llwarns << "Object attachment point invalid: " << attachmentID 
+			<< " trying to use 1 (chest)"
+			<< llendl;
+
+		attachment = get_if_there(mAttachmentPoints, 1, (LLViewerJointAttachment*)NULL);	// Arbitrary using 1 (chest)
+		if (attachment)
+		{
+			llwarns << "Object attachment point invalid: " << attachmentID 
+				<< " on object " << viewer_object->getID()
+				<< " attachment item " << viewer_object->getAttachmentItemID()
+				<< " falling back to 1 (chest)"
+				<< llendl;
+		}
+		else
+		{
+			llwarns << "Object attachment point invalid: " << attachmentID 
+				<< " on object " << viewer_object->getID()
+				<< " attachment item " << viewer_object->getAttachmentItemID()
+				<< "Unable to use fallback attachment point 1 (chest)"
+				<< llendl;
+		}
 	}
 
 	return attachment;
@@ -5620,13 +5654,22 @@ void LLVOAvatar::lazyAttach()
 	
 	for (U32 i = 0; i < mPendingAttachment.size(); i++)
 	{
-		if (mPendingAttachment[i]->mDrawable)
+		LLPointer<LLViewerObject> cur_attachment = mPendingAttachment[i];
+		if (cur_attachment->mDrawable)
 		{
-			attachObject(mPendingAttachment[i]);
+			if (!attachObject(cur_attachment))
+			{	// Drop it
+				llwarns << "attachObject() failed for " 
+					<< cur_attachment->getID()
+					<< " item " << cur_attachment->getAttachmentItemID()
+					<< llendl;
+				// MAINT-3312 backout
+				//still_pending.push_back(cur_attachment);
+			}
 		}
 		else
 		{
-			still_pending.push_back(mPendingAttachment[i]);
+			still_pending.push_back(cur_attachment);
 		}
 	}
 
@@ -5933,6 +5976,28 @@ BOOL LLVOAvatar::isWearingWearableType(LLWearableType::EType type) const
 
 
 
+LLViewerObject *	LLVOAvatar::findAttachmentByID( const LLUUID & target_id ) const
+{
+	for(attachment_map_t::const_iterator attachment_points_iter = mAttachmentPoints.begin();
+		attachment_points_iter != gAgentAvatarp->mAttachmentPoints.end();
+		++attachment_points_iter)
+	{
+		LLViewerJointAttachment* attachment = attachment_points_iter->second;
+		for (LLViewerJointAttachment::attachedobjs_vec_t::iterator attachment_iter = attachment->mAttachedObjects.begin();
+			 attachment_iter != attachment->mAttachedObjects.end();
+			 ++attachment_iter)
+		{
+			LLViewerObject *attached_object = (*attachment_iter);
+			if (attached_object &&
+				attached_object->getID() == target_id)
+			{
+				return attached_object;
+			}
+		}
+	}
+
+	return NULL;
+}
 
 
 // virtual
@@ -7266,7 +7331,7 @@ void LLVOAvatar::onBakedTextureMasksLoaded( BOOL success, LLViewerFetchedTexture
 			}
 
 			U32 gl_name;
-			LLImageGL::generateTextures(LLTexUnit::TT_TEXTURE, GL_ALPHA8, 1, &gl_name );
+			LLImageGL::generateTextures(1, &gl_name );
 			stop_glerror();
 
 			gGL.getTexUnit(0)->bindManual(LLTexUnit::TT_TEXTURE, gl_name);
@@ -7303,7 +7368,7 @@ void LLVOAvatar::onBakedTextureMasksLoaded( BOOL success, LLViewerFetchedTexture
 						maskData->mLastDiscardLevel = discard_level;
 						if (self->mBakedTextureDatas[baked_index].mMaskTexName)
 						{
-							LLImageGL::deleteTextures(LLTexUnit::TT_TEXTURE, 0, -1, 1, &(self->mBakedTextureDatas[baked_index].mMaskTexName));
+							LLImageGL::deleteTextures(1, &(self->mBakedTextureDatas[baked_index].mMaskTexName));
 						}
 						self->mBakedTextureDatas[baked_index].mMaskTexName = gl_name;
 						found_texture_id = true;
@@ -7871,8 +7936,7 @@ void LLVOAvatar::getImpostorValues(LLVector4a* extents, LLVector3& angle, F32& d
 
 void LLVOAvatar::idleUpdateRenderCost()
 {
-	static LLCachedControl<U32> max_render_cost(gSavedSettings, "RenderAutoMuteRenderCostLimit");
-
+	static LLCachedControl<U32> max_render_cost(gSavedSettings, "RenderAutoMuteRenderWeightLimit", 0);
 	static const U32 ARC_LIMIT = 20000;
 
 	if (gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_ATTACHMENT_BYTES))
@@ -8036,7 +8100,7 @@ LLColor4 LLVOAvatar::calcMutedAVColor(F32 value, S32 range_low, S32 range_high)
  
 	LLColor4 new_color = lerp(*spectrum_color[spectrum_index_1], *spectrum_color[spectrum_index_2], fractBetween);
 	new_color.normalize();
-	new_color *= 0.9f;
+	new_color *= 0.7f;		// Tone it down a bit
 
 	//llinfos << "From value " << std::setprecision(3) << value << " returning color " << new_color 
 	//	<< " using indexes " << spectrum_index_1 << ", " << spectrum_index_2

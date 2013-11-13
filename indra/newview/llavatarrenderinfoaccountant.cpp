@@ -38,6 +38,7 @@
 #include "llhttpclient.h"
 #include "lltimer.h"
 #include "llviewercontrol.h"
+#include "llviewermenu.h"
 #include "llviewerobjectlist.h"
 #include "llviewerregion.h"
 #include "llvoavatar.h"
@@ -46,8 +47,6 @@
 
 static	const std::string KEY_AGENTS = "agents";			// map
 static 	const std::string KEY_WEIGHT = "weight";			// integer
-static	const std::string KEY_GEOMETRY = "geometry";		// integer
-static	const std::string KEY_SURFACE =	"surface";			// float
 
 static	const std::string KEY_IDENTIFIER = "identifier";
 static	const std::string KEY_MESSAGE = "message";
@@ -94,7 +93,7 @@ public:
 		{
 			if (LLAvatarRenderInfoAccountant::logRenderInfo())
 			{
-				llinfos << "Result for avatar weights request for region " << regionp->getName() << ":" << llendl;
+				llinfos << "LRI: Result for avatar weights request for region " << regionp->getName() << ":" << llendl;
 			}
 
 			if (content.isMap())
@@ -117,21 +116,13 @@ public:
 
 								if (LLAvatarRenderInfoAccountant::logRenderInfo())
 								{
-									llinfos << " Agent " << target_agent_id 
+									llinfos << "LRI:  Agent " << target_agent_id 
 										<< ": " << agent_info_map << llendl;
 								}
 
 								if (agent_info_map.has(KEY_WEIGHT))
 								{
 									((LLVOAvatar *) avatarp)->setReportedVisualComplexity(agent_info_map[KEY_WEIGHT].asInteger());
-								}
-								if (agent_info_map.has(KEY_GEOMETRY))
-								{
-									((LLVOAvatar *) avatarp)->setReportedAttachmentGeometryBytes(agent_info_map[KEY_GEOMETRY].asInteger());
-								}
-								if (agent_info_map.has(KEY_SURFACE))
-								{
-									((LLVOAvatar *) avatarp)->setReportedAttachmentSurfaceArea((F32) agent_info_map[KEY_SURFACE].asReal());
 								}
 							}
 							report_iter++;
@@ -196,7 +187,7 @@ public:
 		{
 			if (LLAvatarRenderInfoAccountant::logRenderInfo())
 			{
-				llinfos << "Result for avatar weights POST for region " << regionp->getName()
+				llinfos << "LRI: Result for avatar weights POST for region " << regionp->getName()
 					<< ": " << content << llendl;
 			}
 
@@ -234,7 +225,7 @@ void LLAvatarRenderInfoAccountant::sendRenderInfoToRegion(LLViewerRegion * regio
 	{
 		if (logRenderInfo())
 		{
-			llinfos << "Sending avatar render info to region "
+			llinfos << "LRI: Sending avatar render info to region "
 				<< regionp->getName() 
 				<< " from " << url
 				<< llendl;
@@ -259,24 +250,16 @@ void LLAvatarRenderInfoAccountant::sendRenderInfoToRegion(LLViewerRegion * regio
 				if (avatar->getVisualComplexity() > 0)
 				{
 					info[KEY_WEIGHT] = avatar->getVisualComplexity();
-				}
-				if (avatar->getAttachmentGeometryBytes() >= 0)
-				{
-					info[KEY_GEOMETRY] = (S32) avatar->getAttachmentGeometryBytes();
-				}
-				if (avatar->getAttachmentSurfaceArea() >= 0.f)
-				{
-					info[KEY_SURFACE] = avatar->getAttachmentSurfaceArea();
-				}
-				if (info.size() > 0)
-				{
 					agents[avatar->getID().asString()] = info;
-				}
 
-				if (logRenderInfo())
-				{
-					llinfos << "Sending avatar render info for " << avatar->getID()
-						<< ": " << info << llendl;
+					if (logRenderInfo())
+					{
+						llinfos << "LRI: Sending avatar render info for " << avatar->getID()
+							<< ": " << info << llendl;
+						llinfos << "LRI: geometry " << avatar->getAttachmentGeometryBytes()
+							<< ", area " << avatar->getAttachmentSurfaceArea()
+							<< llendl;
+					}
 				}
 			}
 			iter++;
@@ -302,7 +285,7 @@ void LLAvatarRenderInfoAccountant::getRenderInfoFromRegion(LLViewerRegion * regi
 	{
 		if (logRenderInfo())
 		{
-			llinfos << "Requesting avatar render info for region "
+			llinfos << "LRI: Requesting avatar render info for region "
 				<< regionp->getName() 
 				<< " from " << url
 				<< llendl;
@@ -325,6 +308,12 @@ void LLAvatarRenderInfoAccountant::idle()
 	
 		S32 num_avs = LLCharacter::sInstances.size();
 
+		if (logRenderInfo())
+		{
+			llinfos << "LRI: Scanning all regions and checking for render info updates"
+				<< llendl;
+		}
+
 		// Check all regions and see if it's time to fetch/send data
 		for (LLWorld::region_list_t::const_iterator iter = LLWorld::getInstance()->getRegionList().begin();
 				iter != LLWorld::getInstance()->getRegionList().end(); ++iter)
@@ -346,6 +335,35 @@ void LLAvatarRenderInfoAccountant::idle()
 		// We scanned all the regions, reset the request timer.
 		sRenderInfoReportTimer.resetWithExpiry(SECS_BETWEEN_REGION_SCANS);
 	}
+
+	static LLCachedControl<U32> render_auto_mute_functions(gSavedSettings, "RenderAutoMuteFunctions", 0);
+	static U32 prev_render_auto_mute_functions = (U32) -1;
+	if (prev_render_auto_mute_functions != render_auto_mute_functions)
+	{
+		prev_render_auto_mute_functions = render_auto_mute_functions;
+
+		// Adjust menus
+		BOOL show_items = (BOOL)(render_auto_mute_functions & 0x04);
+		gMenuAvatarOther->setItemVisible( std::string("Normal"), show_items);
+		gMenuAvatarOther->setItemVisible( std::string("Always use impostor"), show_items);
+		gMenuAvatarOther->setItemVisible( std::string("Never use impostor"), show_items);
+		gMenuAvatarOther->setItemVisible( std::string("Impostor seperator"), show_items);
+		
+		gMenuAttachmentOther->setItemVisible( std::string("Normal"), show_items);
+		gMenuAttachmentOther->setItemVisible( std::string("Always use impostor"), show_items);
+		gMenuAttachmentOther->setItemVisible( std::string("Never use impostor"), show_items);
+		gMenuAttachmentOther->setItemVisible( std::string("Impostor seperator"), show_items);
+
+		if (!show_items)
+		{	// Turning off visual muting
+			for (std::vector<LLCharacter*>::iterator iter = LLCharacter::sInstances.begin();
+					iter != LLCharacter::sInstances.end(); ++iter)
+			{	// Make sure all AVs have the setting cleared
+				LLVOAvatar* inst = (LLVOAvatar*) *iter;
+				inst->setCachedVisualMute(false);
+			}
+		}
+	}
 }
 
 
@@ -353,19 +371,28 @@ void LLAvatarRenderInfoAccountant::idle()
 // Make sRenderInfoReportTimer expire so the next call to idle() will scan and query a new region
 // called via LLViewerRegion::setCapabilitiesReceived() boost signals when the capabilities
 // are returned for a new LLViewerRegion, and is the earliest time to get render info
-void LLAvatarRenderInfoAccountant::expireRenderInfoReportTimer()
+void LLAvatarRenderInfoAccountant::expireRenderInfoReportTimer(const LLUUID& region_id)
 {
 	if (logRenderInfo())
 	{
-		llinfos << "Viewer has new region capabilities" << llendl;
+		llinfos << "LRI: Viewer has new region capabilities, clearing global render info timer" 
+			<< " and timer for region " << region_id
+			<< llendl;
 	}
 
-	sRenderInfoReportTimer.resetWithExpiry(0.f);
+	// Reset the global timer so it will scan regions immediately
+	sRenderInfoReportTimer.reset();
+	
+	LLViewerRegion* regionp = LLWorld::instance().getRegionFromID(region_id);
+	if (regionp)
+	{	// Reset the region's timer so it will request data immediately
+		regionp->getRenderInfoRequestTimer().reset();
+	}
 }
 
 // static 
 bool LLAvatarRenderInfoAccountant::logRenderInfo()
 {
-	static LLCachedControl<bool> render_mute_logging_enabled(gSavedSettings, "RenderAutoMuteLogging");
+	static LLCachedControl<bool> render_mute_logging_enabled(gSavedSettings, "RenderAutoMuteLogging", false);
 	return render_mute_logging_enabled;
 }

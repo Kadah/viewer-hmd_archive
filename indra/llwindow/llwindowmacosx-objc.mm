@@ -55,9 +55,9 @@ void setupCocoa()
 		// ie. running './secondlife -set Language fr' would cause a pop-up saying can't open document 'fr'
 		// when init'ing the Cocoa App window.
 		[[NSUserDefaults standardUserDefaults] setObject:@"NO" forKey:@"NSTreatUnknownArgumentsAsOpen"];
-
-		[pool release];
 		
+		[pool release];
+
 		inited = true;
 	}
 }
@@ -211,7 +211,7 @@ NSWindowRef createNSWindow(int x, int y, int width, int height, int screen_index
     NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_index];
 
 	LLNSWindow *window = [[LLNSWindow alloc]initWithContentRect:NSMakeRect(x, y, width, height)
-                                                      styleMask:NSTitledWindowMask | NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTexturedBackgroundWindowMask backing:NSBackingStoreBuffered defer:NO screen:s];
+													  styleMask:NSTitledWindowMask | NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTexturedBackgroundWindowMask backing:NSBackingStoreBuffered defer:NO screen:s];
 	[window makeKeyAndOrderFront:nil];
 	[window setAcceptsMouseMovedEvents:TRUE];
 	return window;

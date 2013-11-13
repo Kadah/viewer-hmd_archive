@@ -176,24 +176,28 @@ BOOL LLVOPartGroup::isActive() const
 
 F32 LLVOPartGroup::getBinRadius()
 { 
-	return mScale.mV[0]*2.f;
+	return mViewerPartGroupp->getBoxSide();
 }
 
 void LLVOPartGroup::updateSpatialExtents(LLVector4a& newMin, LLVector4a& newMax)
 {		
 	const LLVector3& pos_agent = getPositionAgent();
 
-	newMin.load3( (pos_agent - mScale).mV);
-	newMax.load3( (pos_agent + mScale).mV);
+	LLVector4a scale;
+	LLVector4a p;
+
+	p.load3(pos_agent.mV);
+
+	scale.splat(mScale.mV[0]+mViewerPartGroupp->getBoxSide()*0.5f);
+
+	newMin.setSub(p, scale);
+	newMax.setAdd(p,scale);
 
 	llassert(newMin.isFinite3());
 	llassert(newMax.isFinite3());
 
-	LLVector4a pos;
-	pos.load3(pos_agent.mV);
-
-	llassert(pos.isFinite3());
-	mDrawable->setPositionGroup(pos);
+	llassert(p.isFinite3());
+	mDrawable->setPositionGroup(p);
 }
 
 void LLVOPartGroup::idleUpdate(LLAgent &agent, LLWorld &world, const F64 &time)
@@ -280,10 +284,6 @@ void LLVOPartGroup::getBlendFunc(S32 idx, U32& src, U32& dst)
 		LLViewerPart* part = mViewerPartGroupp->mParticles[idx];
 		src = part->mBlendFuncSource;
 		dst = part->mBlendFuncDest;
-	}
-	else
-	{
-		llerrs << "WTF?" << llendl;
 	}
 }
 
@@ -459,6 +459,7 @@ BOOL LLVOPartGroup::updateGeometry(LLDrawable *drawable)
 	}
 
 	//record max scale (used to stretch bounding box for visibility culling)
+	
 	mScale.set(max_scale, max_scale, max_scale);
 
 	mDrawable->movePartition();

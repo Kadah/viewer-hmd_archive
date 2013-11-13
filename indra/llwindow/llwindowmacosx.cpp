@@ -166,8 +166,7 @@ LLWindowMacOSX::LLWindowMacOSX(LLWindowCallbacks* callbacks,
 	// Stash an object pointer for OSMessageBox()
 	gWindowImplementation = this;
 	// Create the GL context and set it up for windowed or fullscreen, as appropriate.
-	LL_INFOS("Window") << "Creating context..." << LL_ENDL;
-	if (createContext(x, y, width, height, 32, fullscreen, disable_vsync))
+	if(createContext(x, y, width, height, 32, fullscreen, disable_vsync))
 	{
 		if (mWindow[0] != NULL)
 		{
@@ -334,7 +333,16 @@ void callMouseExit()
 
 void callWindowFocus()
 {
-	gWindowImplementation->getCallbacks()->handleFocus(gWindowImplementation);
+   if ( gWindowImplementation && gWindowImplementation->getCallbacks() )
+	{
+		gWindowImplementation->getCallbacks()->handleFocus (gWindowImplementation);
+	}
+	else
+	{
+		LL_WARNS("COCOA") << "Window Implementation or callbacks not yet initialized." << LL_ENDL;
+	}
+
+
 }
 
 void callWindowUnfocus()
@@ -748,7 +756,7 @@ BOOL LLWindowMacOSX::getPosition(LLCoordScreen *position)
 	float rect[4];
 	S32 err = -1;
 
-	if (mFullscreen)
+	if(mFullscreen)
 	{
 		position->mX = 0;
 		position->mY = 0;
@@ -774,7 +782,7 @@ BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
 	float rect[4];
 	S32 err = -1;
 
-	if (mFullscreen)
+	if(mFullscreen)
 	{
 		size->mX = mFullscreenWidth;
 		size->mY = mFullscreenHeight;
@@ -800,7 +808,7 @@ BOOL LLWindowMacOSX::getSize(LLCoordWindow *size)
 	float rect[4];
 	S32 err = -1;
 	
-	if (mFullscreen)
+	if(mFullscreen)
 	{
 		size->mX = mFullscreenWidth;
 		size->mY = mFullscreenHeight;
@@ -1289,6 +1297,8 @@ void LLWindowMacOSX::setupFailure(const std::string& text, const std::string& ca
 	OSMessageBox(text, caption, type);
 }
 
+			// Note on event recording - QUIT is a known special case and we are choosing NOT to record it for the record and playback feature 
+			// it is handled at a very low-level
 const char* cursorIDToName(int id)
 {
 	switch (id)

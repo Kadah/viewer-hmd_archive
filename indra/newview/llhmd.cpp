@@ -671,7 +671,7 @@ void LLHMDImpl::shutdown()
 
 void LLHMDImpl::onIdle()
 {
-    static LLCachedControl<bool> debug_hmd(gSavedSettings, "DebugHMDEnable");
+    static LLCachedControl<bool> debug_hmd(gSavedSettings, "DebugHMDEnable", false);
     if ( ! debug_hmd && ! gHMD.shouldRender() )
     {
         return;

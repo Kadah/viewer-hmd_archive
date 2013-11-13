@@ -112,6 +112,14 @@ class LLViewerObject : public LLPrimitive, public LLRefCount, public LLGLUpdate
 protected:
 	~LLViewerObject(); // use unref()
 
+	// TomY: Provide for a list of extra parameter structures, mapped by structure name
+	struct ExtraParameter
+	{
+		BOOL in_use;
+		LLNetworkData *data;
+	};
+	std::map<U16, ExtraParameter*> mExtraParameterList;
+
 public:
 	typedef std::list<LLPointer<LLViewerObject> > child_list_t;
 	typedef std::list<LLPointer<LLViewerObject> > vobj_list_t;
@@ -163,6 +171,8 @@ public:
 	virtual BOOL	isAttachment() const { return FALSE; }
 	virtual LLVOAvatar* getAvatar() const;  //get the avatar this object is attached to, or NULL if object is not an attachment
 	virtual BOOL	isHUDAttachment() const { return FALSE; }
+	virtual BOOL	isTempAttachment() const;
+
 	virtual void 	updateRadius() {};
 	virtual F32 	getVObjRadius() const; // default implemenation is mDrawable->getRadius()
 	
@@ -331,6 +341,8 @@ public:
 	LLViewerTexture		*getTENormalMap(const U8 te) const;
 	LLViewerTexture		*getTESpecularMap(const U8 te) const;
 	
+	bool 						isImageAlphaBlended(const U8 te) const;
+
 	void fitFaceTexture(const U8 face);
 	void sendTEUpdate() const;			// Sends packed representation of all texture entry information
 	
@@ -553,8 +565,6 @@ public:
 	std::vector<LLVector3> mUnselectedChildrenPositions ;
 
 private:
-	// TomY: Provide for a list of extra parameter structures, mapped by structure name
-	struct ExtraParameter;
 	ExtraParameter* createNewParameterEntry(U16 param_type);
 	ExtraParameter* getExtraParameterEntry(U16 param_type) const;
 	ExtraParameter* getExtraParameterEntryCreate(U16 param_type);
@@ -794,14 +804,6 @@ private:
 	LLUUID mAttachmentItemID; // ItemID of the associated object is in user inventory.
 	EObjectUpdateType	mLastUpdateType;
 	BOOL	mLastUpdateCached;
-
-	// TomY: Provide for a list of extra parameter structures, mapped by structure name
-	struct ExtraParameter
-	{
-		BOOL in_use;
-		LLNetworkData *data;
-	};
-	std::map<U16, ExtraParameter*> mExtraParameterList;
 };
 
 ///////////////////
@@ -847,7 +849,7 @@ public:
 								LLStrider<LLVector4a>& verticesp,
 								LLStrider<LLVector3>& normalsp, 
 								LLStrider<LLVector2>& texcoordsp,
-								LLStrider<LLColor4U>& colorsp,
+								LLStrider<LLColor4U>& colorsp, 
 								LLStrider<LLColor4U>& emissivep,
 								LLStrider<U16>& indicesp) = 0;
 

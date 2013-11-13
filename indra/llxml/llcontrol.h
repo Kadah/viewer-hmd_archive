@@ -241,7 +241,8 @@ public:
 	LLVector4	getVector4(const std::string& name);
 	LLRect		getRect(const std::string& name);
 	LLSD        getLLSD(const std::string& name);
-    
+
+
 	LLColor4	getColor(const std::string& name);
 	LLColor4	getColor4(const std::string& name);
 	LLColor3	getColor3(const std::string& name);
@@ -408,16 +409,6 @@ public:
 		if (mCachedControlPtr.isNull())
 		{
 			mCachedControlPtr = new LLControlCache<T>(group, name, default_value, comment);
-		}
-	}
-
-	LLCachedControl(LLControlGroup& group,
-					const std::string& name)
-	{
-		mCachedControlPtr = LLControlCache<T>::getInstance(name);
-		if (mCachedControlPtr.isNull())
-		{
-			mCachedControlPtr = new LLControlCache<T>(group, name);
 		}
 	}
 

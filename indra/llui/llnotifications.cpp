@@ -1125,7 +1125,7 @@ LLNotificationChannel::LLNotificationChannel(const Params& p)
 	mName(p.name.isProvided() ? p.name : LLUUID::generateNewID().asString())
 {
 	BOOST_FOREACH(const std::string& source, p.sources)
-{
+    {
 		connectToChannel(source);
 	}
 }
@@ -1206,15 +1206,13 @@ LLNotifications::LLNotifications()
 :	LLNotificationChannelBase(LLNotificationFilters::includeEverything),
 	mIgnoreAllNotifications(false)
 {
+        mListener.reset(new LLNotificationsListener(*this));
 	LLUICtrl::CommitCallbackRegistry::currentRegistrar().add("Notification.Show", boost::bind(&LLNotifications::addFromCallback, this, _2));
 }
 
-//static
-void LLNotifications::cleanUp()
+void LLNotifications::clear()
 {
-    // Letting C++ to delete this singleton on exit leads to a crash as critical services gets deleted before.
-    // This allows notifications to cleanly close up when the time is right (see LLAppViewer::cleanup() for the call).
-    deleteSingleton();
+   mDefaultChannels.clear();
 }
 
 // The expiration channel gets all notifications that are cancelled
