@@ -1380,7 +1380,7 @@ void render_hmd_mouse_cursor_3d()
         gPipeline.disableLights();
 
         LLViewerTexture* pCursorTexture = gHMD.getCursorImage((U32)gViewerWindow->getWindow()->getCursor());
-        if (false && pCursorTexture)
+        if (pCursorTexture)
         {
             if (LLGLSLShader::sNoFixedFunction)
             {
