@@ -949,7 +949,7 @@ void LLAgentCamera::cameraOrbitIn(const F32 meters)
 		if (!gSavedSettings.getBOOL("FreezeTime") && mCameraZoomFraction < MIN_ZOOM_FRACTION && meters > 0.f)
 		{
 			// No need to animate, camera is already there.
-            if (gHMD.shouldRender())
+            if (gHMD.isHMDMode())
             {
 			    changeCameraToFirstPerson(FALSE);
             }
@@ -1956,7 +1956,7 @@ void LLAgentCamera::handleScrollWheel(S32 clicks)
 			mFollowCam.zoom(clicks); 
 			if (mFollowCam.isZoomedToMinimumDistance())
 			{
-                if (gHMD.shouldRender())
+                if (gHMD.isHMDMode())
                 {
                     changeCameraToFirstPerson(FALSE);
                 }

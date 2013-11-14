@@ -4629,7 +4629,7 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
 
 	gGL.setColorMask(true, true);
 
-    BOOL renderHMDDepthVisual = gHMD.shouldRender() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
+    BOOL renderHMDDepthVisual = gHMD.isHMDMode() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
     if (renderHMDDepthVisual)
     {
         LLVertexBuffer::unbind();
@@ -4851,7 +4851,7 @@ void LLPipeline::renderGeomPostDeferred(LLCamera& camera, bool do_occlusion)
 {
 	LLFastTimer t(FTM_POST_DEFERRED_POOLS);
 
-    BOOL renderHMDDepthVisual = gHMD.shouldRender() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
+    BOOL renderHMDDepthVisual = gHMD.isHMDMode() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
     if (renderHMDDepthVisual)
     {
         return;
@@ -7680,7 +7680,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
         {
             if (!mLeftEye.isComplete())
             {
-                if (!mLeftEye.allocate(LLHMD::kHMDEyeWidth, LLHMD::kHMDHeight, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
+                if (!mLeftEye.allocate(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
                 {
                     llwarns << "could not allocate Left Eye buffer for HMD render mode" << LL_ENDL;
                     return;
@@ -7692,7 +7692,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
         {
             if (!mRightEye.isComplete())
             {
-                if (!mRightEye.allocate(LLHMD::kHMDEyeWidth, LLHMD::kHMDHeight, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
+                if (!mRightEye.allocate(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
                 {
                     llwarns << "could not allocate Right Eye buffer for HMD render mode" << LL_ENDL;
                     return;
@@ -7842,7 +7842,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}*/
 
-    gViewerWindow->setup3DViewport(0, 0, gHMD.shouldRender() ? LLHMD::kHMDEyeWidth : 0);
+    gViewerWindow->setup3DViewport(0, 0, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0);
 
 	tc2.setVec((F32)mScreen.getWidth(), (F32)mScreen.getHeight());
 
@@ -7860,7 +7860,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 		bool multisample = RenderFSAASamples > 1 && mFXAABuffer.isComplete();
 
-        gViewerWindow->setup3DViewport(0, 0, gHMD.shouldRender() ? LLHMD::kHMDEyeWidth : 0);
+        gViewerWindow->setup3DViewport(0, 0, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0);
 				
 		if (dof_enabled)
 		{
@@ -8051,7 +8051,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				}
 				else
 				{
-                    gViewerWindow->setup3DViewport(0, 0, gHMD.shouldRender() ? LLHMD::kHMDEyeWidth : 0);
+                    gViewerWindow->setup3DViewport(0, 0, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0);
 				}
 
 				shader = &gDeferredDoFCombineProgram;
@@ -8182,7 +8182,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
 			}
 			
-            gViewerWindow->setup3DViewport(0, 0, gHMD.shouldRender() ? LLHMD::kHMDEyeWidth : 0);
+            gViewerWindow->setup3DViewport(0, 0, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0);
 
 			F32 scale_x = (F32) width/mFXAABuffer.getWidth();
 			F32 scale_y = (F32) height/mFXAABuffer.getHeight();
@@ -11800,7 +11800,7 @@ void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL 
 
         F32 w = 1.0f;
         F32 h = 1.0f;
-        F32 as = (F32)LLHMD::kHMDEyeWidth / (F32)LLHMD::kHMDHeight;
+        F32 as = (F32)gHMD.getHMDEyeWidth() / (F32)gHMD.getHMDHeight();
         F32 scaleFactor = 1.0f / gHMD.getDistortionScale();
         LLVector4 hmd_param = gHMD.getDistortionConstants();
 
@@ -11842,7 +11842,7 @@ void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL 
         gBarrelDistortProgram.unbind();
     }
 
-    if (LLRenderTarget::sUseFBO && (!gHMD.shouldRender() || LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE))
+    if (LLRenderTarget::sUseFBO && (!gHMD.isHMDMode() || LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE))
 	{
         //copy depth buffer from mScreen to framebuffer
 		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 

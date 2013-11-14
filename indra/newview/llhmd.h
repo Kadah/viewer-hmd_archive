@@ -27,6 +27,13 @@
 #ifndef LL_LLHMD_H
 #define LL_LLHMD_H
 
+#if LL_WINDOWS || LL_DARWIN
+    #define LL_HMD_SUPPORTED 1
+#else
+    // We do not support the Oculus Rift on other platforms at the moment
+    #define LL_HMD_SUPPORTED 0
+#endif
+
 class LLHMDImpl;
 class LLViewerTexture;
 class LLVertexBuffer;
@@ -38,20 +45,10 @@ class LLHMD
 public:
     enum eRenderMode
     {
-        RenderMode_None = 0,            // Do not render to HMD
-        RenderMode_HMD,                 // render to HMD
-        RenderMode_ScreenStereo,        // render to screen in stereoscopic mode (no distortion).  Useful for debugging.
-        RenderMode_ScreenStereoDistort, // render to screen in stereoscopic mode (with distortion).  Useful for debugging.
-        RenderMode_Last = RenderMode_ScreenStereoDistort,
-    };
-
-    enum
-    {
-        kHMDHeight = 800,
-        kHMDWidth = 1280,
-        kHMDEyeWidth = 640,
-        kHMDUIWidth = kHMDWidth,
-        kHMDUIHeight = kHMDHeight,
+        RenderMode_None = 0,        // Do not render to HMD
+        RenderMode_HMD,             // render to HMD
+        RenderMode_ScreenStereo,    // render to screen in stereoscopic mode (with distortion).  Useful for debugging.
+        RenderMode_Last = RenderMode_ScreenStereo,
     };
 
     enum eFlags
@@ -61,12 +58,15 @@ public:
         kFlag_Pre_Initialized           = 1 << 1,
         kFlag_Post_Initialized          = 1 << 2,
         kFlag_FailedInit                = 1 << 3,
-        kFlag_MainIsFullScreen          = 1 << 4,
-        kFlag_IsCalibrated              = 1 << 5,
-        kFlag_ShowDepthVisual           = 1 << 6,
-        kFlag_ShowCalibrationUI         = 1 << 7,
-        kFlag_CursorIntersectsWorld     = 1 << 8,
-        kFlag_CursorIntersectsUI        = 1 << 9,
+        kFlag_HMDConnected              = 1 << 4,
+        kFlag_MainIsFullScreen          = 1 << 5,
+        kFlag_IsCalibrated              = 1 << 6,
+        kFlag_ShowDepthVisual           = 1 << 7,
+        kFlag_ShowCalibrationUI         = 1 << 8,
+        kFlag_CursorIntersectsWorld     = 1 << 9,
+        kFlag_CursorIntersectsUI        = 1 << 10,
+        kFlag_FullWidthUIMode           = 1 << 11,
+        kFlag_ChangingRenderContext     = 1 << 12,
     };
 
 public:
@@ -85,6 +85,8 @@ public:
     void isPostDetectionInitialized(BOOL b) { if (b) { mFlags |= kFlag_Post_Initialized; } else { mFlags &= ~kFlag_Post_Initialized; } }
     BOOL failedInit() const { return ((mFlags & kFlag_FailedInit) != 0) ? TRUE : FALSE; }
     void failedInit(BOOL b) { if (b) { mFlags |= kFlag_FailedInit; } else { mFlags &= ~kFlag_FailedInit; } }
+    BOOL isHMDConnected() const { return ((mFlags & kFlag_HMDConnected) != 0) ? TRUE : FALSE; }
+    void isHMDConnected(BOOL b) { if (b) { mFlags |= kFlag_HMDConnected; } else { mFlags &= ~kFlag_HMDConnected; } }
     BOOL isMainFullScreen() const { return ((mFlags & kFlag_MainIsFullScreen) != 0) ? TRUE : FALSE; }
     void isMainFullScreen(BOOL b) { if (b) { mFlags |= kFlag_MainIsFullScreen; } else { mFlags &= ~kFlag_MainIsFullScreen; } }
     BOOL isCalibrated() const { return ((mFlags & kFlag_IsCalibrated) != 0) ? TRUE : FALSE; }
@@ -97,21 +99,27 @@ public:
     void cursorIntersectsWorld(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsWorld; } else { mFlags &= ~kFlag_CursorIntersectsWorld; } }
     BOOL cursorIntersectsUI() const { return ((mFlags & kFlag_CursorIntersectsUI) != 0) ? TRUE : FALSE; }
     void cursorIntersectsUI(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsUI; } else { mFlags &= ~kFlag_CursorIntersectsUI; } }
-    
+    BOOL isFullWidthUIMode() const { return ((mFlags & kFlag_FullWidthUIMode) != 0) ? TRUE : FALSE; }
+    void isFullWidthUIMode(BOOL b) { if (b) { mFlags |= kFlag_FullWidthUIMode; } else { mFlags &= ~kFlag_FullWidthUIMode; } }
+    BOOL isChangingRenderContext() const { return ((mFlags & kFlag_ChangingRenderContext) != 0) ? TRUE : FALSE; }
+    void isChangingRenderContext(BOOL b) { if (b) { mFlags |= kFlag_ChangingRenderContext; } else { mFlags &= ~kFlag_ChangingRenderContext; } }
+
     BOOL isManuallyCalibrating() const;
     void BeginManualCalibration();
     const std::string& getCalibrationText() const;
 
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
-    BOOL shouldRender() const { return mRenderMode != RenderMode_None; }
+    BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
 
     // get/set current HMD rendering mode
     U32 getRenderMode() const { return mRenderMode; }
-    void setRenderMode(U32 mode);
+    void setRenderMode(U32 mode, bool setFocusWindow = true);
     void setRenderWindowMain();
     void setRenderWindowHMD();
     void setFocusWindowMain();
     void setFocusWindowHMD();
+    void onAppFocusGained();
+    void onAppFocusLost();
 
     // 0 = center, 1 = left, 2 = right.  Input clamped to [0,2]
     U32 getCurrentEye() const;
@@ -119,6 +127,12 @@ public:
 
     // size and Lower-Left corner for the viewer of the current eye
     void getViewportInfo(S32& x, S32& y, S32& w, S32& h);
+
+    S32 getHMDWidth() const;
+    S32 getHMDEyeWidth() const;
+    S32 getHMDHeight() const;
+    S32 getHMDUIWidth() const;
+    S32 getHMDUIHeight() const;
 
     F32 getPhysicalScreenWidth() const;
     F32 getPhysicalScreenHeight() const; 

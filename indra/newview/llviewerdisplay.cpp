@@ -101,7 +101,6 @@ BOOL gResizeScreenTexture = FALSE;
 BOOL gWindowResized = FALSE;
 BOOL gSnapshot = FALSE;
 BOOL gShaderProfileFrame = FALSE;
-BOOL gRenderUIMode = FALSE;
 
 U32 gRecentFrameCount = 0; // number of 'recent' frames
 LLFrameTimer gRecentFPSTime;
@@ -633,7 +632,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
         switch(i)
         {
         case LLViewerCamera::CENTER_EYE:
-            if (gHMD.isInitialized())
+            if (gHMD.isInitialized() && gHMD.isHMDConnected())
             {
                 if (render_mode == LLHMD::RenderMode_HMD)
                 {
@@ -664,13 +663,12 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
                     continue;
                 }
                 gHMD.setCurrentEye(i);
-                if (gHMD.isInitialized() && i == LLViewerCamera::LEFT_EYE && render_mode == LLHMD::RenderMode_HMD)
+                if (gHMD.isInitialized() &&
+                    gHMD.isHMDConnected() &&
+                    i == LLViewerCamera::LEFT_EYE &&
+                    render_mode == LLHMD::RenderMode_HMD)
                 {
                     gHMD.setRenderWindowHMD();
-                }
-                if (!gViewerWindow->getCursorHidden())
-                {
-                    gViewerWindow->hideCursor();
                 }
             }
             break;
@@ -961,7 +959,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			//}
 
 			LLPipeline::sUnderWaterRender = LLViewerCamera::getInstance()->cameraUnderWater() ? TRUE : FALSE;
-		    BOOL renderHMDDepthVisual = gHMD.shouldRender() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
+		    BOOL renderHMDDepthVisual = gHMD.isHMDMode() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
 
 			LLGLState::checkStates();
 			LLGLState::checkClientArrays();
@@ -1292,7 +1290,7 @@ bool get_hud_matrices(const LLRect& screen_region, glh::matrix4f &proj, glh::mat
 					   clamp_rescale((F32)(screen_region.getCenterY() - screen_region.mBottom), 0.f, (F32)gViewerWindow->getWorldViewHeightScaled(), 0.5f * scale_y, -0.5f * scale_y),
 					   0.f));
 		proj *= mat;
-        if (gHMD.shouldRender())
+        if (gHMD.isHMDMode())
         {
             mat.make_identity();
             mat.set_translate(glh::vec3f(gHMD.getInterpupillaryOffset(), 0.0f, 0.0f));
@@ -1303,7 +1301,7 @@ bool get_hud_matrices(const LLRect& screen_region, glh::matrix4f &proj, glh::mat
 		mat.set_scale(glh::vec3f(zoom_level, zoom_level, zoom_level));
 		mat.set_translate(glh::vec3f(-hud_bbox.getCenterLocal().mV[VX] + (hud_depth * 0.5f), 0.f, 0.f));
 		tmp_model *= mat;
-        if (gHMD.shouldRender())
+        if (gHMD.isHMDMode())
         {
             F32 viewOffset = gHMD.getInterpupillaryOffset();
             mat.make_identity();
@@ -1352,7 +1350,7 @@ static LLFastTimer::DeclareTimer FTM_SWAP("Swap");
 
 void render_hmd_mouse_cursor_3d()
 {
-    if (gHMD.shouldRender() && !gHMD.cursorIntersectsUI())
+    if (gHMD.isHMDMode() && !gHMD.cursorIntersectsUI())
     {
         LLViewerCamera* camera = LLViewerCamera::getInstance();
         LLVector3 origin = camera->getOrigin();
@@ -1461,7 +1459,7 @@ void render_hmd_mouse_cursor_3d()
 
 void render_hmd_mouse_cursor_2d()
 {
-    if (gHMD.shouldRender())
+    if (gHMD.isHMDMode())
     {
         if (gHMD.cursorIntersectsUI())
         {
@@ -1508,7 +1506,7 @@ void render_ui(F32 zoom_factor, int subfield)
 		glh_set_current_modelview(glh_copy_matrix(gGLLastModelView));
 	}
 	
-    BOOL renderHMDDepthVisual = gHMD.shouldRender() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
+    BOOL renderHMDDepthVisual = gHMD.isHMDMode() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
     BOOL to_texture = gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow;
 	if (to_texture)
 	{
@@ -1576,14 +1574,14 @@ void render_ui(F32 zoom_factor, int subfield)
             }
             else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
             {
-                if (!gPipeline.mUIScreen.allocate(LLHMD::kHMDUIWidth, LLHMD::kHMDUIHeight, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
+                if (!gPipeline.mUIScreen.allocate(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
                 {
                     llwarns << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
                     return;
                 }
                 LLView::sForceReshape = TRUE;
                 LLRootView* rootView = gViewerWindow->getRootView();
-                rootView->reshape(LLHMD::kHMDUIWidth, LLHMD::kHMDUIHeight);
+                rootView->reshape(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight());
                 LLView::sForceReshape = FALSE;
                 // clear font width caches
                 LLHUDObject::reshapeAll();
@@ -1633,7 +1631,7 @@ void render_ui(F32 zoom_factor, int subfield)
 	    LLGLSUIDefault gls_ui;
 	    gPipeline.disableLights();
 	    gGL.color4f(1,1,1,1);
-        gGL.setColorMask(true, gHMD.shouldRender());
+        gGL.setColorMask(true, gHMD.isHMDMode());
         if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
 	    {
 		    LLFastTimer t(FTM_RENDER_UI);
@@ -1653,14 +1651,14 @@ void render_ui(F32 zoom_factor, int subfield)
 		    LLGLState::checkStates();
 	    }
 	    gGL.flush();
-        gRenderUIMode = TRUE;
+        gHMD.isFullWidthUIMode(true);
         gViewerWindow->setup2DRender();
         gViewerWindow->updateDebugText();
         if (!renderHMDDepthVisual)
         {
             gViewerWindow->drawDebugText(); // debugging text
         }
-        gRenderUIMode = FALSE;
+        gHMD.isFullWidthUIMode(false);
 
         render_hmd_mouse_cursor_2d();
 
@@ -1819,8 +1817,8 @@ void render_ui_2d()
     }
     else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
     {
-        gl_state_for_2d(LLHMD::kHMDUIWidth, LLHMD::kHMDUIHeight);
-        gViewerWindow->setup2DViewport(0, 0, LLHMD::kHMDUIWidth);
+        gl_state_for_2d(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight());
+        gViewerWindow->setup2DViewport(0, 0, gHMD.getHMDUIWidth());
     }
 
 	F32 zoom_factor = LLViewerCamera::getInstance()->getZoomFactor();

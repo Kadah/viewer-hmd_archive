@@ -117,7 +117,7 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 
     // setup ortho camera
     gl_state_for_2d(viewport[2], viewport[3]);
-    gViewerWindow->setup3DViewport(0, 0, gHMD.shouldRender() ? LLHMD::kHMDEyeWidth : 0);
+    gViewerWindow->setup3DViewport(0, 0, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0);
 	
 	winX -= viewport[0]; // world_view_rect.mLeft;
 	winY -= viewport[1]; // world_view_rect.mBottom;

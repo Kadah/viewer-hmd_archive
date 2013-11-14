@@ -3365,7 +3365,7 @@ void handle_avatar_eject(const LLSD& avatar_id)
 
 bool hmd_mode_running()
 {
-    return gHMD.shouldRender();
+    return gHMD.isHMDMode();
 }
 
 bool my_profile_visible()
@@ -4037,7 +4037,7 @@ class LLViewMouselook : public view_listener_t
 	{
 		if (!gAgentCamera.cameraMouselook() && !gAgentCamera.cameraFirstPerson())
 		{
-            if (gHMD.shouldRender())
+            if (gHMD.isHMDMode())
             {
                 gAgentCamera.changeCameraToFirstPerson();
             }
@@ -4110,6 +4110,7 @@ class LLViewCycleDisplay : public view_listener_t
 {
     bool handleEvent(const LLSD& userdata)
     {
+#if LL_HMD_SUPPORTED
 		static LLCachedControl<bool> debug_hmd(gSavedSettings, "DebugHMDEnable", false);
 
         U32 curRenderMode = gHMD.getRenderMode();
@@ -4117,18 +4118,18 @@ class LLViewCycleDisplay : public view_listener_t
         switch (curRenderMode)
         {
         case LLHMD::RenderMode_None:
-            nextRenderMode = gHMD.isInitialized() ? LLHMD::RenderMode_HMD : debug_hmd ? LLHMD::RenderMode_ScreenStereoDistort : LLHMD::RenderMode_None;
+            nextRenderMode = gHMD.isInitialized() ? LLHMD::RenderMode_HMD : debug_hmd ? LLHMD::RenderMode_ScreenStereo : LLHMD::RenderMode_None;
             break;
         case LLHMD::RenderMode_HMD:
-        case LLHMD::RenderMode_ScreenStereo:
-            nextRenderMode = debug_hmd ? LLHMD::RenderMode_ScreenStereoDistort : LLHMD::RenderMode_None;
+            nextRenderMode = debug_hmd ? LLHMD::RenderMode_ScreenStereo : LLHMD::RenderMode_None;
             break;
-        case LLHMD::RenderMode_ScreenStereoDistort:
+        case LLHMD::RenderMode_ScreenStereo:
         default:
             nextRenderMode = LLHMD::RenderMode_None;
             break;
         }
         gHMD.setRenderMode(nextRenderMode);
+#endif
         return true;
     }
 };

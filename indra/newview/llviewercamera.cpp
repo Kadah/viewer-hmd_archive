@@ -125,22 +125,20 @@ LLViewerCamera::LLViewerCamera() : LLCamera()
 
 S32 LLViewerCamera::getViewHeightInPixels() const
 {
-    return gHMD.shouldRender() ? gHMD.kHMDHeight : mViewHeightInPixels;
+    return gHMD.isHMDMode() ? gHMD.getHMDHeight() : mViewHeightInPixels;
 }
 
 F32 LLViewerCamera::getAspect() const
 {
-    if (gHMD.shouldRender())
+    if (gHMD.isHMDMode())
     {
-        if (gRenderUIMode)
+        if (gHMD.isFullWidthUIMode())
         {
-            static const F32 kHMDUIAspect = (float)gHMD.kHMDUIWidth / (float)gHMD.kHMDUIHeight;
-            return kHMDUIAspect;
+            return (float)gHMD.getHMDUIWidth() / (float)gHMD.getHMDUIHeight();
         }
         else
         {
-            static const F32 kHMDHalfAspect = (float)gHMD.kHMDEyeWidth / (float)gHMD.kHMDHeight;
-            return kHMDHalfAspect;
+            return (float)gHMD.getHMDEyeWidth() / (float)gHMD.getHMDHeight();
         }
     }
     else
@@ -149,12 +147,12 @@ F32 LLViewerCamera::getAspect() const
     }
 }
 
-void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
+void LLViewerCamera::updateCameraLocation(  const LLVector3 &center,
 											const LLVector3 &up_direction,
 											const LLVector3 &point_of_interest)
 {
 	// do not update if avatar didn't move
-	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate() && (!gHMD.isInitialized() || !gHMD.shouldRender()))
+	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate() && (!gHMD.isInitialized() || !gHMD.isHMDMode()))
 	{
 		return;
 	}
@@ -179,7 +177,7 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
 		origin.mV[2] = llmin(origin.mV[2], water_height-0.20f);
 	}
 
-    if (gHMD.shouldRender())
+    if (gHMD.isHMDMode())
     {
         LLVector3 up = up_direction;
         U32 camera_mode = gAgentCamera.getCameraAnimating() ? gAgentCamera.getLastCameraMode() : gAgentCamera.getCameraMode();
@@ -195,7 +193,7 @@ void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
         gHMD.setUIModelView((F32*)getModelview().mMatrix);
     }
     setOriginAndLookAt(origin, up_direction, point_of_interest);
-    if (gHMD.shouldRender() && gHMD.isInitialized())
+    if (gHMD.isHMDMode() && gHMD.isInitialized())
     {
         gHMD.setBaseLookAt((F32*)getModelview().mMatrix);
         float r, p, y;
@@ -294,7 +292,7 @@ void LLViewerCamera::updateFrustumPlanes(LLCamera& camera, BOOL ortho, BOOL zfli
 
 	for (U32 i = 0; i < 16; i++)
 	{
-        if (gHMD.shouldRender() && !ortho)
+        if (gHMD.isHMDMode() && !ortho)
         {
             model[i] = (F64)gHMD.getBaseModelView()[i];
             proj[i] = (F64)gHMD.getBaseProjection()[i];
@@ -469,7 +467,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 
 	proj_mat *= gl_perspective(fov_y,aspect,z_near,z_far);
 
-    if (gHMD.shouldRender())
+    if (gHMD.isHMDMode())
     {
         gHMD.setBaseProjection(proj_mat.m);
         F32 viewCenter = gHMD.getPhysicalScreenWidth() * 0.25f;
@@ -498,7 +496,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
     glh::matrix4f ogl(ogl_matrix);
 	modelview *= ogl;
 
-    if (gHMD.shouldRender())
+    if (gHMD.isHMDMode())
     {
         gHMD.setBaseModelView(modelview.m);
         glh::matrix4f translate;
@@ -983,7 +981,7 @@ void LLViewerCamera::setDefaultFOV(F32 vertical_fov_rads)
 
 F32 LLViewerCamera::getDefaultFOV() const
 {
-    return gHMD.shouldRender() ? gHMD.getVerticalFOV() : mCameraFOVDefault;
+    return gHMD.isHMDMode() ? gHMD.getVerticalFOV() : mCameraFOVDefault;
 }
 
 // static

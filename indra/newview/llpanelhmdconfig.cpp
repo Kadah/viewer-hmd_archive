@@ -269,7 +269,7 @@ void LLPanelHMDConfig::onClickToggleWorldView()
         else
         {
             s << "View EyeTest";
-            LLUI::getRootView()->getChildView("menu_stack")->setVisible(!gHMD.shouldRender() || gHMD.isCalibrated());
+            LLUI::getRootView()->getChildView("menu_stack")->setVisible(!gHMD.isHMDMode() || gHMD.isCalibrated());
         }
         pPanel->mToggleViewButton->setLabel(s.str());
     }

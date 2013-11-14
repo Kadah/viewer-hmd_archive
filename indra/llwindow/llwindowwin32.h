@@ -159,6 +159,8 @@ protected:
 
     BOOL    getCurrentClientRect(RECT& r, RECT* pActualRect = NULL);
     BOOL    getCurrentWindowRect(RECT& r, RECT* pActualRect = NULL);
+    void    calculateHMDClientHeightDiff();
+    void    calculateHMDClientHeightDiff(S32 actualClientHeight);
 
 protected:
 	//
@@ -203,9 +205,9 @@ protected:
 	BOOL		mMousePositionModified;
 	BOOL		mInputProcessingPaused;
     BOOL        mHMDMode;
-    S32         mHMDRenderWindowIdx;
     S32         mHMDWidth;
     S32         mHMDHeight;
+    S32         mHMDClientHeightDiff;
 
 	// The following variables are for Language Text Input control.
 	// They are all static, since one context is shared by all LLWindowWin32

@@ -399,7 +399,7 @@ LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
 	mMousePositionModified = FALSE;
 	mInputProcessingPaused = FALSE;
     mHMDMode = FALSE;
-    mHMDRenderWindowIdx = 0;
+    mHMDWidth = mHMDHeight = mHMDClientHeightDiff = 0;
 	mPreeditor = NULL;
 	mKeyCharCode = 0;
 	mKeyScanCode = 0;
@@ -832,8 +832,7 @@ BOOL LLWindowWin32::getFullscreen()
 
 BOOL LLWindowWin32::getCurrentClientRect(RECT& r, RECT* pActualRect)
 {
-    S32 idx = mHMDMode ? mHMDRenderWindowIdx : mCurRCIdx;
-    if (!mWindowHandle[idx] || !GetClientRect(mWindowHandle[idx], &r))
+    if (!mWindowHandle[mCurRCIdx] || !GetClientRect(mWindowHandle[mCurRCIdx], &r))
     {
         return FALSE;
     }
@@ -851,8 +850,7 @@ BOOL LLWindowWin32::getCurrentClientRect(RECT& r, RECT* pActualRect)
 
 BOOL LLWindowWin32::getCurrentWindowRect(RECT& r, RECT* pActualRect)
 {
-    S32 idx = mHMDMode ? mHMDRenderWindowIdx : mCurRCIdx;
-    if (!mWindowHandle[idx] || !GetWindowRect(mWindowHandle[idx], &r))
+    if (!mWindowHandle[mCurRCIdx] || !GetWindowRect(mWindowHandle[mCurRCIdx], &r))
     {
         return FALSE;
     }
@@ -1633,7 +1631,6 @@ BOOL LLWindowWin32::setCursorPosition(const LLCoordWindow position)
 		return FALSE;
 	}
 
-
 	// Inform the application of the new mouse position (needed for per-frame
 	// hover/picking to function).
 	mCallbacks->handleMouseMove(this, position.convert(), (MASK)0);
@@ -1678,10 +1675,13 @@ void LLWindowWin32::hideCursor()
 void LLWindowWin32::showCursor()
 {
 	// makes sure the cursor shows up
-	while (ShowCursor(TRUE) < 0)
-	{
-		// do nothing, wait for cursor to pop out
-	}
+    if (!mHMDMode)
+    {
+	    while (ShowCursor(TRUE) < 0)
+	    {
+		    // do nothing, wait for cursor to pop out
+	    }
+    }
 	mCursorHidden = FALSE;
 	mHideCursorPermanent = FALSE;
 }
@@ -1778,8 +1778,6 @@ void LLWindowWin32::initCursors()
 		}
 	}
 }
-
-
 
 void LLWindowWin32::updateCursor()
 {
@@ -2492,6 +2490,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 					&& window_imp->getCurrentClientRect(client_rect))
 				{
 					// we have a valid mouse point and client rect
+                    mouse_coord.y -= window_imp->mHMDClientHeightDiff;
 					if (mouse_coord.x < client_rect.left || client_rect.right < mouse_coord.x
 						|| mouse_coord.y < client_rect.top || client_rect.bottom < mouse_coord.y)
 					{
@@ -2598,6 +2597,8 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				// Actually resize all of our views
 				if (w_param != SIZE_MINIMIZED)
 				{
+                    window_imp->calculateHMDClientHeightDiff(height);
+
 					// Ignore updates for minimizing and minimized "windows"
 					window_imp->mCallbacks->handleResize(	window_imp, 
 						LOWORD(l_param), 
@@ -2649,17 +2650,13 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 
 BOOL LLWindowWin32::convertCoords(LLCoordGL from, LLCoordWindow *to)
 {
-	RECT client_rect, actual_client_rect;
-    if (NULL == to || !getCurrentClientRect(client_rect, &actual_client_rect))
+	RECT client_rect;
+    if (NULL == to || !getCurrentClientRect(client_rect))
     {
         return FALSE;
     }
 	to->mX = from.mX;
-	S32 client_height = client_rect.bottom - client_rect.top;
-    if (mHMDMode && mHMDRenderWindowIdx == 0)
-    {
-        client_height = actual_client_rect.bottom - actual_client_rect.top;
-    }
+	S32 client_height = (client_rect.bottom - client_rect.top) + mHMDClientHeightDiff;
 	to->mY = client_height - from.mY - 1;
 
 	return TRUE;
@@ -2667,17 +2664,13 @@ BOOL LLWindowWin32::convertCoords(LLCoordGL from, LLCoordWindow *to)
 
 BOOL LLWindowWin32::convertCoords(LLCoordWindow from, LLCoordGL* to)
 {
-    RECT client_rect, actual_client_rect;
-    if (NULL == to || !getCurrentClientRect(client_rect, &actual_client_rect))
+    RECT client_rect;
+    if (NULL == to || !getCurrentClientRect(client_rect))
     {
         return FALSE;
     }
     to->mX = from.mX;
-    S32 client_height = client_rect.bottom - client_rect.top;
-    if (mHMDMode && mHMDRenderWindowIdx == 0)
-    {
-        client_height = actual_client_rect.bottom - actual_client_rect.top;
-    }
+	S32 client_height = (client_rect.bottom - client_rect.top) + mHMDClientHeightDiff;
     to->mY = client_height - from.mY - 1;
 
     return TRUE;
@@ -2696,7 +2689,7 @@ BOOL LLWindowWin32::convertCoords(LLCoordScreen from, LLCoordWindow* to)
 	if (result)
 	{
 		to->mX = mouse_point.x;
-		to->mY = mouse_point.y;
+		to->mY = mouse_point.y - mHMDClientHeightDiff;
 	}
 	return result;
 }
@@ -2709,7 +2702,7 @@ BOOL LLWindowWin32::convertCoords(LLCoordWindow from, LLCoordScreen *to)
     }
 	POINT mouse_point;
 	mouse_point.x = from.mX;
-	mouse_point.y = from.mY;
+	mouse_point.y = from.mY + mHMDClientHeightDiff;
 	BOOL result = ClientToScreen(mWindowHandle[mCurRCIdx], &mouse_point);
 	if (result)
 	{
@@ -2848,16 +2841,15 @@ BOOL LLWindowWin32::getClientRectInScreenSpace( RECT* rectp )
 	RECT client_rect;
     if (NULL != rectp && getCurrentClientRect(client_rect))
     {
-        S32 idx = mHMDMode ? mHMDRenderWindowIdx : mCurRCIdx;
         POINT top_left;
         top_left.x = client_rect.left;
         top_left.y = client_rect.top;
-        ClientToScreen(mWindowHandle[idx], &top_left); 
+        ClientToScreen(mWindowHandle[mCurRCIdx], &top_left);
 
         POINT bottom_right;
         bottom_right.x = client_rect.right;
         bottom_right.y = client_rect.bottom;
-        ClientToScreen(mWindowHandle[idx], &bottom_right); 
+        ClientToScreen(mWindowHandle[mCurRCIdx], &bottom_right);
 
         SetRect( rectp,
             top_left.x,
@@ -3901,7 +3893,7 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
         OSMessageBox(mCallbacks->translateString("MBRegClassFailed"), mCallbacks->translateString("MBError"), OSMB_OK);
         return FALSE;
     }
-    DWORD dw_ex_style = 0; // WS_EX_LAYERED;
+    DWORD dw_ex_style = WS_EX_NOACTIVATE; // WS_EX_LAYERED;
     DWORD dw_style = WS_POPUP | WS_VISIBLE; // WS_OVERLAPPED;
 
     LL_DEBUGS("Window") << "Destroying Window" << LL_ENDL;
@@ -3920,7 +3912,7 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
         mPostQuit = FALSE;
         if (!DestroyWindow(mWindowHandle[1]))
         {
-            OSMessageBox(mCallbacks->translateString("MBDestroyWinFailed"), mCallbacks->translateString("MBShutdownErr"), OSMB_OK);
+            LL_WARNS("Window") << "Window Destroy Failed: " << mCallbacks->translateString("MBDestroyWinFailed") << " :: " << mCallbacks->translateString("MBShutdownErr") << LL_ENDL;
         }
         mPostQuit = TRUE;
     }
@@ -3940,13 +3932,13 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
     LL_INFOS("Window") << "window is created." << llendl ;
     if (!(mhDC[1] = GetDC(mWindowHandle[1])))
     {
-        OSMessageBox(mCallbacks->translateString("MBDevContextErr"), mCallbacks->translateString("MBError"), OSMB_OK);
+        LL_WARNS("Window") << "HMD Window Create Failed: " << mCallbacks->translateString("MBDevContextErr") << " :: " << mCallbacks->translateString("MBError") << LL_ENDL;
         return FALSE;
     }
     LL_INFOS("Window") << "Device context retrieved." << llendl ;
     if (!SetPixelFormat(mhDC[1], mPixelFormat, &mPixelFormatDescriptor))
     {
-        OSMessageBox(mCallbacks->translateString("MBPixelFmtSetErr"), mCallbacks->translateString("MBError"), OSMB_OK);
+        LL_WARNS("Window") << "HMD Window Create Failed: " << mCallbacks->translateString("MBPixelFmtSetErr") << " :: " << mCallbacks->translateString("MBError") << LL_ENDL;
         return FALSE;
     }
     SetWindowLong(mWindowHandle[1], GWL_USERDATA, (U32)this);
@@ -3977,7 +3969,7 @@ BOOL LLWindowWin32::destroyHMDWindow()
     mPostQuit = FALSE;
     if (!DestroyWindow(mWindowHandle[1]))
     {
-        OSMessageBox(mCallbacks->translateString("MBDestroyWinFailed"), mCallbacks->translateString("MBShutdownErr"), OSMB_OK);
+        LL_WARNS("Window") << "Window Destroy Failed: " << mCallbacks->translateString("MBDestroyWinFailed") << " :: " << mCallbacks->translateString("MBShutdownErr") << LL_ENDL;
     }
     mPostQuit = TRUE;
     mWindowHandle[1] = NULL;
@@ -4018,13 +4010,43 @@ BOOL LLWindowWin32::setFocusWindow(S32 idx, BOOL clipping, S32 w, S32 h)
         return FALSE;
     }
     mHMDMode = clipping;
-    mHMDRenderWindowIdx = idx;
     mHMDWidth = mHMDMode ? w : 0;
     mHMDHeight = mHMDMode ? h : 0;
+    mCurRCIdx = idx;
     SetForegroundWindow(mWindowHandle[idx]);
     SetFocus(mWindowHandle[idx]);
+    calculateHMDClientHeightDiff();
+    if (mHMDMode)
+    {
+        while (ShowCursor(FALSE) >= 0) {}
+    }
+    else if (!isCursorHidden())
+    {
+        showCursor();
+    }
     return TRUE;
 }
+
+
+void LLWindowWin32::calculateHMDClientHeightDiff()
+{
+    mHMDClientHeightDiff = 0;
+    if (mHMDMode && mCurRCIdx == 0 && mWindowHandle[mCurRCIdx])
+    {
+        RECT r;
+        if (GetClientRect(mWindowHandle[mCurRCIdx], &r))
+        {
+            calculateHMDClientHeightDiff((S32)(r.bottom - r.top));
+        }
+    }
+}
+
+
+void LLWindowWin32::calculateHMDClientHeightDiff(S32 actualClientHeight)
+{
+    mHMDClientHeightDiff = (mHMDMode && mCurRCIdx == 0) ? llmax(0, actualClientHeight - mHMDHeight) : 0;
+}
+
 
 S32 LLWindowWin32::getDisplayCount()
 {
