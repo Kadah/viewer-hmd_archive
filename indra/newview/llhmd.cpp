@@ -520,8 +520,9 @@ BOOL LLHMDImpl::postDetectionInit()
     LLRect r;
     LLWindow* pWin = gViewerWindow->getWindow();
     pWin->getDisplayInfo(mDisplayName, mDisplayId, r, dummy);
-    pWin->getRenderWindow(mainFullScreen);
+    S32 rcIdx = pWin->getRenderWindow(mainFullScreen);
     gHMD.isMainFullScreen(mainFullScreen);
+    LL_INFOS("Oculus") << "Got HMD Display Info: " << utf16str_to_utf8str(mDisplayName) << " [" << rcIdx << "] is " << (mainFullScreen ? " " : "NOT") << " fullscreen" << LL_ENDL;
     if (!pWin->initHMDWindow(r.mLeft, r.mTop, r.mRight - r.mLeft, r.mBottom - r.mTop))
     {
         gHMD.failedInit(TRUE);
@@ -948,6 +949,8 @@ LLHMD::LLHMD()
     , mUIMagnification(600.0f)
     , mUIEyeDepth(0.6f)
     , mMouseWorldSizeMult(5.0f)
+    , mPresetAspect(0.8f)
+    , mPresetUIAspect(1.6f)
 {
     mImpl = new LLHMDImpl();
 }
@@ -975,6 +978,8 @@ BOOL LLHMD::init()
     onChangeUIMagnification();
     gSavedSettings.getControl("OculusWorldCursorSizeMult")->getSignal()->connect(boost::bind(&onChangeWorldCursorSizeMult));
     onChangeWorldCursorSizeMult();
+    gSavedSettings.getControl("OculusUseCalculatedAspect")->getSignal()->connect(boost::bind(&onChangeUseCalculatedAspect));
+    onChangeUseCalculatedAspect();
 
     return mImpl->preInit();
 }
@@ -998,7 +1003,23 @@ void LLHMD::onChangeUISurfaceSavedParams()
 }
 
 void LLHMD::onChangeWorldCursorSizeMult() { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("OculusWorldCursorSizeMult"); }
-
+void LLHMD::onChangeUseCalculatedAspect()
+{
+    BOOL oldVal = gHMD.useCalculatedAspect();
+    BOOL newVal = gSavedSettings.getBOOL("OculusUseCalculatedAspect");
+    if (oldVal != newVal)
+    {
+        gHMD.useCalculatedAspect(newVal);
+        if (gHMD.isHMDMode())
+        {
+            onChangeUISurfaceShape();
+            gHMD.mPresetAspect = (F32)gHMD.getHMDEyeWidth() / (F32)gHMD.getHMDHeight();
+            gHMD.mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
+            LLViewerCamera::getInstance()->setAspect(gHMD.getAspect());
+            gViewerWindow->reshape(gHMD.getHMDWidth(), gHMD.getHMDHeight());
+        }
+    }
+}
 
 void LLHMD::saveSettings()
 {
@@ -1033,30 +1054,34 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
         {
             return;
         }
-        BOOL oldShouldRender = isHMDMode();
+        BOOL oldIsHMDMode = isHMDMode();
         mRenderMode = newRenderMode;
-        if (!oldShouldRender && isHMDMode())
+        if (!oldIsHMDMode && isHMDMode())
         {
             if (gAgentCamera.cameraMouselook())
             {
                 gAgentCamera.changeCameraToFirstPerson();
             }
             LLCoordWindow windowSize;
-            gViewerWindow->getWindow()->getSize(&windowSize);
+            windowp->getSize(&windowSize);
             mMainWindowWidth = windowSize.mX;
             mMainWindowHeight = windowSize.mY;
-            gViewerWindow->reshape(mImpl->getHMDEyeWidth(), mImpl->getHMDHeight());
+            LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
+            mPresetAspect = ((F32)getHMDEyeWidth() / (F32)getHMDHeight());
+            mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
+            gViewerWindow->reshape(mImpl->getHMDWidth(), mImpl->getHMDHeight());
             if (gHMD.shouldShowCalibrationUI())
             {
                 LLUI::getRootView()->getChildView("menu_stack")->setVisible(!gHMD.shouldShowDepthVisual() && gHMD.isCalibrated());
             }
         }
-        else if (oldShouldRender && !isHMDMode())
+        else if (oldIsHMDMode && !isHMDMode())
         {
             if (gAgentCamera.cameraFirstPerson())
             {
                 gAgentCamera.changeCameraToMouselook();
             }
+            LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("CameraAngle"));
             gViewerWindow->reshape(mMainWindowWidth, mMainWindowHeight);
             if (gHMD.shouldShowCalibrationUI())
             {
@@ -1085,17 +1110,17 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 }
 
 
-void LLHMD::setRenderWindowMain()
+BOOL LLHMD::setRenderWindowMain()
 {
-    gViewerWindow->getWindow()->setRenderWindow(0, gHMD.isMainFullScreen());
+    return gViewerWindow->getWindow()->setRenderWindow(0, gHMD.isMainFullScreen());
 }
 
 
-void LLHMD::setRenderWindowHMD()
+BOOL LLHMD::setRenderWindowHMD()
 {
     // TODO: check to see if HMD window is valid, has not been destroyed, etc.  If it has,
     // re-initialize it here
-    gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
+    return gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
 }
 
 
@@ -1104,7 +1129,7 @@ void LLHMD::setFocusWindowMain()
     isChangingRenderContext(TRUE);
     if (isHMDMode())
     {
-        gViewerWindow->getWindow()->setFocusWindow(0, TRUE, mImpl->getHMDUIWidth(), mImpl->getHMDUIHeight());
+        gViewerWindow->getWindow()->setFocusWindow(0, TRUE, mImpl->getHMDWidth(), mImpl->getHMDHeight());
     }
     else
     {
@@ -1118,7 +1143,7 @@ void LLHMD::setFocusWindowHMD()
     // TODO: check to see if HMD window is valid, has not been destroyed, etc.  If it has,
     // re-initialize it here
     isChangingRenderContext(TRUE);
-    gViewerWindow->getWindow()->setFocusWindow(1, TRUE, mImpl->getHMDUIWidth(), mImpl->getHMDUIHeight());
+    gViewerWindow->getWindow()->setFocusWindow(1, TRUE, mImpl->getHMDWidth(), mImpl->getHMDHeight());
 }
 
 
@@ -1184,7 +1209,6 @@ void LLHMD::setEyeToScreenDistance(F32 f)
     calculateUIEyeDepth();
     gPipeline.mOculusUISurface = NULL;
 }
-F32 LLHMD::getUIEyeDepth() { return mUIEyeDepth; }
 LLVector4 LLHMD::getDistortionConstants() const { return mImpl->getDistortionConstants(); }
 F32 LLHMD::getXCenterOffset() const { return mImpl->getXCenterOffset(); }
 F32 LLHMD::getYCenterOffset() const { return mImpl->getYCenterOffset(); }
@@ -1194,6 +1218,7 @@ LLQuaternion LLHMD::getHeadRotationCorrection() const { return mImpl->getHeadRot
 void LLHMD::addHeadRotationCorrection(LLQuaternion quat) { return mImpl->addHeadRotationCorrection(quat); }
 void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); }
 F32 LLHMD::getVerticalFOV() const { return mImpl->getVerticalFOV(); }
+F32 LLHMD::getAspect() { return useCalculatedAspect() ? mImpl->getAspect() : mPresetAspect; }
 BOOL LLHMD::useMotionPrediction() const { return mImpl->useMotionPrediction(); }
 void LLHMD::useMotionPrediction(BOOL b) { mImpl->useMotionPrediction(b); }
 BOOL LLHMD::useMotionPredictionDefault() const { return mImpl->useMotionPredictionDefault(); }

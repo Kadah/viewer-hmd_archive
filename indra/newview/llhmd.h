@@ -67,6 +67,7 @@ public:
         kFlag_CursorIntersectsUI        = 1 << 10,
         kFlag_FullWidthUIMode           = 1 << 11,
         kFlag_ChangingRenderContext     = 1 << 12,
+        kFlag_UseCalculatedAspect       = 1 << 13,
     };
 
 public:
@@ -103,6 +104,8 @@ public:
     void isFullWidthUIMode(BOOL b) { if (b) { mFlags |= kFlag_FullWidthUIMode; } else { mFlags &= ~kFlag_FullWidthUIMode; } }
     BOOL isChangingRenderContext() const { return ((mFlags & kFlag_ChangingRenderContext) != 0) ? TRUE : FALSE; }
     void isChangingRenderContext(BOOL b) { if (b) { mFlags |= kFlag_ChangingRenderContext; } else { mFlags &= ~kFlag_ChangingRenderContext; } }
+    BOOL useCalculatedAspect() const { return ((mFlags & kFlag_UseCalculatedAspect) != 0) ? TRUE : FALSE; }
+    void useCalculatedAspect(BOOL b) { if (b) { mFlags |= kFlag_UseCalculatedAspect; } else { mFlags &= ~kFlag_UseCalculatedAspect; } }
 
     BOOL isManuallyCalibrating() const;
     void BeginManualCalibration();
@@ -114,8 +117,8 @@ public:
     // get/set current HMD rendering mode
     U32 getRenderMode() const { return mRenderMode; }
     void setRenderMode(U32 mode, bool setFocusWindow = true);
-    void setRenderWindowMain();
-    void setRenderWindowHMD();
+    BOOL setRenderWindowMain();
+    BOOL setRenderWindowHMD();
     void setFocusWindowMain();
     void setFocusWindowHMD();
     void onAppFocusGained();
@@ -146,9 +149,10 @@ public:
     void setEyeToScreenDistance(F32 f);
     F32 getEyeToScreenDistanceDefault() const;
     F32 getVerticalFOV() const;
-
+    F32 getAspect();
+    F32 getUIAspect() const { return mPresetUIAspect; }
     F32 getEyeDepth() const { return mEyeDepth; }
-    F32 getUIEyeDepth();
+    F32 getUIEyeDepth() const { return mUIEyeDepth; }
     F32 getUIMagnification() { return mUIMagnification; }
     void setUIMagnification(F32 f) { mUIMagnification = f; calculateUIEyeDepth(); }
 
@@ -235,6 +239,7 @@ public:
     const LLVector3& getMouseWorld() const { return mMouseWorld; }
     void setMouseWorldEnd(const LLVector4a& mwe) { mMouseWorldEnd = mwe; }
     const LLVector4a& getMouseWorldEnd() const { return mMouseWorldEnd; }
+    void setMouseWorldIntersection(const LLVector4a& intersection) { mMouseWorldRaycastIntersection = intersection; }
     void setMouseWorldIntersection(const LLVector4a& intersection, const LLVector4a& normal, const LLVector4a& tangent)
     {
         mMouseWorldRaycastIntersection = intersection;
@@ -254,6 +259,7 @@ public:
     static void onChangeEyeDepth();
     static void onChangeUIMagnification();
     static void onChangeWorldCursorSizeMult();
+    static void onChangeUseCalculatedAspect();
 
 private:
     void calculateUIEyeDepth();
@@ -286,6 +292,8 @@ private:
     LLVector4a mMouseWorldRaycastNormal;
     LLVector4a mMouseWorldRaycastTangent;
     F32 mMouseWorldSizeMult;
+    F32 mPresetAspect;
+    F32 mPresetUIAspect;
 };
 
 extern LLHMD gHMD;

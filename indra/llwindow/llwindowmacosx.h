@@ -138,7 +138,7 @@ public:
     /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary);
 
     // Experimental : allow testing of dual screen code sans Oculus Rift
-    /*virtual*/ void addExtraWindow();
+    /*virtual*/ void addExtraWindow(BOOL useMirroring);
     
 protected:
 	LLWindowMacOSX(LLWindowCallbacks* callbacks,

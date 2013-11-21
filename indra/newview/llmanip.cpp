@@ -267,7 +267,7 @@ BOOL LLManip::getMousePointOnPlaneGlobal(LLVector3d& point, S32 x, S32 y, LLVect
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
 		BOOL result = FALSE;
-		F32 mouse_x = ((F32)x / gViewerWindow->getWorldViewWidthScaled() - 0.5f) * LLViewerCamera::getInstance()->getAspect() / gAgentCamera.mHUDCurZoom;
+		F32 mouse_x = ((F32)x / gViewerWindow->getWorldViewWidthScaled() - 0.5f) * LLViewerCamera::getInstance()->getUIAspect() / gAgentCamera.mHUDCurZoom;
 		F32 mouse_y = ((F32)y / gViewerWindow->getWorldViewHeightScaled() - 0.5f) / gAgentCamera.mHUDCurZoom;
 
 		LLVector3 origin_agent = gAgent.getPosAgentFromGlobal(origin);
@@ -306,7 +306,7 @@ BOOL LLManip::nearestPointOnLineFromMouse( S32 x, S32 y, const LLVector3& b1, co
 
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
-		F32 mouse_x = (((F32)x / gViewerWindow->getWindowWidthScaled()) - 0.5f) * LLViewerCamera::getInstance()->getAspect() / gAgentCamera.mHUDCurZoom;
+		F32 mouse_x = (((F32)x / gViewerWindow->getWindowWidthScaled()) - 0.5f) * LLViewerCamera::getInstance()->getUIAspect() / gAgentCamera.mHUDCurZoom;
 		F32 mouse_y = (((F32)y / gViewerWindow->getWindowHeightScaled()) - 0.5f) / gAgentCamera.mHUDCurZoom;
 		a1 = LLVector3(llmin(b1.mV[VX] - 0.1f, b2.mV[VX] - 0.1f, 0.f), -mouse_x, mouse_y);
 		a2 = a1 + LLVector3(1.f, 0.f, 0.f);
@@ -503,9 +503,12 @@ void LLManip::renderTickText(const LLVector3& pos, const std::string& text, cons
 	// render shadow first
 	LLColor4 shadow_color = LLColor4::black;
 	shadow_color.mV[VALPHA] = color.mV[VALPHA] * 0.5f;
-	gViewerWindow->setup3DViewport(1, -1);
-	hud_render_utf8text(text, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW,  -0.5f * big_fontp->getWidthF32(text), 3.f, shadow_color, mObjectSelection->getSelectType() == SELECT_TYPE_HUD);
-	gViewerWindow->setup3DViewport();
+    // note: hud_render_text does it's own setup3DViewport, ignoring this one.  Thus all we're doing is wasting CPU
+    // by rendering text twice.  If we want this effect, use the x_offset and y_offset that are passed in to
+    // hud_render_text
+	//gViewerWindow->setup3DViewport(1, -1);
+	hud_render_utf8text(text, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW,  -0.5f * big_fontp->getWidthF32(text) + 1.0f, 3.f - 1.0f, shadow_color, mObjectSelection->getSelectType() == SELECT_TYPE_HUD);
+	//gViewerWindow->setup3DViewport();
 	hud_render_utf8text(text, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(text), 3.f, color, mObjectSelection->getSelectType() == SELECT_TYPE_HUD);
 
 	gGL.popMatrix();
@@ -561,23 +564,26 @@ void LLManip::renderTickValue(const LLVector3& pos, F32 value, const std::string
 	LLColor4 shadow_color = LLColor4::black;
 	shadow_color.mV[VALPHA] = color.mV[VALPHA] * 0.5f;
 
+    // note: hud_render_text does it's own setup3DViewport, ignoring any that were set before it is called.  
+    // Thus all we're doing is wasting CPU by rendering text twice.  If we want this effect, use the x_offset
+    // and y_offset that are passed in to hud_render_text
 	if (fractional_portion != 0)
 	{
 		fraction_string = llformat("%c%02d%s", LLResMgr::getInstance()->getDecimalPoint(), fractional_portion, suffix.c_str());
 
-		gViewerWindow->setup3DViewport(1, -1);
-		hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -1.f * big_fontp->getWidthF32(val_string), 3.f, shadow_color, hud_selection);
-		hud_render_utf8text(fraction_string, render_pos, *small_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 1.f, 3.f, shadow_color, hud_selection);
+		//gViewerWindow->setup3DViewport(1, -1);
+		hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -1.f * big_fontp->getWidthF32(val_string) + 1.0f, 3.f - 1.0f, shadow_color, hud_selection);
+		hud_render_utf8text(fraction_string, render_pos, *small_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 1.f + 1.0f, 3.f - 1.0f, shadow_color, hud_selection);
 
-		gViewerWindow->setup3DViewport();
+		//gViewerWindow->setup3DViewport();
 		hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -1.f * big_fontp->getWidthF32(val_string), 3.f, color, hud_selection);
 		hud_render_utf8text(fraction_string, render_pos, *small_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 1.f, 3.f, color, hud_selection);
 	}
 	else
 	{
-		gViewerWindow->setup3DViewport(1, -1);
-		hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(val_string), 3.f, shadow_color, hud_selection);
-		gViewerWindow->setup3DViewport();
+		//gViewerWindow->setup3DViewport(1, -1);
+		hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(val_string) + 1.0f, 3.f - 1.0f, shadow_color, hud_selection);
+		//gViewerWindow->setup3DViewport();
 		hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(val_string), 3.f, color, hud_selection);
 	}
 	gGL.popMatrix();

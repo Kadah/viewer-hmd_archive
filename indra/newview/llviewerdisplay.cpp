@@ -111,7 +111,7 @@ void pre_show_depth_buffer();
 void post_show_depth_buffer();
 void render_ui(F32 zoom_factor = 1.f, int subfield = 0);
 void render_hud_attachments();
-void render_ui_3d();
+void render_ui_3d(BOOL hmdUIMode = FALSE);
 void render_ui_2d();
 void render_disconnected_background();
 void drawBox(const LLVector3& c, const LLVector3& r);
@@ -160,12 +160,16 @@ void display_startup()
 	gPipeline.disableLights();
 
 	if (gViewerWindow)
-	gViewerWindow->setup2DRender();
+    {
+	    gViewerWindow->setup2DRender();
+    }
 	gGL.getTexUnit(0)->setTextureBlendType(LLTexUnit::TB_MULT);
 
 	gGL.color4f(1,1,1,1);
 	if (gViewerWindow)
-	gViewerWindow->draw();
+    {
+	    gViewerWindow->draw();
+    }
 	gGL.flush();
 
 	LLVertexBuffer::unbind();
@@ -174,7 +178,9 @@ void display_startup()
 	LLGLState::checkTextureChannels();
 
 	if (gViewerWindow && gViewerWindow->getWindow())
-	gViewerWindow->getWindow()->swapBuffers();
+    {
+	    gViewerWindow->getWindow()->swapBuffers();
+    }
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 }
@@ -245,29 +251,46 @@ static LLFastTimer::DeclareTimer FTM_TELEPORT_DISPLAY("Teleport Display");
 
 void renderUnusedMainWindow()
 {
+    if (gHMD.getRenderMode() == LLHMD::RenderMode_HMD
+        && gHMD.isInitialized()
+        && gHMD.isHMDConnected()
+        && gViewerWindow
+        && gViewerWindow->getWindow()
 #if LL_DARWIN
-    if (!gSavedSettings.getBOOL("OculusUseMirroring"))
+        && !gSavedSettings.getBOOL("OculusUseMirroring")
+#endif
+       )
     {
-#endif
-        gHMD.setRenderWindowMain();
-        gViewerWindow->setup3DViewport();
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        gViewerWindow->getWindow()->swapBuffers();
-        gDisplaySwapBuffers = TRUE;
-#if LL_DARWIN
+        if (gHMD.setRenderWindowMain())
+        {
+            gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getMainWindowWidth(), gHMD.getMainWindowHeight());
+            glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            gViewerWindow->getWindow()->swapBuffers();
+            gDisplaySwapBuffers = TRUE;
+        }
     }
-#endif
 }
 
 void renderUnusedHMDWindow()
 {
-    gHMD.setRenderWindowHMD();
-    gViewerWindow->setup3DViewport();
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-    // write text "press CTRL-SHIFT-D to switch to HMD"
-    gViewerWindow->getWindow()->swapBuffers();
+    if (gHMD.isInitialized()
+        && gHMD.isHMDConnected()
+        && gHMD.getRenderMode() != LLHMD::RenderMode_HMD
+        && gViewerWindow
+        && gViewerWindow->getWindow())
+    {
+        if (gHMD.setRenderWindowHMD())
+        {
+            gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDWidth(), gHMD.getHMDHeight());
+            glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            // write text "press CTRL-SHIFT-D to switch to HMD"
+            gViewerWindow->getWindow()->swapBuffers();
+        }
+    }
 }
 
 // Paint the display!
@@ -1224,10 +1247,7 @@ void render_hud_attachments()
 		LLSpatialGroup::sNoDelete = FALSE;
 		//gPipeline.clearReferences();
 
-        // 20130625void - This is redundant since it was already called before render_hud_attachments
-        // calling it here just wastes CPU cycles.   Removing it until/unless this turns out to be
-        // necessary for some weird reason.
-		//render_hud_elements();
+		render_hud_elements();
 
 		//restore type mask
 		gPipeline.popRenderTypeMask();
@@ -1243,27 +1263,29 @@ void render_hud_attachments()
 	gGL.popMatrix();
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
 	gGL.popMatrix();
-	
+
 	glh_set_current_projection(current_proj);
 	glh_set_current_modelview(current_mod);
 }
 
 LLRect get_whole_screen_region()
 {
-	LLRect whole_screen = gViewerWindow->getWorldViewRectScaled();
+    LLRect whole_screen = gViewerWindow->getWorldViewRectScaled();
 	
 	// apply camera zoom transform (for high res screenshots)
 	F32 zoom_factor = LLViewerCamera::getInstance()->getZoomFactor();
 	S16 sub_region = LLViewerCamera::getInstance()->getZoomSubRegion();
 	if (zoom_factor > 1.f)
 	{
+        S32 wsw = whole_screen.getWidth();
+        S32 wsh = whole_screen.getHeight();
 		S32 num_horizontal_tiles = llceil(zoom_factor);
-		S32 tile_width = llround((F32)gViewerWindow->getWorldViewWidthScaled() / zoom_factor);
-		S32 tile_height = llround((F32)gViewerWindow->getWorldViewHeightScaled() / zoom_factor);
+		S32 tile_width = llround((F32)wsw / zoom_factor);
+		S32 tile_height = llround((F32)wsh / zoom_factor);
 		int tile_y = sub_region / num_horizontal_tiles;
 		int tile_x = sub_region - (tile_y * num_horizontal_tiles);
 			
-		whole_screen.setLeftTopAndSize(tile_x * tile_width, gViewerWindow->getWorldViewHeightScaled() - (tile_y * tile_height), tile_width, tile_height);
+        whole_screen.setLeftTopAndSize(tile_x * tile_width, wsh - (tile_y * tile_height), tile_width, tile_height);
 	}
 	return whole_screen;
 }
@@ -1274,40 +1296,40 @@ bool get_hud_matrices(const LLRect& screen_region, glh::matrix4f &proj, glh::mat
 	{
 		F32 zoom_level = gAgentCamera.mHUDCurZoom;
 		LLBBox hud_bbox = gAgentAvatarp->getHUDBBox();
-		
+		F32 aspect_ratio = LLViewerCamera::getInstance()->getUIAspect();
 		F32 hud_depth = llmax(1.f, hud_bbox.getExtentLocal().mV[VX] * 1.1f);
-		proj = gl_ortho(-0.5f * LLViewerCamera::getInstance()->getAspect(), 0.5f * LLViewerCamera::getInstance()->getAspect(), -0.5f, 0.5f, 0.f, hud_depth);
-		proj.element(2,2) = -0.01f;
-		
-		F32 aspect_ratio = LLViewerCamera::getInstance()->getAspect();
+		proj = gl_ortho(-0.5f * aspect_ratio, 0.5f * aspect_ratio, -0.5f, 0.5f, 0.f, hud_depth);
+		proj.element(2,2) = -0.01f; // wtf??
 		
 		glh::matrix4f mat;
-		F32 scale_x = (F32)gViewerWindow->getWorldViewWidthScaled() / (F32)screen_region.getWidth();
-		F32 scale_y = (F32)gViewerWindow->getWorldViewHeightScaled() / (F32)screen_region.getHeight();
+        F32 wvsw = (F32)gViewerWindow->getWorldViewWidthScaled();
+        F32 wvsh = (F32)gViewerWindow->getWorldViewHeightScaled();
+		F32 scale_x = wvsw / (F32)screen_region.getWidth();
+	    F32 scale_y = wvsh / (F32)screen_region.getHeight();
 		mat.set_scale(glh::vec3f(scale_x, scale_y, 1.f));
 		mat.set_translate(
-			glh::vec3f(clamp_rescale((F32)(screen_region.getCenterX() - screen_region.mLeft), 0.f, (F32)gViewerWindow->getWorldViewWidthScaled(), 0.5f * scale_x * aspect_ratio, -0.5f * scale_x * aspect_ratio),
-					   clamp_rescale((F32)(screen_region.getCenterY() - screen_region.mBottom), 0.f, (F32)gViewerWindow->getWorldViewHeightScaled(), 0.5f * scale_y, -0.5f * scale_y),
+			glh::vec3f(clamp_rescale((F32)(screen_region.getCenterX() - screen_region.mLeft), 0.f, wvsw, 0.5f * scale_x * aspect_ratio, -0.5f * scale_x * aspect_ratio),
+					   clamp_rescale((F32)(screen_region.getCenterY() - screen_region.mBottom), 0.f, wvsh, 0.5f * scale_y, -0.5f * scale_y),
 					   0.f));
 		proj *= mat;
-        if (gHMD.isHMDMode())
-        {
-            mat.make_identity();
-            mat.set_translate(glh::vec3f(gHMD.getInterpupillaryOffset(), 0.0f, 0.0f));
-            proj = mat * proj;
-        }
+        //if (gHMD.isHMDMode())
+        //{
+        //    mat.make_identity();
+        //    mat.set_translate(glh::vec3f(gHMD.getInterpupillaryOffset(), 0.0f, 0.0f));
+        //    proj = mat * proj;
+        //}
 
 		glh::matrix4f tmp_model((GLfloat*) OGL_TO_CFR_ROTATION);
 		mat.set_scale(glh::vec3f(zoom_level, zoom_level, zoom_level));
 		mat.set_translate(glh::vec3f(-hud_bbox.getCenterLocal().mV[VX] + (hud_depth * 0.5f), 0.f, 0.f));
 		tmp_model *= mat;
-        if (gHMD.isHMDMode())
-        {
-            F32 viewOffset = gHMD.getInterpupillaryOffset();
-            mat.make_identity();
-            mat.set_translate(glh::vec3f(LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? viewOffset : -viewOffset, 0.0f, 0.0f));
-            tmp_model = mat * tmp_model;
-        }
+        //if (gHMD.isHMDMode())
+        //{
+        //    F32 viewOffset = gHMD.getInterpupillaryOffset();
+        //    mat.make_identity();
+        //    mat.set_translate(glh::vec3f(LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? viewOffset : -viewOffset, 0.0f, 0.0f));
+        //    tmp_model = mat * tmp_model;
+        //}
 		model = tmp_model;
 		return TRUE;
 	}
@@ -1528,21 +1550,22 @@ void render_ui(F32 zoom_factor, int subfield)
             if (!renderHMDDepthVisual)
             {
                 render_hud_elements();  // in-world text, labels, nametags
-                if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
-                {
-                    LLFastTimer t(FTM_RENDER_UI);
-                    if (!gDisconnected)
-                    {
-                        render_ui_3d(); // edit outline, move arrows, etc.
-                        LLGLState::checkStates();
-                    }
-                    else
-                    {
-                        render_disconnected_background();
-                    }
-                }
-                render_hmd_mouse_cursor_3d();
             }
+            if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
+            {
+			    LLFastTimer t(FTM_RENDER_UI);
+                if (!gDisconnected)
+                {
+                    render_ui_3d(FALSE);
+				    LLGLState::checkStates();
+                }
+                else
+                {
+                    render_disconnected_background();
+                }
+            }
+
+            render_hmd_mouse_cursor_3d();
 
             if (gPipeline.mUIScreen.isComplete())
             {
@@ -1579,12 +1602,6 @@ void render_ui(F32 zoom_factor, int subfield)
                     llwarns << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
                     return;
                 }
-                LLView::sForceReshape = TRUE;
-                LLRootView* rootView = gViewerWindow->getRootView();
-                rootView->reshape(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight());
-                LLView::sForceReshape = FALSE;
-                // clear font width caches
-                LLHUDObject::reshapeAll();
             }
 
             gGL.matrixMode(LLRender::MM_PROJECTION);
@@ -1623,6 +1640,7 @@ void render_ui(F32 zoom_factor, int subfield)
             gPipeline.mUIScreen.clear();
             gGL.color4f(1,1,1,1);
         }
+
         if (!renderHMDDepthVisual)
         {
             render_hud_attachments();   // huds worn by avatar
@@ -1630,35 +1648,30 @@ void render_ui(F32 zoom_factor, int subfield)
 	    LLGLSDefault gls_default;
 	    LLGLSUIDefault gls_ui;
 	    gPipeline.disableLights();
-	    gGL.color4f(1,1,1,1);
         gGL.setColorMask(true, gHMD.isHMDMode());
+
         if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
 	    {
 		    LLFastTimer t(FTM_RENDER_UI);
-            if (LLViewerCamera::sCurrentEye == LLViewerCamera::CENTER_EYE)
-            {
-		        if (!gDisconnected)
-		        {
-                    render_ui_3d(); // ??
-			        LLGLState::checkStates();
-		        }
-		        else
-		        {
-			        render_disconnected_background();
-		        }
-            }
+		    if (!gDisconnected)
+		    {
+                render_ui_3d(TRUE); // edit outline, move arrows, selection highlighting, debug axes, etc.
+			    LLGLState::checkStates();
+		    }
+		    else if (LLViewerCamera::sCurrentEye == LLViewerCamera::CENTER_EYE)
+		    {
+			    render_disconnected_background();
+		    }
             render_ui_2d(); // Side/bottom buttons, 2D UI windows, etc.
 		    LLGLState::checkStates();
 	    }
 	    gGL.flush();
-        gHMD.isFullWidthUIMode(true);
         gViewerWindow->setup2DRender();
         gViewerWindow->updateDebugText();
         if (!renderHMDDepthVisual)
         {
             gViewerWindow->drawDebugText(); // debugging text
         }
-        gHMD.isFullWidthUIMode(false);
 
         render_hmd_mouse_cursor_2d();
 
@@ -1757,7 +1770,7 @@ void draw_axes()
 	gGL.popMatrix();
 }
 
-void render_ui_3d()
+void render_ui_3d(BOOL hmdUIMode)
 {
 	LLGLSPipeline gls_pipeline;
 
@@ -1783,14 +1796,19 @@ void render_ui_3d()
 		gUIProgram.bind();
 	}
 
-	// Coordinate axes
-	if (gSavedSettings.getBOOL("ShowAxes"))
-	{
-		draw_axes();
-	}
+    if (!gHMD.isHMDMode() || !hmdUIMode)
+    {
+	    // Coordinate axes
+	    if (gSavedSettings.getBOOL("ShowAxes"))
+	    {
+		    draw_axes();
+	    }
+    }
 
-	gViewerWindow->renderSelections(FALSE, FALSE, TRUE); // Non HUD call in render_hud_elements
-	stop_glerror();
+    // render HUD selections/highlights
+    gViewerWindow->renderSelections(gHMD.isHMDMode() ? hmdUIMode : TRUE);
+
+    stop_glerror();
 
     if (LLGLSLShader::sNoFixedFunction)
     {
@@ -1817,8 +1835,7 @@ void render_ui_2d()
     }
     else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
     {
-        gl_state_for_2d(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight());
-        gViewerWindow->setup2DViewport(0, 0, gHMD.getHMDUIWidth());
+        gViewerWindow->setup2DRender(0, 0, gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight());
     }
 
 	F32 zoom_factor = LLViewerCamera::getInstance()->getZoomFactor();
@@ -1841,8 +1858,8 @@ void render_ui_2d()
 	if (isAgentAvatarValid() && gAgentCamera.mHUDCurZoom < 0.98f)
 	{
 		gGL.pushMatrix();
-		S32 half_width = (gViewerWindow->getWorldViewWidthScaled() / 2);
-		S32 half_height = (gViewerWindow->getWorldViewHeightScaled() / 2);
+        S32 half_width  = gViewerWindow->getWorldViewWidthScaled() / 2;
+		S32 half_height = gViewerWindow->getWorldViewWidthScaled() / 2;
 		gGL.scalef(LLUI::getScaleFactor().mV[0], LLUI::getScaleFactor().mV[1], 1.f);
 		gGL.translatef((F32)half_width, (F32)half_height, 0.f);
 		F32 zoom = gAgentCamera.mHUDCurZoom;

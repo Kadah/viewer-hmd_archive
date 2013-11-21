@@ -5602,7 +5602,7 @@ void LLSelectMgr::renderSilhouettes(BOOL for_hud)
 		gGL.pushMatrix();
 		gGL.loadIdentity();
 		F32 depth = llmax(1.f, hud_bbox.getExtentLocal().mV[VX] * 1.1f);
-		gGL.ortho(-0.5f * LLViewerCamera::getInstance()->getAspect(), 0.5f * LLViewerCamera::getInstance()->getAspect(), -0.5f, 0.5f, 0.f, depth);
+		gGL.ortho(-0.5f * LLViewerCamera::getInstance()->getUIAspect(), 0.5f * LLViewerCamera::getInstance()->getUIAspect(), -0.5f, 0.5f, 0.f, depth);
 
 		gGL.matrixMode(LLRender::MM_MODELVIEW);
 		gGL.pushMatrix();

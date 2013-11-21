@@ -92,8 +92,7 @@ public:
 
 	LLViewerCamera();
 
-    virtual S32 getViewHeightInPixels() const;
-    virtual F32 getAspect() const;
+    F32 getUIAspect() const;
 
 	void updateCameraLocation(const LLVector3 &center,
 								const LLVector3 &up_direction,

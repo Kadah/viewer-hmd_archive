@@ -280,7 +280,7 @@ BOOL LLToolPie::handleLeftClickPick()
 					gAgentCamera.setFocusOnAvatar(FALSE, ANIMATE);
 					
 					LLBBox bbox = object->getBoundingBoxAgent() ;
-					F32 angle_of_view = llmax(0.1f, LLViewerCamera::getInstance()->getAspect() > 1.f ? LLViewerCamera::getInstance()->getView() * LLViewerCamera::getInstance()->getAspect() : LLViewerCamera::getInstance()->getView());
+					F32 angle_of_view = llmax(0.1f, LLViewerCamera::getInstance()->getUIAspect() > 1.f ? LLViewerCamera::getInstance()->getView() * LLViewerCamera::getInstance()->getUIAspect() : LLViewerCamera::getInstance()->getView());
 					F32 distance = bbox.getExtentLocal().magVec() * PADDING_FACTOR / atan(angle_of_view);
 				
 					LLVector3 obj_to_cam = LLViewerCamera::getInstance()->getOrigin() - bbox.getCenterAgent();

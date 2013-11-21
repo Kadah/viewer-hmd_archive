@@ -236,6 +236,7 @@ public:
 	S32 			getWorldViewWidthRaw() const;
     S32             getWorldViewLeftRaw() const;
     S32             getWorldViewBottomRaw() const;
+    void            getWorldViewportRaw(S32* v, S32 w = 0, S32 h = 0, S32 xOffset = 0, S32 yOffset = 0) const;
 
 	// Window in scaled pixels (via UI scale), use for most UI computations
 	LLRect			getWindowRectScaled() const;
@@ -243,6 +244,7 @@ public:
 	S32				getWindowWidthScaled() const;
     S32             getWindowLeftScaled() const;
     S32             getWindowBottomScaled() const;
+    void            getWindowViewportRaw(S32* v, S32 w = 0, S32 h = 0, S32 xOffset = 0, S32 yOffset = 0) const;
 
 	// Window in raw pixels as seen on screen.
 	LLRect			getWindowRectRaw() const;
@@ -273,10 +275,10 @@ public:
 
 	const LLPickInfo&	getLastPick() const { return mLastPick; }
 
-	void			setup2DViewport(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0);
-	void			setup3DViewport(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0);
-	void			setup3DRender();
-	void			setup2DRender();
+	void			setup2DViewport(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0, S32 height = 0);
+	void			setup3DViewport(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0, S32 height = 0);
+	void			setup3DRender(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0, S32 height = 0);
+	void			setup2DRender(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0, S32 height = 0);
 
 	LLVector3		mouseDirectionGlobal(const S32 x, const S32 y) const;
 	LLVector3		mouseDirectionCamera(const S32 x, const S32 y) const;
@@ -365,7 +367,7 @@ public:
 	void			playSnapshotAnimAndSound();
 	
 	// draws selection boxes around selected objects, must call displayObjects first
-	void			renderSelections( BOOL for_gl_pick, BOOL pick_parcel_walls, BOOL for_hud );
+	void			renderSelections(BOOL for_hud);
 	void			performPick();
 	void			returnEmptyPicks();
 

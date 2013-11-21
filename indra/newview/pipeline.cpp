@@ -4087,9 +4087,9 @@ void render_hud_elements()
 	if (!LLPipeline::sReflectionRender && gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
 	{
 		LLGLEnable multisample(LLPipeline::RenderFSAASamples > 0 ? GL_MULTISAMPLE_ARB : 0);
-		gViewerWindow->renderSelections(FALSE, FALSE, FALSE); // For HUD version in render_ui_3d()
-	
-		// Draw the tracking overlays
+        gViewerWindow->renderSelections(FALSE); // For non HUD version
+
+        // Draw the tracking overlays
 		LLTracker::render3D();
 		
 		// Show the property lines
@@ -4686,7 +4686,8 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
             gGL.pushMatrix();
             gGL.matrixMode(LLRender::MM_PROJECTION);
             gGL.pushMatrix();
-            gl_state_for_2d(gViewerWindow->getWorldViewWidthRaw(), gViewerWindow->getWorldViewHeightRaw(), 0.0f, gHMD.getOrthoPixelOffset());
+            gl_state_for_2d(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), 0.0f, gHMD.getOrthoPixelOffset());
+            //gl_state_for_2d(gViewerWindow->getWorldViewWidthRaw(), gViewerWindow->getWorldViewHeightRaw(), 0.0f, gHMD.getOrthoPixelOffset());
             gPipeline.disableLights();
             LLGLDisable fog(GL_FOG);
             LLGLSUIDefault gls_ui;
@@ -7842,7 +7843,14 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}*/
 
-    gViewerWindow->setup3DViewport(0, 0, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0);
+    if (gHMD.isHMDMode())
+    {
+        gViewerWindow->setup3DViewport(0, 0, gHMD.getHMDEyeWidth(), gHMD.getHMDHeight());
+    }
+    else
+    {
+        gViewerWindow->setup3DViewport();
+    }
 
 	tc2.setVec((F32)mScreen.getWidth(), (F32)mScreen.getHeight());
 
@@ -7860,8 +7868,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 		bool multisample = RenderFSAASamples > 1 && mFXAABuffer.isComplete();
 
-        gViewerWindow->setup3DViewport(0, 0, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0);
-				
 		if (dof_enabled)
 		{
 			LLGLSLShader* shader = &gDeferredPostProgram;
@@ -8182,7 +8188,14 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
 			}
 			
-            gViewerWindow->setup3DViewport(0, 0, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0);
+            if (gHMD.isHMDMode())
+            {
+                gViewerWindow->setup3DViewport(0, 0, gHMD.getHMDEyeWidth(), gHMD.getHMDHeight());
+            }
+            else
+            {
+                gViewerWindow->setup3DViewport();
+            }
 
 			F32 scale_x = (F32) width/mFXAABuffer.getWidth();
 			F32 scale_y = (F32) height/mFXAABuffer.getHeight();

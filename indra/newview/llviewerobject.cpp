@@ -444,13 +444,22 @@ void LLViewerObject::dump() const
 		mDrawable->getNumFaces() && 
 		mDrawable->getFace(0))
 	{
+        //llinfos << "Drawable::position     : " << mDrawable->getPosition() << llendl;
+        //llinfos << "Drawable::positionWorld: " << mDrawable->getWorldPosition() << llendl;
+        //llinfos << "Drawable::PositionAgent: " << mDrawable->getPositionAgent() << llendl;
+        //llinfos << "Drawable::scale        : " << mDrawable->getScale() << llendl;
+        //llinfos << "Drawable::state        : " << mDrawable->getState() << llendl;
+        //llinfos << "Drawable::faces        : " << mDrawable->getNumFaces() << llendl;
 		LLFacePool *poolp = mDrawable->getFace(0)->getPool();
 		if (poolp)
 		{
 			llinfos << "Pool: " << poolp << llendl;
 			llinfos << "Pool reference count: " << poolp->mReferences.size() << llendl;
 		}
+        //llinfos << "Drawable::isVisible: " << mDrawable->isVisible() << llendl;
+        //llinfos << "Drawable::isActive: " << mDrawable->isActive() << llendl;
 	}
+    //llinfos << "isHUDAttachment: " << isHUDAttachment() << llendl;
 	//llinfos << "BoxTree Min: " << mDrawable->getBox()->getMin() << llendl;
 	//llinfos << "BoxTree Max: " << mDrawable->getBox()->getMin() << llendl;
 	/*

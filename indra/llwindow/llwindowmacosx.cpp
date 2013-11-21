@@ -1831,9 +1831,10 @@ MASK LLWindowMacOSX::modifiersToMask(S16 modifiers)
 
 // Experimental : dual screen rendering and Mac testing method
 /*virtual*/
-void LLWindowMacOSX::addExtraWindow()
+void LLWindowMacOSX::addExtraWindow(BOOL useMirroring)
 {
     llinfos << "Merov : Hit the extra window init!" << llendl;
+    mUseDisplayMirroring = useMirroring;
     LLRect second_screen;
     BOOL is_primary = FALSE;
     llutf16string display_name = utf8str_to_utf16str("Test");

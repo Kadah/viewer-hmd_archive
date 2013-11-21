@@ -59,6 +59,7 @@
 #include "v2math.h"
 #include "llvoavatar.h"
 #include "llmeshrepository.h"
+#include "llhmd.h"
 
 
 const F32 MAX_MANIP_SELECT_DISTANCE_SQUARED = 11.f * 11.f;
@@ -439,16 +440,19 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 
 	if( canAffectSelection() )
 	{
-		LLMatrix4 transform;
+        BOOL use3D = gHMD.isHMDMode() && (mObjectSelection->getSelectType() != SELECT_TYPE_HUD);
+
+		LLVector4 translation(bbox.getPositionAgent());
+        LLQuaternion rot = bbox.getRotation();
+		LLMatrix4 transform(rot, translation);
+
 		if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 		{
-			LLVector4 translation(bbox.getPositionAgent());
-			transform.initRotTrans(bbox.getRotation(), translation);
 			LLMatrix4 cfr(OGL_TO_CFR_ROTATION);
 			transform *= cfr;
 			LLMatrix4 window_scale;
 			F32 zoom_level = 2.f * gAgentCamera.mHUDCurZoom;
-			window_scale.initAll(LLVector3(zoom_level / LLViewerCamera::getInstance()->getAspect(), zoom_level, 0.f),
+			window_scale.initAll(LLVector3(zoom_level / LLViewerCamera::getInstance()->getUIAspect(), zoom_level, 0.f),
 				LLQuaternion::DEFAULT,
 				LLVector3::zero);
 			transform *= window_scale;
@@ -457,7 +461,6 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 		{
 			LLMatrix4 projMatrix = LLViewerCamera::getInstance()->getProjection();
 			LLMatrix4 modelView = LLViewerCamera::getInstance()->getModelview();
-			transform.initAll(LLVector3(1.f, 1.f, 1.f), bbox.getRotation(), bbox.getPositionAgent());
 			
 			transform *= modelView;
 			transform *= projMatrix;
@@ -495,40 +498,73 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 		
 		for (S32 i = 0; i < numManips; i++)
 		{
-			LLVector4 projectedVertex = mManipulatorVertices[i] * transform;
-			projectedVertex = projectedVertex * (1.f / projectedVertex.mV[VW]);
+            LLVector4 projectedVertex;
+            if (use3D)
+            {
+                projectedVertex = translation + (mManipulatorVertices[i] * rot);
+            }
+            else
+            {
+			    projectedVertex = mManipulatorVertices[i] * transform;
+			    projectedVertex = projectedVertex * (1.f / projectedVertex.mV[VW]);
+            }
 
 			ManipulatorHandle* projManipulator = new ManipulatorHandle(LLVector3(projectedVertex.mV[VX], projectedVertex.mV[VY], 
 				projectedVertex.mV[VZ]), MANIPULATOR_IDS[i], (i < 7) ? SCALE_MANIP_CORNER : SCALE_MANIP_FACE);
 			mProjectedManipulators.insert(projManipulator);
 		}
 
-		LLRect world_view_rect = gViewerWindow->getWorldViewRectScaled();
-		F32 half_width = (F32)world_view_rect.getWidth() / 2.f;
-		F32 half_height = (F32)world_view_rect.getHeight() / 2.f;
-		LLVector2 manip2d;
-		LLVector2 mousePos((F32)x - half_width, (F32)y - half_height);
-		LLVector2 delta;
-
-		mHighlightedPart = LL_NO_PART;
-
-		for (minpulator_list_t::iterator iter = mProjectedManipulators.begin();
-			 iter != mProjectedManipulators.end(); ++iter)
-		{
-			ManipulatorHandle* manipulator = *iter;
-			{
-				manip2d.setVec(manipulator->mPosition.mV[VX] * half_width, manipulator->mPosition.mV[VY] * half_height);
-				
-				delta = manip2d - mousePos;
-				if (delta.magVecSquared() < MAX_MANIP_SELECT_DISTANCE_SQUARED)
-				{
+        if (use3D)
+        {
+            const LLVector3& mouse_world = gHMD.getMouseWorld();
+            LLVector3 dir = LLVector3(gHMD.getMouseWorldEnd().getF32ptr()) - mouse_world;
+            dir.normalize();
+            F32 r2 = (mScaledBoxHandleSize * mScaledBoxHandleSize) * 0.5f;
+	        for (minpulator_list_t::iterator it = mProjectedManipulators.begin(), itEnd = mProjectedManipulators.end(); it != itEnd; ++it)
+	        {
+			    ManipulatorHandle* manipulator = *it;
+                LLVector3 other_direction = manipulator->mPosition - mouse_world;
+	            LLVector3 nearest_point = mouse_world + dir * (other_direction * dir);
+	            F32 nearest_approach = (nearest_point - manipulator->mPosition).lengthSquared();
+                if (nearest_approach <= r2)
+                {
 					mHighlightedPart = manipulator->mManipID;
+                    gHMD.cursorIntersectsWorld(TRUE);
+                    LLVector4a intersection;
+                    intersection.load3(nearest_point.mV);
+                    gHMD.setMouseWorldIntersection(intersection);
+                }
+            }
+        }
+        else
+        {
+            LLRect world_view_rect = gViewerWindow->getWorldViewRectScaled();
+		    F32 half_width = (F32)world_view_rect.getWidth() / 2.f;
+		    F32 half_height = (F32)world_view_rect.getHeight() / 2.f;
+		    LLVector2 manip2d;
+		    LLVector2 mousePos((F32)x - half_width, (F32)y - half_height);
+		    LLVector2 delta;
 
-					//llinfos << "Tried: " << mHighlightedPart << llendl;
-					break;
-				}
-			}
-		}
+		    mHighlightedPart = LL_NO_PART;
+
+		    for (minpulator_list_t::iterator iter = mProjectedManipulators.begin();
+			     iter != mProjectedManipulators.end(); ++iter)
+		    {
+			    ManipulatorHandle* manipulator = *iter;
+			    {
+				    manip2d.setVec(manipulator->mPosition.mV[VX] * half_width, manipulator->mPosition.mV[VY] * half_height);
+				
+				    delta = manip2d - mousePos;
+				    if (delta.magVecSquared() < MAX_MANIP_SELECT_DISTANCE_SQUARED)
+				    {
+					    mHighlightedPart = manipulator->mManipID;
+
+					    //llinfos << "Tried: " << mHighlightedPart << llendl;
+					    break;
+				    }
+			    }
+		    }
+        }
 	}
 
 	for (S32 i = 0; i < NUM_MANIPULATORS; i++)

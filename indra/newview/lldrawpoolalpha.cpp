@@ -47,6 +47,7 @@
 #include "llviewerregion.h"
 #include "lldrawpoolwater.h"
 #include "llspatialpartition.h"
+#include "llhmd.h"
 
 BOOL LLDrawPoolAlpha::sShowDebugAlpha = FALSE;
 
@@ -251,7 +252,14 @@ void LLDrawPoolAlpha::render(S32 pass)
 	{
 		mColorSFactor = LLRender::BF_SOURCE_ALPHA;           // } regular alpha blend
 		mColorDFactor = LLRender::BF_ONE_MINUS_SOURCE_ALPHA; // }
-		mAlphaSFactor = LLRender::BF_ZERO;                         // } glow suppression
+        if (gHMD.isHMDMode() && LLPipeline::sRenderingHUDs)
+        {
+            mAlphaSFactor = LLRender::BF_SOURCE_ALPHA;  // have to set it this way or HUD Attachments will not render onto UI texture
+        }
+        else
+        {
+            mAlphaSFactor = LLRender::BF_ZERO;                         // } glow suppression
+        }
 		mAlphaDFactor = LLRender::BF_ONE_MINUS_SOURCE_ALPHA;       // }
 		gGL.blendFunc(mColorSFactor, mColorDFactor, mAlphaSFactor, mAlphaDFactor);
 
@@ -578,8 +586,8 @@ void LLDrawPoolAlpha::renderAlpha(U32 mask, S32 pass)
 
 				static LLFastTimer::DeclareTimer FTM_RENDER_ALPHA_PUSH("Alpha Push Verts");
 				{
-					LLFastTimer t(FTM_RENDER_ALPHA_PUSH);
-    gGL.blendFunc((LLRender::eBlendFactor) params.mBlendFuncSrc, (LLRender::eBlendFactor) params.mBlendFuncDst, mAlphaSFactor, mAlphaDFactor);					
+				LLFastTimer t(FTM_RENDER_ALPHA_PUSH);
+                gGL.blendFunc((LLRender::eBlendFactor) params.mBlendFuncSrc, (LLRender::eBlendFactor) params.mBlendFuncDst, mAlphaSFactor, mAlphaDFactor);					
 				params.mVertexBuffer->setBuffer(mask & ~(params.mFullbright ? (LLVertexBuffer::MAP_TANGENT | LLVertexBuffer::MAP_TEXCOORD1 | LLVertexBuffer::MAP_TEXCOORD2) : 0));
                 
 				params.mVertexBuffer->drawRange(params.mDrawMode, params.mStart, params.mEnd, params.mCount, params.mOffset);

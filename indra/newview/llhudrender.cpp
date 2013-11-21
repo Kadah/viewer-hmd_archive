@@ -88,12 +88,8 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	//get the render_pos in screen space
 	
 	F64 winX, winY, winZ;
-	LLRect world_view_rect = gViewerWindow->getWorldViewRectRaw();
 	S32	viewport[4];
-	viewport[0] = world_view_rect.mLeft;
-	viewport[1] = world_view_rect.mBottom;
-	viewport[2] = world_view_rect.getWidth();
-	viewport[3] = world_view_rect.getHeight();
+    gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
 
 	F64 mdlv[16];
 	F64 proj[16];
@@ -119,8 +115,8 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
     gl_state_for_2d(viewport[2], viewport[3]);
     gViewerWindow->setup3DViewport(0, 0, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0);
 	
-	winX -= viewport[0]; // world_view_rect.mLeft;
-	winY -= viewport[1]; // world_view_rect.mBottom;
+	winX -= viewport[0];
+	winY -= viewport[1];
 	LLUI::loadIdentity();
 	gGL.loadIdentity();
 	LLUI::translate((F32) winX*1.0f/LLFontGL::sScaleX, (F32) winY*1.0f/(LLFontGL::sScaleY), -(((F32) winZ*2.f)-1.f));

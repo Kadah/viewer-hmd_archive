@@ -15076,7 +15076,17 @@
     <key>Value</key>
     <real>5.0</real>
   </map>
-    
+  <key>OculusUseCalculatedAspect</key>
+  <map>
+      <key>Comment</key>
+      <string>TRUE = Use the aspect ratio calculated by the Oculus Rift SDK, FALSE = use a predefined aspect ratio</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <real>0</real>
+  </map>
 
 </map>
 </llsd>
