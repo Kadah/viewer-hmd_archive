@@ -30,7 +30,6 @@
 #include "llviewerprecompiledheaders.h"
 #include "llhmd.h"
 
-#if LL_HMD_SUPPORTED
 #include "llfloaterreg.h"
 #include "llviewerwindow.h"
 #include "llagent.h"
@@ -47,6 +46,7 @@
 #include "llview.h"
 #include "lltool.h"
 
+#if LL_HMD_SUPPORTED
 #include "OVR.h"
 #include "Kernel/OVR_Timer.h"
 #include "Util/Util_MagCalibration.h"
@@ -860,7 +860,7 @@ void LLHMDImpl::updateManualMagCalibration()
 class LLHMDImpl
 {
 public:
-    LLHMDImpl() : mCalibrationText(""); {}
+    LLHMDImpl() : mCalibrationText("") {}
     ~LLHMDImpl() {}
 
 public:
@@ -1158,7 +1158,7 @@ void LLHMD::onAppFocusGained()
         }
         isChangingRenderContext(FALSE);
     }
-    else if (!isChangingRenderContext())
+    else
     {
         // if we've tried to focus on the HMD window while not intentionally swapping contexts, we'll likely get a BSOD.
         // Note that since the HMD window has no task-bar icon, this should not be possible, but users will find a way...
@@ -1423,7 +1423,6 @@ BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
     if (ui_view)
     {
         gHMD.cursorIntersectsUI(TRUE);
-        //LL_INFOS("Oculus") << "[" << LLFrameTimer::getFrameCount() << "] " << ui_view->getName() << " is an LLView and thus UI coordinate space" << LL_ENDL;
         return TRUE;
     }
 
@@ -1433,7 +1432,6 @@ BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
         if (tool->isMouseIntersectInUISpace())
         {
             gHMD.cursorIntersectsUI(TRUE);
-            //LL_INFOS("Oculus") << "[" << LLFrameTimer::getFrameCount() << "] tool " << tool->getName() << " is in UI coordinate space" << LL_ENDL;
         }
         else
         {
@@ -1442,11 +1440,6 @@ BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
             {
                 LLVector3 newMouseIntersect = gAgent.getPosAgentFromGlobal(tool->getMouseIntersectGlobal());
                 gHMD.setMouseWorldRaycastIntersection(newMouseIntersect);
-                //LL_INFOS("Oculus") << "[" << LLFrameTimer::getFrameCount() << "] tool " << tool->getName() << " is in Global coordinate space and has an Updated Mouse Intersect " << newMouseIntersect << LL_ENDL;
-            }
-            else  // mouseWorldRaycastIntersection stays as the value assigned to gDebugRaycastIntersection (above) 
-            {
-                //LL_INFOS("Oculus") << "[" << LLFrameTimer::getFrameCount() << "] tool " << tool->getName() << " is in Global coordinate space and uses the current intersect of " << LLVector3(gHMD.getMouseWorldRaycastIntersection().getF32ptr()) << LL_ENDL;
             }
         }
         return TRUE;
