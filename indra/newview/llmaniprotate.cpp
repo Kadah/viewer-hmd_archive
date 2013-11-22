@@ -61,7 +61,6 @@
 #include "llglheaders.h"
 #include "lltrans.h"
 #include "llvoavatarself.h"
-#include "llhmd.h"
 
 const F32 RADIUS_PIXELS = 100.f;		// size in screen space
 const F32 SQ_RADIUS = RADIUS_PIXELS * RADIUS_PIXELS;
@@ -1829,29 +1828,6 @@ void LLManipRotate::highlightManipulators( S32 x, S32 y )
 			mHighlightedPart = LL_ROT_GENERAL;
 		}
 	}
-
-    mMousePointGlobal.setZero();
-    if (hasMouseIntersectOverride() && !isMouseIntersectInUISpace())
-    {
-        switch(mHighlightedPart)
-        {
-        case LL_ROT_GENERAL:
-		    mMousePointGlobal = gAgent.getPosGlobalFromAgent((intersectMouseWithSphere(x, y, rotation_center, mRadiusMeters) + rotation_center));
-            break;
-        case LL_ROT_X:
-		    mMousePointGlobal = gAgent.getPosGlobalFromAgent(mdx_raw);
-            break;
-        case LL_ROT_Y:
-		    mMousePointGlobal = gAgent.getPosGlobalFromAgent(mdy_raw);
-            break;
-        case LL_ROT_Z:
-		    mMousePointGlobal = gAgent.getPosGlobalFromAgent(mdz_raw);
-            break;
-        case LL_ROT_ROLL:
-		    mMousePointGlobal = gAgent.getPosGlobalFromAgent(intersection_roll + rotation_center);
-            break;
-        }
-    }
 }
 
 S32 LLManipRotate::getObjectAxisClosestToMouse(LLVector3& object_axis)

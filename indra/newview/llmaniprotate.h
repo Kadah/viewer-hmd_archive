@@ -86,6 +86,8 @@ private:
 	static LLVector3	intersectMouseWithSphere( S32 x, S32 y, const LLVector3& sphere_center, F32 sphere_radius );
 	static LLVector3	intersectRayWithSphere( const LLVector3& ray_pt, const LLVector3& ray_dir, const LLVector3& sphere_center, F32 sphere_radius);
 
+    virtual BOOL        hasMouseIntersectOverride() const { return FALSE; }
+
 private:
 	LLVector3d			mRotationCenter;			
 	LLCoordGL			mCenterScreen;
