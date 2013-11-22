@@ -440,7 +440,7 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 
 	if( canAffectSelection() )
 	{
-        BOOL use3D = gHMD.isHMDMode() && (mObjectSelection->getSelectType() != SELECT_TYPE_HUD);
+        BOOL use3D = gHMD.isHMDMode() && !isMouseIntersectInUISpace();
 
 		LLVector4 translation(bbox.getPositionAgent());
         LLQuaternion rot = bbox.getRotation();
@@ -516,10 +516,11 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 
         if (use3D)
         {
+            mMousePointGlobal.setZero();
             const LLVector3& mouse_world = gHMD.getMouseWorld();
             LLVector3 dir = LLVector3(gHMD.getMouseWorldEnd().getF32ptr()) - mouse_world;
             dir.normalize();
-            F32 r2 = (mScaledBoxHandleSize * mScaledBoxHandleSize) * 0.5f;
+            F32 r2 = (mScaledBoxHandleSize * mScaledBoxHandleSize) * (0.5f * 0.5f);
 	        for (minpulator_list_t::iterator it = mProjectedManipulators.begin(), itEnd = mProjectedManipulators.end(); it != itEnd; ++it)
 	        {
 			    ManipulatorHandle* manipulator = *it;
@@ -529,10 +530,7 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
                 if (nearest_approach <= r2)
                 {
 					mHighlightedPart = manipulator->mManipID;
-                    gHMD.cursorIntersectsWorld(TRUE);
-                    LLVector4a intersection;
-                    intersection.load3(nearest_point.mV);
-                    gHMD.setMouseWorldIntersection(intersection);
+                    mMousePointGlobal = gAgent.getPosGlobalFromAgent(nearest_point);
                 }
             }
         }

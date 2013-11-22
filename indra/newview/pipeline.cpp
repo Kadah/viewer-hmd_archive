@@ -7863,8 +7863,12 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 		bool dof_enabled = !LLViewerCamera::getInstance()->cameraUnderWater() &&
 			(RenderDepthOfFieldInEditMode || !LLToolMgr::getInstance()->inBuildMode()) &&
-							RenderDepthOfField;
-
+							RenderDepthOfField &&
+                            !gHMD.isHMDMode();
+        // voidpointer 20131121: HMD Mode seems to have problems with DOF (probably because of the alpha-blend
+        // changes necessary to handle rendering UI to a rendertarget, but not sure).  Could probably dive into
+        // this and figure out why (and possibly even fix it), but have bigger problems to tackle before release.
+        // Disabling DOF in HMD mode for now.
 
 		bool multisample = RenderFSAASamples > 1 && mFXAABuffer.isComplete();
 

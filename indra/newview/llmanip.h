@@ -128,6 +128,11 @@ public:
 	virtual void		handleDeselect();
 	virtual BOOL		canAffectSelection() = 0;
 
+    virtual BOOL        hasMouseIntersectOverride() const;
+    virtual BOOL        isMouseIntersectInUISpace() const;
+    virtual BOOL        hasMouseIntersectGlobal() const;
+    virtual LLVector3d  getMouseIntersectGlobal() { return mMousePointGlobal; }
+
 	EManipPart			getHighlightedPart() { return mHighlightedPart; }
 	
 	LLSafeHandle<LLObjectSelection> getSelection();
@@ -151,6 +156,7 @@ protected:
 	LLSafeHandle<LLObjectSelection> mObjectSelection;
 	EManipPart			mHighlightedPart;
 	EManipPart			mManipPart;
+    LLVector3d          mMousePointGlobal;
 
 	static F32			sHelpTextVisibleTime;
 	static F32			sHelpTextFadeTime;

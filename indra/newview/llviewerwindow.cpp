@@ -2960,7 +2960,7 @@ void LLViewerWindow::updateUI()
 											  &gDebugRaycastEnd);
         if (gHMD.isHMDMode())
         {
-            gHMD.setMouseWorldEnd(gDebugRaycastEnd);
+            gHMD.updateMouseRaycast(gDebugRaycastEnd);
             if (gDebugRaycastObject &&
                 gDebugRaycastObject->mDrawable &&
                 gDebugRaycastObject->mDrawable->getNumFaces())
@@ -2973,7 +2973,7 @@ void LLViewerWindow::updateUI()
                 {
                     gHMD.cursorIntersectsWorld(TRUE);
                 }
-                gHMD.setMouseWorldIntersection(gDebugRaycastIntersection, gDebugRaycastNormal, gDebugRaycastTangent);
+                gHMD.setMouseWorldRaycastIntersection(gDebugRaycastIntersection, gDebugRaycastNormal, gDebugRaycastTangent);
             }
         }
 
@@ -3148,17 +3148,17 @@ void LLViewerWindow::updateUI()
 		if( mouse_captor )
 		{
 			// Pass hover events to object capturing mouse events.
-			S32 local_x;
-			S32 local_y; 
+			S32 local_x, local_y;
 			mouse_captor->screenPointToLocal( x, y, &local_x, &local_y );
-			handled = mouse_captor->handleHover(local_x, local_y, mask);
-            gHMD.cursorIntersectsUI(gHMD.cursorIntersectsUI() || handled);
-			if (LLView::sDebugMouseHandling)
-			{
-				llinfos << "Hover handled by captor " << mouse_captor->getName() << llendl;
-			}
-
-			if( !handled )
+            if (handled = mouse_captor->handleHover(local_x, local_y, mask))
+            {
+                gHMD.handleMouseIntersectOverride(mouse_captor);
+			    if (LLView::sDebugMouseHandling)
+			    {
+				    llinfos << "Hover handled by captor " << mouse_captor->getName() << llendl;
+			    }
+            }
+			else
 			{
 				lldebugst(LLERR_USER_INPUT) << "hover not handled by mouse captor" << llendl;
 			}
@@ -3194,31 +3194,20 @@ void LLViewerWindow::updateUI()
 					}
 				}
 			}
-		
-            gHMD.cursorIntersectsUI(gHMD.cursorIntersectsUI() || handled);
 
-			if (!handled)
+            gHMD.cursorIntersectsUI(handled || gHMD.cursorIntersectsUI());
+
+            if (!handled)
 			{
 				LLTool *tool = LLToolMgr::getInstance()->getCurrentTool();
-
 				if(mMouseInWindow && tool)
 				{
-					handled = tool->handleHover(x, y, mask);
-                    // TODO: remove this block and add equivalent functionality to the llmanip classes directly
-                    if (!gHMD.cursorIntersectsUI() && handled)
+                    if (handled = tool->handleHover(x, y, mask))
                     {
-                        LLManip* manip_tool = dynamic_cast<LLManip*>(tool);
-                        if (manip_tool)
-                        {
-                            LLObjectSelectionHandle selection = manip_tool->getSelection();
-                            if (selection && selection->getObjectCount() && selection->getSelectType() == SELECT_TYPE_HUD)
-                            {
-                                gHMD.cursorIntersectsUI(TRUE);
-                            }
-                        }
+                        gHMD.handleMouseIntersectOverride(tool);
                     }
-				}
-			}
+                }
+            }
 		}
 
 		// Show a new tool tip (or update one that is already shown)
@@ -3313,10 +3302,12 @@ void LLViewerWindow::updateUI()
 	else
 	{	// just have tools handle hover when UI is turned off
 		LLTool *tool = LLToolMgr::getInstance()->getCurrentTool();
-
 		if(mMouseInWindow && tool)
 		{
-			handled = tool->handleHover(x, y, mask);
+			if (handled = tool->handleHover(x, y, mask))
+            {
+                gHMD.handleMouseIntersectOverride(tool);
+            }
 		}
 	}
 

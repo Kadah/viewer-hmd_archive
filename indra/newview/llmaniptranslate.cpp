@@ -108,6 +108,16 @@ struct ClosestToCamera
 	}
 };
 
+struct ClosestToCamera3D
+{
+	bool operator()(const LLManipTranslate::ManipulatorHandle& a,
+					const LLManipTranslate::ManipulatorHandle& b) const
+	{
+        const LLVector3& origin = LLViewerCamera::getInstance()->getOrigin();
+        return (origin - a.mEndPosition).lengthSquared() < (origin - b.mEndPosition).lengthSquared();
+	}
+};
+
 LLManipTranslate::LLManipTranslate( LLToolComposite* composite )
 :	LLManip( std::string("Move"), composite ),
 	mLastHoverMouseX(-1),
@@ -522,7 +532,8 @@ BOOL LLManipTranslate::handleHover(S32 x, S32 y, MASK mask)
 
 	// Project the cursor onto that plane
 	LLVector3d relative_move;
-	getMousePointOnPlaneGlobal(relative_move, x, y, current_pos_global, mManipNormal);\
+	getMousePointOnPlaneGlobal(relative_move, x, y, current_pos_global, mManipNormal);
+    mMousePointGlobal = relative_move;
 	relative_move -= mDragCursorStartGlobal;
 
 	// You can't move more than some distance from your original mousedown point.
@@ -791,7 +802,9 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
 		return;
 	}
 	
-	LLMatrix4 projMatrix = LLViewerCamera::getInstance()->getProjection();
+    BOOL use3D = gHMD.isHMDMode() && !isMouseIntersectInUISpace();
+
+    LLMatrix4 projMatrix = LLViewerCamera::getInstance()->getProjection();
 	LLMatrix4 modelView = LLViewerCamera::getInstance()->getModelview();
 
 	LLVector3 object_position = getPivotPoint();
@@ -807,8 +820,6 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
     LLVector4 translation(object_position);
     LLMatrix4 transform;
     transform.initRotTrans(grid_rotation, translation);
-
-    BOOL use3D = gHMD.isHMDMode() && (mObjectSelection->getSelectType() != SELECT_TYPE_HUD);
 
     if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
@@ -882,12 +893,11 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
 
     // 10 pixel hotspot for arrows, 20 for planar manipulators
     F32 hotspotSize[2] = { 10.0f, 20.0f };
-    if (gHMD.isHMDMode())
+    if (use3D)
     {
-        // TODO: these are too large, but whatever non-hack way I try seems to make no difference (or makes it worse)
-        // so, for now, I'm just going to use a multiplier of .5 (for radius) * (hack)
-        hotspotSize[0] = ((mManipulatorVertices[1] - mManipulatorVertices[0]).scaleVec(LLVector4(mArrowScales))).length() * (0.5f * 0.25f);
-        hotspotSize[1] = ((mManipulatorVertices[num_arrow_manips + 1] - mManipulatorVertices[num_arrow_manips]).scaleVec(LLVector4(mPlaneScales))).length() * (0.5f * 0.5f);
+        hotspotSize[0] = ((mConeSize * MANIPULATOR_HOTSPOT_END) - (mConeSize * MANIPULATOR_HOTSPOT_START) * 0.5f);
+        hotspotSize[0] *= hotspotSize[0];
+        hotspotSize[1] = ((mManipulatorVertices[num_arrow_manips + 1] - mManipulatorVertices[num_arrow_manips]).scaleVec(LLVector4(mPlaneScales))).lengthSquared() * (0.5f * 0.5f);
     }
 
 	for (S32 i = 0; i < numManips; i+= 2)
@@ -924,8 +934,14 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
         }
 	}
 
+    mMousePointGlobal.setZero();
     if (use3D)
     {
+	    // Keep order consistent with insertion via stable_sort
+	    std::stable_sort( projected_manipulators.begin(),
+		    projected_manipulators.end(),
+		    ClosestToCamera3D() );
+
         const LLVector3& mouse_world = gHMD.getMouseWorld();
         LLVector3 dir = LLVector3(gHMD.getMouseWorldEnd().getF32ptr()) - mouse_world;
         dir.normalize();
@@ -933,17 +949,14 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
 	    {
 		    ManipulatorHandle& manipulator = *it;
             LLVector3 ctr = (manipulator.mStartPosition + manipulator.mEndPosition) * 0.5f;
-            F32 r2 = (manipulator.mEndPosition - manipulator.mStartPosition).lengthSquared() * 0.5f;
             LLVector3 other_direction = ctr - mouse_world;
 	        LLVector3 nearest_point = mouse_world + dir * (other_direction * dir);
 	        F32 nearest_approach = (nearest_point - ctr).lengthSquared();
-            if (nearest_approach <= r2)
+            if (nearest_approach <= manipulator.mHotSpotRadius)
             {
 				mHighlightedPart = manipulator.mManipID;
-                gHMD.cursorIntersectsWorld(TRUE);
-                LLVector4a intersection;
-                intersection.load3(nearest_point.mV);
-                gHMD.setMouseWorldIntersection(intersection);
+                mMousePointGlobal = gAgent.getPosGlobalFromAgent(nearest_point);
+                break;
             }
         }
     }
@@ -1530,7 +1543,17 @@ void LLManipTranslate::renderSnapGuides()
 					LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE, GL_GREATER);
 					gGL.getTexUnit(0)->bindManual(LLTexUnit::TT_TEXTURE, getGridTexName());
 					gGL.flush();
-					gGL.blendFunc(LLRender::BF_ZERO, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
+                    if (gHMD.isHMDMode() && mObjectSelection && mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
+                    {
+                        // rendering to the UI surface with a source of BF_ZERO makes whatever is rendered next invisible
+                        // because we are rendering the UI to a rendertarget (which has a different blendfunc so that
+                        // the "unused" portion of the UI Surface is transparent.
+                        gGL.blendFunc(LLRender::BF_SOURCE_ALPHA, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
+                    }
+                    else
+                    {
+					    gGL.blendFunc(LLRender::BF_ZERO, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
+                    }
 					renderGrid(u,v,tiles,0.9f, 0.9f, 0.9f,a*0.15f);
 					gGL.flush();
 					gGL.setSceneBlendType(LLRender::BT_ALPHA);

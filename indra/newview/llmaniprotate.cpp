@@ -61,6 +61,7 @@
 #include "llglheaders.h"
 #include "lltrans.h"
 #include "llvoavatarself.h"
+#include "llhmd.h"
 
 const F32 RADIUS_PIXELS = 100.f;		// size in screen space
 const F32 SQ_RADIUS = RADIUS_PIXELS * RADIUS_PIXELS;
@@ -1702,9 +1703,9 @@ void LLManipRotate::highlightManipulators( S32 x, S32 y )
 	}
 	
 	LLVector3 rotation_center = gAgent.getPosAgentFromGlobal(mRotationCenter);
-	LLVector3 mouse_dir_x;
-	LLVector3 mouse_dir_y;
-	LLVector3 mouse_dir_z;
+	LLVector3 mouse_dir_x, mdx_raw;
+	LLVector3 mouse_dir_y, mdy_raw;
+	LLVector3 mouse_dir_z, mdz_raw;
 	LLVector3 intersection_roll;
 
 	LLVector3 grid_origin;
@@ -1725,20 +1726,23 @@ void LLManipRotate::highlightManipulators( S32 x, S32 y )
 	F32 cur_select_distance = 0.f;
 
 	// test x
-	getMousePointOnPlaneAgent(mouse_dir_x, x, y, rotation_center, rot_x_axis);
+	getMousePointOnPlaneAgent(mdx_raw, x, y, rotation_center, rot_x_axis);
+    mouse_dir_x = mdx_raw;
 	mouse_dir_x -= rotation_center;
 	// push intersection point out when working at obtuse angle to make ring easier to hit
-	mouse_dir_x *= 1.f + (1.f - llabs(rot_x_axis * mCenterToCamNorm)) * 0.1f;
+	mouse_dir_x *= 1.f + (1.f - proj_rot_x_axis) * 0.1f;
 
 	// test y
-	getMousePointOnPlaneAgent(mouse_dir_y, x, y, rotation_center, rot_y_axis);
+	getMousePointOnPlaneAgent(mdy_raw, x, y, rotation_center, rot_y_axis);
+    mouse_dir_y = mdy_raw;
 	mouse_dir_y -= rotation_center;
-	mouse_dir_y *= 1.f + (1.f - llabs(rot_y_axis * mCenterToCamNorm)) * 0.1f;
+	mouse_dir_y *= 1.f + (1.f - proj_rot_y_axis) * 0.1f;
 
 	// test z
-	getMousePointOnPlaneAgent(mouse_dir_z, x, y, rotation_center, rot_z_axis);
+	getMousePointOnPlaneAgent(mdz_raw, x, y, rotation_center, rot_z_axis);
+    mouse_dir_z = mdz_raw;
 	mouse_dir_z -= rotation_center;
-	mouse_dir_z *= 1.f + (1.f - llabs(rot_z_axis * mCenterToCamNorm)) * 0.1f;
+	mouse_dir_z *= 1.f + (1.f - proj_rot_z_axis) * 0.1f;
 
 	// test roll
 	getMousePointOnPlaneAgent(intersection_roll, x, y, rotation_center, mCenterToCamNorm);
@@ -1825,6 +1829,29 @@ void LLManipRotate::highlightManipulators( S32 x, S32 y )
 			mHighlightedPart = LL_ROT_GENERAL;
 		}
 	}
+
+    mMousePointGlobal.setZero();
+    if (hasMouseIntersectOverride() && !isMouseIntersectInUISpace())
+    {
+        switch(mHighlightedPart)
+        {
+        case LL_ROT_GENERAL:
+		    mMousePointGlobal = gAgent.getPosGlobalFromAgent((intersectMouseWithSphere(x, y, rotation_center, mRadiusMeters) + rotation_center));
+            break;
+        case LL_ROT_X:
+		    mMousePointGlobal = gAgent.getPosGlobalFromAgent(mdx_raw);
+            break;
+        case LL_ROT_Y:
+		    mMousePointGlobal = gAgent.getPosGlobalFromAgent(mdy_raw);
+            break;
+        case LL_ROT_Z:
+		    mMousePointGlobal = gAgent.getPosGlobalFromAgent(mdz_raw);
+            break;
+        case LL_ROT_ROLL:
+		    mMousePointGlobal = gAgent.getPosGlobalFromAgent(intersection_roll + rotation_center);
+            break;
+        }
+    }
 }
 
 S32 LLManipRotate::getObjectAxisClosestToMouse(LLVector3& object_axis)

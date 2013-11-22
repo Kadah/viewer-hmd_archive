@@ -37,6 +37,7 @@
 class LLHMDImpl;
 class LLViewerTexture;
 class LLVertexBuffer;
+class LLMouseHandler;
 
 
 // TODO: move some of the data to this class instead of always requiring an extra method call via PIMPL
@@ -237,10 +238,16 @@ public:
     void getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* uv = NULL);
     void updateHMDMouseInfo(S32 ui_x, S32 ui_y);
     const LLVector3& getMouseWorld() const { return mMouseWorld; }
-    void setMouseWorldEnd(const LLVector4a& mwe) { mMouseWorldEnd = mwe; }
+    void updateMouseRaycast(const LLVector4a& mwe) { mMouseWorldEnd = mwe; }
     const LLVector4a& getMouseWorldEnd() const { return mMouseWorldEnd; }
-    void setMouseWorldIntersection(const LLVector4a& intersection) { mMouseWorldRaycastIntersection = intersection; }
-    void setMouseWorldIntersection(const LLVector4a& intersection, const LLVector4a& normal, const LLVector4a& tangent)
+    void setMouseWorldRaycastIntersection(const LLVector3& intersection)
+    {
+        LLVector4a ni;
+        ni.load3(intersection.mV);
+        setMouseWorldRaycastIntersection(ni);
+    }
+    void setMouseWorldRaycastIntersection(const LLVector4a& intersection) { mMouseWorldRaycastIntersection = intersection; }
+    void setMouseWorldRaycastIntersection(const LLVector4a& intersection, const LLVector4a& normal, const LLVector4a& tangent)
     {
         mMouseWorldRaycastIntersection = intersection;
         mMouseWorldRaycastNormal = normal;
@@ -249,6 +256,9 @@ public:
     const LLVector4a& getMouseWorldRaycastIntersection() const { return mMouseWorldRaycastIntersection; }
     const LLVector4a& getMouseWorldRaycastNormal() const { return mMouseWorldRaycastNormal; }
     const LLVector4a& getMouseWorldRaycastTangent() const { return mMouseWorldRaycastTangent; }
+
+    // returns TRUE if we're in HMD Mode, mh is valid and mh has a valid mouse intersect override (in either UI or global coordinate space)
+    BOOL handleMouseIntersectOverride(LLMouseHandler* mh);
 
     F32 getWorldCursorSizeMult() const { return mMouseWorldSizeMult; }
 

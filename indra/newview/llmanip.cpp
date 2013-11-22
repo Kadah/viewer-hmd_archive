@@ -54,6 +54,8 @@
 #include "pipeline.h"
 #include "llglheaders.h"
 #include "lluiimage.h"
+#include "llhmd.h"
+
 // Local constants...
 const S32 VERTICAL_OFFSET = 50;
 
@@ -101,7 +103,8 @@ LLManip::LLManip( const std::string& name, LLToolComposite* composite )
 	LLTool( name, composite ),
 	mInSnapRegime(FALSE),
 	mHighlightedPart(LL_NO_PART),
-	mManipPart(LL_NO_PART)
+	mManipPart(LL_NO_PART),
+    mMousePointGlobal()
 {
 }
 
@@ -246,6 +249,21 @@ BOOL LLManip::handleMouseUp(S32 x, S32 y, MASK mask)
 		setMouseCapture( FALSE );
 	}
 	return handled;
+}
+
+BOOL LLManip::hasMouseIntersectOverride() const
+{
+    return gHMD.isHMDMode() && mObjectSelection && !mObjectSelection->isEmpty() && mHighlightedPart != LL_NO_PART;
+}
+
+BOOL LLManip::isMouseIntersectInUISpace() const
+{
+    return mObjectSelection->getSelectType() == SELECT_TYPE_HUD;
+}
+
+BOOL LLManip::hasMouseIntersectGlobal() const
+{
+    return hasMouseIntersectOverride() && !mMousePointGlobal.isNull();
 }
 
 void LLManip::updateGridSettings()

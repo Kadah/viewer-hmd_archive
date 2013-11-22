@@ -45,6 +45,7 @@
 #include "raytrace.h"
 #include "llui.h"
 #include "llview.h"
+#include "lltool.h"
 
 #include "OVR.h"
 #include "Kernel/OVR_Timer.h"
@@ -1408,4 +1409,48 @@ void LLHMD::updateHMDMouseInfo(S32 ui_x, S32 ui_y)
     //F32 center_y = uih * 0.5f;
     //mMouseWin.mX = llround(((asp[VX] + 1.0f) * 0.5f * uiw) + (center_x * asp[VX] * 0.25f));
     //mMouseWin.mY = llround(((asp[VY] + 1.0f) * 0.5f * uih) + (center_y * asp[VY] * 2.0f));
+}
+
+
+BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
+{
+    if (!mh || !gHMD.isHMDMode())
+    {
+        return FALSE;
+    }
+
+    LLView* ui_view = dynamic_cast<LLView*>(mh);
+    if (ui_view)
+    {
+        gHMD.cursorIntersectsUI(TRUE);
+        //LL_INFOS("Oculus") << "[" << LLFrameTimer::getFrameCount() << "] " << ui_view->getName() << " is an LLView and thus UI coordinate space" << LL_ENDL;
+        return TRUE;
+    }
+
+    LLTool* tool = dynamic_cast<LLTool*>(mh);
+    if (tool && tool->hasMouseIntersectOverride())
+    {
+        if (tool->isMouseIntersectInUISpace())
+        {
+            gHMD.cursorIntersectsUI(TRUE);
+            //LL_INFOS("Oculus") << "[" << LLFrameTimer::getFrameCount() << "] tool " << tool->getName() << " is in UI coordinate space" << LL_ENDL;
+        }
+        else
+        {
+            gHMD.cursorIntersectsWorld(TRUE);
+            if (tool->hasMouseIntersectGlobal())
+            {
+                LLVector3 newMouseIntersect = gAgent.getPosAgentFromGlobal(tool->getMouseIntersectGlobal());
+                gHMD.setMouseWorldRaycastIntersection(newMouseIntersect);
+                //LL_INFOS("Oculus") << "[" << LLFrameTimer::getFrameCount() << "] tool " << tool->getName() << " is in Global coordinate space and has an Updated Mouse Intersect " << newMouseIntersect << LL_ENDL;
+            }
+            else  // mouseWorldRaycastIntersection stays as the value assigned to gDebugRaycastIntersection (above) 
+            {
+                //LL_INFOS("Oculus") << "[" << LLFrameTimer::getFrameCount() << "] tool " << tool->getName() << " is in Global coordinate space and uses the current intersect of " << LLVector3(gHMD.getMouseWorldRaycastIntersection().getF32ptr()) << LL_ENDL;
+            }
+        }
+        return TRUE;
+    }
+
+    return FALSE;
 }
