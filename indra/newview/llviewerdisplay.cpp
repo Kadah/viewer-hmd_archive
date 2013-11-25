@@ -249,50 +249,6 @@ static LLFastTimer::DeclareTimer FTM_TEXTURE_UNBIND("Texture Unbind");
 static LLFastTimer::DeclareTimer FTM_TELEPORT_DISPLAY("Teleport Display");
 
 
-void renderUnusedMainWindow()
-{
-    if (gHMD.getRenderMode() == LLHMD::RenderMode_HMD
-        && gHMD.isInitialized()
-        && gHMD.isHMDConnected()
-        && gViewerWindow
-        && gViewerWindow->getWindow()
-#if LL_DARWIN
-        && !gSavedSettings.getBOOL("OculusUseMirroring")
-#endif
-       )
-    {
-        if (gHMD.setRenderWindowMain())
-        {
-            gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getMainWindowWidth(), gHMD.getMainWindowHeight());
-            glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-            gViewerWindow->getWindow()->swapBuffers();
-            gDisplaySwapBuffers = TRUE;
-        }
-    }
-}
-
-void renderUnusedHMDWindow()
-{
-    if (gHMD.isInitialized()
-        && gHMD.isHMDConnected()
-        && gHMD.getRenderMode() != LLHMD::RenderMode_HMD
-        && gViewerWindow
-        && gViewerWindow->getWindow())
-    {
-        if (gHMD.setRenderWindowHMD())
-        {
-            gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDWidth(), gHMD.getHMDHeight());
-            glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-            // write text "press CTRL-SHIFT-D to switch to HMD"
-            gViewerWindow->getWindow()->swapBuffers();
-        }
-    }
-}
-
 // Paint the display!
 void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 {
@@ -661,14 +617,14 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
                 {
                     if (((S32)LLFrameTimer::getFrameCount() % 30) == 0)
                     {
-                        renderUnusedMainWindow();
+                        gHMD.renderUnusedMainWindow();
                     }
                 }
                 else
                 {
                     if (((S32)LLFrameTimer::getFrameCount() % 30) == 0)
                     {
-                        renderUnusedHMDWindow();
+                        gHMD.renderUnusedHMDWindow();
                     }
                     gHMD.setRenderWindowMain();
                 }
@@ -681,7 +637,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
         case LLViewerCamera::LEFT_EYE:
         case LLViewerCamera::RIGHT_EYE:
             {
-				if ((!gSavedSettings.getBOOL("DebugHMDEnable") && !gHMD.isInitialized()) || render_mode == LLHMD::RenderMode_None)
+				if ((!gHMD.isDebugMode() && !gHMD.isInitialized()) || render_mode == LLHMD::RenderMode_None)
                 {
                     continue;
                 }
@@ -691,7 +647,13 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
                     i == LLViewerCamera::LEFT_EYE &&
                     render_mode == LLHMD::RenderMode_HMD)
                 {
-                    gHMD.setRenderWindowHMD();
+                    if (!gHMD.setRenderWindowHMD())
+                    {
+                        i = LLViewerCamera::RIGHT_EYE;
+                        gHMD.setRenderMode(LLHMD::RenderMode_None);
+                        LL_WARNS("HMD") << "Could not set Render Window to HMD.  Aborting and setting RenderMode to normal." << LL_ENDL;
+                        continue;
+                    }
                 }
             }
             break;

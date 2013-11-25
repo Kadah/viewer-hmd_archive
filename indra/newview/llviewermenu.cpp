@@ -4111,17 +4111,15 @@ class LLViewCycleDisplay : public view_listener_t
     bool handleEvent(const LLSD& userdata)
     {
 #if LL_HMD_SUPPORTED
-		static LLCachedControl<bool> debug_hmd(gSavedSettings, "DebugHMDEnable", false);
-
         U32 curRenderMode = gHMD.getRenderMode();
         U32 nextRenderMode = LLHMD::RenderMode_None;
         switch (curRenderMode)
         {
         case LLHMD::RenderMode_None:
-            nextRenderMode = gHMD.isInitialized() ? LLHMD::RenderMode_HMD : debug_hmd ? LLHMD::RenderMode_ScreenStereo : LLHMD::RenderMode_None;
+            nextRenderMode = gHMD.isInitialized() ? LLHMD::RenderMode_HMD : gHMD.isDebugMode() ? LLHMD::RenderMode_ScreenStereo : LLHMD::RenderMode_None;
             break;
         case LLHMD::RenderMode_HMD:
-            nextRenderMode = debug_hmd ? LLHMD::RenderMode_ScreenStereo : LLHMD::RenderMode_None;
+            nextRenderMode = gHMD.isDebugMode() ? LLHMD::RenderMode_ScreenStereo : LLHMD::RenderMode_None;
             break;
         case LLHMD::RenderMode_ScreenStereo:
         default:

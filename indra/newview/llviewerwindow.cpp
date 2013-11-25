@@ -838,13 +838,14 @@ public:
 			}
 		}
 
-		if (gHMD.isInitialized() && gSavedSettings.getBOOL("DebugHMDEnable"))
+		if (gHMD.isInitialized() && gHMD.isDebugMode())
 		{
-            if (gHMD.isHMDMode())
-            {
-		        xpos = llmax((mWindow->getWorldViewWidthScaled() / 2) - 200, 0);
-		        ypos = (mWindow->getWorldViewHeightScaled() / 2) - (y_inc / 2);
-            }
+          //  if (gHMD.isHMDMode())
+          //  {
+          //      // for debugging: put text in center of screen
+          //      xpos = llmax((mWindow->getWorldViewWidthScaled() / 2) - 200, 0);
+          //      ypos = (mWindow->getWorldViewHeightScaled() / 2) - (y_inc / 2);
+          //  }
             F32 roll, pitch, yaw;
             gHMD.getHMDRollPitchYaw(roll, pitch, yaw);
 			addText(xpos, ypos, llformat("HMD Orient Euler: [roll=%f, pitch=%f, yaw=%f]", roll, pitch, yaw));
@@ -3150,7 +3151,8 @@ void LLViewerWindow::updateUI()
 			// Pass hover events to object capturing mouse events.
 			S32 local_x, local_y;
 			mouse_captor->screenPointToLocal( x, y, &local_x, &local_y );
-            if (handled = mouse_captor->handleHover(local_x, local_y, mask))
+            handled = mouse_captor->handleHover(local_x, local_y, mask);
+            if (handled)
             {
                 gHMD.handleMouseIntersectOverride(mouse_captor);
 			    if (LLView::sDebugMouseHandling)
@@ -3202,7 +3204,8 @@ void LLViewerWindow::updateUI()
 				LLTool *tool = LLToolMgr::getInstance()->getCurrentTool();
 				if(mMouseInWindow && tool)
 				{
-                    if (handled = tool->handleHover(x, y, mask))
+                    handled = tool->handleHover(x, y, mask);
+                    if (handled)
                     {
                         gHMD.handleMouseIntersectOverride(tool);
                     }
@@ -3304,7 +3307,8 @@ void LLViewerWindow::updateUI()
 		LLTool *tool = LLToolMgr::getInstance()->getCurrentTool();
 		if(mMouseInWindow && tool)
 		{
-			if (handled = tool->handleHover(x, y, mask))
+            handled = tool->handleHover(x, y, mask);
+			if (handled)
             {
                 gHMD.handleMouseIntersectOverride(tool);
             }

@@ -102,6 +102,8 @@
   <command name="hmdmode"
            available_in_toybox="true"
            icon="Command_HMD_Mode_Icon"
+           hover_icon_unselected="Command_Highlighting_Icon"
+           hover_icon_selected="Command_Highlighting_Selected_Icon"
            label_ref="Command_HMD_Mode_Label"
            tooltip_ref="Command_HMD_Mode_Tooltip"
            execute_function="View.CycleDisplay"

@@ -208,6 +208,8 @@ protected:
     S32         mHMDWidth;
     S32         mHMDHeight;
     S32         mHMDClientHeightDiff;
+    DWORD       mDwExStyle[2];
+    DWORD       mDwStyle[2];
 
 	// The following variables are for Language Text Input control.
 	// They are all static, since one context is shared by all LLWindowWin32

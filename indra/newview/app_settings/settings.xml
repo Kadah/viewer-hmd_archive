@@ -2180,17 +2180,6 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
-    <key>DebugHMDEnable</key>
-    <map>
-      <key>Comment</key>
-      <string>Enable Head Mounted Display Debugging Mode.</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-    </map>
     <key>DebugInventoryFilters</key>
     <map>
       <key>Comment</key>
@@ -14939,6 +14928,17 @@
       <string />
     </map>
 
+  <key>OculusDebugMode</key>
+  <map>
+    <key>Comment</key>
+    <string>Enable Head Mounted Display Debugging Mode.</string>
+    <key>Persist</key>
+    <integer>1</integer>
+    <key>Type</key>
+    <string>Boolean</string>
+    <key>Value</key>
+    <integer>0</integer>
+  </map>
   <key>OculusUseMirroring</key>
   <map>
     <key>Comment</key>

@@ -4552,8 +4552,7 @@ void LLAppViewer::idle()
 		// Update spaceserver timeinfo
 	    LLWorld::getInstance()->setSpaceTimeUSec(LLWorld::getInstance()->getSpaceTimeUSec() + (U32)(dt_raw * SEC_TO_MICROSEC));
     
-        // TODO: should only allow this to fail ONCE - not over and over again if the preinit fails the first time
-        if (!gHMD.isInitialized())
+        if (!gHMD.isInitialized() && !gHMD.failedInit())
         {
             if (!gHMD.init())
             {

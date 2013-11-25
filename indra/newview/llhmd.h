@@ -34,6 +34,8 @@
     #define LL_HMD_SUPPORTED 0
 #endif
 
+#include "llpointer.h"
+
 class LLHMDImpl;
 class LLViewerTexture;
 class LLVertexBuffer;
@@ -66,7 +68,7 @@ public:
         kFlag_ShowCalibrationUI         = 1 << 8,
         kFlag_CursorIntersectsWorld     = 1 << 9,
         kFlag_CursorIntersectsUI        = 1 << 10,
-        kFlag_FullWidthUIMode           = 1 << 11,
+        kFlag_DebugMode                 = 1 << 11,
         kFlag_ChangingRenderContext     = 1 << 12,
         kFlag_UseCalculatedAspect       = 1 << 13,
     };
@@ -101,8 +103,8 @@ public:
     void cursorIntersectsWorld(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsWorld; } else { mFlags &= ~kFlag_CursorIntersectsWorld; } }
     BOOL cursorIntersectsUI() const { return ((mFlags & kFlag_CursorIntersectsUI) != 0) ? TRUE : FALSE; }
     void cursorIntersectsUI(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsUI; } else { mFlags &= ~kFlag_CursorIntersectsUI; } }
-    BOOL isFullWidthUIMode() const { return ((mFlags & kFlag_FullWidthUIMode) != 0) ? TRUE : FALSE; }
-    void isFullWidthUIMode(BOOL b) { if (b) { mFlags |= kFlag_FullWidthUIMode; } else { mFlags &= ~kFlag_FullWidthUIMode; } }
+    BOOL isDebugMode() const { return ((mFlags & kFlag_DebugMode) != 0) ? TRUE : FALSE; }
+    void isDebugMode(BOOL b) { if (b) { mFlags |= kFlag_DebugMode; } else { mFlags &= ~kFlag_DebugMode; } }
     BOOL isChangingRenderContext() const { return ((mFlags & kFlag_ChangingRenderContext) != 0) ? TRUE : FALSE; }
     void isChangingRenderContext(BOOL b) { if (b) { mFlags |= kFlag_ChangingRenderContext; } else { mFlags &= ~kFlag_ChangingRenderContext; } }
     BOOL useCalculatedAspect() const { return ((mFlags & kFlag_UseCalculatedAspect) != 0) ? TRUE : FALSE; }
@@ -124,6 +126,9 @@ public:
     void setFocusWindowHMD();
     void onAppFocusGained();
     void onAppFocusLost();
+    void renderUnusedMainWindow();
+    void renderUnusedHMDWindow();
+
 
     // 0 = center, 1 = left, 2 = right.  Input clamped to [0,2]
     U32 getCurrentEye() const;
@@ -204,12 +209,19 @@ public:
 
     F32 getOrthoPixelOffset() const;
 
-    S32 getMainWindowWidth() const { return mMainWindowWidth; }
-    void setMainWindowWidth(S32 w) { mMainWindowWidth = w; }
-    S32 getMainWindowHeight() const { return mMainWindowHeight; }
-    void setMainWindowHeight(S32 h) { mMainWindowHeight = h; }
-    void getMainWindowSize(S32& w, S32& h) { w = mMainWindowWidth; h = mMainWindowHeight; }
-    void setMainWindowSize(S32 w, S32 h) { mMainWindowWidth = w; mMainWindowHeight = h; }
+    LLCoordScreen getMainWindowPos() const { return mMainWindowPos; }
+    void setMainWindowPos(LLCoordScreen pos) { mMainWindowPos = pos; }
+    S32 getMainWindowWidth() const { return mMainWindowSize.mX; }
+    void setMainWindowWidth(S32 w) { mMainWindowSize.mX = w; }
+    S32 getMainWindowHeight() const { return mMainWindowSize.mY; }
+    void setMainWindowHeight(S32 h) { mMainWindowSize.mY = h; }
+    LLCoordScreen getMainWindowSize() const { return mMainWindowSize; }
+    S32 getMainClientWidth() const { return mMainClientSize.mX; }
+    void setMainClientWidth(S32 w) { mMainClientSize.mX = w; }
+    S32 getMainClientHeight() const { return mMainClientSize.mY; }
+    void setMainClientHeight(S32 h) { mMainClientSize.mY = h; }
+    LLCoordWindow getMainClientSize() const { return mMainClientSize; }
+    LLCoordWindow getHMDClientSize() const { return LLCoordWindow(getHMDWidth(), getHMDHeight()); }
 
     const LLVector2& getUISurfaceArc() const { return mUICurvedSurfaceArc; }
     F32 getUISurfaceArcHorizontal() const { return mUICurvedSurfaceArc[VX]; }
@@ -230,9 +242,9 @@ public:
     void setUISurfaceOffsetHeight(F32 f) { mUICurvedSurfaceOffsets[VY] = f; onChangeUISurfaceShape(); }
     void setUISurfaceOffsetDepth(F32 f) { mUICurvedSurfaceOffsets[VZ] = f; onChangeUISurfaceShape(); }
 
-    LLViewerTexture* getCursorImage(U32 cursorType);
-    LLViewerTexture* getCalibrateBackground();
-    LLViewerTexture* getCalibrateForeground();
+    LLViewerTexture* getCursorImage(U32 cursorType) { return (cursorType < mCursorTextures.size()) ? mCursorTextures[cursorType].get() : NULL; }
+    LLViewerTexture* getCalibrateBackground() { return mCalibrateBackgroundTexture; }
+    LLViewerTexture* getCalibrateForeground() { return mCalibrateForegroundTexture; }
 
     LLVertexBuffer* createUISurface();
     void getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* uv = NULL);
@@ -264,6 +276,7 @@ public:
 
     void saveSettings();
 
+    static void onChangeOculusDebugMode();
     static void onChangeUISurfaceSavedParams();
     static void onChangeUISurfaceShape();
     static void onChangeEyeDepth();
@@ -284,8 +297,9 @@ private:
     F32 mUIModelView[16];
     F32 mUIModelViewInv[16];
     F32 mBaseLookAt[16];
-    S32 mMainWindowWidth;
-    S32 mMainWindowHeight;
+    LLCoordScreen mMainWindowPos;
+    LLCoordScreen mMainWindowSize;
+    LLCoordWindow mMainClientSize;
     LLVector2 mUICurvedSurfaceArc;
     LLVector4 mUICurvedSurfaceRadius;
     LLVector3 mUICurvedSurfaceOffsets;
@@ -304,6 +318,9 @@ private:
     F32 mMouseWorldSizeMult;
     F32 mPresetAspect;
     F32 mPresetUIAspect;
+    std::vector<LLPointer<LLViewerTexture> > mCursorTextures;
+    LLPointer<LLViewerTexture> mCalibrateBackgroundTexture;
+    LLPointer<LLViewerTexture> mCalibrateForegroundTexture;
 };
 
 extern LLHMD gHMD;

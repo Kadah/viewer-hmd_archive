@@ -408,6 +408,10 @@ LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
     mWindowHandle[0] = mWindowHandle[1] = NULL;
 	mhDC[0] = mhDC[1] = NULL;
 	mhRC = NULL;
+    mDwStyle[0] = WS_OVERLAPPEDWINDOW;
+    mDwExStyle[0] = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+    mDwStyle[1] = WS_POPUP | WS_VISIBLE;
+    mDwExStyle[1] = WS_EX_NOACTIVATE;
 
 	// Initialize the keyboard
 	gKeyboard = new LLKeyboardWin32();
@@ -941,10 +945,7 @@ BOOL LLWindowWin32::setSizeImpl(const LLCoordScreen size)
 BOOL LLWindowWin32::setSizeImpl(const LLCoordWindow size)
 {
 	RECT window_rect = {0, 0, size.mX, size.mY };
-	DWORD dw_ex_style = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-	DWORD dw_style = WS_OVERLAPPEDWINDOW;
-
-	AdjustWindowRectEx(&window_rect, dw_style, FALSE, dw_ex_style);
+	AdjustWindowRectEx(&window_rect, mDwStyle[mCurRCIdx], FALSE, mDwExStyle[mCurRCIdx]);
 
 	return setSizeImpl(LLCoordScreen(window_rect.right - window_rect.left, window_rect.bottom - window_rect.top));
 }
@@ -956,8 +957,6 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 	::ZeroMemory(&dev_mode, sizeof(DEVMODE));
 	dev_mode.dmSize = sizeof(DEVMODE);
 	DWORD	current_refresh;
-	DWORD	dw_ex_style;
-	DWORD	dw_style;
 	RECT	window_rect = {0, 0, 0, 0};
 	S32 width = size.mX;
 	S32 height = size.mY;
@@ -1055,12 +1054,22 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 			window_rect.right = (long) width;			// Windows GDI rects don't include rightmost pixel
 			window_rect.top = (long) 0;
 			window_rect.bottom = (long) height;
-			dw_ex_style = WS_EX_APPWINDOW;
-			dw_style = WS_POPUP;
+            switch (mCurRCIdx)
+            {
+            case 1:
+                mDwStyle[mCurRCIdx] = WS_POPUP | WS_VISIBLE;
+                mDwExStyle[mCurRCIdx] = WS_EX_NOACTIVATE;
+                break;
+            case 0:
+            default:
+                mDwStyle[mCurRCIdx] = WS_POPUP;
+                mDwExStyle[mCurRCIdx] = WS_EX_APPWINDOW;
+                break;
+            }
 
-			// Move window borders out not to cover window contents.
+            // Move window borders out not to cover window contents.
 			// This converts client rect to window rect, i.e. expands it by the window border size.
-			AdjustWindowRectEx(&window_rect, dw_style, FALSE, dw_ex_style);
+			AdjustWindowRectEx(&window_rect, mDwStyle[mCurRCIdx], FALSE, mDwExStyle[mCurRCIdx]);
 		}
 		// If it failed, we don't want to run fullscreen
 		else
@@ -1082,9 +1091,21 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 		window_rect.right = (long) width + window_rect.left;			// Windows GDI rects don't include rightmost pixel
 		window_rect.top = (long) (posp ? posp->mY : 0);
 		window_rect.bottom = (long) height + window_rect.top;
-		// Window with an edge
-		dw_ex_style = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-		dw_style = WS_OVERLAPPEDWINDOW;
+        switch (mCurRCIdx)
+        {
+        case 1:
+            // HMD window is always "full screen"
+            mDwStyle[mCurRCIdx] = WS_POPUP | WS_VISIBLE;
+            mDwExStyle[mCurRCIdx] = WS_EX_NOACTIVATE;
+            break;
+        case 0:
+        default:
+		    // Window with an edge
+		    mDwExStyle[mCurRCIdx] = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+		    mDwStyle[mCurRCIdx] = WS_OVERLAPPEDWINDOW;
+            break;
+        }
+
 	}
 
 
@@ -1093,10 +1114,10 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 
 	// create window
 	DestroyWindow(mWindowHandle[mCurRCIdx]);
-	mWindowHandle[mCurRCIdx] = CreateWindowEx(  dw_ex_style,
+	mWindowHandle[mCurRCIdx] = CreateWindowEx(  mDwExStyle[0],
 		                                        mWindowClassName,
 		                                        mWindowTitle,
-		                                        WS_CLIPSIBLINGS | WS_CLIPCHILDREN | dw_style,
+		                                        WS_CLIPSIBLINGS | WS_CLIPCHILDREN | mDwStyle[mCurRCIdx],
 		                                        window_rect.left,								// x pos
 		                                        window_rect.top,								// y pos
 		                                        window_rect.right - window_rect.left,			// width
@@ -1413,10 +1434,10 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 		DestroyWindow (mWindowHandle[mCurRCIdx]);									// Destroy The Window
 		
 
-		mWindowHandle[mCurRCIdx] = CreateWindowEx(  dw_ex_style,
+		mWindowHandle[mCurRCIdx] = CreateWindowEx(  mDwExStyle[mCurRCIdx],
 			                                        mWindowClassName,
 			                                        mWindowTitle,
-			                                        WS_CLIPSIBLINGS | WS_CLIPCHILDREN | dw_style,
+			                                        WS_CLIPSIBLINGS | WS_CLIPCHILDREN | mDwStyle[mCurRCIdx],
 			                                        window_rect.left,								// x pos
 			                                        window_rect.top,								// y pos
 			                                        window_rect.right - window_rect.left,			// width
@@ -3893,8 +3914,6 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
         OSMessageBox(mCallbacks->translateString("MBRegClassFailed"), mCallbacks->translateString("MBError"), OSMB_OK);
         return FALSE;
     }
-    DWORD dw_ex_style = WS_EX_NOACTIVATE; // WS_EX_LAYERED;
-    DWORD dw_style = WS_POPUP | WS_VISIBLE; // WS_OVERLAPPED;
 
     LL_DEBUGS("Window") << "Destroying Window" << LL_ENDL;
     if (mWindowHandle[1] && mhDC[1] && !ReleaseDC(mWindowHandle[1], mhDC[1]))
@@ -3917,10 +3936,10 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
         mPostQuit = TRUE;
     }
     // create window
-    mWindowHandle[1] = CreateWindowEx(  dw_ex_style,
+    mWindowHandle[1] = CreateWindowEx(  mDwExStyle[1],
                                         L"HMDWindow",
                                         L"AppHMDWindow",
-                                        dw_style,
+                                        mDwStyle[1],
                                         left,			// x pos
                                         top,			// y pos
                                         width,			// width
@@ -3983,6 +4002,10 @@ BOOL LLWindowWin32::setRenderWindow(S32 idx, BOOL fullScreen)
     if (idx < 0 || idx > 1 || !mhDC[idx])
     {
         return FALSE;
+    }
+    if (mCurRCIdx == idx && mFullscreen == fullScreen)
+    {
+        return TRUE;
     }
     mCurRCIdx = idx;
     BOOL oldFullScreen = mFullscreen;
