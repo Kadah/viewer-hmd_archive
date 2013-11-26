@@ -229,7 +229,7 @@ public:
     BOOL preInit() { return FALSE; }
     void shutdown() {}
     void onIdle() {}
-    U32 getCurrentEye() const { return LLViewerCamera::CENTER_EYE; }
+    U32 getCurrentEye() const { return 0; }
     void setCurrentEye(U32 eye) {}
     void getViewportInfo(S32& x, S32& y, S32& w, S32& h) { x = y = w = h = 0; }
     S32 getHMDWidth() const { return 0; }
