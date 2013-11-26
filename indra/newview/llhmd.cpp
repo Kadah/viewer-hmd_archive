@@ -46,33 +46,24 @@
 #include "llview.h"
 #include "lltool.h"
 
-#if LL_HMD_SUPPORTED
-#include "OVR.h"
-#include "Kernel/OVR_Timer.h"
-#include "Util/Util_MagCalibration.h"
 
-#if LL_WINDOWS
-    #include "llwindowwin32.h"
-#elif LL_DARWIN
-    #include "llwindowmacosx.h"
-    #define IDCONTINUE 1        // Exist on Windows along "IDOK" and "IDCANCEL" but not on Mac
-#endif
+//#if LL_HMD_SUPPORTED
+//#include "OVR.h"
+//#include "Kernel/OVR_Timer.h"
+//#include "Util/Util_MagCalibration.h"
+//
+//#if LL_WINDOWS
+//    #include "llwindowwin32.h"
+//#elif LL_DARWIN
+//    #include "llwindowmacosx.h"
+//    #define IDCONTINUE 1        // Exist on Windows along "IDOK" and "IDCANCEL" but not on Mac
+//#endif
+//#endif // LL_HMD_SUPPORTED
 
 #include "llhmdimploculus.h"
 
-LLHMD gHMD;
 
-        std::string mName;
-        F32 mOffsetX;
-        F32 mOffsetY;
-        F32 mOffsetZ;
-        F32 mToroidRadiusWidth;
-        F32 mToroidRadiusDepth;
-        F32 mToroidCrossSectionRadiusWidth;
-        F32 mToroidCrossSectionRadiusHeight;
-        F32 mArcHorizontal;
-        F32 mArcVertical;
-        F32 mUIMagnification;
+LLHMD gHMD;
 
 const LLHMD::UISurfaceShapeSettings LLHMD::sHMDUISurfacePresets[] = 
 {
@@ -113,6 +104,7 @@ LLHMD::~LLHMD()
 
 BOOL LLHMD::init()
 {
+#if LL_HMD_SUPPORTED
     if (gHMD.isPreDetectionInitialized())
     {
         return TRUE;
@@ -249,6 +241,9 @@ BOOL LLHMD::init()
     }
 
     return preInitResult;
+#else
+    return FALSE;
+#endif // LL_HMD_SUPPORTED
 }
 
 void LLHMD::onChangeHMDDebugMode() { gHMD.isDebugMode(gSavedSettings.getBOOL("HMDDebugMode")); }
@@ -473,20 +468,26 @@ BOOL LLHMD::setRenderWindowMain()
 
 BOOL LLHMD::setRenderWindowHMD()
 {
+#if LL_HMD_SUPPORTED
     // TODO: check to see if HMD window is valid, has not been destroyed, etc.  If it has,
     // re-initialize it here
     return gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
+#else
+    return FALSE;
+#endif
 }
 
 
 void LLHMD::setFocusWindowMain()
 {
     isChangingRenderContext(TRUE);
+#if LL_HMD_SUPPORTED
     if (isHMDMode())
     {
         gViewerWindow->getWindow()->setFocusWindow(0, TRUE, mImpl->getHMDWidth(), mImpl->getHMDHeight());
     }
     else
+#endif
     {
         gViewerWindow->getWindow()->setFocusWindow(0, FALSE, 0, 0);
     }
@@ -495,10 +496,12 @@ void LLHMD::setFocusWindowMain()
 
 void LLHMD::setFocusWindowHMD()
 {
+#if LL_HMD_SUPPORTED
     // TODO: check to see if HMD window is valid, has not been destroyed, etc.  If it has,
     // re-initialize it here
     isChangingRenderContext(TRUE);
     gViewerWindow->getWindow()->setFocusWindow(1, TRUE, mImpl->getHMDWidth(), mImpl->getHMDHeight());
+#endif
 }
 
 
@@ -568,6 +571,7 @@ void LLHMD::renderUnusedMainWindow()
 
 void LLHMD::renderUnusedHMDWindow()
 {
+#if LL_HMD_SUPPORTED
     if (gHMD.isInitialized()
         && gHMD.isHMDConnected()
         && gHMD.getRenderMode() != LLHMD::RenderMode_HMD
@@ -584,6 +588,7 @@ void LLHMD::renderUnusedHMDWindow()
             gViewerWindow->getWindow()->swapBuffers();
         }
     }
+#endif
 }
 
 
@@ -818,6 +823,7 @@ void LLHMD::getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* u
 
 void LLHMD::updateHMDMouseInfo(S32 ui_x, S32 ui_y)
 {
+#if LL_HMD_SUPPORTED
     if (!isHMDMode())
     {
         mMouseWorld.set(0.0f, 0.0f, 0.0f);
@@ -861,6 +867,7 @@ void LLHMD::updateHMDMouseInfo(S32 ui_x, S32 ui_y)
     //F32 center_y = uih * 0.5f;
     //mMouseWin.mX = llround(((asp[VX] + 1.0f) * 0.5f * uiw) + (center_x * asp[VX] * 0.25f));
     //mMouseWin.mY = llround(((asp[VY] + 1.0f) * 0.5f * uih) + (center_y * asp[VY] * 2.0f));
+#endif
 }
 
 
@@ -899,5 +906,3 @@ BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
 
     return FALSE;
 }
-
-#endif // LL_HMD_SUPPORTED
