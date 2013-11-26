@@ -62,12 +62,34 @@
 
 LLHMD gHMD;
 
+        std::string mName;
+        F32 mOffsetX;
+        F32 mOffsetY;
+        F32 mOffsetZ;
+        F32 mToroidRadiusWidth;
+        F32 mToroidRadiusDepth;
+        F32 mToroidCrossSectionRadiusWidth;
+        F32 mToroidCrossSectionRadiusHeight;
+        F32 mArcHorizontal;
+        F32 mArcVertical;
+        F32 mUIMagnification;
+
+const LLHMD::UISurfaceShapeSettings LLHMD::sHMDUISurfacePresets[] = 
+{
+    { "Custom", 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Surround1", 0.0f, 0.0f, -0.32f, 1.0f, 1.0f, 0.2f, 1.2f, 0.9f * F_PI, 0.6f * F_PI, 670.0f },
+    { "Surround2", 0.0f, 0.0f, 0.0f, 0.3f, 0.6f, 0.5f, 0.7f, 0.75f * F_PI, 0.51f * F_PI, 600.0f },
+    { "Floating1", 0.0f, 0.0f, -0.1f, 0.6f, 0.6f, 0.5f, 1.6f, 0.62f * F_PI, 0.23f * F_PI, 700.0f },
+    { "Floating2", 0.0f, 0.0f, -0.1f, 1.0f, 1.2f, 0.1f, 1.1f, 0.51f * F_PI, 0.31f * F_PI, 870.0f },
+};
+const size_t LLHMD::sNumHMDUISurfacePresets = sizeof(LLHMD::sHMDUISurfacePresets) / sizeof(LLHMD::UISurfaceShapeSettings);
+
+
 LLHMD::LLHMD()
     : mRenderMode(RenderMode_None)
     , mMainWindowSize(LLHMDImpl::kDefaultHResolution, LLHMDImpl::kDefaultVResolution)
     , mMainClientSize(LLHMDImpl::kDefaultHResolution, LLHMDImpl::kDefaultVResolution)
     , mEyeDepth(0.075f)
-    , mUIMagnification(600.0f)
     , mUIEyeDepth(0.6f)
     , mMouseWorldSizeMult(5.0f)
     , mPresetAspect(0.8f)
@@ -76,6 +98,7 @@ LLHMD::LLHMD()
     , mCalibrateForegroundTexture(NULL)
 {
     mImpl = new LLHMDImpl();
+    mUIShape = sHMDUISurfacePresets[1];
 }
 
 
@@ -99,21 +122,28 @@ BOOL LLHMD::init()
         return FALSE;
     }
 
-    gSavedSettings.getControl("OculusDebugMode")->getSignal()->connect(boost::bind(&onChangeOculusDebugMode));
-    onChangeOculusDebugMode();
-    gSavedSettings.getControl("OculusUISurfaceArc")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
-    gSavedSettings.getControl("OculusUISurfaceToroidRadius")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
-    gSavedSettings.getControl("OculusUISurfaceCrossSectionRadius")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
-    gSavedSettings.getControl("OculusUISurfaceOffsets")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
-    onChangeUISurfaceSavedParams();
-    gSavedSettings.getControl("OculusEyeDepth")->getSignal()->connect(boost::bind(&onChangeEyeDepth));
+    gSavedSettings.getControl("HMDDebugMode")->getSignal()->connect(boost::bind(&onChangeHMDDebugMode));
+    onChangeHMDDebugMode();
+    gSavedSettings.getControl("HMDInterpupillaryDistance")->getSignal()->connect(boost::bind(&onChangeInterpupillaryDistance));
+    // intentionally not calling onChangeInterpupillaryDistance here
+    gSavedSettings.getControl("HMDEyeToScreenDistance")->getSignal()->connect(boost::bind(&onChangeEyeToScreenDistance));
+    // intentionally not calling onChangeEyeToScreenDistance here
+    gSavedSettings.getControl("HMDEyeDepth")->getSignal()->connect(boost::bind(&onChangeEyeDepth));
     onChangeEyeDepth();
-    gSavedSettings.getControl("OculusUIMagnification")->getSignal()->connect(boost::bind(&onChangeUIMagnification));
+    gSavedSettings.getControl("HMDUISurfaceArcHorizontal")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
+    gSavedSettings.getControl("HMDUISurfaceArcVertical")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
+    gSavedSettings.getControl("HMDUISurfaceToroidWidth")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
+    gSavedSettings.getControl("HMDUISurfaceToroidDepth")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
+    gSavedSettings.getControl("HMDUISurfaceToroidCSWidth")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
+    gSavedSettings.getControl("HMDUISurfaceToroidCSHeight")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
+    gSavedSettings.getControl("HMDUISurfaceOffsets")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
+    onChangeUISurfaceSavedParams();
+    gSavedSettings.getControl("HMDUIMagnification")->getSignal()->connect(boost::bind(&onChangeUIMagnification));
     onChangeUIMagnification();
-    gSavedSettings.getControl("OculusWorldCursorSizeMult")->getSignal()->connect(boost::bind(&onChangeWorldCursorSizeMult));
+    gSavedSettings.getControl("HMDUIShapePreset")->getSignal()->connect(boost::bind(&onChangeUIShapePreset));
+    onChangeUIShapePreset();
+    gSavedSettings.getControl("HMDWorldCursorSizeMult")->getSignal()->connect(boost::bind(&onChangeWorldCursorSizeMult));
     onChangeWorldCursorSizeMult();
-    gSavedSettings.getControl("OculusUseCalculatedAspect")->getSignal()->connect(boost::bind(&onChangeUseCalculatedAspect));
-    onChangeUseCalculatedAspect();
 
     BOOL preInitResult = mImpl->preInit();
     if (preInitResult)
@@ -221,56 +251,48 @@ BOOL LLHMD::init()
     return preInitResult;
 }
 
-void LLHMD::onChangeOculusDebugMode() { gHMD.isDebugMode(gSavedSettings.getBOOL("OculusDebugMode")); }
-void LLHMD::onChangeEyeDepth() { gHMD.mEyeDepth = gSavedSettings.getF32("OculusEyeDepth") * .001f; }
-void LLHMD::onChangeUIMagnification()
-{
-    gHMD.mUIMagnification = gSavedSettings.getF32("OculusUIMagnification");
-    gHMD.calculateUIEyeDepth();
-}
+void LLHMD::onChangeHMDDebugMode() { gHMD.isDebugMode(gSavedSettings.getBOOL("HMDDebugMode")); }
+void LLHMD::onChangeInterpupillaryDistance() { gHMD.mImpl->setInterpupillaryOffset(gSavedSettings.getF32("HMDInterpupillaryDistance")); }
+void LLHMD::onChangeEyeToScreenDistance() { gHMD.setEyeToScreenDistance(gSavedSettings.getF32("HMDEyeToScreenDistance")); }
+void LLHMD::onChangeEyeDepth() { gHMD.mEyeDepth = gSavedSettings.getF32("HMDEyeDepth"); }
+void LLHMD::onChangeUIMagnification() { gHMD.setUIMagnification(gSavedSettings.getF32("HMDUIMagnification")); }
 
 void LLHMD::onChangeUISurfaceSavedParams()
 {
-    gHMD.mUICurvedSurfaceArc.set(gSavedSettings.getVector3("OculusUISurfaceArc").mV);
-    gHMD.mUICurvedSurfaceArc *= F_PI;
-    LLVector3 tr = gSavedSettings.getVector3("OculusUISurfaceToroidRadius");
-    LLVector3 csr = gSavedSettings.getVector3("OculusUISurfaceCrossSectionRadius");
-    gHMD.mUICurvedSurfaceRadius.set(tr[0], tr[1], csr[1], csr[0]);
-    gHMD.mUICurvedSurfaceOffsets = gSavedSettings.getVector3("OculusUISurfaceOffsets");
+    gHMD.mUIShape.mName = "Custom";
+    gHMD.mUIShape.mArcHorizontal = gSavedSettings.getF32("HMDUISurfaceArcHorizontal");
+    gHMD.mUIShape.mArcVertical = gSavedSettings.getF32("HMDUISurfaceArcVertical");
+    gHMD.mUIShape.mToroidRadiusWidth = gSavedSettings.getF32("HMDUISurfaceToroidWidth");
+    gHMD.mUIShape.mToroidRadiusDepth = gSavedSettings.getF32("HMDUISurfaceToroidDepth");
+    gHMD.mUIShape.mToroidCrossSectionRadiusWidth = gSavedSettings.getF32("HMDUISurfaceToroidCSWidth");
+    gHMD.mUIShape.mToroidCrossSectionRadiusHeight = gSavedSettings.getF32("HMDUISurfaceToroidCSHeight");
+    LLVector3 offsets = gSavedSettings.getVector3("HMDUISurfaceOffsets");
+    gHMD.mUIShape.mOffsetX = offsets[VX];
+    gHMD.mUIShape.mOffsetY = offsets[VY];
+    gHMD.mUIShape.mOffsetZ = offsets[VZ];
     onChangeUISurfaceShape();
 }
 
-void LLHMD::onChangeWorldCursorSizeMult() { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("OculusWorldCursorSizeMult"); }
-void LLHMD::onChangeUseCalculatedAspect()
-{
-    BOOL oldVal = gHMD.useCalculatedAspect();
-    BOOL newVal = gSavedSettings.getBOOL("OculusUseCalculatedAspect");
-    if (oldVal != newVal)
-    {
-        gHMD.useCalculatedAspect(newVal);
-        if (gHMD.isHMDMode())
-        {
-            onChangeUISurfaceShape();
-            gHMD.mPresetAspect = (F32)gHMD.getHMDEyeWidth() / (F32)gHMD.getHMDHeight();
-            gHMD.mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
-            LLViewerCamera::getInstance()->setAspect(gHMD.getAspect());
-            gViewerWindow->reshape(gHMD.getHMDWidth(), gHMD.getHMDHeight());
-        }
-    }
-}
+void LLHMD::onChangeUIShapePreset() { gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset")); }
+void LLHMD::onChangeWorldCursorSizeMult() { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); }
 
 void LLHMD::saveSettings()
 {
     // TODO: when we have correct defaults and settings.xml param names, enable this block.  For now, changes to these settings will revert to defaults after each session.
-    //gSavedSettings.setF32("OculusInterpupillaryDistance", gHMD.getInterpupillaryOffset());
-    //gSavedSettings.setF32("OculusEyeToScreenDistance", gHMD.getEyeToScreenDistance());
-    //gSavedSettings.setBOOL("OculusUseMotionPrediction", gHMD.useMotionPrediction());
-    //gSavedSettings.setVector3("OculusUISurfaceToroidRadius", LLVector3(mUICurvedSurfaceRadius[VX], mUICurvedSurfaceRadius[VY], 0.0f));
-    //gSavedSettings.setVector3("OculusUISurfaceCrossSectionRadius", LLVector3(mUICurvedSurfaceRadius[VW], mUICurvedSurfaceRadius[VZ], 0.0f));
-    //gSavedSettings.setVector3("OculusUISurfaceArc", LLVector3(mUICurvedSurfaceArc[VX] / F_PI, mUICurvedSurfaceArc[VY] / F_PI, 0.0f));
-    //gSavedSettings.setVector3("OculusUISurfaceOffsets", mUICurvedSurfaceOffsets);
-    //gSavedSettings.setF32("OculusEyeDepth", gHMD.getEyeDepth() * 1000.0f);
-    //gSavedSettings.setF32("OculusUIMagnification", gHMD.getUIMagnification());
+    //gSavedSettings.setF32("HMDInterpupillaryDistance", gHMD.getInterpupillaryOffset());
+    //gSavedSettings.setF32("HMDEyeToScreenDistance", gHMD.getEyeToScreenDistance());
+    //gSavedSettings.setF32("HMDEyeDepth", gHMD.getEyeDepth());
+    //gSavedSettings.setF32("HMDUISurfaceArcHorizontal", gHMD.getUISurfaceArcHorizontal());
+    //gSavedSettings.setF32("HMDUISurfaceArcVertical", gHMD.getUISurfaceArcVertical());
+    //gSavedSettings.setF32("HMDUISurfaceToroidWidth", gHMD.getUISurfaceToroidRadiusWidth());
+    //gSavedSettings.setF32("HMDUISurfaceToroidDepth", gHMD.getUISurfaceToroidRadiusDepth());
+    //gSavedSettings.setF32("HMDUISurfaceToroidCSWidth", gHMD.getUISurfaceToroidCrossSectionRadiusWidth());
+    //gSavedSettings.setF32("HMDUISurfaceToroidCSHeight", gHMD.getUISurfaceToroidCrossSectionRadiusHeight());
+    //LLVector3 offsets(mUIShape.mOffsetX, mUIShape.mOffsetY, mUIShape.mOffsetZ);
+    //gSavedSettings.setVector3("HMDUISurfaceOffsets", offsets);
+    //gSavedSettings.setF32("HMDUIMagnification", gHMD.getUIMagnification());
+    //gSavedSettings.setBOOL("HMDUseMotionPrediction", gHMD.useMotionPrediction());
+    //gSavedSettings.setF32("HMDWorldCursorSizeMult", gHMD.getWorldCursorSizeMult());
 }
 
 void LLHMD::onChangeUISurfaceShape()
@@ -581,12 +603,40 @@ F32 LLHMD::getInterpupillaryOffsetDefault() const { return mImpl->getInterpupill
 F32 LLHMD::getLensSeparationDistance() const { return mImpl->getLensSeparationDistance(); }
 F32 LLHMD::getEyeToScreenDistance() const { return mImpl->getEyeToScreenDistance(); }
 F32 LLHMD::getEyeToScreenDistanceDefault() const { return mImpl->getEyeToScreenDistanceDefault(); }
+
 void LLHMD::setEyeToScreenDistance(F32 f)
 {
     mImpl->setEyeToScreenDistance(f);
     calculateUIEyeDepth();
     gPipeline.mOculusUISurface = NULL;
 }
+
+void LLHMD::setUIMagnification(F32 f)
+{
+    if (f != mUIShape.mUIMagnification)
+    {
+        mUIShape.mUIMagnification = f;
+        mUIShapePreset = 0;
+        mUIShape.mName = "Custom";
+        calculateUIEyeDepth();
+    }
+}
+
+void LLHMD::setUISurfaceParam(F32* p, F32 f)
+{
+    if (!p)
+    {
+        return;
+    }
+    if (f != *p)
+    {
+        *p = f;
+        mUIShapePreset = 0;
+        mUIShape.mName = "Custom";
+        onChangeUISurfaceShape();
+    }
+}
+
 LLVector4 LLHMD::getDistortionConstants() const { return mImpl->getDistortionConstants(); }
 F32 LLHMD::getXCenterOffset() const { return mImpl->getXCenterOffset(); }
 F32 LLHMD::getYCenterOffset() const { return mImpl->getYCenterOffset(); }
@@ -596,7 +646,7 @@ LLQuaternion LLHMD::getHeadRotationCorrection() const { return mImpl->getHeadRot
 void LLHMD::addHeadRotationCorrection(LLQuaternion quat) { return mImpl->addHeadRotationCorrection(quat); }
 void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); }
 F32 LLHMD::getVerticalFOV() const { return mImpl->getVerticalFOV(); }
-F32 LLHMD::getAspect() { return useCalculatedAspect() ? mImpl->getAspect() : mPresetAspect; }
+F32 LLHMD::getAspect() { return mImpl->getAspect(); }
 BOOL LLHMD::useMotionPrediction() const { return mImpl->useMotionPrediction(); }
 void LLHMD::useMotionPrediction(BOOL b) { mImpl->useMotionPrediction(b); }
 BOOL LLHMD::useMotionPredictionDefault() const { return mImpl->useMotionPredictionDefault(); }
@@ -619,7 +669,7 @@ void LLHMD::calculateUIEyeDepth()
     ////  MESD = eye_to_screen_dist_where_X_should_be_zero
     ////  in the current case:
     ////  -14.285714 = 600 / ((0.041 - 0.083) * 1000)
-    F32 eyeDepthMult = mUIMagnification / ((getEyeToScreenDistanceDefault() - 0.083f) * 1000.0f);
+    F32 eyeDepthMult = mUIShape.mUIMagnification / ((getEyeToScreenDistanceDefault() - 0.083f) * 1000.0f);
     mUIEyeDepth = ((mImpl->getEyeToScreenDistance() - 0.083f) * eyeDepthMult);
 }
 
@@ -643,6 +693,34 @@ void LLHMD::setUIModelView(F32* m)
         mUIModelView[i] = m[i];
         mUIModelViewInv[i] = uivInv.m[i];
     }
+}
+
+void LLHMD::setUIShapePresetIndex(S32 idx)
+{
+    if (idx < 0 || idx >= (S32)sNumHMDUISurfacePresets)
+    {
+        idx = 0;
+    }
+    mUIShapePreset = idx;
+    if (idx == 0)
+    {
+        mUIShape.mName = "Custom";
+    }
+    else // if (idx > 0)
+    {
+        mUIShape = sHMDUISurfacePresets[idx];
+        calculateUIEyeDepth();
+        onChangeUISurfaceShape();
+    }
+}
+
+const LLHMD::UISurfaceShapeSettings& LLHMD::getUIShapePreset(S32 idx)
+{
+    if (idx < 0 || idx >= (S32)sNumHMDUISurfacePresets)
+    {
+        idx = 0;
+    }
+    return sHMDUISurfacePresets[idx];
 }
 
 // Creates a surface that is part of an outer shell of a torus.
@@ -671,8 +749,8 @@ LLVertexBuffer* LLHMD::createUISurface()
     LLStrider<LLVector2> tc;
     buff->getVertexStrider(v);
     buff->getTexCoord0Strider(tc);
-    F32 dx = mUICurvedSurfaceArc[VX] / ((F32)resX - 1.0f);
-    F32 dy = mUICurvedSurfaceArc[VY] / ((F32)resY - 1.0f);
+    F32 dx = mUIShape.mArcHorizontal / ((F32)resX - 1.0f);
+    F32 dy = mUIShape.mArcVertical / ((F32)resY - 1.0f);
     //LL_INFOS("Oculus")  << "XA: [" << xa[0] << "," << xa[1] << "], "
     //                    << "YA: [" << ya[0] << "," << ya[1] << "], "
     //                    << "r: [" << r[0] << "," << r[1] << "], "
@@ -687,10 +765,10 @@ LLVertexBuffer* LLHMD::createUISurface()
     LLVector2 uv;
     for (U32 i = 0; i < resY; ++i)
     {
-        F32 va = (F_PI - (mUICurvedSurfaceArc[VY] * 0.5f)) + ((F32)i * dy);
+        F32 va = (F_PI - (mUIShape.mArcVertical * 0.5f)) + ((F32)i * dy);
         for (U32 j = 0; j < resX; ++j)
         {
-            F32 ha = (mUICurvedSurfaceArc[VX] * -0.5f) + ((F32)j * dx);
+            F32 ha = (mUIShape.mArcHorizontal * -0.5f) + ((F32)j * dx);
             getUISurfaceCoordinates(ha, va, t2, &uv);
             t.loadua(t2.mV);
             *v++ = t;
@@ -728,13 +806,13 @@ LLVertexBuffer* LLHMD::createUISurface()
 void LLHMD::getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* uv)
 {
     F32 cva = cos(va);
-    pos.set(    (sin(ha) * (mUICurvedSurfaceRadius[0] - (cva * mUICurvedSurfaceRadius[3]))) + mUICurvedSurfaceOffsets[VX],
-                (mUICurvedSurfaceRadius[2] * -sin(va)) + mUICurvedSurfaceOffsets[VY],
-                (-1.0f * ((mUICurvedSurfaceRadius[1] * cos(ha)) - (cva * mUICurvedSurfaceRadius[3]))) + mUICurvedSurfaceOffsets[VZ],
+    pos.set(    (sin(ha) * (mUIShape.mToroidRadiusWidth - (cva * mUIShape.mToroidCrossSectionRadiusWidth))) + mUIShape.mOffsetX,
+                (mUIShape.mToroidCrossSectionRadiusHeight * -sin(va)) + mUIShape.mOffsetY,
+                (-1.0f * ((mUIShape.mToroidRadiusDepth * cos(ha)) - (cva * mUIShape.mToroidCrossSectionRadiusWidth))) + mUIShape.mOffsetZ,
                 1.0f);
     if (uv)
     {
-        uv->set((ha - (mUICurvedSurfaceArc[VX] * -0.5f))/mUICurvedSurfaceArc[VX], (va - (F_PI - (mUICurvedSurfaceArc[VY] * 0.5f)))/mUICurvedSurfaceArc[VY]);
+        uv->set((ha - (mUIShape.mArcHorizontal * -0.5f)) / mUIShape.mArcHorizontal, (va - (F_PI - (mUIShape.mArcVertical * 0.5f))) / mUIShape.mArcVertical);
     }
 }
 
@@ -751,8 +829,8 @@ void LLHMD::updateHMDMouseInfo(S32 ui_x, S32 ui_y)
     F32 uih = (F32)gViewerWindow->getWorldViewRectScaled().getHeight();
     F32 nx = llclamp((F32)ui_x / (F32)uiw, 0.0f, 1.0f);
     F32 ny = llclamp((F32)ui_y / (F32)uih, 0.0f, 1.0f);
-    F32 ha = ((mUICurvedSurfaceArc[VX] * -0.5f) + (nx * mUICurvedSurfaceArc[VX]));
-    F32 va = (F_PI - (mUICurvedSurfaceArc[VY] * 0.5f)) + (ny * mUICurvedSurfaceArc[VY]);
+    F32 ha = ((mUIShape.mArcHorizontal * -0.5f) + (nx * mUIShape.mArcHorizontal));
+    F32 va = (F_PI - (mUIShape.mArcVertical * 0.5f)) + (ny * mUIShape.mArcVertical);
 
     // 2. determine eye-space x,y,z for ha, va (-z forward/depth)
     LLVector4 eyeSpacePos;

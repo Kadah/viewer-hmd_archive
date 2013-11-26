@@ -72,6 +72,10 @@ LLPanelHMDConfig::LLPanelHMDConfig()
     , mUIMagnificationSliderCtrl(NULL)
     , mUIMagnificationAmountCtrl(NULL)
     , mUIMagnificationOriginal(600.0f)
+    , mUISurfaceShapePresetSliderCtrl(NULL)
+    , mUISurfaceShapePresetLabelCtrl(NULL)
+    , mUISurfaceShapePresetOriginal(0.0f)
+
 {
     sInstance = this;
 
@@ -94,6 +98,7 @@ LLPanelHMDConfig::LLPanelHMDConfig()
     mCommitCallbackRegistrar.add("HMDConfig.SetUISurfaceToroidArcHorizontal", boost::bind(&LLPanelHMDConfig::onSetUISurfaceToroidArcHorizontal, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetUISurfaceToroidArcVertical", boost::bind(&LLPanelHMDConfig::onSetUISurfaceToroidArcVertical, this));
     mCommitCallbackRegistrar.add("HMDConfig.SetUIMagnification", boost::bind(&LLPanelHMDConfig::onSetUIMagnification, this));
+    mCommitCallbackRegistrar.add("HMDConfig.SetUIShapePreset", boost::bind(&LLPanelHMDConfig::onSetUIShapePreset, this));
 }
 
 LLPanelHMDConfig::~LLPanelHMDConfig()
@@ -104,9 +109,10 @@ LLPanelHMDConfig::~LLPanelHMDConfig()
 //static
 LLPanelHMDConfig* LLPanelHMDConfig::getInstance()
 {
-    if (!sInstance) 
+    if (!sInstance)
+    {
         sInstance = new LLPanelHMDConfig();
-
+    }
     return sInstance;
 }
 
@@ -133,80 +139,84 @@ void LLPanelHMDConfig::toggleVisibility()
         {
             pPanel->mInterpupillaryOffsetOriginal = gHMD.getInterpupillaryOffset() * 1000.0f;
             pPanel->mInterpupillaryOffsetSliderCtrl->setValue(pPanel->mInterpupillaryOffsetOriginal);
-            pPanel->onSetInterpupillaryOffset();
+            pPanel->updateInterpupillaryOffsetLabel();
         }
         if (pPanel->mEyeToScreenSliderCtrl)
         {
             pPanel->mEyeToScreenDistanceOriginal = gHMD.getEyeToScreenDistance() * 1000.0f;
             pPanel->mEyeToScreenSliderCtrl->setValue(pPanel->mEyeToScreenDistanceOriginal);
-            pPanel->onSetEyeToScreenDistance();
+            pPanel->updateEyeToScreenDistanceLabel();
         }
         if (pPanel->mMotionPredictionDeltaSliderCtrl)
         {
             pPanel->mMotionPredictionDeltaOriginal = gHMD.getMotionPredictionDelta() * 1000.0f;
             pPanel->mMotionPredictionDeltaSliderCtrl->setValue(pPanel->mMotionPredictionDeltaOriginal);
-            pPanel->onSetMotionPredictionDelta();
+            pPanel->updateMotionPredictionDeltaLabel();
         }
         if (pPanel->mMotionPredictionCheckBoxCtrl)
         {
             pPanel->mMotionPredictionCheckedOriginal = gHMD.useMotionPrediction();
             pPanel->mMotionPredictionCheckBoxCtrl->setValue(pPanel->mMotionPredictionCheckedOriginal);
-            pPanel->onCheckMotionPrediction();
         }
-
         if (pPanel->mUISurfaceOffsetDepthSliderCtrl)
         {
-            pPanel->mUISurfaceOffsetDepthOriginal = gHMD.getUISurfaceOffsets()[VZ];
+            pPanel->mUISurfaceOffsetDepthOriginal = gHMD.getUISurfaceOffsetDepth();
             pPanel->mUISurfaceOffsetDepthSliderCtrl->setValue(pPanel->mUISurfaceOffsetDepthOriginal);
-            pPanel->onSetUISurfaceOffsetDepth();
+            pPanel->updateUISurfaceOffsetDepthLabel();
         }
         if (pPanel->mUISurfaceToroidRadiusWidthSliderCtrl)
         {
             pPanel->mUISurfaceToroidRadiusWidthOriginal = gHMD.getUISurfaceToroidRadiusWidth();
             pPanel->mUISurfaceToroidRadiusWidthSliderCtrl->setValue(pPanel->mUISurfaceToroidRadiusWidthOriginal);
-            pPanel->onSetUISurfaceToroidRadiusWidth();
+            pPanel->updateUISurfaceToroidRadiusWidthLabel();
         }
         if (pPanel->mUISurfaceToroidRadiusDepthSliderCtrl)
         {
             pPanel->mUISurfaceToroidRadiusDepthOriginal = gHMD.getUISurfaceToroidRadiusDepth();
             pPanel->mUISurfaceToroidRadiusDepthSliderCtrl->setValue(pPanel->mUISurfaceToroidRadiusDepthOriginal);
-            pPanel->onSetUISurfaceToroidRadiusDepth();
+            pPanel->updateUISurfaceToroidRadiusDepthLabel();
         }
         if (pPanel->mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl)
         {
             pPanel->mUISurfaceToroidCrossSectionRadiusWidthOriginal = gHMD.getUISurfaceToroidCrossSectionRadiusWidth();
             pPanel->mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->setValue(pPanel->mUISurfaceToroidCrossSectionRadiusWidthOriginal);
-            pPanel->onSetUISurfaceToroidCrossSectionRadiusWidth();
+            pPanel->updateUISurfaceToroidCrossSectionRadiusWidthLabel();
         }
         if (pPanel->mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl)
         {
             pPanel->mUISurfaceToroidCrossSectionRadiusHeightOriginal = gHMD.getUISurfaceToroidCrossSectionRadiusHeight();
             pPanel->mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->setValue(pPanel->mUISurfaceToroidCrossSectionRadiusHeightOriginal);
-            pPanel->onSetUISurfaceToroidCrossSectionRadiusHeight();
+            pPanel->updateUISurfaceToroidCrossSectionRadiusHeightLabel();
         }
         if (pPanel->mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl)
         {
             pPanel->mUISurfaceToroidCrossSectionRadiusHeightOriginal = gHMD.getUISurfaceToroidCrossSectionRadiusHeight();
             pPanel->mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->setValue(pPanel->mUISurfaceToroidCrossSectionRadiusHeightOriginal);
-            pPanel->onSetUISurfaceToroidCrossSectionRadiusHeight();
+            pPanel->updateUISurfaceToroidCrossSectionRadiusHeightLabel();
         }
         if (pPanel->mUISurfaceToroidArcHorizontalSliderCtrl)
         {
             pPanel->mUISurfaceToroidArcHorizontalOriginal = gHMD.getUISurfaceArcHorizontal() / F_PI;
             pPanel->mUISurfaceToroidArcHorizontalSliderCtrl->setValue(pPanel->mUISurfaceToroidArcHorizontalOriginal);
-            pPanel->onSetUISurfaceToroidArcHorizontal();
+            pPanel->updateUISurfaceToroidArcHorizontalLabel();
         }
         if (pPanel->mUISurfaceToroidArcVerticalSliderCtrl)
         {
             pPanel->mUISurfaceToroidArcVerticalOriginal = gHMD.getUISurfaceArcVertical() / F_PI;
             pPanel->mUISurfaceToroidArcVerticalSliderCtrl->setValue(pPanel->mUISurfaceToroidArcVerticalOriginal);
-            pPanel->onSetUISurfaceToroidArcVertical();
+            pPanel->updateUISurfaceToroidArcVerticalLabel();
         }
         if (pPanel->mUIMagnificationSliderCtrl)
         {
             pPanel->mUIMagnificationOriginal = gHMD.getUIMagnification();
             pPanel->mUIMagnificationSliderCtrl->setValue(pPanel->mUIMagnificationOriginal);
-            pPanel->onSetUIMagnification();
+            pPanel->updateUIMagnificationLabel();
+        }
+        if (pPanel->mUISurfaceShapePresetSliderCtrl)
+        {
+            pPanel->mUISurfaceShapePresetOriginal = (F32)gHMD.getUIShapePresetIndex();
+            pPanel->mUISurfaceShapePresetSliderCtrl->setValue(pPanel->mUISurfaceShapePresetOriginal);
+            pPanel->updateUIShapePresetLabel();
         }
     }
     else
@@ -244,6 +254,8 @@ BOOL LLPanelHMDConfig::postBuild()
     mUISurfaceToroidArcVerticalAmountCtrl = getChild<LLUICtrl>("uisurface_toroid_arc_vertical_slider_amount");
     mUIMagnificationSliderCtrl = getChild<LLSlider>("ui_magnification_slider");
     mUIMagnificationAmountCtrl = getChild<LLUICtrl>("ui_magnification_slider_amount");
+    mUISurfaceShapePresetSliderCtrl = getChild<LLSlider>("uisurface_shape_preset_slider");
+    mUISurfaceShapePresetLabelCtrl = getChild<LLUICtrl>("uisurface_shape_preset_value");
 
 	return LLPanel::postBuild();
 }
@@ -295,27 +307,8 @@ void LLPanelHMDConfig::onClickResetValues()
     onSetMotionPredictionDelta();
     mMotionPredictionCheckBoxCtrl->setValue(gHMD.useMotionPredictionDefault());
     onCheckMotionPrediction();
-
-    gHMD.onChangeUISurfaceSavedParams();
-    mUISurfaceOffsetDepthSliderCtrl->setValue(gHMD.getUISurfaceOffsets()[VZ]);
-    onSetUISurfaceOffsetDepth();
-    mUISurfaceToroidRadiusWidthSliderCtrl->setValue(gHMD.getUISurfaceToroidRadiusWidth());
-    onSetUISurfaceToroidRadiusWidth();
-    mUISurfaceToroidRadiusDepthSliderCtrl->setValue(gHMD.getUISurfaceToroidRadiusDepth());
-    onSetUISurfaceToroidRadiusDepth();
-    mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->setValue(gHMD.getUISurfaceToroidCrossSectionRadiusWidth());
-    onSetUISurfaceToroidCrossSectionRadiusWidth();
-    mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->setValue(gHMD.getUISurfaceToroidCrossSectionRadiusHeight());
-    onSetUISurfaceToroidCrossSectionRadiusHeight();
-    mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->setValue(gHMD.getUISurfaceToroidCrossSectionRadiusHeight());
-    onSetUISurfaceToroidCrossSectionRadiusHeight();
-    mUISurfaceToroidArcHorizontalSliderCtrl->setValue(gHMD.getUISurfaceArcHorizontal() / F_PI);
-    onSetUISurfaceToroidArcHorizontal();
-    mUISurfaceToroidArcVerticalSliderCtrl->setValue(gHMD.getUISurfaceArcVertical() / F_PI);
-    onSetUISurfaceToroidArcVertical();
-    gHMD.onChangeUIMagnification();
-    mUIMagnificationSliderCtrl->setValue(gHMD.getUIMagnification());
-    onSetUIMagnification();
+    mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndexDefault());
+    onSetUIShapePreset();
 }
 
 void LLPanelHMDConfig::onClickCancel()
@@ -347,12 +340,14 @@ void LLPanelHMDConfig::onClickCancel()
     onSetUISurfaceToroidArcVertical();
     mUIMagnificationSliderCtrl->setValue(mUIMagnificationOriginal);
     onSetUIMagnification();
+    mUISurfaceShapePresetSliderCtrl->setValue(mUISurfaceShapePresetOriginal);
+    onSetUIShapePreset();
+
     LLPanelHMDConfig::getInstance()->toggleVisibility();
 }
 
 void LLPanelHMDConfig::onClickSave()
 {
-    // turn off panel - all values are saved already
     gHMD.saveSettings();
     LLPanelHMDConfig::getInstance()->toggleVisibility();
 }
@@ -361,8 +356,13 @@ void LLPanelHMDConfig::onSetInterpupillaryOffset()
 {
     F32 f = mInterpupillaryOffsetSliderCtrl->getValueF32();
     gHMD.setInterpupillaryOffset(f / 1000.0f);
+    updateInterpupillaryOffsetLabel();
+}
+
+void LLPanelHMDConfig::updateInterpupillaryOffsetLabel()
+{
     std::ostringstream s;
-    s << f << " mm";
+    s << (gHMD.getInterpupillaryOffset() * 1000.0f) << " mm";
     mInterpupillaryOffsetAmountCtrl->setValue(s.str());
 }
 
@@ -370,8 +370,13 @@ void LLPanelHMDConfig::onSetEyeToScreenDistance()
 {
     F32 f = mEyeToScreenSliderCtrl->getValueF32();
     gHMD.setEyeToScreenDistance(f / 1000.0f);
+    updateEyeToScreenDistanceLabel();
+}
+
+void LLPanelHMDConfig::updateEyeToScreenDistanceLabel()
+{
     std::ostringstream s;
-    s << f << " mm";
+    s << (gHMD.getEyeToScreenDistance() * 1000.0f) << " mm";
     mEyeToScreenAmountCtrl->setValue(s.str());
 }
 
@@ -385,8 +390,13 @@ void LLPanelHMDConfig::onSetMotionPredictionDelta()
 {
     F32 f = mMotionPredictionDeltaSliderCtrl->getValueF32();
     gHMD.setMotionPredictionDelta(f / 1000.0f);
+    updateMotionPredictionDeltaLabel();
+}
+
+void LLPanelHMDConfig::updateMotionPredictionDeltaLabel()
+{
     std::ostringstream s;
-    s << f << " ms";
+    s << (gHMD.getMotionPredictionDelta() * 1000.0f) << " ms";
     mMotionPredictionDeltaAmountCtrl->setValue(s.str());
 }
 
@@ -394,8 +404,13 @@ void LLPanelHMDConfig::onSetUISurfaceOffsetDepth()
 {
     F32 f = mUISurfaceOffsetDepthSliderCtrl->getValueF32();
     gHMD.setUISurfaceOffsetDepth(f);
+    updateUISurfaceOffsetDepthLabel();
+}
+
+void LLPanelHMDConfig::updateUISurfaceOffsetDepthLabel()
+{
     std::ostringstream s;
-    s << f;
+    s << gHMD.getUISurfaceOffsetDepth();
     mUISurfaceOffsetDepthAmountCtrl->setValue(s.str());
 }
 
@@ -403,8 +418,13 @@ void LLPanelHMDConfig::onSetUISurfaceToroidRadiusWidth()
 {
     F32 f = mUISurfaceToroidRadiusWidthSliderCtrl->getValueF32();
     gHMD.setUISurfaceToroidRadiusWidth(f);
+    updateUISurfaceToroidRadiusWidthLabel();
+}
+
+void LLPanelHMDConfig::updateUISurfaceToroidRadiusWidthLabel()
+{
     std::ostringstream s;
-    s << f;
+    s << gHMD.getUISurfaceToroidRadiusWidth();
     mUISurfaceToroidRadiusWidthAmountCtrl->setValue(s.str());
 }
 
@@ -412,8 +432,13 @@ void LLPanelHMDConfig::onSetUISurfaceToroidRadiusDepth()
 {
     F32 f = mUISurfaceToroidRadiusDepthSliderCtrl->getValueF32();
     gHMD.setUISurfaceToroidRadiusDepth(f);
+    updateUISurfaceToroidRadiusDepthLabel();
+}
+
+void LLPanelHMDConfig::updateUISurfaceToroidRadiusDepthLabel()
+{
     std::ostringstream s;
-    s << f;
+    s << gHMD.getUISurfaceToroidRadiusDepth();
     mUISurfaceToroidRadiusDepthAmountCtrl->setValue(s.str());
 }
 
@@ -421,8 +446,13 @@ void LLPanelHMDConfig::onSetUISurfaceToroidCrossSectionRadiusWidth()
 {
     F32 f = mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getValueF32();
     gHMD.setUISurfaceToroidCrossSectionRadiusWidth(f);
+    updateUISurfaceToroidCrossSectionRadiusWidthLabel();
+}
+
+void LLPanelHMDConfig::updateUISurfaceToroidCrossSectionRadiusWidthLabel()
+{
     std::ostringstream s;
-    s << f;
+    s << gHMD.getUISurfaceToroidCrossSectionRadiusWidth();
     mUISurfaceToroidCrossSectionRadiusWidthAmountCtrl->setValue(s.str());
 }
 
@@ -430,8 +460,13 @@ void LLPanelHMDConfig::onSetUISurfaceToroidCrossSectionRadiusHeight()
 {
     F32 f = mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getValueF32();
     gHMD.setUISurfaceToroidCrossSectionRadiusHeight(f);
+    updateUISurfaceToroidCrossSectionRadiusHeightLabel();
+}
+
+void LLPanelHMDConfig::updateUISurfaceToroidCrossSectionRadiusHeightLabel()
+{
     std::ostringstream s;
-    s << f;
+    s << gHMD.getUISurfaceToroidCrossSectionRadiusHeight();
     mUISurfaceToroidCrossSectionRadiusHeightAmountCtrl->setValue(s.str());
 }
 
@@ -439,8 +474,13 @@ void LLPanelHMDConfig::onSetUISurfaceToroidArcHorizontal()
 {
     F32 f = mUISurfaceToroidArcHorizontalSliderCtrl->getValueF32();
     gHMD.setUISurfaceArcHorizontal(f * F_PI);
+    updateUISurfaceToroidArcHorizontalLabel();
+}
+
+void LLPanelHMDConfig::updateUISurfaceToroidArcHorizontalLabel()
+{
     std::ostringstream s;
-    s << f << " PI";
+    s << (gHMD.getUISurfaceArcHorizontal() / F_PI) << " PI";
     mUISurfaceToroidArcHorizontalAmountCtrl->setValue(s.str());
 }
 
@@ -448,8 +488,13 @@ void LLPanelHMDConfig::onSetUISurfaceToroidArcVertical()
 {
     F32 f = mUISurfaceToroidArcVerticalSliderCtrl->getValueF32();
     gHMD.setUISurfaceArcVertical(f * F_PI);
+    updateUISurfaceToroidArcVerticalLabel();
+}
+
+void LLPanelHMDConfig::updateUISurfaceToroidArcVerticalLabel()
+{
     std::ostringstream s;
-    s << f << " PI";
+    s << (gHMD.getUISurfaceArcVertical() / F_PI) << " PI";
     mUISurfaceToroidArcVerticalAmountCtrl->setValue(s.str());
 }
 
@@ -457,7 +502,43 @@ void LLPanelHMDConfig::onSetUIMagnification()
 {
     F32 f = mUIMagnificationSliderCtrl->getValueF32();
     gHMD.setUIMagnification(f);
+    updateUIMagnificationLabel();
+}
+
+void LLPanelHMDConfig::updateUIMagnificationLabel()
+{
     std::ostringstream s;
-    s << f;
+    s << gHMD.getUIMagnification();
     mUIMagnificationAmountCtrl->setValue(s.str());
+}
+
+void LLPanelHMDConfig::onSetUIShapePreset()
+{
+    F32 f = mUISurfaceShapePresetSliderCtrl->getValueF32();
+    gHMD.setUIShapePresetIndex((S32)f);
+    updateUIShapePresetLabel();
+
+    mUISurfaceOffsetDepthSliderCtrl->setValue(gHMD.getUISurfaceOffsetDepth());
+    updateUISurfaceOffsetDepthLabel();
+    mUISurfaceToroidRadiusWidthSliderCtrl->setValue(gHMD.getUISurfaceToroidRadiusWidth());
+    updateUISurfaceToroidRadiusWidthLabel();
+    mUISurfaceToroidRadiusDepthSliderCtrl->setValue(gHMD.getUISurfaceToroidRadiusDepth());
+    updateUISurfaceToroidRadiusDepthLabel();
+    mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->setValue(gHMD.getUISurfaceToroidCrossSectionRadiusWidth());
+    updateUISurfaceToroidCrossSectionRadiusWidthLabel();
+    mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->setValue(gHMD.getUISurfaceToroidCrossSectionRadiusHeight());
+    updateUISurfaceToroidCrossSectionRadiusHeightLabel();
+    mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->setValue(gHMD.getUISurfaceToroidCrossSectionRadiusHeight());
+    updateUISurfaceToroidCrossSectionRadiusHeightLabel();
+    mUISurfaceToroidArcHorizontalSliderCtrl->setValue(gHMD.getUISurfaceArcHorizontal() / F_PI);
+    updateUISurfaceToroidArcHorizontalLabel();
+    mUISurfaceToroidArcVerticalSliderCtrl->setValue(gHMD.getUISurfaceArcVertical() / F_PI);
+    updateUISurfaceToroidArcVerticalLabel();
+    mUIMagnificationSliderCtrl->setValue(gHMD.getUIMagnification());
+    updateUIMagnificationLabel();
+}
+
+void LLPanelHMDConfig::updateUIShapePresetLabel()
+{
+    mUISurfaceShapePresetLabelCtrl->setValue(gHMD.getUIShapeName());
 }

@@ -50,18 +50,32 @@ class LLPanelHMDConfig : public LLPanel
     void onClickCancel();
     void onClickSave();
     void onClickResetValues();
+
     void onSetInterpupillaryOffset();
+    void updateInterpupillaryOffsetLabel();
     void onSetEyeToScreenDistance();
+    void updateEyeToScreenDistanceLabel();
     void onCheckMotionPrediction();
     void onSetMotionPredictionDelta();
+    void updateMotionPredictionDeltaLabel();
     void onSetUISurfaceOffsetDepth();
+    void updateUISurfaceOffsetDepthLabel();
     void onSetUISurfaceToroidRadiusWidth();
+    void updateUISurfaceToroidRadiusWidthLabel();
     void onSetUISurfaceToroidRadiusDepth();
+    void updateUISurfaceToroidRadiusDepthLabel();
     void onSetUISurfaceToroidCrossSectionRadiusWidth();
+    void updateUISurfaceToroidCrossSectionRadiusWidthLabel();
     void onSetUISurfaceToroidCrossSectionRadiusHeight();
+    void updateUISurfaceToroidCrossSectionRadiusHeightLabel();
     void onSetUISurfaceToroidArcHorizontal();
+    void updateUISurfaceToroidArcHorizontalLabel();
     void onSetUISurfaceToroidArcVertical();
+    void updateUISurfaceToroidArcVerticalLabel();
     void onSetUIMagnification();
+    void updateUIMagnificationLabel();
+    void onSetUIShapePreset();
+    void updateUIShapePresetLabel();
 
  private:
     static LLPanelHMDConfig*  sInstance;
@@ -102,6 +116,9 @@ class LLPanelHMDConfig : public LLPanel
     LLSlider* mUIMagnificationSliderCtrl;
     LLUICtrl* mUIMagnificationAmountCtrl;
     F32 mUIMagnificationOriginal;
+    LLSlider* mUISurfaceShapePresetSliderCtrl;
+    LLUICtrl* mUISurfaceShapePresetLabelCtrl;
+    F32 mUISurfaceShapePresetOriginal;
 };
 
 #endif // LL_LLPANELHMDCONFIG_H

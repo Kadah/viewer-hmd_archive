@@ -98,7 +98,7 @@
              tab_stop="false"/>
     </layout_panel>
   </layout_stack>
-  <panel  height="440"
+  <panel  height="480"
           width="1024"
           bottom="-1"
           follows="left|right|bottom"

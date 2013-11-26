@@ -70,8 +70,24 @@ public:
         kFlag_CursorIntersectsUI        = 1 << 10,
         kFlag_DebugMode                 = 1 << 11,
         kFlag_ChangingRenderContext     = 1 << 12,
-        kFlag_UseCalculatedAspect       = 1 << 13,
     };
+
+
+    struct UISurfaceShapeSettings
+    {
+        std::string mName;
+        F32 mOffsetX;
+        F32 mOffsetY;
+        F32 mOffsetZ;
+        F32 mToroidRadiusWidth;
+        F32 mToroidRadiusDepth;
+        F32 mToroidCrossSectionRadiusWidth;
+        F32 mToroidCrossSectionRadiusHeight;
+        F32 mArcHorizontal;
+        F32 mArcVertical;
+        F32 mUIMagnification;
+    };
+
 
 public:
     LLHMD();
@@ -107,8 +123,6 @@ public:
     void isDebugMode(BOOL b) { if (b) { mFlags |= kFlag_DebugMode; } else { mFlags &= ~kFlag_DebugMode; } }
     BOOL isChangingRenderContext() const { return ((mFlags & kFlag_ChangingRenderContext) != 0) ? TRUE : FALSE; }
     void isChangingRenderContext(BOOL b) { if (b) { mFlags |= kFlag_ChangingRenderContext; } else { mFlags &= ~kFlag_ChangingRenderContext; } }
-    BOOL useCalculatedAspect() const { return ((mFlags & kFlag_UseCalculatedAspect) != 0) ? TRUE : FALSE; }
-    void useCalculatedAspect(BOOL b) { if (b) { mFlags |= kFlag_UseCalculatedAspect; } else { mFlags &= ~kFlag_UseCalculatedAspect; } }
 
     BOOL isManuallyCalibrating() const;
     void BeginManualCalibration();
@@ -128,7 +142,6 @@ public:
     void onAppFocusLost();
     void renderUnusedMainWindow();
     void renderUnusedHMDWindow();
-
 
     // 0 = center, 1 = left, 2 = right.  Input clamped to [0,2]
     U32 getCurrentEye() const;
@@ -159,8 +172,8 @@ public:
     F32 getUIAspect() const { return mPresetUIAspect; }
     F32 getEyeDepth() const { return mEyeDepth; }
     F32 getUIEyeDepth() const { return mUIEyeDepth; }
-    F32 getUIMagnification() { return mUIMagnification; }
-    void setUIMagnification(F32 f) { mUIMagnification = f; calculateUIEyeDepth(); }
+    F32 getUIMagnification() { return mUIShape.mUIMagnification; }
+    void setUIMagnification(F32 f);
 
     // coefficients for the distortion function.
     LLVector4 getDistortionConstants() const;
@@ -223,24 +236,29 @@ public:
     LLCoordWindow getMainClientSize() const { return mMainClientSize; }
     LLCoordWindow getHMDClientSize() const { return LLCoordWindow(getHMDWidth(), getHMDHeight()); }
 
-    const LLVector2& getUISurfaceArc() const { return mUICurvedSurfaceArc; }
-    F32 getUISurfaceArcHorizontal() const { return mUICurvedSurfaceArc[VX]; }
-    void setUISurfaceArcHorizontal(F32 f) { mUICurvedSurfaceArc[VX] = f; onChangeUISurfaceShape(); }
-    F32 getUISurfaceArcVertical() const { return mUICurvedSurfaceArc[VY]; }
-    void setUISurfaceArcVertical(F32 f) { mUICurvedSurfaceArc[VY] = f; onChangeUISurfaceShape(); }
-    const LLVector4& getUISurfaceRadius() const { return mUICurvedSurfaceRadius; }
-    F32 getUISurfaceToroidRadiusWidth() const { return mUICurvedSurfaceRadius[0]; }
-    void setUISurfaceToroidRadiusWidth(F32 f) { mUICurvedSurfaceRadius[0] =  f; onChangeUISurfaceShape(); }
-    F32 getUISurfaceToroidRadiusDepth() const { return mUICurvedSurfaceRadius[1]; }
-    void setUISurfaceToroidRadiusDepth(F32 f) { mUICurvedSurfaceRadius[1] =  f; onChangeUISurfaceShape(); }
-    F32 getUISurfaceToroidCrossSectionRadiusWidth() const { return mUICurvedSurfaceRadius[3]; }
-    void setUISurfaceToroidCrossSectionRadiusWidth(F32 f) { mUICurvedSurfaceRadius[3] =  f; onChangeUISurfaceShape(); }
-    F32 getUISurfaceToroidCrossSectionRadiusHeight() const { return mUICurvedSurfaceRadius[2]; }
-    void setUISurfaceToroidCrossSectionRadiusHeight(F32 f) { mUICurvedSurfaceRadius[2] =  f; onChangeUISurfaceShape(); }
-    const LLVector3& getUISurfaceOffsets() const { return mUICurvedSurfaceOffsets; }
-    void setUISurfaceOffsetWidth(F32 f) { mUICurvedSurfaceOffsets[VX] = f; onChangeUISurfaceShape(); }
-    void setUISurfaceOffsetHeight(F32 f) { mUICurvedSurfaceOffsets[VY] = f; onChangeUISurfaceShape(); }
-    void setUISurfaceOffsetDepth(F32 f) { mUICurvedSurfaceOffsets[VZ] = f; onChangeUISurfaceShape(); }
+    const std::string& getUIShapeName() const { return mUIShape.mName; }
+    F32 getUISurfaceArcHorizontal() const { return mUIShape.mArcHorizontal; }
+    void setUISurfaceArcHorizontal(F32 f) { setUISurfaceParam(&mUIShape.mArcHorizontal, f); }
+    F32 getUISurfaceArcVertical() const { return mUIShape.mArcVertical; }
+    void setUISurfaceArcVertical(F32 f) { setUISurfaceParam(&mUIShape.mArcVertical, f); }
+    F32 getUISurfaceToroidRadiusWidth() const { return mUIShape.mToroidRadiusWidth; }
+    void setUISurfaceToroidRadiusWidth(F32 f) { setUISurfaceParam(&mUIShape.mToroidRadiusWidth, f); }
+    F32 getUISurfaceToroidRadiusDepth() const { return mUIShape.mToroidRadiusDepth; }
+    void setUISurfaceToroidRadiusDepth(F32 f) { setUISurfaceParam(&mUIShape.mToroidRadiusDepth, f); }
+    F32 getUISurfaceToroidCrossSectionRadiusWidth() const { return mUIShape.mToroidCrossSectionRadiusWidth; }
+    void setUISurfaceToroidCrossSectionRadiusWidth(F32 f) { setUISurfaceParam(&mUIShape.mToroidCrossSectionRadiusWidth, f); }
+    F32 getUISurfaceToroidCrossSectionRadiusHeight() const { return mUIShape.mToroidCrossSectionRadiusHeight; }
+    void setUISurfaceToroidCrossSectionRadiusHeight(F32 f) { setUISurfaceParam(&mUIShape.mToroidCrossSectionRadiusHeight, f); }
+    F32 getUISurfaceOffsetWidth() const { return mUIShape.mOffsetX; }
+    void setUISurfaceOffsetWidth(F32 f) { setUISurfaceParam(&mUIShape.mOffsetX, f); }
+    F32 getUISurfaceOffsetHeight() const { return mUIShape.mOffsetY; }
+    void setUISurfaceOffsetHeight(F32 f) { setUISurfaceParam(&mUIShape.mOffsetY, f); }
+    F32 getUISurfaceOffsetDepth() const { return mUIShape.mOffsetZ; }
+    void setUISurfaceOffsetDepth(F32 f) { setUISurfaceParam(&mUIShape.mOffsetZ, f); }
+    S32 getUIShapePresetIndex() const { return mUIShapePreset; }
+    void setUIShapePresetIndex(S32 idx);
+    S32 getUIShapePresetIndexDefault() const { return 1; }
+    const LLHMD::UISurfaceShapeSettings& getUIShapePreset(S32 idx);
 
     LLViewerTexture* getCursorImage(U32 cursorType) { return (cursorType < mCursorTextures.size()) ? mCursorTextures[cursorType].get() : NULL; }
     LLViewerTexture* getCalibrateBackground() { return mCalibrateBackgroundTexture; }
@@ -276,21 +294,29 @@ public:
 
     void saveSettings();
 
-    static void onChangeOculusDebugMode();
+    static void onChangeHMDDebugMode();
+    static void onChangeInterpupillaryDistance();
+    static void onChangeEyeToScreenDistance();
+    static void onChangeEyeDepth();
     static void onChangeUISurfaceSavedParams();
     static void onChangeUISurfaceShape();
-    static void onChangeEyeDepth();
     static void onChangeUIMagnification();
+    static void onChangeUIShapePreset();
     static void onChangeWorldCursorSizeMult();
-    static void onChangeUseCalculatedAspect();
 
 private:
     void calculateUIEyeDepth();
+    void setUISurfaceParam(F32* p, F32 f);
 
 private:
     LLHMDImpl* mImpl;
     U32 mFlags;
     U32 mRenderMode;
+    F32 mInterpupillaryDistance;
+    LLHMD::UISurfaceShapeSettings mUIShape;
+    F32 mEyeDepth;
+    F32 mUIEyeDepth;
+    S32 mUIShapePreset;
     F32 mBaseModelView[16];
     F32 mBaseModelViewInv[16];
     F32 mBaseProjection[16];
@@ -300,12 +326,6 @@ private:
     LLCoordScreen mMainWindowPos;
     LLCoordScreen mMainWindowSize;
     LLCoordWindow mMainClientSize;
-    LLVector2 mUICurvedSurfaceArc;
-    LLVector4 mUICurvedSurfaceRadius;
-    LLVector3 mUICurvedSurfaceOffsets;
-    F32 mEyeDepth;
-    F32 mUIMagnification;
-    F32 mUIEyeDepth;
     // in-world coordinates of mouse pointer on the UI surface
     LLVector3 mMouseWorld;
     // in-world coordinates of raycast from viewpoint into world, assuming no collisions.
@@ -321,6 +341,9 @@ private:
     std::vector<LLPointer<LLViewerTexture> > mCursorTextures;
     LLPointer<LLViewerTexture> mCalibrateBackgroundTexture;
     LLPointer<LLViewerTexture> mCalibrateForegroundTexture;
+
+    static const LLHMD::UISurfaceShapeSettings sHMDUISurfacePresets[];
+    static const size_t sNumHMDUISurfacePresets;
 };
 
 extern LLHMD gHMD;

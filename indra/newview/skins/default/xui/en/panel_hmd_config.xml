@@ -5,21 +5,21 @@
   border="false"
   chrome="true"
   width="512"
-  height="440"
+  height="480"
   layout="topleft"
   name="hmd_config">
   <layout_stack
     left="0"
     top="0"
     layout="topleft"
-    height="440"
+    height="480"
     follows="all"
     orientation="horizontal">
     <layout_panel
-      height="440"
+      height="480"
       width="1" />
     <layout_panel
-      height="440"
+      height="480"
       auto_resize="false"
       width="400">
       <layout_stack
@@ -27,7 +27,7 @@
         border_size="0"
         top="0"
         layout="topleft"
-        height="440"
+        height="480"
         follows="all"
         orientation="vertical">
 
@@ -87,7 +87,64 @@ Interpupillary Distance
             </layout_panel>
           </layout_stack>
         </layout_panel>
-        
+
+        <layout_panel
+         height="40"
+         auto_resize="false"
+         width="400">
+          <layout_stack
+            border_size="0"
+            left="0"
+            top="0"
+            height="40"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="400"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="300"
+                left="0"
+                text_color="white"
+                halign="center">
+UI Surface Shape Preset
+              </text>
+              <text
+                name="uisurface_shape_preset_value"
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="70"
+                left="320"
+                text_color="white"
+                halign="right">
+Default
+              </text>
+              <slider_bar
+                top_delta="18"
+                min_val="0.0"
+                max_val="4.0"
+                increment="1.0"
+                initial_value="1.0"
+                name="uisurface_shape_preset_slider"
+                tool_tip="Shape of the UI surface in HMD Mode"
+                left="5"
+                width="390">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetUIShapePreset" />
+              </slider_bar>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+          
         <layout_panel
          height="40"
          auto_resize="false"
@@ -113,10 +170,10 @@ Interpupillary Distance
                 left="0"
                 text_color="white"
                 halign="center">
-Eye to Screen Distance (FOV)
+UI Magnification
               </text>
               <text
-                name="eye_to_screen_distance_slider_amount"
+                name="ui_magnification_slider_amount"
                 follows="all"
                 font.name="SansSerifSmall"
                 top="5"
@@ -125,25 +182,25 @@ Eye to Screen Distance (FOV)
                 left="320"
                 text_color="white"
                 halign="right">
-41.0 mm
+600
               </text>
               <slider_bar
                 top_delta="18"
-                min_val="0"
-                max_val="100"
-                increment=".1"
-                initial_value="41"
-                name="eye_to_screen_distance_slider"
-                tool_tip="Distance from the eye to screen surface, in millimeters"
+                min_val="0.0"
+                max_val="1000"
+                increment="10.0"
+                initial_value="600.0"
+                name="ui_magnification_slider"
+                tool_tip="UI Magnification at default Eye-To-Screen distance"
                 left="5"
                 width="390">
                 <slider_bar.commit_callback
-                  function="HMDConfig.SetEyeToScreenDistance" />
+                  function="HMDConfig.SetUIMagnification" />
               </slider_bar>
             </layout_panel>
           </layout_stack>
         </layout_panel>
-        
+
         <layout_panel
          height="40"
          auto_resize="false"
@@ -223,6 +280,62 @@ Motion Prediction Delta
           </layout_stack>
         </layout_panel>
 
+        <layout_panel
+         height="40"
+         auto_resize="false"
+         width="400">
+          <layout_stack
+            border_size="0"
+            top="0"
+            height="40"
+            follows="all"
+            orientation="horizontal">
+            <layout_panel
+              width="400"
+              text_color="white"
+              background_visible="true"
+              follows="all"
+              bg_alpha_color="0.0 0.3 0.3">
+              <text
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="300"
+                left="0"
+                text_color="white"
+                halign="center">
+Eye to Screen Distance (FOV)
+              </text>
+              <text
+                name="eye_to_screen_distance_slider_amount"
+                follows="all"
+                font.name="SansSerifSmall"
+                top="5"
+                height="10"
+                width="70"
+                left="320"
+                text_color="white"
+                halign="right">
+41.0 mm
+              </text>
+              <slider_bar
+                top_delta="18"
+                min_val="0"
+                max_val="100"
+                increment=".1"
+                initial_value="41"
+                name="eye_to_screen_distance_slider"
+                tool_tip="Distance from the eye to screen surface, in millimeters"
+                left="5"
+                width="390">
+                <slider_bar.commit_callback
+                  function="HMDConfig.SetEyeToScreenDistance" />
+              </slider_bar>
+            </layout_panel>
+          </layout_stack>
+        </layout_panel>
+        
         <layout_panel
          height="40"
          auto_resize="false"
@@ -616,67 +729,11 @@ UI Surface Arc (Vertical)
           </layout_stack>
         </layout_panel>
 
-        <layout_panel
-         height="40"
-         auto_resize="false"
-         width="400">
-          <layout_stack
-            border_size="0"
-            top="0"
-            height="40"
-            follows="all"
-            orientation="horizontal">
-            <layout_panel
-              width="400"
-              text_color="white"
-              background_visible="true"
-              follows="all"
-              bg_alpha_color="0.0 0.3 0.3">
-              <text
-                follows="all"
-                font.name="SansSerifSmall"
-                top="5"
-                height="10"
-                width="300"
-                left="0"
-                text_color="white"
-                halign="center">
-UI Magnification
-              </text>
-              <text
-                name="ui_magnification_slider_amount"
-                follows="all"
-                font.name="SansSerifSmall"
-                top="5"
-                height="10"
-                width="70"
-                left="320"
-                text_color="white"
-                halign="right">
-600
-              </text>
-              <slider_bar
-                top_delta="18"
-                min_val="0.0"
-                max_val="1000"
-                increment="10.0"
-                initial_value="600.0"
-                name="ui_magnification_slider"
-                tool_tip="UI Magnification at default Eye-To-Screen distance"
-                left="5"
-                width="390">
-                <slider_bar.commit_callback
-                  function="HMDConfig.SetUIMagnification" />
-              </slider_bar>
-            </layout_panel>
-          </layout_stack>
-        </layout_panel>
-
       </layout_stack>
     </layout_panel>
     
     <layout_panel
-      height="440"
+      height="480"
       auto_resize="false"
       width="100">
       <layout_stack
@@ -684,7 +741,7 @@ UI Magnification
         border_size="0"
         top="0"
         layout="topleft"
-        height="440"
+        height="480"
         follows="all"
         orientation="vertical">
         <layout_panel
@@ -753,7 +810,7 @@ UI Magnification
     </layout_panel>
     
     <layout_panel
-      height="440"
+      height="480"
       width="1" />
   </layout_stack>
 </panel>

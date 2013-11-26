@@ -2069,7 +2069,7 @@ void LLViewerWindow::addExtraWindow()
 {
     if (mWindow)
     {
-        mWindow->addExtraWindow(gSavedSettings.getBOOL("OculusUseMirroring"));
+        mWindow->addExtraWindow(gSavedSettings.getBOOL("HMDUseMirroring"));
     }
 }
 
