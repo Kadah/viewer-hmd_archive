@@ -801,20 +801,31 @@ BOOL LLViewerCamera::projectPosAgentToScreenEdge(const LLVector3 &pos_agent,
 }
 
 
-void LLViewerCamera::getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, LLVector3 &right)
+void LLViewerCamera::getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, LLVector3 &right, BOOL allowRoll)
 {
 	LLVector3 to_vec = pos_agent - getOrigin();
-
 	F32 at_dist = to_vec * getAtAxis();
-
 	F32 height_meters = at_dist* (F32)tan(getView()/2.f);
 	F32 height_pixels = getViewHeightInPixels()/2.f;
-
 	F32 pixel_aspect = gViewerWindow->getWindow()->getPixelAspectRatio();
-
 	F32 meters_per_pixel = height_meters / height_pixels;
-	up = getUpAxis() * meters_per_pixel * gViewerWindow->getDisplayScale().mV[VY];
-	right = -1.f * pixel_aspect * meters_per_pixel * getLeftAxis() * gViewerWindow->getDisplayScale().mV[VX];
+
+    LLVector3 up_axis, left_axis;
+    if (allowRoll)
+    {
+        up_axis.set(0.0f, 0.0f, 1.0f);
+        left_axis = getLeftAxis();
+        left_axis[VZ] = 0.0f;
+        left_axis.normalize();
+    }
+    else
+    {
+        up_axis = getUpAxis();
+        left_axis = getLeftAxis();
+    }
+
+	up = up_axis * meters_per_pixel * gViewerWindow->getDisplayScale().mV[VY];
+	right = -1.f * pixel_aspect * meters_per_pixel * left_axis * gViewerWindow->getDisplayScale().mV[VX];
 }
 
 LLVector3 LLViewerCamera::roundToPixel(const LLVector3 &pos_agent)

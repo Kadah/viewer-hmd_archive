@@ -5151,9 +5151,22 @@ F32	LLViewerWindow::getWorldViewAspectRatio() const
 
 void LLViewerWindow::calcDisplayScale()
 {
-	F32 ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
+	F32 ui_scale_factor;
 	LLVector2 display_scale;
-	display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+    if (gHMD.isHMDMode())
+    {
+        // In HMD mode, the world should not be scaled as the resolution is fixed and too many calculations depend on that
+        // fixed resolution.   The UI could be scaled by adjusting the resolution of the rendertarget that the UI is sent
+        // to, but because the current setup has the world and UI scaling so intermingled, getting scaling to work for just
+        // the UI would be painful and probably take a week or more.  Thus, for now, just disable "UI" scaling in HMD mode.
+	    ui_scale_factor = 1.0f;
+	    display_scale.setVec(1.0f, 1.0f);
+    }
+    else
+    {
+	    ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
+	    display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+    }
 	display_scale *= ui_scale_factor;
 
 	// limit minimum display scale

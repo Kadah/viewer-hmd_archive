@@ -1531,9 +1531,9 @@ void render_ui(F32 zoom_factor, int subfield)
 
             if (gPipeline.mUIScreen.isComplete())
             {
-                if (gPipeline.mOculusUISurface.isNull())
+                if (gPipeline.mHMDUISurface.isNull())
                 {
-                    gPipeline.mOculusUISurface = gHMD.createUISurface();
+                    gPipeline.mHMDUISurface = gHMD.createUISurface();
                 }
                 gGL.matrixMode(LLRender::MM_MODELVIEW);
                 gGL.pushMatrix();
@@ -1546,7 +1546,7 @@ void render_ui(F32 zoom_factor, int subfield)
                 gOneTextureNoColorProgram.bind();
                 gGL.setColorMask(true, true);
                 gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
-                LLVertexBuffer* buff = gPipeline.mOculusUISurface;
+                LLVertexBuffer* buff = gPipeline.mHMDUISurface;
                 {
                     LLGLDisable cull(GL_CULL_FACE);
                     LLGLEnable blend(GL_BLEND);

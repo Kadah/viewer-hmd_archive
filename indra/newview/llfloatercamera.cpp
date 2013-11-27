@@ -41,6 +41,7 @@
 #include "llslider.h"
 #include "llfirstuse.h"
 #include "llhints.h"
+#include "llhmd.h"
 
 static LLDefaultChildRegistry::Register<LLPanelCameraItem> r("panel_camera_item");
 
@@ -279,12 +280,39 @@ void LLFloaterCamera::handleAvatarEditingAppearance(bool editing)
 	getChildView("avatarview_btn")->setEnabled(!editing);
 }
 
+void LLFloaterCamera::onHMDChange()
+{
+	LLFloaterCamera* floater_camera = LLFloaterCamera::findInstance();
+	if (!floater_camera) return;
+	floater_camera->handleHMDChange();
+}
+
+void LLFloaterCamera::handleHMDChange()
+{
+    // disable mouselook mode when in HMD mode
+    if (gHMD.isHMDMode())
+    {
+        if (gAgentCamera.cameraMouselook())
+        {
+            gAgentCamera.changeCameraToFirstPerson();
+        }
+        getChild<LLPanelCameraItem>("mouselook_view")->setEnabled(FALSE);
+    }
+    else
+    {
+        if (gAgentCamera.cameraFirstPerson() && !gSavedSettings.getBOOL("FirstPersonModeInCycle"))
+        {
+            gAgentCamera.changeCameraToMouselook();
+        }
+        getChild<LLPanelCameraItem>("mouselook_view")->setEnabled(TRUE);
+    }
+}
+
 void LLFloaterCamera::update()
 {
 	ECameraControlMode mode = determineMode();
 	if (mode != mCurrMode) setMode(mode);
 }
-
 
 void LLFloaterCamera::toPrevMode()
 {

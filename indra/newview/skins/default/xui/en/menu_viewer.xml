@@ -2881,10 +2881,10 @@
              name="Debug HMD Display">
               <menu_item_check.on_check
                function="CheckControl"
-               parameter="OculusDebugMode" />
+               parameter="HMDDebugMode" />
               <menu_item_check.on_click
                function="ToggleControl"
-               parameter="OculusDebugMode" />
+               parameter="HMDDebugMode" />
                          </menu_item_check>
         </menu>
 

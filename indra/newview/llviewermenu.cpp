@@ -4035,21 +4035,38 @@ class LLViewMouselook : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		if (!gAgentCamera.cameraMouselook() && !gAgentCamera.cameraFirstPerson())
-		{
+        ECameraMode mode = gAgentCamera.getCameraMode();
+        switch (mode)
+        {
+        case CAMERA_MODE_MOUSELOOK:
+            if (gHMD.isHMDMode() || gSavedSettings.getBOOL("FirstPersonModeInCycle"))
+            {
+                gAgentCamera.changeCameraToFirstPerson();
+            }
+            else
+            {
+                gAgentCamera.changeCameraToDefault();
+            }
+            break;
+        case CAMERA_MODE_FIRST_PERSON:
+            gAgentCamera.changeCameraToDefault();
+            break;
+        case CAMERA_MODE_FOLLOW:
+        case CAMERA_MODE_THIRD_PERSON:
             if (gHMD.isHMDMode())
             {
                 gAgentCamera.changeCameraToFirstPerson();
             }
             else
             {
-			    gAgentCamera.changeCameraToMouselook();
+                gAgentCamera.changeCameraToMouselook();
             }
-		}
-		else
-		{
-			gAgentCamera.changeCameraToDefault();
-		}
+            break;
+        case CAMERA_MODE_CUSTOMIZE_AVATAR:
+        default:
+            // do nothing - cannot switch to mouselook/first-person from customize_avatar mode
+            break;
+        }
 		return true;
 	}
 };

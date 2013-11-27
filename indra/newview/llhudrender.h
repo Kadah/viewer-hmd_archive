@@ -33,26 +33,28 @@ class LLVector3;
 class LLFontGL;
 
 // Utility classes for rendering HUD elements
-void hud_render_text(const LLWString &wstr,
-					 const LLVector3 &pos_agent,
-					 const LLFontGL &font,
-					 const U8 style,
-					 const LLFontGL::ShadowType, 
-					 const F32 x_offset,
-					 const F32 y_offset,
-					 const LLColor4& color,
-					 const BOOL orthographic);
+void hud_render_text(   const LLWString &wstr,
+					    const LLVector3 &pos_agent,
+					    const LLFontGL &font,
+					    const U8 style,
+					    const LLFontGL::ShadowType, 
+					    const F32 x_offset,
+					    const F32 y_offset,
+					    const LLColor4& color,
+					    const BOOL orthographic,
+                        BOOL allowRoll = FALSE);
 
 // Legacy, slower
-void hud_render_utf8text(const std::string &str,
-						 const LLVector3 &pos_agent,
-						 const LLFontGL &font,
-						 const U8 style,
-						const LLFontGL::ShadowType, 
-						 const F32 x_offset,
-						 const F32 y_offset,
-						 const LLColor4& color,
-						 const BOOL orthographic);
+void hud_render_utf8text(   const std::string &str,
+						     const LLVector3 &pos_agent,
+						     const LLFontGL &font,
+						     const U8 style,
+						     const LLFontGL::ShadowType, 
+						     const F32 x_offset,
+						     const F32 y_offset,
+						     const LLColor4& color,
+						     const BOOL orthographic,
+                             BOOL allowRoll = FALSE);
 
 
 #endif //LL_LLHUDRENDER_H

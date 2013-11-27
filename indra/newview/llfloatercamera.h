@@ -64,6 +64,9 @@ public:
 	/** Called when Avatar is entered/exited editing appearance mode */
 	static void onAvatarEditingAppearance(bool editing);
 
+    // Called when the viewer enters and exits HMD mode
+    static void onHMDChange();
+
 	/* determines actual mode and updates ui */
 	void update();
 
@@ -115,6 +118,8 @@ private:
 	void fillFlatlistFromPanel (LLFlatListView* list, LLPanel* panel);
 
 	void handleAvatarEditingAppearance(bool editing);
+
+    void handleHMDChange();
 
 	// set to true when free camera mode is selected in modes list
 	// remains true until preset camera mode is chosen, or pan button is clicked, or escape pressed

@@ -660,8 +660,8 @@ public:
 	LLPointer<LLDrawable>				mTargetShadowSpotLight[2];
 
     //utility buffers for rendering various HMD (e.g. Oculus Rift) surfaces
-    LLPointer<LLVertexBuffer> mOculusUISurface;
-    LLPointer<LLVertexBuffer> mOculusDepthShape;
+    LLPointer<LLVertexBuffer> mHMDUISurface;
+    LLPointer<LLVertexBuffer> mHMDDepthShape;
 
 	LLVector4				mSunClipPlanes;
 	LLVector4				mSunOrthoClipPlanes;

@@ -4556,7 +4556,7 @@ void LLAppViewer::idle()
         {
             if (!gHMD.init())
             {
-                LL_WARNS("Oculus") << "Oculus Rift initialization Failed!" << LL_ENDL;
+                LL_WARNS("HMD") << "HMD initialization Failed!" << LL_ENDL;
             }
         }
 

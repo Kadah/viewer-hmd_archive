@@ -47,10 +47,11 @@ void hud_render_utf8text(const std::string &str, const LLVector3 &pos_agent,
 					 const LLFontGL::ShadowType shadow,
 					 const F32 x_offset, const F32 y_offset,
 					 const LLColor4& color,
-					 const BOOL orthographic)
+					 const BOOL orthographic,
+                     BOOL allowRoll)
 {
 	LLWString wstr(utf8str_to_wstring(str));
-	hud_render_text(wstr, pos_agent, font, style, shadow, x_offset, y_offset, color, orthographic);
+	hud_render_text(wstr, pos_agent, font, style, shadow, x_offset, y_offset, color, orthographic, allowRoll);
 }
 
 void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
@@ -59,7 +60,8 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 					const LLFontGL::ShadowType shadow,
 					const F32 x_offset, const F32 y_offset,
 					const LLColor4& color,
-					const BOOL orthographic)
+					const BOOL orthographic,
+                    BOOL allowRoll)
 {
 	LLViewerCamera* camera = LLViewerCamera::getInstance();
 	// Do cheap plane culling
@@ -80,7 +82,7 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	}
 	else
 	{
-		camera->getPixelVectors(pos_agent, up_axis, right_axis);
+		camera->getPixelVectors(pos_agent, up_axis, right_axis, allowRoll);
 	}
 
 	LLVector3 render_pos = pos_agent + (floorf(x_offset) * right_axis) + (floorf(y_offset) * up_axis);
@@ -113,16 +115,23 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 
     // setup ortho camera
     gl_state_for_2d(viewport[2], viewport[3]);
-    gViewerWindow->setup3DViewport(0, 0, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0);
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 	
 	winX -= viewport[0];
 	winY -= viewport[1];
 	LLUI::loadIdentity();
 	gGL.loadIdentity();
-	LLUI::translate((F32) winX*1.0f/LLFontGL::sScaleX, (F32) winY*1.0f/(LLFontGL::sScaleY), -(((F32) winZ*2.f)-1.f));
-	F32 right_x;
-	
-	font.render(wstr, 0, 0, 1, color, LLFontGL::LEFT, LLFontGL::BASELINE, style, shadow, wstr.length(), 1000, &right_x);
+
+    LLVector4 uit((F32) winX*1.0f/LLFontGL::sScaleX, (F32) winY*1.0f/(LLFontGL::sScaleY), -(((F32) winZ*2.f)-1.f), 1.0f);
+    if (allowRoll && gHMD.isHMDMode())
+    {
+        LLMatrix4 mat_neg_roll(0.0f, 0.0f, gHMD.getHMDRoll());
+        LLMatrix4 mat_roll(0.0f, 0.0f, -gHMD.getHMDRoll());
+        uit = uit * mat_roll;
+        gGL.multMatrix((GLfloat*)mat_neg_roll.mMatrix);
+    }
+    LLUI::translate(uit[VX], uit[VY], uit[VZ]);
+	font.render(wstr, 0, 0, 1, color, LLFontGL::LEFT, LLFontGL::BASELINE, style, shadow, wstr.length(), 1000);
 
 	LLUI::popMatrix();
 	gGL.popMatrix();

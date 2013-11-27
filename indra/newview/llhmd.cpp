@@ -45,6 +45,7 @@
 #include "llui.h"
 #include "llview.h"
 #include "lltool.h"
+#include "llfloatercamera.h"
 
 
 //#if LL_HMD_SUPPORTED
@@ -83,7 +84,6 @@ LLHMD::LLHMD()
     , mEyeDepth(0.075f)
     , mUIEyeDepth(0.6f)
     , mMouseWorldSizeMult(5.0f)
-    , mPresetAspect(0.8f)
     , mPresetUIAspect(1.6f)
     , mCalibrateBackgroundTexture(NULL)
     , mCalibrateForegroundTexture(NULL)
@@ -292,7 +292,7 @@ void LLHMD::saveSettings()
 
 void LLHMD::onChangeUISurfaceShape()
 {
-    gPipeline.mOculusUISurface = NULL;
+    gPipeline.mHMDUISurface = NULL;
 }
 
 void LLHMD::shutdown()
@@ -368,10 +368,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("CameraAngle"));
                         windowp->setPosition(getMainWindowPos());
                         windowp->setSize(getMainClientSize());
-                        if (gAgentCamera.cameraFirstPerson())
-                        {
-                            gAgentCamera.changeCameraToMouselook();
-                        }
+                        LLFloaterCamera::onHMDChange();
                         if (shouldShowCalibrationUI())
                         {
                             LLUI::getRootView()->getChildView("menu_stack")->setVisible(!shouldShowDepthVisual());
@@ -389,7 +386,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 windowp->getSize(&mMainClientSize);
                 windowp->getPosition(&mMainWindowPos);
                 renderUnusedMainWindow();
-                mPresetAspect = ((F32)getHMDEyeWidth() / (F32)getHMDHeight());
                 mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
                 switch (mRenderMode)
                 {
@@ -427,10 +423,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     }
                     break;
                 }
-                if (gAgentCamera.cameraMouselook())
-                {
-                    gAgentCamera.changeCameraToFirstPerson();
-                }
+                LLFloaterCamera::onHMDChange();
                 if (gHMD.shouldShowCalibrationUI())
                 {
                     LLUI::getRootView()->getChildView("menu_stack")->setVisible(!gHMD.shouldShowDepthVisual() && gHMD.isCalibrated());
@@ -553,7 +546,7 @@ void LLHMD::renderUnusedMainWindow()
         && gViewerWindow
         && gViewerWindow->getWindow()
 #if LL_DARWIN
-        && !gSavedSettings.getBOOL("OculusUseMirroring")
+        && !gSavedSettings.getBOOL("HMDUseMirroring")
 #endif
        )
     {
@@ -613,7 +606,7 @@ void LLHMD::setEyeToScreenDistance(F32 f)
 {
     mImpl->setEyeToScreenDistance(f);
     calculateUIEyeDepth();
-    gPipeline.mOculusUISurface = NULL;
+    gPipeline.mHMDUISurface = NULL;
 }
 
 void LLHMD::setUIMagnification(F32 f)
@@ -650,6 +643,9 @@ LLQuaternion LLHMD::getHMDOrient() const { return mImpl->getHMDOrient(); }
 LLQuaternion LLHMD::getHeadRotationCorrection() const { return mImpl->getHeadRotationCorrection(); }
 void LLHMD::addHeadRotationCorrection(LLQuaternion quat) { return mImpl->addHeadRotationCorrection(quat); }
 void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); }
+F32 LLHMD::getHMDRoll() const { return mImpl->getRoll(); }
+F32 LLHMD::getHMDPitch() const { return mImpl->getPitch(); }
+F32 LLHMD::getHMDYaw() const { return mImpl->getYaw(); }
 F32 LLHMD::getVerticalFOV() const { return mImpl->getVerticalFOV(); }
 F32 LLHMD::getAspect() { return mImpl->getAspect(); }
 BOOL LLHMD::useMotionPrediction() const { return mImpl->useMotionPrediction(); }
@@ -756,12 +752,12 @@ LLVertexBuffer* LLHMD::createUISurface()
     buff->getTexCoord0Strider(tc);
     F32 dx = mUIShape.mArcHorizontal / ((F32)resX - 1.0f);
     F32 dy = mUIShape.mArcVertical / ((F32)resY - 1.0f);
-    //LL_INFOS("Oculus")  << "XA: [" << xa[0] << "," << xa[1] << "], "
+    //LL_INFOS("HMD")  << "XA: [" << xa[0] << "," << xa[1] << "], "
     //                    << "YA: [" << ya[0] << "," << ya[1] << "], "
     //                    << "r: [" << r[0] << "," << r[1] << "], "
     //                    << "offsets: [" << offsets[0] << "," << offsets[1] << "," << offsets[2] << "]"
     //                    << LL_ENDL;
-    //LL_INFOS("Oculus")  << "dX: " << dx << ", "
+    //LL_INFOS("HMD")  << "dX: " << dx << ", "
     //                    << "dY: " << dy
     //                    << LL_ENDL;
 
@@ -797,7 +793,7 @@ LLVertexBuffer* LLHMD::createUISurface()
             *idx++ = right;
             *idx++ = bottom;
             *idx++ = bottom_right;
-            //LL_INFOS("Oculus")  << "Vtx " << ((i * resX) + j) << " [" << i << "," << j << "]: "
+            //LL_INFOS("HMD")  << "Vtx " << ((i * resX) + j) << " [" << i << "," << j << "]: "
             //                    << "[" << cur_idx << "," << bottom << "," << right << "], "
             //                    << "[" << right << "," << bottom << "," << bottom_right << "]"
             //                    << LL_ENDL;

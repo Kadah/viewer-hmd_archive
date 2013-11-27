@@ -287,10 +287,10 @@ BOOL LLHMDImpl::postDetectionInit()
     {
         gHMD.isMainFullScreen(mainFullScreen);
     }
-    LL_INFOS("Oculus") << "Got HMD Display Info: " << utf16str_to_utf8str(mDisplayName) << " [" << rcIdx << "] is " << (mainFullScreen ? " " : "NOT") << " fullscreen" << LL_ENDL;
+    LL_INFOS("HMD") << "Got HMD Display Info: " << utf16str_to_utf8str(mDisplayName) << " [" << rcIdx << "] is " << (mainFullScreen ? " " : "NOT") << " fullscreen" << LL_ENDL;
     if (!pWin->initHMDWindow(r.mLeft, r.mTop, r.mRight - r.mLeft, r.mBottom - r.mTop))
     {
-        LL_INFOS("Oculus") << "HMD Window init with rect " << r << " Failed!" << LL_ENDL;
+        LL_INFOS("HMD") << "HMD Window init with rect " << r << " Failed!" << LL_ENDL;
         return FALSE;
     }
 
@@ -366,7 +366,7 @@ void LLHMDImpl::onIdle()
     const char* results = mLatencyUtil.GetResultsString();
     if (results != NULL)
     {
-        LL_DEBUGS("Oculus") << "LATENCY TESTER:" << results << LL_ENDL;
+        LL_DEBUGS("HMD") << "LATENCY TESTER:" << results << LL_ENDL;
     }
 
     // Have to place this as close as possible to where the HMD orientation is read.
@@ -443,7 +443,7 @@ void LLHMDImpl::updateManualMagCalibration()
         if (mLastCalibrationStep != 0)
         {
             mCalibrationText = "** Step 1: Please Look Forward **";
-            //LL_INFOS("Oculus") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
+            //LL_INFOS("HMD") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
             mLastCalibrationStep = 0;
         }
         if ((fabs(yaw) < 10.0f * dtr) && (fabs(pitch) < 10.0f * dtr))
@@ -455,7 +455,7 @@ void LLHMDImpl::updateManualMagCalibration()
         if (mLastCalibrationStep != 1)
         {
             mCalibrationText = "** Step 2: Please Look Up **";
-            //LL_INFOS("Oculus") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
+            //LL_INFOS("HMD") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
             mLastCalibrationStep = 1;
         }
         if (pitch > 30.0f * dtr)
@@ -467,7 +467,7 @@ void LLHMDImpl::updateManualMagCalibration()
         if (mLastCalibrationStep != 2)
         {
             mCalibrationText = "** Step 3: Please Look Left **";
-            //LL_INFOS("Oculus") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
+            //LL_INFOS("HMD") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
             mLastCalibrationStep = 2;
         }
         if (yaw > 30.0f * dtr)
@@ -479,7 +479,7 @@ void LLHMDImpl::updateManualMagCalibration()
         if (mLastCalibrationStep != 3)
         {
             mCalibrationText = "** Step 4: Please Look Right **";
-            //LL_INFOS("Oculus") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
+            //LL_INFOS("HMD") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
             mLastCalibrationStep = 3;
         }
         if (yaw < -30.0f * dtr)
@@ -492,7 +492,7 @@ void LLHMDImpl::updateManualMagCalibration()
         {
             mMagCal.SetCalibration(mSensorFusion);
             //Vector3f mc = mMagCal.GetMagCenter();
-            //LL_INFOS("Oculus") << "Magnetometer Calibration Complete   \nCenter: " << mc.x << "," << mc.y << "," << mc.z << LL_ENDL;
+            //LL_INFOS("HMD") << "Magnetometer Calibration Complete   \nCenter: " << mc.x << "," << mc.y << "," << mc.z << LL_ENDL;
             mLastCalibrationStep = 4;
             gHMD.isCalibrated(TRUE);
             mCalibrationText = "";
@@ -501,34 +501,34 @@ void LLHMDImpl::updateManualMagCalibration()
                 LLUI::getRootView()->getChildView("menu_stack")->setVisible(TRUE);
             }
             //setCurrentEye(OVR::Util::Render::StereoEye_Left);
-            //LL_INFOS("Oculus") << "Left Eye:" << LL_ENDL;
-            //LL_INFOS("Oculus") << "HScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenWidth() << ", default: " << LLHMDImpl::kDefaultHScreenSize << LL_ENDL;
-            //LL_INFOS("Oculus") << "VScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenHeight() << ", default: " << LLHMDImpl::kDefaultVScreenSize << LL_ENDL;
-            //LL_INFOS("Oculus") << "InterpupillaryOffset: " << std::fixed << std::setprecision(4) << getInterpupillaryOffset() << ", default: " << LLHMDImpl::kDefaultInterpupillaryOffset << LL_ENDL;
-            //LL_INFOS("Oculus") << "LensSeparationDistance: " << std::fixed << std::setprecision(4) << getLensSeparationDistance() << ", default: " << LLHMDImpl::kDefaultLenSeparationDistance << LL_ENDL;
-            //LL_INFOS("Oculus") << "EyeToScreenDistance: " << std::fixed << std::setprecision(4) << getEyeToScreenDistance() << ", default: " << LLHMDImpl::kDefaultEyeToScreenDistance << LL_ENDL;
+            //LL_INFOS("HMD") << "Left Eye:" << LL_ENDL;
+            //LL_INFOS("HMD") << "HScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenWidth() << ", default: " << LLHMDImpl::kDefaultHScreenSize << LL_ENDL;
+            //LL_INFOS("HMD") << "VScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenHeight() << ", default: " << LLHMDImpl::kDefaultVScreenSize << LL_ENDL;
+            //LL_INFOS("HMD") << "InterpupillaryOffset: " << std::fixed << std::setprecision(4) << getInterpupillaryOffset() << ", default: " << LLHMDImpl::kDefaultInterpupillaryOffset << LL_ENDL;
+            //LL_INFOS("HMD") << "LensSeparationDistance: " << std::fixed << std::setprecision(4) << getLensSeparationDistance() << ", default: " << LLHMDImpl::kDefaultLenSeparationDistance << LL_ENDL;
+            //LL_INFOS("HMD") << "EyeToScreenDistance: " << std::fixed << std::setprecision(4) << getEyeToScreenDistance() << ", default: " << LLHMDImpl::kDefaultEyeToScreenDistance << LL_ENDL;
             //LLVector4 dc = getDistortionConstants();
-            //LL_INFOS("Oculus") << "Distortion Constants: [" << std::fixed << std::setprecision(4) << dc.mV[0] << "," << dc.mV[1] << "," << dc.mV[2] << "," << dc.mV[3] << "]" << LL_ENDL;
-            //LL_INFOS("Oculus") << "Default Dist Cnstnts: [" << std::fixed << std::setprecision(4) << LLHMDImpl::kDefaultDistortionConstant0 << "," << LLHMDImpl::kDefaultDistortionConstant1 << "," << LLHMDImpl::kDefaultDistortionConstant2 << "," << LLHMDImpl::kDefaultDistortionConstant3 << "]" << LL_ENDL;
-            //LL_INFOS("Oculus") << "XCenterOffset: " << std::fixed << std::setprecision(4) << getXCenterOffset() << ", default: " << LLHMDImpl::kDefaultXCenterOffset << LL_ENDL;
-            //LL_INFOS("Oculus") << "YCenterOffset: " << std::fixed << std::setprecision(4) << getYCenterOffset() << ", default: " << LLHMDImpl::kDefaultYCenterOffset << LL_ENDL;
-            //LL_INFOS("Oculus") << "DistortionScale: " << std::fixed << std::setprecision(4) << getDistortionScale() << ", default: " << LLHMDImpl::kDefaultDistortionScale << LL_ENDL;
-            //LL_INFOS("Oculus") << "OrthoPixelOffset: " << std::fixed << std::setprecision(4) << getOrthoPixelOffset() << ", default: " << LLHMDImpl::kDefaultOrthoPixelOffset << LL_ENDL;
+            //LL_INFOS("HMD") << "Distortion Constants: [" << std::fixed << std::setprecision(4) << dc.mV[0] << "," << dc.mV[1] << "," << dc.mV[2] << "," << dc.mV[3] << "]" << LL_ENDL;
+            //LL_INFOS("HMD") << "Default Dist Cnstnts: [" << std::fixed << std::setprecision(4) << LLHMDImpl::kDefaultDistortionConstant0 << "," << LLHMDImpl::kDefaultDistortionConstant1 << "," << LLHMDImpl::kDefaultDistortionConstant2 << "," << LLHMDImpl::kDefaultDistortionConstant3 << "]" << LL_ENDL;
+            //LL_INFOS("HMD") << "XCenterOffset: " << std::fixed << std::setprecision(4) << getXCenterOffset() << ", default: " << LLHMDImpl::kDefaultXCenterOffset << LL_ENDL;
+            //LL_INFOS("HMD") << "YCenterOffset: " << std::fixed << std::setprecision(4) << getYCenterOffset() << ", default: " << LLHMDImpl::kDefaultYCenterOffset << LL_ENDL;
+            //LL_INFOS("HMD") << "DistortionScale: " << std::fixed << std::setprecision(4) << getDistortionScale() << ", default: " << LLHMDImpl::kDefaultDistortionScale << LL_ENDL;
+            //LL_INFOS("HMD") << "OrthoPixelOffset: " << std::fixed << std::setprecision(4) << getOrthoPixelOffset() << ", default: " << LLHMDImpl::kDefaultOrthoPixelOffset << LL_ENDL;
 
             //setCurrentEye(OVR::Util::Render::StereoEye_Right);
-            //LL_INFOS("Oculus") << "Right Eye:" << LL_ENDL;
-            //LL_INFOS("Oculus") << "HScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenWidth() << ", default: " << LLHMDImpl::kDefaultHScreenSize << LL_ENDL;
-            //LL_INFOS("Oculus") << "VScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenHeight() << ", default: " << LLHMDImpl::kDefaultVScreenSize << LL_ENDL;
-            //LL_INFOS("Oculus") << "InterpupillaryOffset: " << std::fixed << std::setprecision(4) << getInterpupillaryOffset() << ", default: " << LLHMDImpl::kDefaultInterpupillaryOffset << LL_ENDL;
-            //LL_INFOS("Oculus") << "LensSeparationDistance: " << std::fixed << std::setprecision(4) << getLensSeparationDistance() << ", default: " << LLHMDImpl::kDefaultLenSeparationDistance << LL_ENDL;
-            //LL_INFOS("Oculus") << "EyeToScreenDistance: " << std::fixed << std::setprecision(4) << getEyeToScreenDistance() << ", default: " << LLHMDImpl::kDefaultEyeToScreenDistance << LL_ENDL;
+            //LL_INFOS("HMD") << "Right Eye:" << LL_ENDL;
+            //LL_INFOS("HMD") << "HScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenWidth() << ", default: " << LLHMDImpl::kDefaultHScreenSize << LL_ENDL;
+            //LL_INFOS("HMD") << "VScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenHeight() << ", default: " << LLHMDImpl::kDefaultVScreenSize << LL_ENDL;
+            //LL_INFOS("HMD") << "InterpupillaryOffset: " << std::fixed << std::setprecision(4) << getInterpupillaryOffset() << ", default: " << LLHMDImpl::kDefaultInterpupillaryOffset << LL_ENDL;
+            //LL_INFOS("HMD") << "LensSeparationDistance: " << std::fixed << std::setprecision(4) << getLensSeparationDistance() << ", default: " << LLHMDImpl::kDefaultLenSeparationDistance << LL_ENDL;
+            //LL_INFOS("HMD") << "EyeToScreenDistance: " << std::fixed << std::setprecision(4) << getEyeToScreenDistance() << ", default: " << LLHMDImpl::kDefaultEyeToScreenDistance << LL_ENDL;
             //dc = getDistortionConstants();
-            //LL_INFOS("Oculus") << "Distortion Constants: [" << std::fixed << std::setprecision(4) << dc.mV[0] << "," << dc.mV[1] << "," << dc.mV[2] << "," << dc.mV[3] << "]" << LL_ENDL;
-            //LL_INFOS("Oculus") << "Default Dist Cnstnts: [" << std::fixed << std::setprecision(4) << LLHMDImpl::kDefaultDistortionConstant0 << "," << LLHMDImpl::kDefaultDistortionConstant1 << "," << LLHMDImpl::kDefaultDistortionConstant2 << "," << LLHMDImpl::kDefaultDistortionConstant3 << "]" << LL_ENDL;
-            //LL_INFOS("Oculus") << "XCenterOffset: " << std::fixed << std::setprecision(4) << getXCenterOffset() << ", default: " << LLHMDImpl::kDefaultXCenterOffset << LL_ENDL;
-            //LL_INFOS("Oculus") << "YCenterOffset: " << std::fixed << std::setprecision(4) << getYCenterOffset() << ", default: " << LLHMDImpl::kDefaultYCenterOffset << LL_ENDL;
-            //LL_INFOS("Oculus") << "DistortionScale: " << std::fixed << std::setprecision(4) << getDistortionScale() << ", default: " << LLHMDImpl::kDefaultDistortionScale << LL_ENDL;
-            //LL_INFOS("Oculus") << "OrthoPixelOffset: " << std::fixed << std::setprecision(4) << getOrthoPixelOffset() << ", default: " << (-1.0f * LLHMDImpl::kDefaultOrthoPixelOffset) << LL_ENDL;
+            //LL_INFOS("HMD") << "Distortion Constants: [" << std::fixed << std::setprecision(4) << dc.mV[0] << "," << dc.mV[1] << "," << dc.mV[2] << "," << dc.mV[3] << "]" << LL_ENDL;
+            //LL_INFOS("HMD") << "Default Dist Cnstnts: [" << std::fixed << std::setprecision(4) << LLHMDImpl::kDefaultDistortionConstant0 << "," << LLHMDImpl::kDefaultDistortionConstant1 << "," << LLHMDImpl::kDefaultDistortionConstant2 << "," << LLHMDImpl::kDefaultDistortionConstant3 << "]" << LL_ENDL;
+            //LL_INFOS("HMD") << "XCenterOffset: " << std::fixed << std::setprecision(4) << getXCenterOffset() << ", default: " << LLHMDImpl::kDefaultXCenterOffset << LL_ENDL;
+            //LL_INFOS("HMD") << "YCenterOffset: " << std::fixed << std::setprecision(4) << getYCenterOffset() << ", default: " << LLHMDImpl::kDefaultYCenterOffset << LL_ENDL;
+            //LL_INFOS("HMD") << "DistortionScale: " << std::fixed << std::setprecision(4) << getDistortionScale() << ", default: " << LLHMDImpl::kDefaultDistortionScale << LL_ENDL;
+            //LL_INFOS("HMD") << "OrthoPixelOffset: " << std::fixed << std::setprecision(4) << getOrthoPixelOffset() << ", default: " << (-1.0f * LLHMDImpl::kDefaultOrthoPixelOffset) << LL_ENDL;
 
             setCurrentEye(OVR::Util::Render::StereoEye_Center);
         }

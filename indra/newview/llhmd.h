@@ -196,6 +196,9 @@ public:
     // Get the current HMD orientation
     LLQuaternion getHMDOrient() const;
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
+    F32 getHMDRoll() const;
+    F32 getHMDPitch() const;
+    F32 getHMDYaw() const;
 
     // head correction (difference in rotation between head and body)
     LLQuaternion getHeadRotationCorrection() const;
@@ -336,7 +339,6 @@ private:
     LLVector4a mMouseWorldRaycastNormal;
     LLVector4a mMouseWorldRaycastTangent;
     F32 mMouseWorldSizeMult;
-    F32 mPresetAspect;
     F32 mPresetUIAspect;
     std::vector<LLPointer<LLViewerTexture> > mCursorTextures;
     LLPointer<LLViewerTexture> mCalibrateBackgroundTexture;

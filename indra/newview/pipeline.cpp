@@ -4633,7 +4633,7 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
     if (renderHMDDepthVisual)
     {
         LLVertexBuffer::unbind();
-        if (gPipeline.mOculusDepthShape.isNull())
+        if (gPipeline.mHMDDepthShape.isNull())
         {
             LLVertexBuffer* buff = new LLVertexBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0, GL_STATIC_DRAW_ARB);
             buff->allocateBuffer(26, 26, true);
@@ -4677,7 +4677,7 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
             v[24] = LLVector3( -0.05f, 0.05f,-1.5f);    tc[24] = LLVector2(0,1);    idx[24] = 24;
             v[25] = LLVector3(  0.05f, 0.05f,-1.5f);    tc[25] = LLVector2(1,1);    idx[25] = 25;       
             buff->flush();
-            gPipeline.mOculusDepthShape = buff;
+            gPipeline.mHMDDepthShape = buff;
         }
 
         if (!gHMD.isCalibrated())
@@ -4763,7 +4763,7 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
                 LLGLDisable cull(GL_CULL_FACE);
                 LLGLEnable blend(GL_BLEND);
                 gPipeline.disableLights();
-                LLVertexBuffer* buff = gPipeline.mOculusDepthShape;
+                LLVertexBuffer* buff = gPipeline.mHMDDepthShape;
                 buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
                 gGL.getTexUnit(0)->bind(gHMD.getCalibrateForeground());
                 for (int i = 0; i < 9; ++i)
@@ -7519,8 +7519,8 @@ void LLPipeline::doResetVertexBuffers()
 	mResetVertexBuffers = false;
 
 	mCubeVB = NULL;
-    mOculusUISurface = NULL;
-    mOculusDepthShape = NULL;
+    mHMDUISurface = NULL;
+    mHMDDepthShape = NULL;
 
 	for (LLWorld::region_list_t::const_iterator iter = LLWorld::getInstance()->getRegionList().begin(); 
 			iter != LLWorld::getInstance()->getRegionList().end(); ++iter)

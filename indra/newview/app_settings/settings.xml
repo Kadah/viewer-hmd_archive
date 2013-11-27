@@ -3676,6 +3676,17 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>FirstPersonModeInCycle</key>
+    <map>
+        <key>Comment</key>
+        <string>When pressing m, add first-person mode.  Thus m would cycle through normal, mouselook, and firstperson camera modes instead of just normal and mouselook</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>1</integer>
+    </map>
     <key>FirstRunThisInstall</key>
     <map>
       <key>Comment</key>
@@ -4424,6 +4435,186 @@
       <key>Value</key>
       <integer>0</integer>
     </map>	
+    <key>HMDDebugMode</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable Head Mounted Display Debugging Mode.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>HMDEyeDepth</key>
+    <map>
+      <key>Comment</key>
+      <string>amount (in meters) that the eyes are positioned in front of the center of the head.  Recommend to leave this at 0, otherwise there can be jarring visual effects in some cases.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.0</real>
+    </map>
+    <key>HMDEyeToScreenDistance</key>
+    <map>
+      <key>Comment</key>
+      <string>Saved Value of Eye To Screen Distance (FOV) for HMD</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.041</real>
+    </map>
+    <key>HMDInterpupillaryDistance</key>
+    <map>
+      <key>Comment</key>
+      <string>Saved Value of Interpupillary Distance for HMD</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.064</real>
+    </map>
+    <key>HMDUIMagnification</key>
+    <map>
+      <key>Comment</key>
+      <string>Magnification amount for UI surface.   Higher values = larger text/closer to viewpoint.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>600.0</real>
+    </map>
+    <key>HMDUIShapePreset</key>
+    <map>
+      <key>Comment</key>
+      <string>Preset index for HMD UI Surface shape.  0 = custom</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <real>1</real>
+    </map>
+    <key>HMDUISurfaceArcHorizontal</key>
+    <map>
+      <key>Comment</key>
+      <string>amount of horizontal arc (in radians) used by the HMD UI Surface</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>2.8274333882308139146163790449516</real>
+    </map>
+    <key>HMDUISurfaceArcVertical</key>
+    <map>
+      <key>Comment</key>
+      <string>amount of vertical arc (in radians) used by the HMD UI Surface</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.8849555921538759430775860299677</real>
+    </map>
+    <key>HMDUISurfaceOffsets</key>
+    <map>
+      <key>Comment</key>
+      <string>Offsets (in meters) to add to final coordinates of HMD UI surface</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Vector3</string>
+      <key>Value</key>
+      <array>
+        <real>0.0</real>
+        <real>0.0</real>
+        <real>-0.3</real>
+      </array>
+    </map>
+    <key>HMDUISurfaceToroidCSHeight</key>
+    <map>
+      <key>Comment</key>
+      <string>Height (in meters) of HMD UI Surface Toroid Cross-Section.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.2</real>
+    </map>
+    <key>HMDUISurfaceToroidCSWidth</key>
+    <map>
+      <key>Comment</key>
+      <string>Width (in meters) of HMD UI Surface Toroid Cross-Section.  Also used for Cross-Section depth.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.2</real>
+    </map>
+    <key>HMDUISurfaceToroidDepth</key>
+    <map>
+      <key>Comment</key>
+      <string>Depth (in meters) of HMD UI Surface Toroid.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.0</real>
+    </map>
+    <key>HMDUISurfaceToroidWidth</key>
+    <map>
+      <key>Comment</key>
+      <string>Width (in meters) of HMD UI Surface Toroid.  Also used for Toroid Height</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.0</real>
+    </map>
+    <key>HMDUseMirroring</key>
+    <map>
+      <key>Comment</key>
+      <string>(Mac only) True = Render HMD mode to main window, FALSE = Render HMD to separate window</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <real>0</real>
+    </map>
+    <key>HMDUseMotionPrediction</key>
+    <map>
+      <key>Comment</key>
+      <string>Saved Value of whether to use Motion Prediction for HMD.</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>HMDWorldCursorSizeMult</key>
+    <map>
+      <key>Comment</key>
+      <string>Size Multiplier for in-world cursor in HMD mode</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>5.0</real>
+    </map>
     <key>HostID</key>
     <map>
       <key>Comment</key>
@@ -14927,187 +15118,6 @@
       <key>Value</key>
       <string />
     </map>
-
-  <key>HMDDebugMode</key>
-  <map>
-    <key>Comment</key>
-    <string>Enable Head Mounted Display Debugging Mode.</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Boolean</string>
-    <key>Value</key>
-    <integer>0</integer>
-  </map>
-  <key>HMDUseMirroring</key>
-  <map>
-    <key>Comment</key>
-    <string>(Mac only) True = Render HMD mode to main window, FALSE = Render HMD to separate window</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Boolean</string>
-    <key>Value</key>
-    <real>0</real>
-  </map>
-  <key>HMDInterpupillaryDistance</key>
-  <map>
-    <key>Comment</key>
-    <string>Saved Value of Interpupillary Distance for HMD</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.064</real>
-  </map>
-  <key>HMDEyeToScreenDistance</key>
-  <map>
-    <key>Comment</key>
-    <string>Saved Value of Eye To Screen Distance (FOV) for HMD</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.041</real>
-  </map>
-  <key>HMDEyeDepth</key>
-  <map>
-    <key>Comment</key>
-    <string>amount (in meters) that the eyes are positioned in front of the center of the head.</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.075</real>
-  </map>
-  <key>HMDUISurfaceArcHorizontal</key>
-  <map>
-    <key>Comment</key>
-    <string>amount of horizontal arc (in radians) used by the HMD UI Surface</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>3.1415926535897932384626433832795</real>
-  </map>
-  <key>HMDUISurfaceArcVertical</key>
-  <map>
-    <key>Comment</key>
-    <string>amount of vertical arc (in radians) used by the HMD UI Surface</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>2.2619467105846511316931032359612</real>
-  </map>
-  <key>HMDUISurfaceToroidWidth</key>
-  <map>
-    <key>Comment</key>
-    <string>Width (in meters) of HMD UI Surface Toroid.  Also used for Toroid Height</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.6</real>
-  </map>
-  <key>HMDUISurfaceToroidDepth</key>
-  <map>
-    <key>Comment</key>
-    <string>Depth (in meters) of HMD UI Surface Toroid.</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.6</real>
-  </map>
-  <key>HMDUISurfaceToroidCSWidth</key>
-  <map>
-    <key>Comment</key>
-    <string>Width (in meters) of HMD UI Surface Toroid Cross-Section.  Also used for Cross-Section depth.</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.4</real>
-  </map>
-  <key>HMDUISurfaceToroidCSHeight</key>
-  <map>
-    <key>Comment</key>
-    <string>Height (in meters) of HMD UI Surface Toroid Cross-Section.</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>0.7</real>
-  </map>
-  <key>HMDUISurfaceOffsets</key>
-  <map>
-    <key>Comment</key>
-    <string>Offsets (in meters) to add to final coordinates of HMD UI surface</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Vector3</string>
-    <key>Value</key>
-    <array>
-      <real>0.0</real>
-      <real>0.0</real>
-      <real>0.0</real>
-    </array>
-  </map>
-  <key>HMDUIMagnification</key>
-  <map>
-    <key>Comment</key>
-    <string>Magnification amount for UI surface.   Higher values = larger text/closer to viewpoint.</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>400.0</real>
-  </map>
-  <key>HMDUIShapePreset</key>
-  <map>
-    <key>Comment</key>
-    <string>Preset index for HMD UI Surface shape.  0 = custom</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>S32</string>
-    <key>Value</key>
-    <real>1</real>
-  </map>
-  <key>HMDUseMotionPrediction</key>
-  <map>
-    <key>Comment</key>
-    <string>Saved Value of whether to use Motion Prediction for HMD.</string>
-    <key>Persist</key>
-    <integer>0</integer>
-    <key>Type</key>
-    <string>Boolean</string>
-    <key>Value</key>
-    <integer>1</integer>
-  </map>
-  <key>HMDWorldCursorSizeMult</key>
-  <map>
-    <key>Comment</key>
-    <string>Size Multiplier for in-world cursor in HMD mode</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>F32</string>
-    <key>Value</key>
-    <real>5.0</real>
-  </map>
 
 </map>
 </llsd>
