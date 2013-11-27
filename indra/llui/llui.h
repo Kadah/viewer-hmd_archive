@@ -247,6 +247,8 @@ public:
 	static void getMousePositionLocal(const LLView* viewp, S32 *x, S32 *y);
 	static LLVector2& getScaleFactor() { return LLRender2D::sGLScaleFactor; }
 	static void setScaleFactor(const LLVector2& scale_factor) { LLRender2D::setScaleFactor(scale_factor); }
+    static BOOL getDestIsRenderTarget() { return LLRender2D::sDestIsRenderTarget; }
+    static void setDestIsRenderTarget(BOOL b) { LLRender2D::sDestIsRenderTarget = b; }
 	static void setLineWidth(F32 width) { LLRender2D::setLineWidth(width); }
 	static LLPointer<LLUIImage> getUIImageByID(const LLUUID& image_id, S32 priority = 0)
 		{ return LLRender2D::getUIImageByID(image_id, priority); }

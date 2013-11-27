@@ -140,6 +140,8 @@ public:
 	static LLPointer<LLUIImage> getUIImage(const std::string& name, S32 priority = 0);
 
 	static LLVector2		sGLScaleFactor;
+    static BOOL             sDestIsRenderTarget;
+
 private:
 	static LLImageProviderInterface* sImageProvider;
 };

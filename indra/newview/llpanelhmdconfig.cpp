@@ -405,6 +405,7 @@ void LLPanelHMDConfig::onSetUISurfaceOffsetDepth()
     F32 f = mUISurfaceOffsetDepthSliderCtrl->getValueF32();
     gHMD.setUISurfaceOffsetDepth(f);
     updateUISurfaceOffsetDepthLabel();
+    updateUIShapePresetLabel();
 }
 
 void LLPanelHMDConfig::updateUISurfaceOffsetDepthLabel()
@@ -419,6 +420,7 @@ void LLPanelHMDConfig::onSetUISurfaceToroidRadiusWidth()
     F32 f = mUISurfaceToroidRadiusWidthSliderCtrl->getValueF32();
     gHMD.setUISurfaceToroidRadiusWidth(f);
     updateUISurfaceToroidRadiusWidthLabel();
+    updateUIShapePresetLabel();
 }
 
 void LLPanelHMDConfig::updateUISurfaceToroidRadiusWidthLabel()
@@ -433,6 +435,7 @@ void LLPanelHMDConfig::onSetUISurfaceToroidRadiusDepth()
     F32 f = mUISurfaceToroidRadiusDepthSliderCtrl->getValueF32();
     gHMD.setUISurfaceToroidRadiusDepth(f);
     updateUISurfaceToroidRadiusDepthLabel();
+    updateUIShapePresetLabel();
 }
 
 void LLPanelHMDConfig::updateUISurfaceToroidRadiusDepthLabel()
@@ -447,6 +450,7 @@ void LLPanelHMDConfig::onSetUISurfaceToroidCrossSectionRadiusWidth()
     F32 f = mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getValueF32();
     gHMD.setUISurfaceToroidCrossSectionRadiusWidth(f);
     updateUISurfaceToroidCrossSectionRadiusWidthLabel();
+    updateUIShapePresetLabel();
 }
 
 void LLPanelHMDConfig::updateUISurfaceToroidCrossSectionRadiusWidthLabel()
@@ -461,6 +465,7 @@ void LLPanelHMDConfig::onSetUISurfaceToroidCrossSectionRadiusHeight()
     F32 f = mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getValueF32();
     gHMD.setUISurfaceToroidCrossSectionRadiusHeight(f);
     updateUISurfaceToroidCrossSectionRadiusHeightLabel();
+    updateUIShapePresetLabel();
 }
 
 void LLPanelHMDConfig::updateUISurfaceToroidCrossSectionRadiusHeightLabel()
@@ -475,6 +480,7 @@ void LLPanelHMDConfig::onSetUISurfaceToroidArcHorizontal()
     F32 f = mUISurfaceToroidArcHorizontalSliderCtrl->getValueF32();
     gHMD.setUISurfaceArcHorizontal(f * F_PI);
     updateUISurfaceToroidArcHorizontalLabel();
+    updateUIShapePresetLabel();
 }
 
 void LLPanelHMDConfig::updateUISurfaceToroidArcHorizontalLabel()
@@ -489,6 +495,7 @@ void LLPanelHMDConfig::onSetUISurfaceToroidArcVertical()
     F32 f = mUISurfaceToroidArcVerticalSliderCtrl->getValueF32();
     gHMD.setUISurfaceArcVertical(f * F_PI);
     updateUISurfaceToroidArcVerticalLabel();
+    updateUIShapePresetLabel();
 }
 
 void LLPanelHMDConfig::updateUISurfaceToroidArcVerticalLabel()
@@ -503,6 +510,7 @@ void LLPanelHMDConfig::onSetUIMagnification()
     F32 f = mUIMagnificationSliderCtrl->getValueF32();
     gHMD.setUIMagnification(f);
     updateUIMagnificationLabel();
+    updateUIShapePresetLabel();
 }
 
 void LLPanelHMDConfig::updateUIMagnificationLabel()

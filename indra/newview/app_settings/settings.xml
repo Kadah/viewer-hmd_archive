@@ -4488,7 +4488,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>600.0</real>
+      <real>650.0</real>
     </map>
     <key>HMDUIShapePreset</key>
     <map>
@@ -4535,7 +4535,7 @@
       <array>
         <real>0.0</real>
         <real>0.0</real>
-        <real>-0.3</real>
+        <real>-0.2</real>
       </array>
     </map>
     <key>HMDUISurfaceToroidCSHeight</key>

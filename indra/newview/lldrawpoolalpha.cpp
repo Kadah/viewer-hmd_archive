@@ -246,7 +246,14 @@ void LLDrawPoolAlpha::render(S32 pass)
 
 	if (deferred_render && pass == 1)
 	{
-		gGL.blendFunc(LLRender::BF_SOURCE_ALPHA, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
+        if (gHMD.isHMDMode() && LLPipeline::sRenderingHUDs)
+        {
+            gGL.blendFunc(LLRender::BF_SOURCE_ALPHA, LLRender::BF_ONE_MINUS_SOURCE_ALPHA, LLRender::BF_ONE, LLRender::BF_ONE);
+        }
+        else
+        {
+		    gGL.blendFunc(LLRender::BF_SOURCE_ALPHA, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
+        }
 	}
 	else
 	{
@@ -254,13 +261,15 @@ void LLDrawPoolAlpha::render(S32 pass)
 		mColorDFactor = LLRender::BF_ONE_MINUS_SOURCE_ALPHA; // }
         if (gHMD.isHMDMode() && LLPipeline::sRenderingHUDs)
         {
-            mAlphaSFactor = LLRender::BF_SOURCE_ALPHA;  // have to set it this way or HUD Attachments will not render onto UI texture
+            //mAlphaSFactor = LLRender::BF_SOURCE_ALPHA;  // have to set it this way or HUD Attachments will not render onto UI texture
+            mAlphaSFactor = LLRender::BF_ONE;  // have to set it this way or HUD Attachments will not render onto UI texture
+		    mAlphaDFactor = LLRender::BF_ONE;       // }
         }
         else
         {
             mAlphaSFactor = LLRender::BF_ZERO;                         // } glow suppression
+		    mAlphaDFactor = LLRender::BF_ONE_MINUS_SOURCE_ALPHA;       // }
         }
-		mAlphaDFactor = LLRender::BF_ONE_MINUS_SOURCE_ALPHA;       // }
 		gGL.blendFunc(mColorSFactor, mColorDFactor, mAlphaSFactor, mAlphaDFactor);
 
 		if (mVertexShaderLevel > 0)
@@ -302,7 +311,7 @@ void LLDrawPoolAlpha::render(S32 pass)
 		renderAlpha(getVertexDataMask(), pass);
 	}
 
-	gGL.setColorMask(true, false);
+	gGL.setColorMask(true, gHMD.isHMDMode() && LLPipeline::sRenderingHUDs);
 
 	if (deferred_render && pass == 1)
 	{

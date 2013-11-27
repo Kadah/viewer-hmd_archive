@@ -136,6 +136,7 @@ public:
     /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping, S32 w = 0, S32 h = 0);
     /*virtual*/ S32 getDisplayCount();
     /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary);
+    /*virtual*/ void enableVSync(BOOL b);
 
     // Experimental : allow testing of dual screen code sans Oculus Rift
     /*virtual*/ void addExtraWindow(BOOL useMirroring);

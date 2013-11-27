@@ -35,6 +35,7 @@
 #include "llrendertarget.h"
 #include "lltexture.h"
 #include "llshadermgr.h"
+#include "llrender2dutils.h"
 
 LLRender gGL;
 
@@ -1601,7 +1602,14 @@ void LLRender::setSceneBlendType(eBlendType type)
 	switch (type) 
 	{
 		case BT_ALPHA:
-			blendFunc(BF_SOURCE_ALPHA, BF_ONE_MINUS_SOURCE_ALPHA);
+            if (LLRender2D::sDestIsRenderTarget)
+            {
+                blendFunc(LLRender::BF_SOURCE_ALPHA, LLRender::BF_ONE_MINUS_SOURCE_ALPHA, LLRender::BF_ONE, LLRender::BF_ONE);
+            }
+            else
+            { 
+			    blendFunc(BF_SOURCE_ALPHA, BF_ONE_MINUS_SOURCE_ALPHA);
+            }
 			break;
 		case BT_ADD:
 			blendFunc(BF_ONE, BF_ONE);

@@ -1601,6 +1601,10 @@ void render_ui(F32 zoom_factor, int subfield)
             glClearColor(0.0f,0.0f,0.0f,0.0f);
             gPipeline.mUIScreen.clear();
             gGL.color4f(1,1,1,1);
+            LLUI::setDestIsRenderTarget(TRUE);
+            // this is necessary even though it theoretically already is using that blend type due to
+            // setting the DestIsRenderTarget flag
+            gGL.setSceneBlendType(LLRender::BT_ALPHA);
         }
 
         if (!renderHMDDepthVisual)
@@ -1646,6 +1650,7 @@ void render_ui(F32 zoom_factor, int subfield)
                 LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
                     0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
             }
+            LLUI::setDestIsRenderTarget(FALSE);
         }
     }
 

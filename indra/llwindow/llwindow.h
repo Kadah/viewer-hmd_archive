@@ -173,6 +173,7 @@ public:
     virtual BOOL setFocusWindow(S32 idx, BOOL clipping, S32 w = 0, S32 h = 0) = 0;
     virtual S32 getDisplayCount() = 0;
     virtual BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary) = 0;
+    virtual void enableVSync(BOOL b) {}
     // Experimental : allow testing of Mac code for dual screen mode without Oculus Rift plugged in
     virtual void addExtraWindow(BOOL useMirroring) { mUseDisplayMirroring = useMirroring; }
     

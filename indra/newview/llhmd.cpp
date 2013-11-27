@@ -46,21 +46,6 @@
 #include "llview.h"
 #include "lltool.h"
 #include "llfloatercamera.h"
-
-
-//#if LL_HMD_SUPPORTED
-//#include "OVR.h"
-//#include "Kernel/OVR_Timer.h"
-//#include "Util/Util_MagCalibration.h"
-//
-//#if LL_WINDOWS
-//    #include "llwindowwin32.h"
-//#elif LL_DARWIN
-//    #include "llwindowmacosx.h"
-//    #define IDCONTINUE 1        // Exist on Windows along "IDOK" and "IDCANCEL" but not on Mac
-//#endif
-//#endif // LL_HMD_SUPPORTED
-
 #include "llhmdimploculus.h"
 
 
@@ -69,7 +54,7 @@ LLHMD gHMD;
 const LLHMD::UISurfaceShapeSettings LLHMD::sHMDUISurfacePresets[] = 
 {
     { "Custom", 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
-    { "Surround1", 0.0f, 0.0f, -0.32f, 1.0f, 1.0f, 0.2f, 1.2f, 0.9f * F_PI, 0.6f * F_PI, 670.0f },
+    { "Surround1", 0.0f, 0.0f, -0.2f, 1.0f, 1.0f, 0.2f, 1.2f, 0.9f * F_PI, 0.6f * F_PI, 650.0f },
     { "Surround2", 0.0f, 0.0f, 0.0f, 0.3f, 0.6f, 0.5f, 0.7f, 0.75f * F_PI, 0.51f * F_PI, 600.0f },
     { "Floating1", 0.0f, 0.0f, -0.1f, 0.6f, 0.6f, 0.5f, 1.6f, 0.62f * F_PI, 0.23f * F_PI, 700.0f },
     { "Floating2", 0.0f, 0.0f, -0.1f, 1.0f, 1.2f, 0.1f, 1.1f, 0.51f * F_PI, 0.31f * F_PI, 870.0f },
@@ -347,6 +332,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                                 return;
                             }
                         }
+                        windowp->enableVSync(TRUE);
                     }
                     break;
                 case RenderMode_ScreenStereo:
@@ -355,6 +341,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     {
                         setRenderWindowMain();
                         windowp->setSize(getHMDClientSize());
+                        windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
                     }
                     break;
                 case RenderMode_None:
@@ -369,6 +356,10 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         windowp->setPosition(getMainWindowPos());
                         windowp->setSize(getMainClientSize());
                         LLFloaterCamera::onHMDChange();
+                        if (oldMode == RenderMode_HMD)
+                        {
+                            windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
+                        }
                         if (shouldShowCalibrationUI())
                         {
                             LLUI::getRootView()->getChildView("menu_stack")->setVisible(!shouldShowDepthVisual());
@@ -413,6 +404,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                                 return;
                             }
                         }
+                        windowp->enableVSync(TRUE);
                     }
                     break;
                 case RenderMode_ScreenStereo:
@@ -462,8 +454,6 @@ BOOL LLHMD::setRenderWindowMain()
 BOOL LLHMD::setRenderWindowHMD()
 {
 #if LL_HMD_SUPPORTED
-    // TODO: check to see if HMD window is valid, has not been destroyed, etc.  If it has,
-    // re-initialize it here
     return gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
 #else
     return FALSE;
@@ -490,8 +480,6 @@ void LLHMD::setFocusWindowMain()
 void LLHMD::setFocusWindowHMD()
 {
 #if LL_HMD_SUPPORTED
-    // TODO: check to see if HMD window is valid, has not been destroyed, etc.  If it has,
-    // re-initialize it here
     isChangingRenderContext(TRUE);
     gViewerWindow->getWindow()->setFocusWindow(1, TRUE, mImpl->getHMDWidth(), mImpl->getHMDHeight());
 #endif
@@ -515,7 +503,6 @@ void LLHMD::onAppFocusGained()
         if (mRenderMode == (U32)RenderMode_HMD)
         {
             setRenderMode(RenderMode_None);
-            // TODO: kill HMD window
         }
         else if (mRenderMode == (U32)RenderMode_ScreenStereo)
         {
@@ -533,7 +520,6 @@ void LLHMD::onAppFocusLost()
         // it tries to render to a (now) invalid renderContext.
         setRenderWindowMain();
         setRenderMode(RenderMode_None, false);
-        // TODO: destroy HMD window
     }
 }
 
@@ -845,24 +831,6 @@ void LLHMD::updateHMDMouseInfo(S32 ui_x, S32 ui_y)
     glh::vec4f w(eyeSpacePos.mV);
     uivInv.mult_matrix_vec(w);
     mMouseWorld.set(w[VX], w[VY], w[VZ]);
-
-    //// Note the below ... ALMOST works, but because the UI surface is not a regular curve, it is somewhat off.
-    //// c'est la vie.  Luckily, it turns out we only need mMouseWorld.
-    //// 4. Finally, take head-rotations and the camera's base pitch into account to project the world-coord from
-    ////    step 3 into screen space.
-    //glh::matrix4f bmv(mBaseModelView);
-    //glh::matrix4f proj(mBaseProjection);
-    //glh::matrix4f mvp = proj * bmv;
-    //glh::vec4f asp(w[VX], w[VY], w[VZ], 1.0f);
-    //mvp.mult_matrix_vec(asp);
-    //asp[VX] /= asp[VW];
-    //asp[VY] /= asp[VW];
-    ////asp[VZ] /= asp[VW];
-
-    //F32 center_x = uiw * 0.5f;
-    //F32 center_y = uih * 0.5f;
-    //mMouseWin.mX = llround(((asp[VX] + 1.0f) * 0.5f * uiw) + (center_x * asp[VX] * 0.25f));
-    //mMouseWin.mY = llround(((asp[VY] + 1.0f) * 0.5f * uih) + (center_y * asp[VY] * 2.0f));
 #endif
 }
 

@@ -181,7 +181,6 @@ void LLHMDImpl::handleMessages()
                     bool validInfo = desc.Handle.GetDeviceInfo(&info) && info.HResolution > 0;
                     if (validInfo &&
                         info.DisplayDeviceName[0] &&
-                        //strlen(info.DisplayDeviceName) > 0 &&
                         (!mHMD || !info.IsSameDisplay(mStereoConfig.GetHMDInfo())))
                     {
                         if (!mHMD || !desc.Handle.IsDevice(mHMD))

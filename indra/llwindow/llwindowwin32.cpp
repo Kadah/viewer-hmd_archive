@@ -1588,16 +1588,14 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 		return FALSE;
 	}
 	
-	// Disable vertical sync for swap
-	if (disable_vsync && wglSwapIntervalEXT)
-	{
-		LL_DEBUGS("Window") << "Disabling vertical sync" << LL_ENDL;
-		wglSwapIntervalEXT(0);
-	}
-	else
-	{
-		LL_DEBUGS("Window") << "Keeping vertical sync" << LL_ENDL;
-	}
+    if (disable_vsync)
+    {
+        enableVSync(FALSE);
+    }
+    else
+    {
+        LL_DEBUGS("Window") << "Keeping vertical sync" << LL_ENDL;
+    }
 
 	SetWindowLong(mWindowHandle[mCurRCIdx], GWL_USERDATA, (U32)this);
 
@@ -4017,10 +4015,6 @@ BOOL LLWindowWin32::setRenderWindow(S32 idx, BOOL fullScreen)
         mFullscreen = oldFullScreen;
         return FALSE;
     }
-    //if (wglSwapIntervalEXT)
-    //{
-    //    wglSwapIntervalEXT(mCurRCIdx == 0 ? 0 : 1);
-    //}
 
     return TRUE;
 }
@@ -4130,6 +4124,35 @@ BOOL LLWindowWin32::getDisplayInfo(const llutf16string& displayName, long displa
     }
     
     return FALSE;
+}
+
+void LLWindowWin32::enableVSync(BOOL b)
+{
+	if (wglSwapIntervalEXT)
+	{
+        if (b)
+        {
+            if (gGLManager.mHasAdaptiveVSync)
+            {
+		        LL_DEBUGS("Window") << "Enabling adaptive vertical sync" << LL_ENDL;
+                if (!wglSwapIntervalEXT(-1))
+                {
+		            LL_DEBUGS("Window") << "Adaptive vertical sync failed to enable, enabling regular vsync instead" << LL_ENDL;
+                    wglSwapIntervalEXT(1);
+                }
+            }
+            else
+            {
+		        LL_DEBUGS("Window") << "Enabling vertical sync" << LL_ENDL;
+                wglSwapIntervalEXT(1);
+            }
+        }
+        else
+        {
+		    LL_DEBUGS("Window") << "Disabling vertical sync" << LL_ENDL;
+            wglSwapIntervalEXT(0);
+        }
+	}
 }
 
 //static

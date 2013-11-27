@@ -996,6 +996,12 @@ void LLGLManager::initExtensions()
 #else
 	mHassRGBFramebuffer = ExtensionExists("GL_EXT_framebuffer_sRGB", gGLHExts.mSysExts);
 #endif
+
+#if WGL_EXT_swap_control && WGL_EXT_extensions_string
+    mHasAdaptiveVSync = ExtensionExists("WGL_EXT_swap_control_tear", gGLHExts.mSysExts);
+#else
+    mHasAdaptiveVSync = FALSE;
+#endif
 	
 	mHasMipMapGeneration = mHasFramebufferObject || mGLVersion >= 1.4f;
 

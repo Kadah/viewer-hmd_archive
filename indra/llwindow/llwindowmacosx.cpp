@@ -567,18 +567,7 @@ BOOL LLWindowMacOSX::createContext(int x, int y, int width, int height, int bits
 		}
 	}
 
-	// Disable vertical sync for swap
-	GLint frames_per_swap = 0;
-	if (disable_vsync)
-	{
-		frames_per_swap = 0;
-	}
-	else
-	{
-		frames_per_swap = 1;
-	}
-	
-	CGLSetParameter(mContext, kCGLCPSwapInterval, &frames_per_swap);
+    enableVSync(!disable_vsync);
 
 	//enable multi-threaded OpenGL
 	if (sUseMultGL)
@@ -601,7 +590,6 @@ BOOL LLWindowMacOSX::createContext(int x, int y, int width, int height, int bits
     
 	return TRUE;
 }
-
 
 // We only support OS X 10.7's fullscreen app mode which is literally a full screen window that fills a virtual desktop.
 // This makes this method obsolete.
@@ -1978,6 +1966,17 @@ BOOL LLWindowMacOSX::getDisplayInfo(const llutf16string& displayName, long displ
     // On Mac, the primary screen is the one with index 0
     isPrimary = (screen_id == 0);
    return TRUE;
+}
+
+/*virtual*/
+void LLWindowMacOSX::enableVSync(BOOL b)
+{
+	// Enable/Disable vertical sync for swap
+    if (mContext)
+    {
+	    GLint frames_per_swap = (b ? 1 : 0);
+	    CGLSetParameter(mContext, kCGLCPSwapInterval, &frames_per_swap);
+    }
 }
 
 #if LL_OS_DRAGDROP_ENABLED

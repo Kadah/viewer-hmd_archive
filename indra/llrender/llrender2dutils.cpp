@@ -45,8 +45,9 @@
 // Globals
 //
 const LLColor4 UI_VERTEX_COLOR(1.f, 1.f, 1.f, 1.f);
-/*static*/ LLVector2		LLRender2D::sGLScaleFactor(1.f, 1.f);
-/*static*/ LLImageProviderInterface* LLRender2D::sImageProvider = NULL;
+/*static*/ LLVector2		            LLRender2D::sGLScaleFactor(1.f, 1.f);
+/*static*/ LLImageProviderInterface*    LLRender2D::sImageProvider = NULL;
+/*static*/ BOOL                         LLRender2D::sDestIsRenderTarget = FALSE;
 
 //
 // Functions
