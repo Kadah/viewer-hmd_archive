@@ -4629,218 +4629,60 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
 
 	gGL.setColorMask(true, true);
 
-    BOOL renderHMDDepthVisual = gHMD.isHMDMode() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
-    if (renderHMDDepthVisual)
-    {
-        LLVertexBuffer::unbind();
-        if (gPipeline.mHMDDepthShape.isNull())
-        {
-            LLVertexBuffer* buff = new LLVertexBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0, GL_STATIC_DRAW_ARB);
-            buff->allocateBuffer(26, 26, true);
-            LLStrider<LLVector3> v;
-            buff->getVertexStrider(v);
-            LLStrider<U16> idx;
-            buff->getIndexStrider(idx);
-            LLStrider<LLVector2> tc;
-            buff->getTexCoord0Strider(tc);
-            // Front face
-            v[ 0] = LLVector3( -0.05f,-0.05f,-1.4f);    tc[ 0] = LLVector2(0,0);    idx[ 0] =  0;
-            v[ 1] = LLVector3(  0.05f,-0.05f,-1.4f);    tc[ 1] = LLVector2(1,0);    idx[ 1] =  1;
-            v[ 2] = LLVector3( -0.05f, 0.05f,-1.4f);    tc[ 2] = LLVector2(0,1);    idx[ 2] =  2;
-            v[ 3] = LLVector3(  0.05f, 0.05f,-1.4f);    tc[ 3] = LLVector2(1,1);    idx[ 3] =  3;
-            // Right face
-            v[ 4] = LLVector3(  0.05f, 0.05f,-1.4f);    tc[ 4] = LLVector2(0,1);    idx[ 4] =  4;
-            v[ 5] = LLVector3(  0.05f,-0.05f,-1.4f);    tc[ 5] = LLVector2(0,0);    idx[ 5] =  5;
-            v[ 6] = LLVector3(  0.05f, 0.05f,-1.5f);    tc[ 6] = LLVector2(1,1);    idx[ 6] =  6;
-            v[ 7] = LLVector3(  0.05f,-0.05f,-1.5f);    tc[ 7] = LLVector2(1,0);    idx[ 7] =  7;
-            // Back face
-            v[ 8] = LLVector3(  0.05f,-0.05f,-1.5f);    tc[ 8] = LLVector2(0,0);    idx[ 8] =  8;
-            v[ 9] = LLVector3( -0.05f,-0.05f,-1.5f);    tc[ 9] = LLVector2(1,0);    idx[ 9] =  9;
-            v[10] = LLVector3(  0.05f, 0.05f,-1.5f);    tc[10] = LLVector2(0,1);    idx[10] = 10;
-            v[11] = LLVector3( -0.05f, 0.05f,-1.5f);    tc[11] = LLVector2(1,1);    idx[11] = 11;
-            // Left face                                
-            v[12] = LLVector3( -0.05f, 0.05f,-1.5f);    tc[12] = LLVector2(0,1);    idx[12] = 12;
-            v[13] = LLVector3( -0.05f,-0.05f,-1.5f);    tc[13] = LLVector2(0,0);    idx[13] = 13;
-            v[14] = LLVector3( -0.05f, 0.05f,-1.4f);    tc[14] = LLVector2(1,1);    idx[14] = 14;
-            v[15] = LLVector3( -0.05f,-0.05f,-1.4f);    tc[15] = LLVector2(1,0);    idx[15] = 15;
-            // Bottom face
-            v[16] = LLVector3( -0.05f,-0.05f,-1.4f);    tc[16] = LLVector2(0,1);    idx[16] = 16;
-            v[17] = LLVector3( -0.05f,-0.05f,-1.5f);    tc[17] = LLVector2(0,0);    idx[17] = 17;
-            v[18] = LLVector3(  0.05f,-0.05f,-1.4f);    tc[18] = LLVector2(1,1);    idx[18] = 18;
-            v[19] = LLVector3(  0.05f,-0.05f,-1.5f);    tc[19] = LLVector2(1,0);    idx[19] = 19;
-            // move to top
-            v[20] = LLVector3(  0.05f,-0.05f,-1.5f);    tc[20] = LLVector2(1,0);    idx[20] = 20; 
-            v[21] = LLVector3( -0.05f, 0.05f,-1.4f);    tc[21] = LLVector2(0,0);    idx[21] = 21; 
-            // Top Face
-            v[22] = LLVector3( -0.05f, 0.05f,-1.4f);    tc[22] = LLVector2(0,0);    idx[22] = 22; 
-            v[23] = LLVector3(  0.05f, 0.05f,-1.4f);    tc[23] = LLVector2(1,0);    idx[23] = 23;
-            v[24] = LLVector3( -0.05f, 0.05f,-1.5f);    tc[24] = LLVector2(0,1);    idx[24] = 24;
-            v[25] = LLVector3(  0.05f, 0.05f,-1.5f);    tc[25] = LLVector2(1,1);    idx[25] = 25;       
-            buff->flush();
-            gPipeline.mHMDDepthShape = buff;
-        }
+    pool_set_t::iterator iter1 = mPools.begin();
 
-        if (!gHMD.isCalibrated())
-        {
-            gGL.matrixMode(LLRender::MM_MODELVIEW);
-            gGL.pushMatrix();
-            gGL.matrixMode(LLRender::MM_PROJECTION);
-            gGL.pushMatrix();
-            gl_state_for_2d(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), 0.0f, gHMD.getOrthoPixelOffset());
-            //gl_state_for_2d(gViewerWindow->getWorldViewWidthRaw(), gViewerWindow->getWorldViewHeightRaw(), 0.0f, gHMD.getOrthoPixelOffset());
-            gPipeline.disableLights();
-            LLGLDisable fog(GL_FOG);
-            LLGLSUIDefault gls_ui;
-            LLGLEnable stencil(GL_STENCIL_TEST);
-            glStencilFunc(GL_ALWAYS, 255, 0xFFFFFFFF);
-            glStencilMask(0xFFFFFFFF);
-            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-            gGL.color4f(1,1,1,1);
-            if (LLGLSLShader::sNoFixedFunction)
-            {
-                gUIProgram.bind();
-            }
-            LLGLDepthTest depth(GL_TRUE, GL_FALSE);
-            const LLFontGL* font = LLFontGL::getFontSansSerifBold();
-            const std::string& t = gHMD.getCalibrationText();
-            font->renderUTF8(t, 0, llround(gViewerWindow->getWorldViewWidthRaw() / 2.0f), llround(gViewerWindow->getWorldViewHeightRaw() / 2.0f), LLColor4( 1.0f, 1.0f, 1.0f, 1.0f ), LLFontGL::HCENTER, LLFontGL::TOP);
-            stop_glerror();
-            if (LLGLSLShader::sNoFixedFunction)
-            {
-                gUIProgram.unbind();
-            }
-            gGL.flush();
-            gGL.matrixMode(LLRender::MM_PROJECTION);
-            gGL.popMatrix();
-            gGL.matrixMode(LLRender::MM_MODELVIEW);
-            gGL.popMatrix();
-        }
-        else
-        {
-            gGL.matrixMode(LLRender::MM_MODELVIEW);
-            gGL.pushMatrix();
-            LLMatrix4 m1(gHMD.getUIModelViewInv());
-            gGL.multMatrix((GLfloat*)(m1.mMatrix));
-            LLGLDisable fog(GL_FOG);
-            LLGLEnable blend_on(GL_BLEND);
-            gPipeline.disableLights();
-            gOneTextureNoColorProgram.bind();
-            gGL.setColorMask(true, true);
-            gGL.blendFunc(LLRender::BF_ONE, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
-            gGL.color4f(1,1,1,1);
-            gGL.getTexUnit(0)->bind(gHMD.getCalibrateBackground());
-            gGL.begin(LLRender::QUADS);
-            for (int i = 0; i < 4; ++i)
-            {
-                for (int j = 0; j < 4; ++j)
-                {
-                    //right top, left top, left bottom, right bottom
-                    gGL.texCoord2f(1, 1);  gGL.vertex3f( -1.0f + (F32)j, 2.0f - (F32)i, -3.0f);
-                    gGL.texCoord2f(0, 1);  gGL.vertex3f( -2.0f + (F32)j, 2.0f - (F32)i, -3.0f);
-                    gGL.texCoord2f(0, 0);  gGL.vertex3f( -2.0f + (F32)j, 1.0f - (F32)i, -3.0f);
-                    gGL.texCoord2f(1, 0);  gGL.vertex3f( -1.0f + (F32)j, 1.0f - (F32)i, -3.0f);
-                }
-            }
-            gGL.end();
-            gGL.flush();
-
-            // render 9 copies of the VB, offset in a "grid" pattern so that users can get a good sense of depth perception
-            static const LLVector3 kMat[][3] =
-            {
-                // translation                , scale
-                { LLVector3(-0.2f, 0.4f,-0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
-                { LLVector3( 0.0f, 0.4f, 0.0f), LLVector3( 0.5f, 0.5f, 1.0f) },
-                { LLVector3( 0.2f, 0.4f, 0.1f), LLVector3( 0.5f, 0.5f, 1.0f) },
-                { LLVector3(-0.2f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
-                { LLVector3( 0.0f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
-                { LLVector3( 0.2f, 0.2f, 0.0f), LLVector3( 1.0f, 1.0f, 1.0f) },
-                { LLVector3(-0.3f,-0.1f, 0.0f), LLVector3( 2.0f, 2.0f, 1.0f) },
-                { LLVector3( 0.0f,-0.1f,-0.1f), LLVector3( 2.0f, 2.0f, 1.0f) },
-                { LLVector3( 0.3f,-0.1f,-0.2f), LLVector3( 2.0f, 2.0f, 1.0f) },
-            };
-            {
-                LLGLDisable fog(GL_FOG);
-                LLGLDisable cull(GL_CULL_FACE);
-                LLGLEnable blend(GL_BLEND);
-                gPipeline.disableLights();
-                LLVertexBuffer* buff = gPipeline.mHMDDepthShape;
-                buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
-                gGL.getTexUnit(0)->bind(gHMD.getCalibrateForeground());
-                for (int i = 0; i < 9; ++i)
-                {
-                    gGL.matrixMode(LLRender::MM_MODELVIEW);
-                    gGL.pushMatrix();
-                    LLMatrix4 m2;
-                    m2.initScale(kMat[i][1]);
-                    m2.setTranslation(kMat[i][0]);
-                    gGL.multMatrix((GLfloat*)m2.mMatrix);
-                    buff->drawRange(LLRender::TRIANGLE_STRIP, 0, buff->getNumVerts()-1, buff->getNumIndices(), 0);
-                    gGL.popMatrix();
-                }
-            }
-            gGL.flush();
-            gOneTextureNoColorProgram.unbind();
-            gGL.matrixMode(LLRender::MM_MODELVIEW);
-            gGL.popMatrix();
-        }
-    }
-    else
-    {
-	    pool_set_t::iterator iter1 = mPools.begin();
-
-	    while ( iter1 != mPools.end() )
-	    {
-		    LLDrawPool *poolp = *iter1;
+	while ( iter1 != mPools.end() )
+	{
+		LLDrawPool *poolp = *iter1;
 		
-		    cur_type = poolp->getType();
+		cur_type = poolp->getType();
 
-		    pool_set_t::iterator iter2 = iter1;
-		    if (hasRenderType(poolp->getType()) && poolp->getNumDeferredPasses() > 0)
-		    {
-			    LLFastTimer t(FTM_DEFERRED_POOLRENDER);
+		pool_set_t::iterator iter2 = iter1;
+		if (hasRenderType(poolp->getType()) && poolp->getNumDeferredPasses() > 0)
+		{
+			LLFastTimer t(FTM_DEFERRED_POOLRENDER);
 
-			    gGLLastMatrix = NULL;
-			    gGL.loadMatrix(gGLModelView);
+			gGLLastMatrix = NULL;
+			gGL.loadMatrix(gGLModelView);
 		
-			    for( S32 i = 0; i < poolp->getNumDeferredPasses(); i++ )
-			    {
-				    LLVertexBuffer::unbind();
-				    poolp->beginDeferredPass(i);
-				    for (iter2 = iter1; iter2 != mPools.end(); iter2++)
-				    {
-					    LLDrawPool *p = *iter2;
-					    if (p->getType() != cur_type)
-					    {
-						    break;
-					    }
+			for( S32 i = 0; i < poolp->getNumDeferredPasses(); i++ )
+			{
+				LLVertexBuffer::unbind();
+				poolp->beginDeferredPass(i);
+				for (iter2 = iter1; iter2 != mPools.end(); iter2++)
+				{
+					LLDrawPool *p = *iter2;
+					if (p->getType() != cur_type)
+					{
+						break;
+					}
 										
-					    if ( !p->getSkipRenderFlag() ) { p->renderDeferred(i); }
-				    }
-				    poolp->endDeferredPass(i);
-				    LLVertexBuffer::unbind();
+					if ( !p->getSkipRenderFlag() ) { p->renderDeferred(i); }
+				}
+				poolp->endDeferredPass(i);
+				LLVertexBuffer::unbind();
 
-				    if (gDebugGL || gDebugPipeline)
-				    {
-					    LLGLState::checkStates();
-				    }
-			    }
-		    }
-		    else
-		    {
-			    // Skip all pools of this type
-			    for (iter2 = iter1; iter2 != mPools.end(); iter2++)
-			    {
-				    LLDrawPool *p = *iter2;
-				    if (p->getType() != cur_type)
-				    {
-					    break;
-				    }
-			    }
-		    }
-		    iter1 = iter2;
-		    stop_glerror();
-	    }
-    }
+				if (gDebugGL || gDebugPipeline)
+				{
+					LLGLState::checkStates();
+				}
+			}
+		}
+		else
+		{
+			// Skip all pools of this type
+			for (iter2 = iter1; iter2 != mPools.end(); iter2++)
+			{
+				LLDrawPool *p = *iter2;
+				if (p->getType() != cur_type)
+				{
+					break;
+				}
+			}
+		}
+		iter1 = iter2;
+		stop_glerror();
+	}
 
 	gGLLastMatrix = NULL;
 	gGL.loadMatrix(gGLModelView);
@@ -4851,12 +4693,6 @@ void LLPipeline::renderGeomDeferred(LLCamera& camera)
 void LLPipeline::renderGeomPostDeferred(LLCamera& camera, bool do_occlusion)
 {
 	LLFastTimer t(FTM_POST_DEFERRED_POOLS);
-
-    BOOL renderHMDDepthVisual = gHMD.isHMDMode() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
-    if (renderHMDDepthVisual)
-    {
-        return;
-    }
 
 	U32 cur_type = 0;
 

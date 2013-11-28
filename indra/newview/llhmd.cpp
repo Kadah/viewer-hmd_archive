@@ -163,7 +163,7 @@ BOOL LLHMD::init()
             //UI_CURSOR_ARROWCOPY
             mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/arrowcop.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
             //UI_CURSOR_ARROWDRAGMULTI
-            mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/arrowdragmulti.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+            mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/llarrowdragmulti.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
             //UI_CURSOR_ARROWCOPYMULTI
             mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/arrowcopmulti.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
             //UI_CURSOR_NOLOCKED
@@ -362,7 +362,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         }
                         if (shouldShowCalibrationUI())
                         {
-                            LLUI::getRootView()->getChildView("menu_stack")->setVisible(!shouldShowDepthVisual());
+                            LLUI::getRootView()->getChildView("menu_stack")->setVisible(TRUE);
                         }
                     }
                     break;
@@ -418,7 +418,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 LLFloaterCamera::onHMDChange();
                 if (gHMD.shouldShowCalibrationUI())
                 {
-                    LLUI::getRootView()->getChildView("menu_stack")->setVisible(!gHMD.shouldShowDepthVisual() && gHMD.isCalibrated());
+                    LLUI::getRootView()->getChildView("menu_stack")->setVisible(gHMD.isCalibrated());
                 }
             }
             break;

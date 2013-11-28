@@ -78,7 +78,9 @@
 #include "llvotree.h"
 #include "llvosky.h"
 #include "llfloaterpathfindingconsole.h"
-#include "llpanelhmdconfig.h"
+#include "llhmd.h"
+#include "llfloaterhmdconfig.h"
+#include "llfloaterhmdconfigdebug.h"
 
 // linden library includes
 #include "llavatarnamecache.h"
@@ -550,7 +552,22 @@ void LLFloaterPreference::apply()
 	{
 		hardware_settings->apply();
 	}
-	
+
+    // hmd config apply
+    LLFloaterHMDConfig* hmd_config_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfig>("floater_hmd_config");
+    if (hmd_config_settings && hmd_config_settings->getVisible())
+    {
+        hmd_config_settings->onClickSave();
+    }
+    else
+    {
+        LLFloaterHMDConfigDebug* hmd_config_debug_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfigDebug>("floater_hmd_config_debug");
+        if (hmd_config_debug_settings && hmd_config_debug_settings->getVisible())
+        {
+            hmd_config_debug_settings->onClickSave();
+        }
+    }
+
 	gViewerWindow->requestResolutionUpdate(); // for UIScaleFactor
 
 	LLSliderCtrl* fov_slider = getChild<LLSliderCtrl>("camera_fov");
@@ -626,7 +643,22 @@ void LLFloaterPreference::cancel()
 	
 	// hide spellchecker settings folder
 	LLFloaterReg::hideInstance("prefs_spellchecker");
-	
+
+    // hide hmd config floater(s)
+    LLFloaterHMDConfig* hmd_config_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfig>("floater_hmd_config");
+    if (hmd_config_settings && hmd_config_settings->getVisible())
+    {
+        hmd_config_settings->onClickCancel();
+    }
+    else
+    {
+        LLFloaterHMDConfigDebug* hmd_config_debug_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfigDebug>("floater_hmd_config_debug");
+        if (hmd_config_debug_settings && hmd_config_debug_settings->getVisible())
+        {
+            hmd_config_debug_settings->onClickCancel();
+        }
+    }
+
 	// cancel hardware menu
 	LLFloaterHardwareSettings* hardware_settings = LLFloaterReg::getTypedInstance<LLFloaterHardwareSettings>("prefs_hardware_settings");
 	if (hardware_settings)
@@ -1682,7 +1714,14 @@ void LLFloaterPreference::onClickSpellChecker()
 
 void LLFloaterPreference::onClickOpenHMDConfig()
 {
-	LLPanelHMDConfig::toggleVisibility();
+    if (gHMD.isDebugMode())
+    {
+        LLFloaterReg::showInstance("floater_hmd_config_debug");
+    }
+    else
+    {
+        LLFloaterReg::showInstance("floater_hmd_config");
+    }
 }
 
 void LLFloaterPreference::onClickActionChange()

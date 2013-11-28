@@ -114,6 +114,7 @@ void render_hud_attachments();
 void render_ui_3d(BOOL hmdUIMode = FALSE);
 void render_ui_2d();
 void render_disconnected_background();
+void render_hmd_calibration_text();
 void drawBox(const LLVector3& c, const LLVector3& r);
 
 void display_startup()
@@ -944,7 +945,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			//}
 
 			LLPipeline::sUnderWaterRender = LLViewerCamera::getInstance()->cameraUnderWater() ? TRUE : FALSE;
-		    BOOL renderHMDDepthVisual = gHMD.isHMDMode() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
 
 			LLGLState::checkStates();
 			LLGLState::checkClientArrays();
@@ -961,20 +961,13 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 				if (LLPipeline::sRenderDeferred)
 				{
 					gPipeline.mDeferredScreen.bindTarget();
-                    if (renderHMDDepthVisual)
-                    {
-					    glClearColor(0,0,0,0);
-                    }
-                    else
-                    {
-                        glClearColor(1,0,1,1);
-                    }
+                    glClearColor(1,0,1,1);
 					gPipeline.mDeferredScreen.clear();
 				}
 				else
 				{
 					gPipeline.mScreen.bindTarget();
-					if (LLPipeline::sUnderWaterRender && !gPipeline.canUseWindLightShaders() && !renderHMDDepthVisual)
+					if (LLPipeline::sUnderWaterRender && !gPipeline.canUseWindLightShaders())
 					{
 						const LLColor4 &col = LLDrawPoolWater::sWaterFogColor;
 						glClearColor(col.mV[0], col.mV[1], col.mV[2], 0.f);
@@ -991,7 +984,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			{
 				LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
 
-				if (gSavedSettings.getBOOL("RenderDepthPrePass") && LLGLSLShader::sNoFixedFunction && !renderHMDDepthVisual)
+				if (gSavedSettings.getBOOL("RenderDepthPrePass") && LLGLSLShader::sNoFixedFunction)
 				{
 					gGL.setColorMask(false, false);
 				
@@ -1490,7 +1483,6 @@ void render_ui(F32 zoom_factor, int subfield)
 		glh_set_current_modelview(glh_copy_matrix(gGLLastModelView));
 	}
 	
-    BOOL renderHMDDepthVisual = gHMD.isHMDMode() && (gHMD.shouldShowDepthVisual() || (gHMD.shouldShowCalibrationUI() && !gHMD.isCalibrated()));
     BOOL to_texture = gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow;
 	if (to_texture)
 	{
@@ -1508,11 +1500,9 @@ void render_ui(F32 zoom_factor, int subfield)
             gGL.popMatrix();
             gGL.matrixMode(LLRender::MM_MODELVIEW);
             gGL.popMatrix();
-            
-            if (!renderHMDDepthVisual)
-            {
-                render_hud_elements();  // in-world text, labels, nametags
-            }
+
+            render_hmd_calibration_text();
+            render_hud_elements();  // in-world text, labels, nametags
             if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
             {
 			    LLFastTimer t(FTM_RENDER_UI);
@@ -1607,10 +1597,7 @@ void render_ui(F32 zoom_factor, int subfield)
             gGL.setSceneBlendType(LLRender::BT_ALPHA);
         }
 
-        if (!renderHMDDepthVisual)
-        {
-            render_hud_attachments();   // huds worn by avatar
-        }
+        render_hud_attachments();   // huds worn by avatar
 	    LLGLSDefault gls_default;
 	    LLGLSUIDefault gls_ui;
 	    gPipeline.disableLights();
@@ -1634,10 +1621,7 @@ void render_ui(F32 zoom_factor, int subfield)
 	    gGL.flush();
         gViewerWindow->setup2DRender();
         gViewerWindow->updateDebugText();
-        if (!renderHMDDepthVisual)
-        {
-            gViewerWindow->drawDebugText(); // debugging text
-        }
+        gViewerWindow->drawDebugText(); // debugging text
 
         render_hmd_mouse_cursor_2d();
 
@@ -1926,6 +1910,38 @@ void render_disconnected_background()
 	}
 
 }
+
+void render_hmd_calibration_text()
+{
+    if (!gHMD.isHMDMode() || (!gHMD.shouldShowCalibrationUI() || gHMD.isCalibrated()))
+    {
+        return;
+    }
+
+    LLGLSDefault gls_default;
+    LLGLSUIDefault gls_ui;
+    gPipeline.disableLights();
+    LLGLEnable stencil(GL_STENCIL_TEST);
+    glStencilFunc(GL_ALWAYS, 255, 0xFFFFFFFF);
+    glStencilMask(0xFFFFFFFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+    gGL.color4f(1,1,1,1);
+    if (LLGLSLShader::sNoFixedFunction)
+    {
+        gUIProgram.bind();
+    }
+    LLGLDepthTest depth(GL_TRUE, GL_FALSE);
+    const LLFontGL* font = LLFontGL::getFontSansSerifBold();
+    const std::string& t = gHMD.getCalibrationText();
+    font->renderUTF8(t, 0, llround(gViewerWindow->getWorldViewWidthRaw() / 2.0f), llround(gViewerWindow->getWorldViewHeightRaw() / 2.0f), LLColor4( 1.0f, 1.0f, 1.0f, 1.0f ), LLFontGL::HCENTER, LLFontGL::TOP);
+    stop_glerror();
+    if (LLGLSLShader::sNoFixedFunction)
+    {
+        gUIProgram.unbind();
+    }
+    gGL.flush();
+}
+
 
 void display_cleanup()
 {

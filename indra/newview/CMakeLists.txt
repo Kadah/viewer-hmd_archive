@@ -326,6 +326,8 @@ set(viewer_SOURCE_FILES
     llhudrender.cpp
     llhudtext.cpp
     llhudview.cpp
+	llfloaterhmdconfig.cpp
+	llfloaterhmdconfigdebug.cpp
     llfloaterimsessiontab.cpp
     llfloaterimsession.cpp
     llfloaterimcontainer.cpp
@@ -412,7 +414,6 @@ set(viewer_SOURCE_FILES
     llpanelgroupnotices.cpp
     llpanelgrouproles.cpp
     llpanelhome.cpp
-    llpanelhmdconfig.cpp
     llpanelland.cpp
     llpanellandaudio.cpp
     llpanellandmarkinfo.cpp
@@ -916,6 +917,8 @@ set(viewer_HEADER_FILES
     llhudrender.h
     llhudtext.h
     llhudview.h
+    llfloaterhmdconfig.h
+    llfloaterhmdconfigdebug.h
     llfloaterimsessiontab.h
     llfloaterimsession.h
     llfloaterimcontainer.h
@@ -996,7 +999,6 @@ set(viewer_HEADER_FILES
     llpanelgroupnotices.h
     llpanelgrouproles.h
     llpanelhome.h
-    llpanelhmdconfig.h
     llpanelland.h
     llpanellandaudio.h
     llpanellandmarkinfo.h

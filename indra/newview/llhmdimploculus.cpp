@@ -330,7 +330,10 @@ void LLHMDImpl::shutdown()
         return;
     }
     gHMD.isInitialized(FALSE);
-    gViewerWindow->getWindow()->destroyHMDWindow();
+    if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected())
+    {
+        gViewerWindow->getWindow()->destroyHMDWindow();
+    }
     RemoveHandlerFromDevices();
 
     // This causes a deadlock.  No idea why.   Disabling it as it doesn't seem to be necessary unless we're actually RE-initializing the HMD
@@ -495,7 +498,7 @@ void LLHMDImpl::updateManualMagCalibration()
             mLastCalibrationStep = 4;
             gHMD.isCalibrated(TRUE);
             mCalibrationText = "";
-            if (gHMD.isHMDMode() && gHMD.shouldShowCalibrationUI() && !gHMD.shouldShowDepthVisual())
+            if (gHMD.isHMDMode() && gHMD.shouldShowCalibrationUI())
             {
                 LLUI::getRootView()->getChildView("menu_stack")->setVisible(TRUE);
             }

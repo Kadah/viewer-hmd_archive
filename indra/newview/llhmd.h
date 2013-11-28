@@ -64,12 +64,11 @@ public:
         kFlag_HMDConnected              = 1 << 4,
         kFlag_MainIsFullScreen          = 1 << 5,
         kFlag_IsCalibrated              = 1 << 6,
-        kFlag_ShowDepthVisual           = 1 << 7,
-        kFlag_ShowCalibrationUI         = 1 << 8,
-        kFlag_CursorIntersectsWorld     = 1 << 9,
-        kFlag_CursorIntersectsUI        = 1 << 10,
-        kFlag_DebugMode                 = 1 << 11,
-        kFlag_ChangingRenderContext     = 1 << 12,
+        kFlag_ShowCalibrationUI         = 1 << 7,
+        kFlag_CursorIntersectsWorld     = 1 << 8,
+        kFlag_CursorIntersectsUI        = 1 << 9,
+        kFlag_DebugMode                 = 1 << 10,
+        kFlag_ChangingRenderContext     = 1 << 11,
     };
 
 
@@ -111,8 +110,6 @@ public:
     void isMainFullScreen(BOOL b) { if (b) { mFlags |= kFlag_MainIsFullScreen; } else { mFlags &= ~kFlag_MainIsFullScreen; } }
     BOOL isCalibrated() const { return ((mFlags & kFlag_IsCalibrated) != 0) ? TRUE : FALSE; }
     void isCalibrated(BOOL b) { if (b) { mFlags |= kFlag_IsCalibrated; } else { mFlags &= ~kFlag_IsCalibrated; } }
-    BOOL shouldShowDepthVisual() const { return ((mFlags & kFlag_ShowDepthVisual) != 0) ? TRUE : FALSE; }
-    void shouldShowDepthVisual(BOOL b) { if (b) { mFlags |= kFlag_ShowDepthVisual; } else { mFlags &= ~kFlag_ShowDepthVisual; } }
     BOOL shouldShowCalibrationUI() const { return ((mFlags & kFlag_ShowCalibrationUI) != 0) ? TRUE : FALSE; }
     void shouldShowCalibrationUI(BOOL b) { if (b) { mFlags |= kFlag_ShowCalibrationUI; } else { mFlags &= ~kFlag_ShowCalibrationUI; } }
     BOOL cursorIntersectsWorld() const { return ((mFlags & kFlag_CursorIntersectsWorld) != 0) ? TRUE : FALSE; }

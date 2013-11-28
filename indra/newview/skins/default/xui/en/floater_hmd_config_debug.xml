@@ -1,0 +1,631 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<floater
+  name="floater_hmd_config_debug"
+  title="Debug HMD Configuration"
+  can_resize="true"
+  can_minimize="true"
+  can_close="true"
+  save_visibility="false"
+  single_instance="true"
+  layout="topleft"
+  min_height="640"
+  min_width="520"
+  width="520"
+  height="640">
+
+  <layout_stack
+    layout="topleft"
+    follows="all"
+    orientation="horizontal"
+    width="520"
+    height="640"
+    min_width="520"
+    min_height="640">
+    <layout_panel
+      follows="all"
+      left="0"
+      top="0"
+      height="640"
+      width="400"
+      min_width="400"
+      min_height="640">
+      
+      <layout_stack
+        layout="topleft"
+        follows="top|left|right"
+        border_size="0"
+        left="0"
+        top="0"
+        height="600"
+        width="400"
+        min_width="400"
+        min_height="600"        
+        orientation="vertical">
+
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+Interpupillary Distance
+          </text>
+          <text
+            name="hmd_config_debug_interpupillary_offset_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+64.0 mm
+          </text>
+          <slider_bar
+            name="hmd_config_debug_interpupillary_offset_slider"
+            tool_tip="Configured distance between the user's eye centers, in millimeters"
+            min_val="50"
+            max_val="75"
+            increment="0.1"
+            initial_value="64"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetInterpupillaryOffset" />
+          </slider_bar>
+        </layout_panel>
+
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+UI Surface Shape Preset
+          </text>
+          <text
+            name="hmd_config_debug_uisurface_shape_preset_value"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+Default
+          </text>
+          <slider_bar
+            name="hmd_config_debug_uisurface_shape_preset_slider"
+            tool_tip="Shape of the UI surface in HMD Mode"
+            min_val="0.0"
+            max_val="4.0"
+            increment="1.0"
+            initial_value="1.0"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetUIShapePreset" />
+          </slider_bar>
+        </layout_panel>
+
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+UI Magnification
+          </text>
+          <text
+            name="hmd_config_debug_ui_magnification_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+600
+          </text>
+          <slider_bar
+            name="hmd_config_debug_ui_magnification_slider"
+            tool_tip="UI Magnification at default Eye-To-Screen distance"
+            min_val="0.0"
+            max_val="1000"
+            increment="10.0"
+            initial_value="600.0"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetUIMagnification" />
+          </slider_bar>
+        </layout_panel>
+
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+UI Surface Offset Depth
+          </text>
+          <text
+            name="hmd_config_debug_uisurface_offset_depth_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+0.0
+          </text>
+          <slider_bar
+            name="hmd_config_debug_uisurface_offset_depth_slider"
+            tool_tip="Forward Offset for UI Surface"
+            min_val="-1.0"
+            max_val="1.0"
+            increment="0.01"
+            initial_value="0.0"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceOffsetDepth" />
+          </slider_bar>
+        </layout_panel>
+          
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+Toroid Radius (Width)
+          </text>
+          <text
+            name="hmd_config_debug_uisurface_toroid_radius_width_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+0.3
+          </text>
+          <slider_bar
+            name="hmd_config_debug_uisurface_toroid_radius_width_slider"
+            tool_tip="Toroid Radius (Width)"
+            min_val="0.1"
+            max_val="10.0"
+            increment="0.1"
+            initial_value="0.3"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidRadiusWidth" />
+          </slider_bar>
+        </layout_panel>
+
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+Toroid Radius (Depth)
+          </text>
+          <text
+            name="hmd_config_debug_uisurface_toroid_radius_depth_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+0.6
+          </text>
+          <slider_bar
+            name="hmd_config_debug_uisurface_toroid_radius_depth_slider"
+            tool_tip="Toroid Radius (Depth)"
+            min_val="0.1"
+            max_val="10.0"
+            increment="0.1"
+            initial_value="0.6"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidRadiusDepth" />
+          </slider_bar>
+        </layout_panel>
+
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+Toroid Cross-Section Radius (Width)
+          </text>
+          <text
+            name="hmd_config_debug_uisurface_toroid_cross_section_radius_width_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+0.5
+          </text>
+          <slider_bar
+            name="hmd_config_debug_uisurface_toroid_cross_section_radius_width_slider"
+            tool_tip="Toroid Cross-Section Radius (Width)"
+            min_val="0.1"
+            max_val="10.0"
+            increment="0.1"
+            initial_value="0.5"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidCrossSectionRadiusWidth" />
+          </slider_bar>
+        </layout_panel>
+
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+Toroid Cross-Section Radius (Height)
+          </text>
+          <text
+            name="hmd_config_debug_uisurface_toroid_cross_section_radius_height_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+0.7
+          </text>
+          <slider_bar
+            name="hmd_config_debug_uisurface_toroid_cross_section_radius_height_slider"
+            tool_tip="Toroid Cross-Section Radius (Height)"
+            min_val="0.1"
+            max_val="10.0"
+            increment="0.1"
+            initial_value="0.7"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidCrossSectionRadiusHeight" />
+          </slider_bar>
+        </layout_panel>
+
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+UI Surface Arc (Horizontal)
+          </text>
+          <text
+            name="hmd_config_debug_uisurface_toroid_arc_horizontal_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+1.0 PI
+          </text>
+          <slider_bar
+            name="hmd_config_debug_uisurface_toroid_arc_horizontal_slider"
+            tool_tip="UI Surface Arc (Horizontal)"
+            min_val="0.1"
+            max_val="1.5"
+            increment="0.01"
+            initial_value="1.0"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidArcHorizontal" />
+          </slider_bar>
+        </layout_panel>
+
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+UI Surface Arc (Vertical)
+          </text>
+          <text
+            name="hmd_config_debug_uisurface_toroid_arc_vertical_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+0.7
+          </text>
+          <slider_bar
+            name="hmd_config_debug_uisurface_toroid_arc_vertical_slider"
+            tool_tip="UI Surface Arc (Vertical)"
+            min_val="0.1"
+            max_val="1.0"
+            increment="0.01"
+            initial_value="0.6"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidArcVertical" />
+          </slider_bar>
+        </layout_panel>
+
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+Eye to Screen Distance (FOV)
+          </text>
+          <text
+            name="hmd_config_debug_eye_to_screen_distance_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+41.0 mm
+          </text>
+          <slider_bar
+            name="hmd_config_debug_eye_to_screen_distance_slider"
+            tool_tip="Distance from the eye to screen surface, in millimeters"
+            min_val="0"
+            max_val="100"
+            increment=".1"
+            initial_value="41"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetEyeToScreenDistance" />
+          </slider_bar>
+        </layout_panel>
+
+        <layout_panel
+          follows="left|right"
+          height="45"
+          width="400"
+          min_height="45"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            left="30"
+            top="5"
+            height="10"
+            width="100"
+            halign="center">
+Motion Prediction
+          </text>
+          <check_box
+            name="hmd_config_debug_hmd_motion_prediction"
+            tool_tip="Motion prediction attempts to predict headset movement for a smoother, less jerky experience"
+            initial_value="true"
+            left="60"
+            top="24"
+            width="32"
+            height="16">
+            <check_box.commit_callback function="HMDConfigDebug.CheckMotionPrediction" />
+          </check_box>
+          <text
+            font.name="SansSerifSmall"
+            left="120"
+            top="5"
+            width="220"
+            height="10"
+            follows="left|right"
+            halign="center">
+Motion Prediction Delta
+          </text>
+          <text
+            name="hmd_config_debug_motion_prediction_delta_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="50"
+            follows="right"
+            halign="right">
+30 ms
+          </text>
+          <slider_bar
+            name="hmd_config_debug_motion_prediction_delta_slider"
+            tool_tip="Specifies how much prediction should be applied in milliseconds; it should in general be under the average rendering latency"
+            min_val="0"
+            max_val="100"
+            increment="1"
+            initial_value="30"
+            top="18"
+            height="22"
+            left="125"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetMotionPredictionDelta" />
+          </slider_bar>
+        </layout_panel>
+
+      </layout_stack>
+    </layout_panel>
+      
+    <layout_panel
+      follows="top|right"
+      auto_resize="false"
+      top="0"
+      right="-10"
+      width="110"
+      height="600"
+      min_width="110"
+      min_height="600">
+      <layout_stack
+        orientation="vertical"
+        layout="topleft"
+        follows="top|left|right"
+        left="5"
+        top="5"
+        width="90"
+        height="600"
+        min_width="110"
+        min_height="600">
+        <layout_panel
+          auto_resize="false"
+          text_color="white"
+          height="25"
+          width="90">
+          <button
+            name="hmd_config_debug_hmd_calibrate_button"
+            label="Calibrate"
+            follows="all">
+            <commit_callback function="HMDConfigDebug.Calibrate" />
+          </button>
+        </layout_panel>
+        <layout_panel
+          auto_resize="false"
+          text_color="white"
+          height="25"
+          width="90">
+          <button
+            name="hmd_config_debug_hmd_reset_values_button"
+            label="Reset Values"
+            follows="all">
+            <commit_callback function="HMDConfigDebug.ResetValues" />
+          </button>
+        </layout_panel>
+        <layout_panel
+          auto_resize="false"
+          text_color="white"
+          height="25"
+          width="90">
+          <button
+            name="hmd_config_debug_hmd_cancel_button"
+            label="Cancel"
+            follows="all">
+            <commit_callback function="HMDConfigDebug.Cancel" />
+          </button>
+        </layout_panel>
+        <layout_panel
+          auto_resize="false"
+          text_color="white"
+          height="25"
+          width="90">
+          <button
+            name="hmd_config_debug_hmd_save_button"
+            label="Save"
+            follows="all">
+            <commit_callback function="HMDConfigDebug.Save" />
+          </button>
+        </layout_panel>
+      </layout_stack>
+    </layout_panel>
+  </layout_stack>
+</floater>

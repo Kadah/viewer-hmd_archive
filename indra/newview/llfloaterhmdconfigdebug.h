@@ -1,6 +1,6 @@
 /** 
- * @file llpanelhmdconfig.h
- * @brief A panel showing the head mounted display (HMD) config UI
+ * @file llfloaterhmdconfigdebug.h
+ * @brief A floater showing the head mounted display (HMD) config UI
  *
  * $LicenseInfo:firstyear=2008&license=viewerlgpl$
  * Second Life Viewer Source Code
@@ -24,33 +24,36 @@
  * $/LicenseInfo$
  */
 
-#ifndef LL_LLPANELHMDCONFIG_H
-#define LL_LLPANELHMDCONFIG_H
+#ifndef LL_LLFLOATERHMDCONFIGDEBUG_H
+#define LL_LLFLOATERHMDCONFIGDEBUG_H
 
 #include "linden_common.h"
 
-#include "llpanel.h"
+#include "llfloater.h"
 
 class LLSlider;
 class LLCheckBoxCtrl;
 
-class LLPanelHMDConfig : public LLPanel
+class LLFloaterHMDConfigDebug : public LLFloater
 {
- public:
-    LLPanelHMDConfig();
-	~LLPanelHMDConfig();
-	/*virtual*/ void draw();
-	/*virtual*/ BOOL postBuild();
+    friend class LLFloaterReg;
 
-    static void toggleVisibility();
-    static LLPanelHMDConfig* getInstance();
+public:
+    LLFloaterHMDConfigDebug(const LLSD& key);
+	~LLFloaterHMDConfigDebug();
 
-    void onClickToggleWorldView();
+	virtual BOOL postBuild();
+	virtual void onOpen(const LLSD& key);
+	virtual void onClose(bool app_quitting);
+
+    static LLFloaterHMDConfigDebug* getInstance();
+
     void onClickCalibrate();
     void onClickCancel();
     void onClickSave();
     void onClickResetValues();
 
+protected:
     void onSetInterpupillaryOffset();
     void updateInterpupillaryOffsetLabel();
     void onSetEyeToScreenDistance();
@@ -77,19 +80,18 @@ class LLPanelHMDConfig : public LLPanel
     void onSetUIShapePreset();
     void updateUIShapePresetLabel();
 
- private:
-    static LLPanelHMDConfig*  sInstance;
+    void updateDirty();
 
-    LLButton* mToggleViewButton;
+protected:
     LLSlider* mInterpupillaryOffsetSliderCtrl;
     LLUICtrl* mInterpupillaryOffsetAmountCtrl;
+    F32 mInterpupillaryOffsetOriginal;
     LLSlider* mEyeToScreenSliderCtrl;
     LLUICtrl* mEyeToScreenAmountCtrl;
+    F32 mEyeToScreenDistanceOriginal;
     LLCheckBoxCtrl* mMotionPredictionCheckBoxCtrl;
     LLSlider* mMotionPredictionDeltaSliderCtrl;
     LLUICtrl* mMotionPredictionDeltaAmountCtrl;
-    F32 mInterpupillaryOffsetOriginal;
-    F32 mEyeToScreenDistanceOriginal;
     BOOL mMotionPredictionCheckedOriginal;
     F32 mMotionPredictionDeltaOriginal;
     LLSlider* mUISurfaceOffsetDepthSliderCtrl;
@@ -119,6 +121,9 @@ class LLPanelHMDConfig : public LLPanel
     LLSlider* mUISurfaceShapePresetSliderCtrl;
     LLUICtrl* mUISurfaceShapePresetLabelCtrl;
     F32 mUISurfaceShapePresetOriginal;
+    BOOL mDirty;
+
+    static LLFloaterHMDConfigDebug* sInstance;
 };
 
-#endif // LL_LLPANELHMDCONFIG_H
+#endif // LL_LLFLOATERHMDCONFIGDEBUG_H
