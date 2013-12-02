@@ -133,7 +133,7 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3 &center,
 											const LLVector3 &point_of_interest)
 {
 	// do not update if avatar didn't move
-	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate() && (!gHMD.isInitialized() || !gHMD.isHMDMode()))
+	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate() && (!gHMD.isPreDetectionInitialized() || !gHMD.isHMDMode()))
 	{
 		return;
 	}
@@ -174,7 +174,7 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3 &center,
         gHMD.setUIModelView((F32*)getModelview().mMatrix);
     }
     setOriginAndLookAt(origin, up_direction, point_of_interest);
-    if (gHMD.isHMDMode() && gHMD.isInitialized())
+    if (gHMD.isHMDMode() && gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected())
     {
         gHMD.setBaseLookAt((F32*)getModelview().mMatrix);
         float r, p, y;

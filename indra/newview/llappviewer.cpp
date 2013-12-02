@@ -1808,10 +1808,7 @@ bool LLAppViewer::cleanup()
 	// Clean up before GL is shut down because we might be holding on to objects with texture references
 	LLSelectMgr::cleanupGlobals();
 	
-    if (gHMD.isInitialized())
-    {
-        gHMD.shutdown();
-    }
+    gHMD.shutdown();
 
 	llinfos << "Shutting down OpenGL" << llendflush;
 
@@ -4552,7 +4549,7 @@ void LLAppViewer::idle()
 		// Update spaceserver timeinfo
 	    LLWorld::getInstance()->setSpaceTimeUSec(LLWorld::getInstance()->getSpaceTimeUSec() + (U32)(dt_raw * SEC_TO_MICROSEC));
     
-        if (!gHMD.isInitialized() && !gHMD.failedInit())
+        if (!gHMD.isPreDetectionInitialized() && !gHMD.failedInit())
         {
             if (!gHMD.init())
             {
@@ -4560,7 +4557,7 @@ void LLAppViewer::idle()
             }
         }
 
-        if (gHMD.isInitialized())
+        if (gHMD.isPreDetectionInitialized())
         {
             gHMD.onIdle();
         }

@@ -57,24 +57,23 @@ public:
     enum eFlags
     {
         kFlag_None                      = 0,
-        kFlag_Initialized               = 1 << 0,
-        kFlag_Pre_Initialized           = 1 << 1,
-        kFlag_Post_Initialized          = 1 << 2,
-        kFlag_FailedInit                = 1 << 3,
-        kFlag_HMDConnected              = 1 << 4,
-        kFlag_MainIsFullScreen          = 1 << 5,
-        kFlag_IsCalibrated              = 1 << 6,
-        kFlag_ShowCalibrationUI         = 1 << 7,
-        kFlag_CursorIntersectsWorld     = 1 << 8,
-        kFlag_CursorIntersectsUI        = 1 << 9,
-        kFlag_DebugMode                 = 1 << 10,
-        kFlag_ChangingRenderContext     = 1 << 11,
+        kFlag_Pre_Initialized           = 1 << 0,
+        kFlag_Post_Initialized          = 1 << 1,
+        kFlag_FailedInit                = 1 << 2,
+        kFlag_HMDConnected              = 1 << 3,
+        kFlag_MainIsFullScreen          = 1 << 4,
+        kFlag_IsCalibrated              = 1 << 5,
+        kFlag_ShowCalibrationUI         = 1 << 6,
+        kFlag_CursorIntersectsWorld     = 1 << 7,
+        kFlag_CursorIntersectsUI        = 1 << 8,
+        kFlag_DebugMode                 = 1 << 9,
+        kFlag_ChangingRenderContext     = 1 << 10,
     };
 
 
     struct UISurfaceShapeSettings
     {
-        std::string mName;
+        char mName[32];
         F32 mOffsetX;
         F32 mOffsetY;
         F32 mOffsetZ;
@@ -96,8 +95,6 @@ public:
     void shutdown();
     void onIdle();
 
-    BOOL isInitialized() const { return ((mFlags & kFlag_Initialized) != 0) ? TRUE : FALSE; }
-    void isInitialized(BOOL b) { if (b) { mFlags |= kFlag_Initialized; } else { mFlags &= ~kFlag_Initialized; } }
     BOOL isPreDetectionInitialized() const { return ((mFlags & kFlag_Pre_Initialized) != 0) ? TRUE : FALSE; }
     void isPreDetectionInitialized(BOOL b) { if (b) { mFlags |= kFlag_Pre_Initialized; } else { mFlags &= ~kFlag_Pre_Initialized; } }
     BOOL isPostDetectionInitialized() const { return ((mFlags & kFlag_Post_Initialized) != 0) ? TRUE : FALSE; }
@@ -236,7 +233,7 @@ public:
     LLCoordWindow getMainClientSize() const { return mMainClientSize; }
     LLCoordWindow getHMDClientSize() const { return LLCoordWindow(getHMDWidth(), getHMDHeight()); }
 
-    const std::string& getUIShapeName() const { return mUIShape.mName; }
+    const char* getUIShapeName() const { return mUIShape.mName; }
     F32 getUISurfaceArcHorizontal() const { return mUIShape.mArcHorizontal; }
     void setUISurfaceArcHorizontal(F32 f) { setUISurfaceParam(&mUIShape.mArcHorizontal, f); }
     F32 getUISurfaceArcVertical() const { return mUIShape.mArcVertical; }

@@ -4103,6 +4103,8 @@ BOOL LLWindowWin32::getDisplayInfo(const llutf16string& displayName, long displa
     monitors.MonitorCount = 0;
     ::EnumDisplayMonitors(NULL, NULL, monitor_enum_proc, (LPARAM)&monitors);
     MONITORINFOEX info;
+    S32 foundMonitorNum = -1;
+    LL_INFOS("HMD") << "HMD getDisplayInfo('" << utf16str_to_utf8str(displayName) << "', " << displayId << ") found " << monitors.MonitorCount << " monitors" << LL_ENDL;
     for (S32 i = 0; i < monitors.MonitorCount; i++)
     {
         info.cbSize = sizeof(MONITORINFOEX);
@@ -4114,16 +4116,27 @@ BOOL LLWindowWin32::getDisplayInfo(const llutf16string& displayName, long displa
             // however, the display names returned by GetMonitorInfo do not have that.  So we check for both
             // forms.
             displayNameTest2.append(L"\\Monitor0");
-            if (!displayName.compare(displayNameTest1) || !displayName.compare(displayNameTest2))
+
+            LL_INFOS("HMD") << "HMD Monitor " << i << ": '" << utf16str_to_utf8str(displayNameTest1) << "'" << LL_ENDL;
+            if (foundMonitorNum < 0 && (!displayName.compare(displayNameTest1) || !displayName.compare(displayNameTest2)))
             {
+                foundMonitorNum = i;
                 isPrimary = (info.dwFlags & MONITORINFOF_PRIMARY) ? TRUE : FALSE;
                 rcWork.set(info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom);
-                return TRUE;
+                LL_INFOS("HMD") << "Found matching HMD display " << i << ": '" << utf16str_to_utf8str(displayNameTest1) << "' with rect " << rcWork << LL_ENDL;
             }
         }
     }
-    
-    return FALSE;
+
+    if (foundMonitorNum < 0)
+    {
+        LL_INFOS("HMD") << "No acceptable HMD display found that matches desired display name or ID" << LL_ENDL;
+        return FALSE;
+    }
+    else
+    {
+        return TRUE;
+    }
 }
 
 void LLWindowWin32::enableVSync(BOOL b)

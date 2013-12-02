@@ -612,7 +612,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
         switch(i)
         {
         case LLViewerCamera::CENTER_EYE:
-            if (gHMD.isInitialized() && gHMD.isHMDConnected())
+            if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected())
             {
                 if (render_mode == LLHMD::RenderMode_HMD)
                 {
@@ -638,12 +638,12 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
         case LLViewerCamera::LEFT_EYE:
         case LLViewerCamera::RIGHT_EYE:
             {
-				if ((!gHMD.isDebugMode() && !gHMD.isInitialized()) || render_mode == LLHMD::RenderMode_None)
+				if ((!gHMD.isDebugMode() && !gHMD.isPostDetectionInitialized()) || render_mode == LLHMD::RenderMode_None)
                 {
                     continue;
                 }
                 gHMD.setCurrentEye(i);
-                if (gHMD.isInitialized() &&
+                if (gHMD.isPostDetectionInitialized() &&
                     gHMD.isHMDConnected() &&
                     i == LLViewerCamera::LEFT_EYE &&
                     render_mode == LLHMD::RenderMode_HMD)

@@ -93,21 +93,15 @@ BOOL LLHMDImpl::preInit()
     mDeviceManager = *OVR::DeviceManager::Create();
     if (!mDeviceManager)
     {
-        gHMD.isInitialized(FALSE);
+        LL_INFOS("HMD") << "HMD Preinit abort: could not create Oculus Rift HMD device manager" << LL_ENDL;
         gHMD.isPreDetectionInitialized(FALSE);
         return FALSE;
     }
 
     mDeviceManager->SetMessageHandler(this);
+    mSensorDevice = NULL;
 
     mHMD = *mDeviceManager->EnumerateDevices<OVR::HMDDevice>().CreateDevice();
-    if (!mHMD)
-    {
-        gHMD.isPreDetectionInitialized(TRUE); // consider ourselves pre-initialized if we get here
-        gHMD.isInitialized(FALSE);
-        return FALSE;
-    }
-
     if (mHMD)
     {
         OVR::HMDInfo info;
@@ -120,14 +114,29 @@ BOOL LLHMDImpl::preInit()
             info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
             mStereoConfig.SetHMDInfo(info);
             gHMD.isHMDConnected(TRUE);
+            if (info.DisplayDeviceName[0])
+            {
+                LL_INFOS("HMD") << "HMD Preinit: Found connected HMD device " << info.DisplayDeviceName << "[" << info.DisplayId << "]" << LL_ENDL;
+            }
+            else
+            {
+                LL_INFOS("HMD") << "HMD Preinit: Found connected HMD device with ID [" << info.DisplayId << "]" << LL_ENDL;
+            }
+        }
+        else
+        {
+            LL_INFOS("HMD") << "HMD Preinit: Could not find connected HMD device" << LL_ENDL;
         }
     }
+    else
+    {
+        LL_INFOS("HMD") << "HMD Preinit abort: could not create Oculus Rift HMD device" << LL_ENDL;
+    }
 
-    mSensorDevice = 0;
-    
-    gHMD.isInitialized(TRUE);
-    gHMD.isPreDetectionInitialized(TRUE); 
+    // consider ourselves pre-initialized if we get here
+    LL_INFOS("HMD") << "HMD Preinit successful" << LL_ENDL;
 
+    gHMD.isPreDetectionInitialized(TRUE);
     return TRUE;
 }
 
@@ -166,6 +175,7 @@ void LLHMDImpl::handleMessages()
                             mSensorFusion.AttachToSensor(mSensorDevice);
                             mSensorFusion.SetDelegateMessageHandler(this);
                             mSensorFusion.SetPredictionEnabled(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
+                            LL_INFOS("HMD") << "HMD Sensor Device Added" << LL_ENDL;
                         }
                         else
                         if (!was_already_created )
@@ -195,6 +205,7 @@ void LLHMDImpl::handleMessages()
                             mDisplayId = info.DisplayId;
                             mStereoConfig.SetHMDInfo(info);
                             gHMD.isHMDConnected(TRUE);
+                            LL_INFOS("HMD") << "HMD Device " << utf16str_to_utf8str(mDisplayName) << ", ID [" << mDisplayId << "] Added" << LL_ENDL;
                         }
                     }
                     break;
@@ -210,6 +221,7 @@ void LLHMDImpl::handleMessages()
             {
                 mSensorFusion.AttachToSensor(NULL);
                 mSensorDevice.Clear();
+                LL_INFOS("HMD") << "HMD Sensor Device Removed" << LL_ENDL;
             }
             else if (desc.Handle.IsDevice(mHMD))
             {
@@ -225,6 +237,7 @@ void LLHMDImpl::handleMessages()
                         mDisplayName = utf8str_to_utf16str(info.DisplayDeviceName);
                         mDisplayId = info.DisplayId;
                         mStereoConfig.SetHMDInfo(info);
+                        LL_INFOS("HMD") << "HMD Device " << utf16str_to_utf8str(mDisplayName) << ", ID [" << mDisplayId << "] Removed" << LL_ENDL;
                     }
                 }
             }
@@ -286,7 +299,7 @@ BOOL LLHMDImpl::postDetectionInit()
     {
         gHMD.isMainFullScreen(mainFullScreen);
     }
-    LL_INFOS("HMD") << "Got HMD Display Info: " << utf16str_to_utf8str(mDisplayName) << " [" << rcIdx << "] is " << (mainFullScreen ? " " : "NOT") << " fullscreen" << LL_ENDL;
+    LL_INFOS("HMD") << "Got HMD Display Info: " << utf16str_to_utf8str(mDisplayName) << " [" << rcIdx << "], rect=" << r << " is " << (mainFullScreen ? " " : "NOT") << " fullscreen" << LL_ENDL;
     if (!pWin->initHMDWindow(r.mLeft, r.mTop, r.mRight - r.mLeft, r.mBottom - r.mTop))
     {
         LL_INFOS("HMD") << "HMD Window init with rect " << r << " Failed!" << LL_ENDL;
@@ -313,11 +326,13 @@ BOOL LLHMDImpl::postDetectionInit()
         }
     }
 
-    gHMD.isInitialized(TRUE);
+    gHMD.isPostDetectionInitialized(TRUE);
     gHMD.failedInit(FALSE);
     gHMD.isCalibrated(FALSE);
 
     setCurrentEye(OVR::Util::Render::StereoEye_Center);
+
+    LL_INFOS("HMD") << "HMD Post-Detection Init Success" << LL_ENDL;
 
     return TRUE;
 }
@@ -325,12 +340,11 @@ BOOL LLHMDImpl::postDetectionInit()
 
 void LLHMDImpl::shutdown()
 {
-    if (!gHMD.isInitialized())
+    if (!gHMD.isPreDetectionInitialized())
     {
         return;
     }
-    gHMD.isInitialized(FALSE);
-    if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected())
+    if (gHMD.isPostDetectionInitialized())
     {
         gViewerWindow->getWindow()->destroyHMDWindow();
     }
@@ -359,8 +373,8 @@ void LLHMDImpl::onIdle()
 
     if (!gHMD.isPostDetectionInitialized())
     {
-        BOOL result = postDetectionInit();
-        gHMD.isPostDetectionInitialized(result);
+        postDetectionInit();
+        // give the HMD a frame to internally initialize before trying to access it
         return;
     }
 
@@ -414,7 +428,7 @@ void LLHMDImpl::onIdle()
 
 LLVector4 LLHMDImpl::getDistortionConstants() const
 {
-    if (gHMD.isInitialized())
+    if (gHMD.isPostDetectionInitialized())
     {
         return LLVector4(   mCurrentEyeParams.pDistortion->K[0],
                             mCurrentEyeParams.pDistortion->K[1],

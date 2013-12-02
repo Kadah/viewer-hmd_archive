@@ -838,7 +838,7 @@ public:
 			}
 		}
 
-		if (gHMD.isInitialized() && gHMD.isDebugMode())
+		if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gHMD.isDebugMode())
 		{
           //  if (gHMD.isHMDMode())
           //  {
