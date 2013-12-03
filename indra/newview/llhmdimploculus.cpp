@@ -44,44 +44,31 @@
     #define IDCONTINUE 1        // Exist on Windows along "IDOK" and "IDCANCEL" but not on Mac
 #endif
 
-using namespace OVR;
 
-const F32 LLHMDImpl::kDefaultHScreenSize = 0.14976f;
-const F32 LLHMDImpl::kDefaultVScreenSize = 0.0936f;
-const F32 LLHMDImpl::kDefaultInterpupillaryOffset = 0.064f;
-const F32 LLHMDImpl::kDefaultLenSeparationDistance = 0.0635f;
-const F32 LLHMDImpl::kDefaultEyeToScreenDistance = 0.041f;
-const F32 LLHMDImpl::kDefaultDistortionConstant0 = 1.0f;
-const F32 LLHMDImpl::kDefaultDistortionConstant1 = 0.22f;
-const F32 LLHMDImpl::kDefaultDistortionConstant2 = 0.24f;
-const F32 LLHMDImpl::kDefaultDistortionConstant3 = 0.0f;
-const F32 LLHMDImpl::kDefaultXCenterOffset = 0.152f;
-const F32 LLHMDImpl::kDefaultYCenterOffset = 0.0f;
-const F32 LLHMDImpl::kDefaultDistortionScale = 1.7146f;
-const F32 LLHMDImpl::kDefaultOrthoPixelOffset = 0.1775f; // -0.1775f Right Eye
-const F32 LLHMDImpl::kDefaultVerticalFOVRadians = 1.5707963f;
-const F32 LLHMDImpl::kDefaultAspect = 0.8f;
-const F32 LLHMDImpl::kDefaultAspectMult = 1.0f;
-
-
-LLHMDImpl::LLHMDImpl()
-    : mEyePitch(0.0f)
+LLHMDImplOculus::LLHMDImplOculus()
+    : mDeviceManager(NULL)
+    , mHMD(NULL)
+    , mSensorFusion(NULL)
+    , mSensorDevice(NULL)
+    , mHeadRotationCorrection(LLQuaternion::DEFAULT)
+    , mpDeviceStatusNotificationsQueue(NULL)
+    , mpLatencyTester(NULL)
+    , mDisplayId(-1)
+    , mEyePitch(0.0f)
     , mEyeRoll(0.0f)
     , mEyeYaw(0.0f)
     , mCurrentEye(OVR::Util::Render::StereoEye_Center)
-    , mLastCalibrationStep(-1)
-    , mCalibrationText("")
 {
 }
 
 
-LLHMDImpl::~LLHMDImpl()
+LLHMDImplOculus::~LLHMDImplOculus()
 {
     shutdown();
 }
 
 
-BOOL LLHMDImpl::preInit()
+BOOL LLHMDImplOculus::preInit()
 {
     if (gHMD.isPreDetectionInitialized())
     {
@@ -90,6 +77,10 @@ BOOL LLHMDImpl::preInit()
 
     OVR::System::Init(OVR::Log::ConfigureDefaultLog(OVR::LogMask_None));
 
+    mSensorDevice = NULL;
+    mSensorFusion = new OVR::SensorFusion(mSensorDevice);
+    mpDeviceStatusNotificationsQueue = new OVR::Array<DeviceStatusNotificationDesc>();
+    
     mDeviceManager = *OVR::DeviceManager::Create();
     if (!mDeviceManager)
     {
@@ -99,7 +90,6 @@ BOOL LLHMDImpl::preInit()
     }
 
     mDeviceManager->SetMessageHandler(this);
-    mSensorDevice = NULL;
 
     mHMD = *mDeviceManager->EnumerateDevices<OVR::HMDDevice>().CreateDevice();
     if (mHMD)
@@ -141,7 +131,7 @@ BOOL LLHMDImpl::preInit()
 }
 
 
-void LLHMDImpl::handleMessages()
+void LLHMDImplOculus::handleMessages()
 {
     bool queue_is_empty = false;
 
@@ -150,14 +140,14 @@ void LLHMDImpl::handleMessages()
         DeviceStatusNotificationDesc desc;
         {
             OVR::Lock::Locker lock(mDeviceManager->GetHandlerLock());
-            if (DeviceStatusNotificationsQueue.GetSize() == 0)
+            if (!mpDeviceStatusNotificationsQueue || mpDeviceStatusNotificationsQueue->GetSize() == 0)
             {
                 break;
             }
-            desc = DeviceStatusNotificationsQueue.Front();
+            desc = mpDeviceStatusNotificationsQueue->Front();
 
-            DeviceStatusNotificationsQueue.RemoveAt(0);
-            queue_is_empty = (DeviceStatusNotificationsQueue.GetSize() == 0);
+            mpDeviceStatusNotificationsQueue->RemoveAt(0);
+            queue_is_empty = (mpDeviceStatusNotificationsQueue->GetSize() == 0);
         }
         
         bool was_already_created = desc.Handle.IsCreated();
@@ -172,9 +162,9 @@ void LLHMDImpl::handleMessages()
                         if (!mSensorDevice)
                         {
                             mSensorDevice = *desc.Handle.CreateDeviceTyped<OVR::SensorDevice>();
-                            mSensorFusion.AttachToSensor(mSensorDevice);
-                            mSensorFusion.SetDelegateMessageHandler(this);
-                            mSensorFusion.SetPredictionEnabled(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
+                            mSensorFusion->AttachToSensor(mSensorDevice);
+                            mSensorFusion->SetDelegateMessageHandler(this);
+                            mSensorFusion->SetPredictionEnabled(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
                             LL_INFOS("HMD") << "HMD Sensor Device Added" << LL_ENDL;
                         }
                         else
@@ -184,32 +174,42 @@ void LLHMDImpl::handleMessages()
                         }
                     }
                     break;
-
-                case OVR::Device_HMD:
-                {
-                    OVR::HMDInfo info;
-                    bool validInfo = desc.Handle.GetDeviceInfo(&info) && info.HResolution > 0;
-                    if (validInfo &&
-                        info.DisplayDeviceName[0] &&
-                        (!mHMD || !info.IsSameDisplay(mStereoConfig.GetHMDInfo())))
+                case OVR::Device_LatencyTester:
+                    if (desc.Handle.IsAvailable() && !desc.Handle.IsCreated())
                     {
-                        if (!mHMD || !desc.Handle.IsDevice(mHMD))
+                        if (!mpLatencyTester)
                         {
-                            mHMD = *desc.Handle.CreateDeviceTyped<OVR::HMDDevice>();
-                        }
-                        if (mHMD)
-                        {
-                            info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
-                            info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
-                            mDisplayName = utf8str_to_utf16str(info.DisplayDeviceName);
-                            mDisplayId = info.DisplayId;
-                            mStereoConfig.SetHMDInfo(info);
-                            gHMD.isHMDConnected(TRUE);
-                            LL_INFOS("HMD") << "HMD Device " << utf16str_to_utf8str(mDisplayName) << ", ID [" << mDisplayId << "] Added" << LL_ENDL;
+                            mpLatencyTester = *desc.Handle.CreateDeviceTyped<OVR::LatencyTestDevice>();
+                            mLatencyUtil.SetDevice(mpLatencyTester);
+                            LL_INFOS("HMD") << "HMD Latency Tester Device Added" << LL_ENDL;
                         }
                     }
                     break;
-                }
+                case OVR::Device_HMD:
+                    {
+                        OVR::HMDInfo info;
+                        bool validInfo = desc.Handle.GetDeviceInfo(&info) && info.HResolution > 0;
+                        if (validInfo &&
+                            info.DisplayDeviceName[0] &&
+                            (!mHMD || !info.IsSameDisplay(mStereoConfig.GetHMDInfo())))
+                        {
+                            if (!mHMD || !desc.Handle.IsDevice(mHMD))
+                            {
+                                mHMD = *desc.Handle.CreateDeviceTyped<OVR::HMDDevice>();
+                            }
+                            if (mHMD)
+                            {
+                                info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
+                                info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
+                                mDisplayName = utf8str_to_utf16str(info.DisplayDeviceName);
+                                mDisplayId = info.DisplayId;
+                                mStereoConfig.SetHMDInfo(info);
+                                gHMD.isHMDConnected(TRUE);
+                                LL_INFOS("HMD") << "HMD Device " << utf16str_to_utf8str(mDisplayName) << ", ID [" << mDisplayId << "] Added" << LL_ENDL;
+                            }
+                        }
+                    }
+                    break;
                 default:
                     break;
             }
@@ -219,9 +219,15 @@ void LLHMDImpl::handleMessages()
         {
             if (desc.Handle.IsDevice(mSensorDevice))
             {
-                mSensorFusion.AttachToSensor(NULL);
+                mSensorFusion->AttachToSensor(NULL);
                 mSensorDevice.Clear();
                 LL_INFOS("HMD") << "HMD Sensor Device Removed" << LL_ENDL;
+            }
+            else if (desc.Handle.IsDevice(mpLatencyTester))
+            {
+                mLatencyUtil.SetDevice(NULL);
+                mpLatencyTester.Clear();
+                LL_INFOS("HMD") << "HMD Latency Tester Device Removed" << LL_ENDL;
             }
             else if (desc.Handle.IsDevice(mHMD))
             {
@@ -251,38 +257,23 @@ void LLHMDImpl::handleMessages()
 
 
 // virtual
-void LLHMDImpl::OnMessage(const OVR::Message& msg)
+void LLHMDImplOculus::OnMessage(const OVR::Message& msg)
 {
-    if (msg.Type == OVR::Message_DeviceAdded || msg.Type == OVR::Message_DeviceRemoved)
+    if ((msg.Type == OVR::Message_DeviceAdded || msg.Type == OVR::Message_DeviceRemoved) && msg.pDevice == mDeviceManager)
     {
-        if (msg.pDevice == mDeviceManager)
+        const OVR::MessageDeviceStatus& statusMsg = static_cast<const OVR::MessageDeviceStatus&>(msg);
+        if (mpDeviceStatusNotificationsQueue)
         {
-            const OVR::MessageDeviceStatus& statusMsg = static_cast<const OVR::MessageDeviceStatus&>(msg);
-            {
-                OVR::Lock::Locker lock(mDeviceManager->GetHandlerLock());
-                DeviceStatusNotificationsQueue.PushBack(DeviceStatusNotificationDesc(statusMsg.Type, statusMsg.Handle));
-            }
-
-            switch (statusMsg.Type)
-            {
-                case OVR::Message_DeviceAdded:
-                    break;
-
-                case OVR::Message_DeviceRemoved:
-                    break;
-
-                default:
-                    // DeviceManager reported unknown action.
-                    break;
-            }
+            OVR::Lock::Locker lock(mDeviceManager->GetHandlerLock());
+            mpDeviceStatusNotificationsQueue->PushBack(DeviceStatusNotificationDesc(statusMsg.Type, statusMsg.Handle));
         }
     }
 }
 
 
-BOOL LLHMDImpl::postDetectionInit()
+BOOL LLHMDImplOculus::postDetectionInit()
 {
-    mpLatencyTester = *(mDeviceManager->EnumerateDevices<LatencyTestDevice>().CreateDevice());
+    mpLatencyTester = *(mDeviceManager->EnumerateDevices<OVR::LatencyTestDevice>().CreateDevice());
     if (mpLatencyTester)
     {
         mLatencyUtil.SetDevice(mpLatencyTester);
@@ -328,7 +319,6 @@ BOOL LLHMDImpl::postDetectionInit()
 
     gHMD.isPostDetectionInitialized(TRUE);
     gHMD.failedInit(FALSE);
-    gHMD.isCalibrated(FALSE);
 
     setCurrentEye(OVR::Util::Render::StereoEye_Center);
 
@@ -338,7 +328,7 @@ BOOL LLHMDImpl::postDetectionInit()
 }
 
 
-void LLHMDImpl::shutdown()
+void LLHMDImplOculus::shutdown()
 {
     if (!gHMD.isPreDetectionInitialized())
     {
@@ -349,14 +339,33 @@ void LLHMDImpl::shutdown()
         gViewerWindow->getWindow()->destroyHMDWindow();
     }
     RemoveHandlerFromDevices();
+    mLatencyUtil.SetDevice(NULL);
+    mpLatencyTester.Clear();
+    if (mSensorFusion)
+    {
+        mSensorFusion->AttachToSensor(NULL);
+    }
+    mSensorDevice.Clear();
+    if (mpDeviceStatusNotificationsQueue)
+    {
+        mpDeviceStatusNotificationsQueue->ClearAndRelease();
+        delete mpDeviceStatusNotificationsQueue;
+        mpDeviceStatusNotificationsQueue = NULL;
+    }
+    mHMD.Clear();
+    mDeviceManager.Clear();
+    delete mSensorFusion;
+    mSensorFusion = NULL;
 
-    // This causes a deadlock.  No idea why.   Disabling it as it doesn't seem to be necessary unless we're actually RE-initializing the HMD
-    // without shutting down.   For now, to init HMD, we have to restart the viewer.
-    //OVR::System::Destroy();
+    OVR::System::Destroy();
+
+    // make sure if/when we call shutdown again, we don't try to deallocate things twice.
+    gHMD.isPreDetectionInitialized(FALSE);
+    gHMD.isPostDetectionInitialized(FALSE);
 }
 
 
-void LLHMDImpl::onIdle()
+void LLHMDImplOculus::onIdle()
 {
     if (!gHMD.isPreDetectionInitialized())
     {
@@ -388,25 +397,6 @@ void LLHMDImpl::onIdle()
     // Have to place this as close as possible to where the HMD orientation is read.
     mLatencyUtil.ProcessInputs();
 
-    if (!gHMD.isCalibrated())
-    {
-        // Magnetometer calibration procedure
-        if (mMagCal.IsManuallyCalibrating())
-        {
-            updateManualMagCalibration();
-        }
-        else if (mMagCal.IsAutoCalibrating()) 
-        {
-            mMagCal.UpdateAutoCalibration(mSensorFusion);
-            // if (mMagCal.IsCalibrated())
-            // {
-            //    Vector3f mc = mMagCal.GetMagCenter();
-            //    SetAdjustMessage("   Magnetometer Calibration Complete   \nCenter: %f %f %f",mc.x,mc.y,mc.z);
-            // }
-            // SetAdjustMessage("Mag has been successfully calibrated");
-        }
-    }
-
     // Handle Sensor motion.
     if (mSensorDevice)
     {
@@ -418,15 +408,15 @@ void LLHMDImpl::onIdle()
         // Yaw = rotation around the "up" axis          (LL  Z, Oculus  Y)
         // Pitch = rotation around the left/right axis  (LL -Y, Oculus  X)
         // Roll = rotation around the forward axis      (LL  X, Oculus -Z)
-        OVR::Quatf orient = useMotionPrediction() ? mSensorFusion.GetPredictedOrientation() : mSensorFusion.GetOrientation();
-        orient.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&mEyeYaw, &mEyePitch, &mEyeRoll);
+        OVR::Quatf orient = useMotionPrediction() ? mSensorFusion->GetPredictedOrientation() : mSensorFusion->GetOrientation();
+        orient.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&mEyeYaw, &mEyePitch, &mEyeRoll);
         mEyeRoll = -mEyeRoll;
         mEyePitch = -mEyePitch;
     }
 }
 
 
-LLVector4 LLHMDImpl::getDistortionConstants() const
+LLVector4 LLHMDImplOculus::getDistortionConstants() const
 {
     if (gHMD.isPostDetectionInitialized())
     {
@@ -441,113 +431,6 @@ LLVector4 LLHMDImpl::getDistortionConstants() const
                             kDefaultDistortionConstant1,
                             kDefaultDistortionConstant2,
                             kDefaultDistortionConstant3);
-    }
-}
-
-    
-void LLHMDImpl::updateManualMagCalibration()
-{
-    F32 yaw, pitch, roll;
-    OVR::Quatf hmdOrient = mSensorFusion.GetOrientation();
-    hmdOrient.GetEulerAngles<Axis_X, Axis_Z, Axis_Y>(&pitch, &roll, &yaw);
-    OVR::Vector3f mag = mSensorFusion.GetMagnetometer();
-    float dtr = OVR::Math<float>::DegreeToRadFactor;
-
-    switch(mMagCal.NumberOfSamples())
-    {
-    case 0:
-        if (mLastCalibrationStep != 0)
-        {
-            mCalibrationText = "** Step 1: Please Look Forward **";
-            //LL_INFOS("HMD") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
-            mLastCalibrationStep = 0;
-        }
-        if ((fabs(yaw) < 10.0f * dtr) && (fabs(pitch) < 10.0f * dtr))
-        {
-            mMagCal.InsertIfAcceptable(hmdOrient, mag);
-        }
-        break;
-    case 1:
-        if (mLastCalibrationStep != 1)
-        {
-            mCalibrationText = "** Step 2: Please Look Up **";
-            //LL_INFOS("HMD") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
-            mLastCalibrationStep = 1;
-        }
-        if (pitch > 30.0f * dtr)
-        {
-            mMagCal.InsertIfAcceptable(hmdOrient, mag);
-        }
-        break;
-    case 2:
-        if (mLastCalibrationStep != 2)
-        {
-            mCalibrationText = "** Step 3: Please Look Left **";
-            //LL_INFOS("HMD") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
-            mLastCalibrationStep = 2;
-        }
-        if (yaw > 30.0f * dtr)
-        {
-            mMagCal.InsertIfAcceptable(hmdOrient, mag);
-        }
-        break;
-    case 3:
-        if (mLastCalibrationStep != 3)
-        {
-            mCalibrationText = "** Step 4: Please Look Right **";
-            //LL_INFOS("HMD") << "Magnetometer Calibration\n" << mCalibrationText << LL_ENDL;
-            mLastCalibrationStep = 3;
-        }
-        if (yaw < -30.0f * dtr)
-        {
-            mMagCal.InsertIfAcceptable(hmdOrient, mag);
-        }
-        break;
-    case 4:
-        if (!mMagCal.IsCalibrated()) 
-        {
-            mMagCal.SetCalibration(mSensorFusion);
-            //Vector3f mc = mMagCal.GetMagCenter();
-            //LL_INFOS("HMD") << "Magnetometer Calibration Complete   \nCenter: " << mc.x << "," << mc.y << "," << mc.z << LL_ENDL;
-            mLastCalibrationStep = 4;
-            gHMD.isCalibrated(TRUE);
-            mCalibrationText = "";
-            if (gHMD.isHMDMode() && gHMD.shouldShowCalibrationUI())
-            {
-                LLUI::getRootView()->getChildView("menu_stack")->setVisible(TRUE);
-            }
-            //setCurrentEye(OVR::Util::Render::StereoEye_Left);
-            //LL_INFOS("HMD") << "Left Eye:" << LL_ENDL;
-            //LL_INFOS("HMD") << "HScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenWidth() << ", default: " << LLHMDImpl::kDefaultHScreenSize << LL_ENDL;
-            //LL_INFOS("HMD") << "VScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenHeight() << ", default: " << LLHMDImpl::kDefaultVScreenSize << LL_ENDL;
-            //LL_INFOS("HMD") << "InterpupillaryOffset: " << std::fixed << std::setprecision(4) << getInterpupillaryOffset() << ", default: " << LLHMDImpl::kDefaultInterpupillaryOffset << LL_ENDL;
-            //LL_INFOS("HMD") << "LensSeparationDistance: " << std::fixed << std::setprecision(4) << getLensSeparationDistance() << ", default: " << LLHMDImpl::kDefaultLenSeparationDistance << LL_ENDL;
-            //LL_INFOS("HMD") << "EyeToScreenDistance: " << std::fixed << std::setprecision(4) << getEyeToScreenDistance() << ", default: " << LLHMDImpl::kDefaultEyeToScreenDistance << LL_ENDL;
-            //LLVector4 dc = getDistortionConstants();
-            //LL_INFOS("HMD") << "Distortion Constants: [" << std::fixed << std::setprecision(4) << dc.mV[0] << "," << dc.mV[1] << "," << dc.mV[2] << "," << dc.mV[3] << "]" << LL_ENDL;
-            //LL_INFOS("HMD") << "Default Dist Cnstnts: [" << std::fixed << std::setprecision(4) << LLHMDImpl::kDefaultDistortionConstant0 << "," << LLHMDImpl::kDefaultDistortionConstant1 << "," << LLHMDImpl::kDefaultDistortionConstant2 << "," << LLHMDImpl::kDefaultDistortionConstant3 << "]" << LL_ENDL;
-            //LL_INFOS("HMD") << "XCenterOffset: " << std::fixed << std::setprecision(4) << getXCenterOffset() << ", default: " << LLHMDImpl::kDefaultXCenterOffset << LL_ENDL;
-            //LL_INFOS("HMD") << "YCenterOffset: " << std::fixed << std::setprecision(4) << getYCenterOffset() << ", default: " << LLHMDImpl::kDefaultYCenterOffset << LL_ENDL;
-            //LL_INFOS("HMD") << "DistortionScale: " << std::fixed << std::setprecision(4) << getDistortionScale() << ", default: " << LLHMDImpl::kDefaultDistortionScale << LL_ENDL;
-            //LL_INFOS("HMD") << "OrthoPixelOffset: " << std::fixed << std::setprecision(4) << getOrthoPixelOffset() << ", default: " << LLHMDImpl::kDefaultOrthoPixelOffset << LL_ENDL;
-
-            //setCurrentEye(OVR::Util::Render::StereoEye_Right);
-            //LL_INFOS("HMD") << "Right Eye:" << LL_ENDL;
-            //LL_INFOS("HMD") << "HScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenWidth() << ", default: " << LLHMDImpl::kDefaultHScreenSize << LL_ENDL;
-            //LL_INFOS("HMD") << "VScreenSize: " << std::fixed << std::setprecision(4) << getPhysicalScreenHeight() << ", default: " << LLHMDImpl::kDefaultVScreenSize << LL_ENDL;
-            //LL_INFOS("HMD") << "InterpupillaryOffset: " << std::fixed << std::setprecision(4) << getInterpupillaryOffset() << ", default: " << LLHMDImpl::kDefaultInterpupillaryOffset << LL_ENDL;
-            //LL_INFOS("HMD") << "LensSeparationDistance: " << std::fixed << std::setprecision(4) << getLensSeparationDistance() << ", default: " << LLHMDImpl::kDefaultLenSeparationDistance << LL_ENDL;
-            //LL_INFOS("HMD") << "EyeToScreenDistance: " << std::fixed << std::setprecision(4) << getEyeToScreenDistance() << ", default: " << LLHMDImpl::kDefaultEyeToScreenDistance << LL_ENDL;
-            //dc = getDistortionConstants();
-            //LL_INFOS("HMD") << "Distortion Constants: [" << std::fixed << std::setprecision(4) << dc.mV[0] << "," << dc.mV[1] << "," << dc.mV[2] << "," << dc.mV[3] << "]" << LL_ENDL;
-            //LL_INFOS("HMD") << "Default Dist Cnstnts: [" << std::fixed << std::setprecision(4) << LLHMDImpl::kDefaultDistortionConstant0 << "," << LLHMDImpl::kDefaultDistortionConstant1 << "," << LLHMDImpl::kDefaultDistortionConstant2 << "," << LLHMDImpl::kDefaultDistortionConstant3 << "]" << LL_ENDL;
-            //LL_INFOS("HMD") << "XCenterOffset: " << std::fixed << std::setprecision(4) << getXCenterOffset() << ", default: " << LLHMDImpl::kDefaultXCenterOffset << LL_ENDL;
-            //LL_INFOS("HMD") << "YCenterOffset: " << std::fixed << std::setprecision(4) << getYCenterOffset() << ", default: " << LLHMDImpl::kDefaultYCenterOffset << LL_ENDL;
-            //LL_INFOS("HMD") << "DistortionScale: " << std::fixed << std::setprecision(4) << getDistortionScale() << ", default: " << LLHMDImpl::kDefaultDistortionScale << LL_ENDL;
-            //LL_INFOS("HMD") << "OrthoPixelOffset: " << std::fixed << std::setprecision(4) << getOrthoPixelOffset() << ", default: " << (-1.0f * LLHMDImpl::kDefaultOrthoPixelOffset) << LL_ENDL;
-
-            setCurrentEye(OVR::Util::Render::StereoEye_Center);
-        }
     }
 }
 

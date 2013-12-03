@@ -48,7 +48,6 @@ public:
 
     static LLFloaterHMDConfigDebug* getInstance();
 
-    void onClickCalibrate();
     void onClickCancel();
     void onClickSave();
     void onClickResetValues();

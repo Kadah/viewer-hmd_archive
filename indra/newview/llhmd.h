@@ -62,12 +62,10 @@ public:
         kFlag_FailedInit                = 1 << 2,
         kFlag_HMDConnected              = 1 << 3,
         kFlag_MainIsFullScreen          = 1 << 4,
-        kFlag_IsCalibrated              = 1 << 5,
-        kFlag_ShowCalibrationUI         = 1 << 6,
-        kFlag_CursorIntersectsWorld     = 1 << 7,
-        kFlag_CursorIntersectsUI        = 1 << 8,
-        kFlag_DebugMode                 = 1 << 9,
-        kFlag_ChangingRenderContext     = 1 << 10,
+        kFlag_CursorIntersectsWorld     = 1 << 5,
+        kFlag_CursorIntersectsUI        = 1 << 6,
+        kFlag_DebugMode                 = 1 << 7,
+        kFlag_ChangingRenderContext     = 1 << 8,
     };
 
 
@@ -105,10 +103,6 @@ public:
     void isHMDConnected(BOOL b) { if (b) { mFlags |= kFlag_HMDConnected; } else { mFlags &= ~kFlag_HMDConnected; } }
     BOOL isMainFullScreen() const { return ((mFlags & kFlag_MainIsFullScreen) != 0) ? TRUE : FALSE; }
     void isMainFullScreen(BOOL b) { if (b) { mFlags |= kFlag_MainIsFullScreen; } else { mFlags &= ~kFlag_MainIsFullScreen; } }
-    BOOL isCalibrated() const { return ((mFlags & kFlag_IsCalibrated) != 0) ? TRUE : FALSE; }
-    void isCalibrated(BOOL b) { if (b) { mFlags |= kFlag_IsCalibrated; } else { mFlags &= ~kFlag_IsCalibrated; } }
-    BOOL shouldShowCalibrationUI() const { return ((mFlags & kFlag_ShowCalibrationUI) != 0) ? TRUE : FALSE; }
-    void shouldShowCalibrationUI(BOOL b) { if (b) { mFlags |= kFlag_ShowCalibrationUI; } else { mFlags &= ~kFlag_ShowCalibrationUI; } }
     BOOL cursorIntersectsWorld() const { return ((mFlags & kFlag_CursorIntersectsWorld) != 0) ? TRUE : FALSE; }
     void cursorIntersectsWorld(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsWorld; } else { mFlags &= ~kFlag_CursorIntersectsWorld; } }
     BOOL cursorIntersectsUI() const { return ((mFlags & kFlag_CursorIntersectsUI) != 0) ? TRUE : FALSE; }
@@ -117,10 +111,6 @@ public:
     void isDebugMode(BOOL b) { if (b) { mFlags |= kFlag_DebugMode; } else { mFlags &= ~kFlag_DebugMode; } }
     BOOL isChangingRenderContext() const { return ((mFlags & kFlag_ChangingRenderContext) != 0) ? TRUE : FALSE; }
     void isChangingRenderContext(BOOL b) { if (b) { mFlags |= kFlag_ChangingRenderContext; } else { mFlags &= ~kFlag_ChangingRenderContext; } }
-
-    BOOL isManuallyCalibrating() const;
-    void BeginManualCalibration();
-    const std::string& getCalibrationText() const;
 
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
@@ -343,6 +333,91 @@ private:
 };
 
 extern LLHMD gHMD;
+
+
+
+// dummmy class to satisfy API requirements on platforms which we don't support HMD on
+class LLHMDImpl
+{
+public:
+    static const S32 kDefaultHResolution = 1280;
+    static const S32 kDefaultVResolution = 800;
+    static const F32 kDefaultHScreenSize;
+    static const F32 kDefaultVScreenSize;
+    static const F32 kDefaultInterpupillaryOffset;
+    static const F32 kDefaultLenSeparationDistance;
+    static const F32 kDefaultEyeToScreenDistance;
+    static const F32 kDefaultDistortionConstant0;
+    static const F32 kDefaultDistortionConstant1;
+    static const F32 kDefaultDistortionConstant2;
+    static const F32 kDefaultDistortionConstant3;
+    static const F32 kDefaultXCenterOffset;
+    static const F32 kDefaultYCenterOffset;
+    static const F32 kDefaultDistortionScale;
+    static const F32 kDefaultOrthoPixelOffset;
+    static const F32 kDefaultVerticalFOVRadians;
+    static const F32 kDefaultAspect;
+    static const F32 kDefaultAspectMult;
+
+
+public:
+    LLHMDImpl() {}
+    virtual ~LLHMDImpl() {}
+
+    virtual BOOL preInit() { return FALSE; }
+    virtual BOOL postDetectionInit() { return FALSE; }
+    virtual void shutdown() {}
+    virtual void onIdle() {}
+    virtual U32 getCurrentEye() const { return 0; }
+    virtual void setCurrentEye(U32 eye) {}
+    virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h) { x = y = w = h = 0; }
+
+    virtual S32 getHMDWidth() const { return kDefaultHResolution; }
+    virtual S32 getHMDEyeWidth() const { return (kDefaultHResolution / 2); }
+    virtual S32 getHMDHeight() const { return kDefaultVResolution; }
+    virtual S32 getHMDUIWidth() const { return kDefaultHResolution; }
+    virtual S32 getHMDUIHeight() const { return kDefaultVResolution; }
+    virtual F32 getPhysicalScreenWidth() const { return kDefaultHScreenSize; }
+    virtual F32 getPhysicalScreenHeight() const { return kDefaultVScreenSize; }
+    virtual F32 getInterpupillaryOffset() const { return kDefaultInterpupillaryOffset; }
+    virtual F32 getInterpupillaryOffsetDefault() const { return kDefaultInterpupillaryOffset; }
+    virtual void setInterpupillaryOffset(F32 f) {}
+    virtual F32 getLensSeparationDistance() const { return kDefaultLenSeparationDistance; }
+    virtual F32 getEyeToScreenDistance() const { return kDefaultEyeToScreenDistance; }
+    virtual F32 getEyeToScreenDistanceDefault() const { return kDefaultEyeToScreenDistance; }
+    virtual void setEyeToScreenDistance(F32 f) {}
+    virtual F32 getVerticalFOV() { return kDefaultVerticalFOVRadians; }
+    virtual F32 getAspect() { return kDefaultAspect; }
+    virtual F32 getAspectMultiplier() { return kDefaultAspectMult; }
+    virtual void setAspectMultiplier(F32 f) {}
+
+    virtual LLVector4 getDistortionConstants() const { return LLVector4::zero; }
+
+    virtual F32 getXCenterOffset() const { return 0.0f; }
+    virtual F32 getYCenterOffset() const { return 0.0f; }
+    virtual F32 getDistortionScale() const { return kDefaultDistortionScale; }
+
+    virtual BOOL useMotionPrediction() { return FALSE; }
+    virtual BOOL useMotionPredictionDefault() const { return FALSE; }
+    virtual void useMotionPrediction(BOOL b) {}
+    virtual F32 getMotionPredictionDelta() { return 0.0f; }
+    virtual F32 getMotionPredictionDeltaDefault() const { return 0.03f; }
+    virtual void setMotionPredictionDelta(F32 f) {}
+
+    virtual LLQuaternion getHMDOrient() const { return LLQuaternion::DEFAULT; }
+
+    virtual F32 getRoll() const { return 0.0f; }
+    virtual F32 getPitch() const { return 0.0f; }
+    virtual F32 getYaw() const { return 0.0f; }
+    virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = pitch = yaw = 0.0f; }
+
+    virtual LLQuaternion getHeadRotationCorrection() const { return LLQuaternion::DEFAULT; }
+    virtual void addHeadRotationCorrection(LLQuaternion quat) {}
+
+    virtual F32 getOrthoPixelOffset() const { return kDefaultOrthoPixelOffset; }
+
+    virtual void resetOrientation() {}
+};
 
 #endif // LL_LLHMD_H
 

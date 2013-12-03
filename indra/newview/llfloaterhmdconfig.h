@@ -44,11 +44,9 @@ public:
 	virtual BOOL postBuild();
 	virtual void onOpen(const LLSD& key);
 	virtual void onClose(bool app_quitting);
-	//virtual void draw();
 
     static LLFloaterHMDConfig* getInstance();
 
-    void onClickCalibrate();
     void onClickCancel();
     void onClickSave();
     void onClickResetValues();

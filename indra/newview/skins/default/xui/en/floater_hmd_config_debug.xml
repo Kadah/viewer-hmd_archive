@@ -583,18 +583,6 @@ Motion Prediction Delta
           height="25"
           width="90">
           <button
-            name="hmd_config_debug_hmd_calibrate_button"
-            label="Calibrate"
-            follows="all">
-            <commit_callback function="HMDConfigDebug.Calibrate" />
-          </button>
-        </layout_panel>
-        <layout_panel
-          auto_resize="false"
-          text_color="white"
-          height="25"
-          width="90">
-          <button
             name="hmd_config_debug_hmd_reset_values_button"
             label="Reset Values"
             follows="all">

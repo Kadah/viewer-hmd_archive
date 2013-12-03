@@ -78,7 +78,6 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
 {
     sInstance = this;
 
-    mCommitCallbackRegistrar.add("HMDConfigDebug.Calibrate", boost::bind(&LLFloaterHMDConfigDebug::onClickCalibrate, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.ResetValues", boost::bind(&LLFloaterHMDConfigDebug::onClickResetValues, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.Cancel", boost::bind(&LLFloaterHMDConfigDebug::onClickCancel, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.Save", boost::bind(&LLFloaterHMDConfigDebug::onClickSave, this));
@@ -150,8 +149,6 @@ BOOL LLFloaterHMDConfigDebug::postBuild()
 void LLFloaterHMDConfigDebug::onOpen(const LLSD& key)
 {
     LLFloaterHMDConfigDebug* pPanel = LLFloaterHMDConfigDebug::getInstance();
-    gHMD.shouldShowCalibrationUI(TRUE);
-
     if (pPanel->mInterpupillaryOffsetSliderCtrl)
     {
         pPanel->mInterpupillaryOffsetOriginal = gHMD.getInterpupillaryOffset() * 1000.0f;
@@ -248,12 +245,6 @@ void LLFloaterHMDConfigDebug::onClose(bool app_quitting)
     {
         onClickCancel();
     }
-    gHMD.shouldShowCalibrationUI(FALSE);
-}
-
-void LLFloaterHMDConfigDebug::onClickCalibrate()
-{
-    gHMD.BeginManualCalibration();
 }
 
 void LLFloaterHMDConfigDebug::onClickResetValues()

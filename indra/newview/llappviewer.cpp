@@ -1707,6 +1707,9 @@ bool LLAppViewer::cleanup()
 
 	llinfos << "Cleaning Up" << llendflush;
 
+    // shut down HMD manager
+    gHMD.shutdown();
+
 	// shut down mesh streamer
 	gMeshRepo.shutdown();
 
@@ -1808,8 +1811,6 @@ bool LLAppViewer::cleanup()
 	// Clean up before GL is shut down because we might be holding on to objects with texture references
 	LLSelectMgr::cleanupGlobals();
 	
-    gHMD.shutdown();
-
 	llinfos << "Shutting down OpenGL" << llendflush;
 
 	// Shut down OpenGL

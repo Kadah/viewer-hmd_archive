@@ -51,7 +51,6 @@ LLFloaterHMDConfig::LLFloaterHMDConfig(const LLSD& key)
 {
     sInstance = this;
 
-    mCommitCallbackRegistrar.add("HMDConfig.Calibrate", boost::bind(&LLFloaterHMDConfig::onClickCalibrate, this));
     mCommitCallbackRegistrar.add("HMDConfig.ResetValues", boost::bind(&LLFloaterHMDConfig::onClickResetValues, this));
     mCommitCallbackRegistrar.add("HMDConfig.Cancel", boost::bind(&LLFloaterHMDConfig::onClickCancel, this));
     mCommitCallbackRegistrar.add("HMDConfig.Save", boost::bind(&LLFloaterHMDConfig::onClickSave, this));
@@ -91,17 +90,11 @@ BOOL LLFloaterHMDConfig::postBuild()
     mUISurfaceShapePresetLabelCtrl = getChild<LLUICtrl>("uisurface_shape_preset_value");
 
     return LLFloater::postBuild();
-	//return LLPanel::postBuild();
 }
 
 void LLFloaterHMDConfig::onOpen(const LLSD& key)
 {
     LLFloaterHMDConfig* pPanel = LLFloaterHMDConfig::getInstance();
-    //bool visible = pPanel->getVisible();
-
-    gHMD.shouldShowCalibrationUI(TRUE);
-    //pPanel->setVisible( !visible );
-
     if (pPanel->mInterpupillaryOffsetSliderCtrl)
     {
         pPanel->mInterpupillaryOffsetOriginal = gHMD.getInterpupillaryOffset() * 1000.0f;
@@ -139,18 +132,6 @@ void LLFloaterHMDConfig::onClose(bool app_quitting)
     {
         onClickCancel();
     }
-    gHMD.shouldShowCalibrationUI(FALSE);
-}
-
-//void LLFloaterHMDConfig::draw()
-//{
-//    // maybe override not needed here - TODO: remove if not.
-//    LLPanel::draw();
-//}
-
-void LLFloaterHMDConfig::onClickCalibrate()
-{
-    gHMD.BeginManualCalibration();
 }
 
 void LLFloaterHMDConfig::onClickResetValues()
