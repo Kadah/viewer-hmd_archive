@@ -30,6 +30,8 @@
 #include "llsliderctrl.h"
 #include "llfloaterreg.h"
 #include "llhmd.h"
+#include "lltrans.h"
+
 
 LLFloaterHMDConfig* LLFloaterHMDConfig::sInstance = NULL;
 
@@ -167,38 +169,23 @@ void LLFloaterHMDConfig::onClickSave()
 
 void LLFloaterHMDConfig::onSetInterpupillaryOffset()
 {
-    F32 f = mInterpupillaryOffsetSliderCtrl->getValueF32();
-    gHMD.setInterpupillaryOffset(f / 1000.0f);
+    F32 f = llround(mInterpupillaryOffsetSliderCtrl->getValueF32(), mInterpupillaryOffsetSliderCtrl->getIncrement());
+    F32 newVal = llround(f / 1000.0f, mInterpupillaryOffsetSliderCtrl->getIncrement() / 1000.0f);
+    gHMD.setInterpupillaryOffset(newVal);
     updateInterpupillaryOffsetLabel();
     updateDirty();
 }
 
 void LLFloaterHMDConfig::updateInterpupillaryOffsetLabel()
 {
-    std::ostringstream s;
-    s << (gHMD.getInterpupillaryOffset() * 1000.0f) << " mm";
-    mInterpupillaryOffsetAmountCtrl->setValue(s.str());
-}
-
-void LLFloaterHMDConfig::onSetUISurfaceOffsetDepth()
-{
-    F32 f = mUISurfaceOffsetDepthSliderCtrl->getValueF32();
-    gHMD.setUISurfaceOffsetDepth(f);
-    updateUISurfaceOffsetDepthLabel();
-    updateUIShapePresetLabel();
-    updateDirty();
-}
-
-void LLFloaterHMDConfig::updateUISurfaceOffsetDepthLabel()
-{
-    std::ostringstream s;
-    s << gHMD.getUISurfaceOffsetDepth();
-    mUISurfaceOffsetDepthAmountCtrl->setValue(s.str());
+	LLStringUtil::format_map_t args;
+	args["[VAL]"] = llformat("%.1f", gHMD.getInterpupillaryOffset() * 1000.0f);
+	mInterpupillaryOffsetAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsMillimeters", args));
 }
 
 void LLFloaterHMDConfig::onSetUIMagnification()
 {
-    F32 f = mUIMagnificationSliderCtrl->getValueF32();
+    F32 f = llround(mUIMagnificationSliderCtrl->getValueF32(), mUIMagnificationSliderCtrl->getIncrement());
     gHMD.setUIMagnification(f);
     updateUIMagnificationLabel();
     updateUIShapePresetLabel();
@@ -207,9 +194,21 @@ void LLFloaterHMDConfig::onSetUIMagnification()
 
 void LLFloaterHMDConfig::updateUIMagnificationLabel()
 {
-    std::ostringstream s;
-    s << gHMD.getUIMagnification();
-    mUIMagnificationAmountCtrl->setValue(s.str());
+    mUIMagnificationAmountCtrl->setValue(llformat("%.0f", gHMD.getUIMagnification()));
+}
+
+void LLFloaterHMDConfig::onSetUISurfaceOffsetDepth()
+{
+    F32 f = llround(mUISurfaceOffsetDepthSliderCtrl->getValueF32(), mUISurfaceOffsetDepthSliderCtrl->getIncrement());
+    gHMD.setUISurfaceOffsetDepth(f);
+    updateUISurfaceOffsetDepthLabel();
+    updateUIShapePresetLabel();
+    updateDirty();
+}
+
+void LLFloaterHMDConfig::updateUISurfaceOffsetDepthLabel()
+{
+    mUISurfaceOffsetDepthAmountCtrl->setValue(llformat("%.2f", gHMD.getUISurfaceOffsetDepth()));
 }
 
 void LLFloaterHMDConfig::onSetUIShapePreset()
@@ -218,9 +217,9 @@ void LLFloaterHMDConfig::onSetUIShapePreset()
     gHMD.setUIShapePresetIndex((S32)f);
     updateUIShapePresetLabel();
 
-    mUISurfaceOffsetDepthSliderCtrl->setValue(gHMD.getUISurfaceOffsetDepth());
+    mUISurfaceOffsetDepthSliderCtrl->setValue(llround(gHMD.getUISurfaceOffsetDepth(), mUISurfaceOffsetDepthSliderCtrl->getIncrement()));
     updateUISurfaceOffsetDepthLabel();
-    mUIMagnificationSliderCtrl->setValue(gHMD.getUIMagnification());
+    mUIMagnificationSliderCtrl->setValue(llround(gHMD.getUIMagnification(), mUIMagnificationSliderCtrl->getIncrement()));
     updateUIMagnificationLabel();
     updateDirty();
 }
@@ -228,6 +227,13 @@ void LLFloaterHMDConfig::onSetUIShapePreset()
 void LLFloaterHMDConfig::updateUIShapePresetLabel()
 {
     mUISurfaceShapePresetLabelCtrl->setValue(gHMD.getUIShapeName());
+    // This method is called from a number of places since the preset index can be changed as a side effect of a number
+    // of other values being modified.  So, to keep the slider in sync with the actual value, we update the slider value
+    // here to match the real value.
+    if (gHMD.getUIShapePresetIndex() != (S32)mUISurfaceShapePresetSliderCtrl->getValueF32())
+    {
+        mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndex(), TRUE);
+    }
 }
 
 void LLFloaterHMDConfig::updateDirty()
@@ -244,6 +250,6 @@ void LLFloaterHMDConfig::updateDirty()
     mDirty = FALSE;
     for (U32 i = 0; i < numVals; ++i)
     {
-        mDirty = mDirty || (cur[i][0] != cur[i][1] ? TRUE : FALSE);
+        mDirty = mDirty || !is_approx_equal(cur[i][0], cur[i][1]);
     }
 }

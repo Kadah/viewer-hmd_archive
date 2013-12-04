@@ -47,6 +47,7 @@
 #include "lltool.h"
 #include "llfloatercamera.h"
 #include "llhmdimploculus.h"
+#include "lltrans.h"
 
 
 const F32 LLHMDImpl::kDefaultHScreenSize = 0.14976f;
@@ -69,31 +70,23 @@ const F32 LLHMDImpl::kDefaultAspectMult = 1.0f;
 
 LLHMD gHMD;
 
-const LLHMD::UISurfaceShapeSettings LLHMD::sHMDUISurfacePresets[] = 
-{
-    // NOTE: mName (first field) currently has a MAX of 32 chars (including NULL)
-    { "Custom", 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
-    { "Surround1", 0.0f, 0.0f, -0.2f, 1.0f, 1.0f, 0.2f, 1.2f, 0.9f * F_PI, 0.6f * F_PI, 650.0f },
-    { "Surround2", 0.0f, 0.0f, 0.0f, 0.3f, 0.6f, 0.5f, 0.7f, 0.75f * F_PI, 0.51f * F_PI, 600.0f },
-    { "Floating1", 0.0f, 0.0f, -0.1f, 0.6f, 0.6f, 0.5f, 1.6f, 0.62f * F_PI, 0.23f * F_PI, 700.0f },
-    { "Floating2", 0.0f, 0.0f, -0.1f, 1.0f, 1.2f, 0.1f, 1.1f, 0.51f * F_PI, 0.31f * F_PI, 870.0f },
-};
-const size_t LLHMD::sNumHMDUISurfacePresets = sizeof(LLHMD::sHMDUISurfacePresets) / sizeof(LLHMD::UISurfaceShapeSettings);
-
-
 LLHMD::LLHMD()
     : mImpl(NULL)
+    , mFlags(0)
     , mRenderMode(RenderMode_None)
-    , mMainWindowSize(LLHMDImpl::kDefaultHResolution, LLHMDImpl::kDefaultVResolution)
-    , mMainClientSize(LLHMDImpl::kDefaultHResolution, LLHMDImpl::kDefaultVResolution)
-    , mEyeDepth(0.075f)
-    , mUIEyeDepth(0.6f)
+    , mInterpupillaryDistance(0.064f)
+    , mEyeDepth(0.0f)
+    , mUIEyeDepth(0.65f)
+    , mUIShapePreset(0)
+    , mNextUserPresetIndex(1)
     , mMouseWorldSizeMult(5.0f)
     , mPresetUIAspect(1.6f)
-    , mCalibrateBackgroundTexture(NULL)
-    , mCalibrateForegroundTexture(NULL)
 {
-    mUIShape = sHMDUISurfacePresets[1];
+    memset(&mUIShape, 0, sizeof(UISurfaceShapeSettings));
+    mUIShape.mPresetType = (U32)LLHMD::kCustom;
+    mUIShape.mPresetTypeIndex = 0;
+    // "Custom" preset is always in index 0
+    mUIPresetValues.push_back(mUIShape);
 }
 
 
@@ -143,6 +136,8 @@ BOOL LLHMD::init()
     onChangeUISurfaceSavedParams();
     gSavedSettings.getControl("HMDUIMagnification")->getSignal()->connect(boost::bind(&onChangeUIMagnification));
     onChangeUIMagnification();
+    gSavedSettings.getControl("HMDUIPresetValues")->getSignal()->connect(boost::bind(&onChangePresetValues));
+    onChangePresetValues();
     gSavedSettings.getControl("HMDUIShapePreset")->getSignal()->connect(boost::bind(&onChangeUIShapePreset));
     onChangeUIShapePreset();
     gSavedSettings.getControl("HMDWorldCursorSizeMult")->getSignal()->connect(boost::bind(&onChangeWorldCursorSizeMult));
@@ -237,9 +232,6 @@ BOOL LLHMD::init()
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolpathfindingpathendadd.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
         //UI_CURSOR_TOOLNO
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/llno.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
-
-        mCalibrateBackgroundTexture = LLViewerTextureManager::getFetchedTextureFromFile("hmd/test_pattern_bkg.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI);
-        mCalibrateForegroundTexture = LLViewerTextureManager::getFetchedTextureFromFile("hmd/cube_test-01.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI);
     }
     else
 #endif
@@ -260,7 +252,8 @@ void LLHMD::onChangeUIMagnification() { gHMD.setUIMagnification(gSavedSettings.g
 
 void LLHMD::onChangeUISurfaceSavedParams()
 {
-    strcpy(gHMD.mUIShape.mName, "Custom");
+    gHMD.mUIShape.mPresetType = (U32)LLHMD::kCustom;
+    gHMD.mUIShape.mPresetTypeIndex = 1;
     gHMD.mUIShape.mArcHorizontal = gSavedSettings.getF32("HMDUISurfaceArcHorizontal");
     gHMD.mUIShape.mArcVertical = gSavedSettings.getF32("HMDUISurfaceArcVertical");
     gHMD.mUIShape.mToroidRadiusWidth = gSavedSettings.getF32("HMDUISurfaceToroidWidth");
@@ -272,6 +265,80 @@ void LLHMD::onChangeUISurfaceSavedParams()
     gHMD.mUIShape.mOffsetY = offsets[VY];
     gHMD.mUIShape.mOffsetZ = offsets[VZ];
     onChangeUISurfaceShape();
+}
+
+void LLHMD::onChangePresetValues()
+{
+    LLSD raw = gSavedSettings.getLLSD("HMDUIPresetValues");
+    gHMD.mUIPresetValues.clear();
+    {
+        // "Custom" preset is always in index 0
+        UISurfaceShapeSettings settings;
+        memset(&settings, 0, sizeof(UISurfaceShapeSettings));
+        settings.mPresetType = (U32)LLHMD::kCustom;
+        settings.mPresetTypeIndex = 1;
+        gHMD.mUIPresetValues.push_back(settings);
+    }
+    U32 nextDefault = 1;
+    gHMD.mNextUserPresetIndex = 1;
+    for (LLSD::array_const_iterator it1 = raw.beginArray(), it1End = raw.endArray(); it1 != it1End; ++it1)
+    {
+        const LLSD& entry = *it1;
+        UISurfaceShapeSettings settings;
+        memset(&settings, 0, sizeof(UISurfaceShapeSettings));
+        for (LLSD::map_const_iterator it2 = entry.beginMap(), it2End = entry.endMap(); it2 != it2End; ++it2)
+        {
+            const std::string& key = it2->first;
+            if (!strncasecmp(key.c_str(), "PresetType", 32))
+            {
+                if (!strncasecmp(it2->second.asString().c_str(), "Default", 16))
+                {
+                    settings.mPresetType = (U32)LLHMD::kDefault;
+                    settings.mPresetTypeIndex = nextDefault++;
+                }
+                else
+                {
+                    settings.mPresetType = (U32)LLHMD::kUser;
+                    settings.mPresetTypeIndex = gHMD.mNextUserPresetIndex++;
+                }
+            }
+            else if (!strncasecmp(key.c_str(), "ToroidRadiusWidth", 32))
+            {
+                settings.mToroidRadiusWidth = it2->second.asReal();
+            }
+            else if (!strncasecmp(key.c_str(), "ToroidRadiusDepth", 32))
+            {
+                settings.mToroidRadiusDepth = it2->second.asReal();
+            }
+            else if (!strncasecmp(key.c_str(), "ToroidCSRadiusWidth", 32))
+            {
+                settings.mToroidCrossSectionRadiusWidth = it2->second.asReal();
+            }
+            else if (!strncasecmp(key.c_str(), "ToroidCSRadiusHeight", 32))
+            {
+                settings.mToroidCrossSectionRadiusHeight = it2->second.asReal();
+            }
+            else if (!strncasecmp(key.c_str(), "ArcHorizontal", 32))
+            {
+                settings.mArcHorizontal = it2->second.asReal();
+            }
+            else if (!strncasecmp(key.c_str(), "ArcVertical", 32))
+            {
+                settings.mArcVertical = it2->second.asReal();
+            }
+            else if (!strncasecmp(key.c_str(), "UIMagnification", 32))
+            {
+                settings.mUIMagnification = it2->second.asReal();
+            }
+            else if (!strncasecmp(key.c_str(), "Offsets", 32))
+            {
+                settings.mOffsetX = it2->second[0].asReal();
+                settings.mOffsetY = it2->second[1].asReal();
+                settings.mOffsetZ = it2->second[2].asReal();
+            }
+        }
+        gHMD.mUIPresetValues.push_back(settings);
+    }
 }
 
 void LLHMD::onChangeUIShapePreset() { gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset")); }
@@ -295,6 +362,26 @@ void LLHMD::saveSettings()
     gSavedSettings.setF32("HMDEyeDepth", gHMD.getEyeDepth());
     gSavedSettings.setBOOL("HMDUseMotionPrediction", gHMD.useMotionPrediction());
     gSavedSettings.setF32("HMDWorldCursorSizeMult", gHMD.getWorldCursorSizeMult());
+
+    static const char* kPresetTypeStrings[] = { "Custom", "Default", "User" };
+    LLSDArray entries;
+    U32 numPresets = mUIPresetValues.size();
+    for (U32 i = 1; i < numPresets; ++i)
+    {
+        const UISurfaceShapeSettings& settings = mUIPresetValues[i];
+        LLSDMap entry;
+        entry("PresetType", kPresetTypeStrings[settings.mPresetType]);
+        entry("ToroidRadiusWidth", settings.mToroidRadiusWidth);
+        entry("ToroidRadiusDepth", settings.mToroidRadiusDepth);
+        entry("ToroidCSRadiusWidth", settings.mToroidCrossSectionRadiusWidth);
+        entry("ToroidCSRadiusHeight", settings.mToroidCrossSectionRadiusHeight);
+        entry("ArcHorizontal", settings.mArcHorizontal);
+        entry("ArcVertical", settings.mArcVertical);
+        entry("UIMagnification", settings.mUIMagnification);
+        entry("Offsets", LLSDArray(settings.mOffsetX)(settings.mOffsetY)(settings.mOffsetZ));
+        entries(entry);
+    }
+    gSavedSettings.setLLSD("HMDUIPresetValues", entries);
 }
 
 void LLHMD::onChangeUISurfaceShape()
@@ -631,7 +718,8 @@ void LLHMD::setUIMagnification(F32 f)
     {
         mUIShape.mUIMagnification = f;
         mUIShapePreset = 0;
-        strcpy(mUIShape.mName, "Custom");
+        gHMD.mUIShape.mPresetType = (U32)LLHMD::kCustom;
+        gHMD.mUIShape.mPresetTypeIndex = 1;
         calculateUIEyeDepth();
     }
 }
@@ -642,11 +730,12 @@ void LLHMD::setUISurfaceParam(F32* p, F32 f)
     {
         return;
     }
-    if (f != *p)
+    if (!is_approx_equal(f, *p))
     {
         *p = f;
         mUIShapePreset = 0;
-        strcpy(mUIShape.mName, "Custom");
+        mUIShape.mPresetType = (U32)LLHMD::kCustom;
+        mUIShape.mPresetTypeIndex = 1;
         onChangeUISurfaceShape();
     }
 }
@@ -672,6 +761,17 @@ F32 LLHMD::getMotionPredictionDeltaDefault() const { return mImpl ? mImpl->getMo
 void LLHMD::setMotionPredictionDelta(F32 f) { if (mImpl) { mImpl->setMotionPredictionDelta(f); } }
 //LLVector4 LLHMD::getChromaticAberrationConstants() const { return mImpl ? mImpl->getChromaticAberrationConstants() : LLVector4::zero; }
 F32 LLHMD::getOrthoPixelOffset() const { return mImpl ? mImpl->getOrthoPixelOffset() : 0.0f; }
+
+std::string LLHMD::getUIShapeName() const
+{
+    if (mUIShape.mPresetType >= (U32)LLHMD::kDefault)
+    {
+	    LLStringUtil::format_map_t args;
+	    args["[INDEX]"] = llformat ("%u", mUIShape.mPresetTypeIndex);
+        return LLTrans::getString(mUIShape.mPresetType == (U32)LLHMD::kDefault ? "HMDPresetDefault" : "HMDPresetUser", args);
+    }
+    return LLTrans::getString("HMDPresetCustom");
+}
 
 void LLHMD::calculateUIEyeDepth()
 {
@@ -715,30 +815,91 @@ void LLHMD::setUIModelView(F32* m)
 
 void LLHMD::setUIShapePresetIndex(S32 idx)
 {
-    if (idx < 0 || idx >= (S32)sNumHMDUISurfacePresets)
+    if (idx < 0 || idx >= (S32)mUIPresetValues.size())
     {
         idx = 0;
     }
     mUIShapePreset = idx;
     if (idx == 0)
     {
-        strcpy(mUIShape.mName, "Custom");
+        mUIShape.mPresetType = (U32)LLHMD::kCustom;
+        mUIShape.mPresetTypeIndex = 1;
     }
     else // if (idx > 0)
     {
-        mUIShape = sHMDUISurfacePresets[idx];
+        mUIShape = mUIPresetValues[idx];
         calculateUIEyeDepth();
         onChangeUISurfaceShape();
     }
 }
 
-const LLHMD::UISurfaceShapeSettings& LLHMD::getUIShapePreset(S32 idx)
+LLHMD::UISurfaceShapeSettings LLHMD::getUIShapePreset(S32 idx)
 {
-    if (idx < 0 || idx >= (S32)sNumHMDUISurfacePresets)
+    // Note: intentionally NOT returning a const ref here.  We do a copy because the contents of the vector can
+    // change and if it does, any refs held by others will become invalid and could cause crashes/memory corruption
+    // if accessed.
+    if (idx < 0 || idx >= (S32)mUIPresetValues.size())
     {
         idx = 0;
     }
-    return sHMDUISurfacePresets[idx];
+    return mUIPresetValues[idx];
+}
+
+BOOL LLHMD::addPreset()
+{
+    if (mUIShape.mPresetType != (U32)LLHMD::kCustom)
+    {
+        return FALSE;
+    }
+    // verify that the current settings are different than all other saved presets
+    U32 numPresets = mUIPresetValues.size();
+    for (U32 i = 1; i < numPresets; ++i)
+    {
+        const UISurfaceShapeSettings& settings = mUIPresetValues[i];
+        BOOL isSame = TRUE;
+        isSame = isSame && (mUIShape.mOffsetX == settings.mOffsetX);
+        isSame = isSame && (mUIShape.mOffsetY == settings.mOffsetY);
+        isSame = isSame && (mUIShape.mOffsetZ == settings.mOffsetZ);
+        isSame = isSame && (mUIShape.mToroidRadiusWidth == settings.mToroidRadiusWidth);
+        isSame = isSame && (mUIShape.mToroidRadiusDepth == settings.mToroidRadiusDepth);
+        isSame = isSame && (mUIShape.mToroidCrossSectionRadiusWidth == settings.mToroidCrossSectionRadiusWidth);
+        isSame = isSame && (mUIShape.mToroidCrossSectionRadiusHeight == settings.mToroidCrossSectionRadiusHeight);
+        isSame = isSame && (mUIShape.mArcHorizontal == settings.mArcHorizontal);
+        isSame = isSame && (mUIShape.mArcVertical == settings.mArcVertical);
+        isSame = isSame && (mUIShape.mUIMagnification == settings.mUIMagnification);
+        if (isSame)
+        {
+            setUIShapePresetIndex(i);
+            return TRUE;
+        }
+    }
+
+    // the current values are different than all existing presets, so add a new preset
+    mUIShape.mPresetType = (U32)LLHMD::kUser;
+    mUIShape.mPresetTypeIndex = mNextUserPresetIndex++;
+    mUIPresetValues.push_back(mUIShape);
+    setUIShapePresetIndex(numPresets);
+    return TRUE;
+}
+
+BOOL LLHMD::removePreset(S32 idx)
+{
+    if (idx < 1 || idx >= (S32)mUIPresetValues.size())
+    {
+        return FALSE;
+    }
+    if (mUIPresetValues[idx].mPresetType != (U32)LLHMD::kUser)
+    {
+        return FALSE;
+    }
+    mUIPresetValues.erase(mUIPresetValues.begin() + idx);
+    if (mUIShapePreset == idx)
+    {
+        mUIShapePreset = 0;
+        mUIShape.mPresetType = (U32)LLHMD::kCustom;
+        mUIShape.mPresetTypeIndex = 1;
+    }
+    return TRUE;
 }
 
 // Creates a surface that is part of an outer shell of a torus.

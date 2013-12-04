@@ -48,6 +48,8 @@ public:
 
     static LLFloaterHMDConfigDebug* getInstance();
 
+    void onClickAddPreset();
+    void onClickRemovePreset();
     void onClickCancel();
     void onClickSave();
     void onClickResetValues();
@@ -77,7 +79,7 @@ protected:
     void onSetUIMagnification();
     void updateUIMagnificationLabel();
     void onSetUIShapePreset();
-    void updateUIShapePresetLabel();
+    void updateUIShapePresetLabel(BOOL typeChanged);
 
     void updateDirty();
 

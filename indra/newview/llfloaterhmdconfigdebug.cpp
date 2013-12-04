@@ -31,6 +31,8 @@
 #include "llcheckboxctrl.h"
 #include "llfloaterreg.h"
 #include "llhmd.h"
+#include "lltrans.h"
+
 
 LLFloaterHMDConfigDebug* LLFloaterHMDConfigDebug::sInstance = NULL;
 
@@ -78,6 +80,8 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
 {
     sInstance = this;
 
+    mCommitCallbackRegistrar.add("HMDConfigDebug.AddPreset", boost::bind(&LLFloaterHMDConfigDebug::onClickAddPreset, this));
+    mCommitCallbackRegistrar.add("HMDConfigDebug.RemovePreset", boost::bind(&LLFloaterHMDConfigDebug::onClickRemovePreset, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.ResetValues", boost::bind(&LLFloaterHMDConfigDebug::onClickResetValues, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.Cancel", boost::bind(&LLFloaterHMDConfigDebug::onClickCancel, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.Save", boost::bind(&LLFloaterHMDConfigDebug::onClickSave, this));
@@ -230,7 +234,7 @@ void LLFloaterHMDConfigDebug::onOpen(const LLSD& key)
     {
         pPanel->mUISurfaceShapePresetOriginal = (F32)gHMD.getUIShapePresetIndex();
         pPanel->mUISurfaceShapePresetSliderCtrl->setValue(pPanel->mUISurfaceShapePresetOriginal);
-        pPanel->updateUIShapePresetLabel();
+        pPanel->updateUIShapePresetLabel(TRUE);
     }
     mDirty = FALSE;
 }
@@ -247,13 +251,35 @@ void LLFloaterHMDConfigDebug::onClose(bool app_quitting)
     }
 }
 
+void LLFloaterHMDConfigDebug::onClickAddPreset()
+{
+    if (!gHMD.addPreset())
+    {
+        return;
+    }
+    mUISurfaceShapePresetSliderCtrl->setMaxValue((F32)gHMD.getNumUIShapePresets());
+    mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndex());
+    onSetUIShapePreset();
+}
+
+void LLFloaterHMDConfigDebug::onClickRemovePreset()
+{
+    if (!gHMD.removePreset((S32)mUISurfaceShapePresetSliderCtrl->getValue()))
+    {
+        return;
+    }
+    mUISurfaceShapePresetSliderCtrl->setMaxValue((F32)gHMD.getNumUIShapePresets());
+    mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndex());
+    onSetUIShapePreset();
+}
+
 void LLFloaterHMDConfigDebug::onClickResetValues()
 {
-    mInterpupillaryOffsetSliderCtrl->setValue(gHMD.getInterpupillaryOffsetDefault() * 1000.0f);
+    mInterpupillaryOffsetSliderCtrl->setValue(llround(gHMD.getInterpupillaryOffsetDefault() * 1000.0f, mInterpupillaryOffsetSliderCtrl->getIncrement()));
     onSetInterpupillaryOffset();
-    mEyeToScreenSliderCtrl->setValue(gHMD.getEyeToScreenDistanceDefault() * 1000.0f);
+    mEyeToScreenSliderCtrl->setValue(llround(gHMD.getEyeToScreenDistanceDefault() * 1000.0f, mEyeToScreenSliderCtrl->getIncrement()));
     onSetEyeToScreenDistance();
-    mMotionPredictionDeltaSliderCtrl->setValue(gHMD.getMotionPredictionDeltaDefault() * 1000.0f);
+    mMotionPredictionDeltaSliderCtrl->setValue(llround(gHMD.getMotionPredictionDeltaDefault() * 1000.0f, mMotionPredictionDeltaSliderCtrl->getIncrement()));
     onSetMotionPredictionDelta();
     mMotionPredictionCheckBoxCtrl->setValue(gHMD.useMotionPredictionDefault());
     onCheckMotionPrediction();
@@ -304,119 +330,145 @@ void LLFloaterHMDConfigDebug::onClickSave()
 
 void LLFloaterHMDConfigDebug::onSetInterpupillaryOffset()
 {
-    F32 f = mInterpupillaryOffsetSliderCtrl->getValueF32();
-    gHMD.setInterpupillaryOffset(f / 1000.0f);
+    F32 f = llround(mInterpupillaryOffsetSliderCtrl->getValueF32(), mInterpupillaryOffsetSliderCtrl->getIncrement());
+    F32 newVal = llround(f / 1000.0f, mInterpupillaryOffsetSliderCtrl->getIncrement() / 1000.0f);
+    gHMD.setInterpupillaryOffset(newVal);
     updateInterpupillaryOffsetLabel();
     updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::updateInterpupillaryOffsetLabel()
 {
-    std::ostringstream s;
-    s << (gHMD.getInterpupillaryOffset() * 1000.0f) << " mm";
-    mInterpupillaryOffsetAmountCtrl->setValue(s.str());
+	LLStringUtil::format_map_t args;
+	args["[VAL]"] = llformat("%.1f", gHMD.getInterpupillaryOffset() * 1000.0f);
+	mInterpupillaryOffsetAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsMillimeters", args));
 }
 
 void LLFloaterHMDConfigDebug::onSetUIMagnification()
 {
-    F32 f = mUIMagnificationSliderCtrl->getValueF32();
+    F32 f = llround(mUIMagnificationSliderCtrl->getValueF32(), mUIMagnificationSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUIMagnification(f);
     updateUIMagnificationLabel();
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
     updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::updateUIMagnificationLabel()
 {
-    std::ostringstream s;
-    s << gHMD.getUIMagnification();
-    mUIMagnificationAmountCtrl->setValue(s.str());
+    mUIMagnificationAmountCtrl->setValue(llformat("%.0f", gHMD.getUIMagnification()));
 }
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceOffsetDepth()
 {
-    F32 f = mUISurfaceOffsetDepthSliderCtrl->getValueF32();
+    F32 f = llround(mUISurfaceOffsetDepthSliderCtrl->getValueF32(), mUISurfaceOffsetDepthSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceOffsetDepth(f);
     updateUISurfaceOffsetDepthLabel();
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
     updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::updateUISurfaceOffsetDepthLabel()
 {
-    std::ostringstream s;
-    s << gHMD.getUISurfaceOffsetDepth();
-    mUISurfaceOffsetDepthAmountCtrl->setValue(s.str());
+    mUISurfaceOffsetDepthAmountCtrl->setValue(llformat("%.2f", gHMD.getUISurfaceOffsetDepth()));
 }
 
 void LLFloaterHMDConfigDebug::onSetUIShapePreset()
 {
     F32 f = mUISurfaceShapePresetSliderCtrl->getValueF32();
+    U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUIShapePresetIndex((S32)f);
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
 
-    mUISurfaceOffsetDepthSliderCtrl->setValue(gHMD.getUISurfaceOffsetDepth());
+    mUISurfaceOffsetDepthSliderCtrl->setValue(llround(gHMD.getUISurfaceOffsetDepth(), mUISurfaceOffsetDepthSliderCtrl->getIncrement()));
     updateUISurfaceOffsetDepthLabel();
-    mUIMagnificationSliderCtrl->setValue(gHMD.getUIMagnification());
+    mUIMagnificationSliderCtrl->setValue(llround(gHMD.getUIMagnification(), mUIMagnificationSliderCtrl->getIncrement()));
     updateUIMagnificationLabel();
-    mUISurfaceToroidRadiusWidthSliderCtrl->setValue(gHMD.getUISurfaceToroidRadiusWidth());
-    onSetUISurfaceToroidRadiusWidth();
-    mUISurfaceToroidRadiusDepthSliderCtrl->setValue(gHMD.getUISurfaceToroidRadiusDepth());
-    onSetUISurfaceToroidRadiusDepth();
-    mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->setValue(gHMD.getUISurfaceToroidCrossSectionRadiusWidth());
-    onSetUISurfaceToroidCrossSectionRadiusWidth();
-    mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->setValue(gHMD.getUISurfaceToroidCrossSectionRadiusHeight());
-    onSetUISurfaceToroidCrossSectionRadiusHeight();
-    mUISurfaceToroidArcHorizontalSliderCtrl->setValue(gHMD.getUISurfaceArcHorizontal() / F_PI);
-    onSetUISurfaceToroidArcHorizontal();
-    mUISurfaceToroidArcVerticalSliderCtrl->setValue(gHMD.getUISurfaceArcVertical() / F_PI);
-    onSetUISurfaceToroidArcVertical();
+    mUISurfaceToroidRadiusWidthSliderCtrl->setValue(llround(gHMD.getUISurfaceToroidRadiusWidth(), mUISurfaceToroidRadiusWidthSliderCtrl->getIncrement()));
+    updateUISurfaceToroidRadiusWidthLabel();
+    mUISurfaceToroidRadiusDepthSliderCtrl->setValue(llround(gHMD.getUISurfaceToroidRadiusDepth(), mUISurfaceToroidRadiusDepthSliderCtrl->getIncrement()));
+    updateUISurfaceToroidRadiusDepthLabel();
+    mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->setValue(llround(gHMD.getUISurfaceToroidCrossSectionRadiusWidth(), mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getIncrement()));
+    updateUISurfaceToroidCrossSectionRadiusWidthLabel();
+    mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->setValue(llround(gHMD.getUISurfaceToroidCrossSectionRadiusHeight(), mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getIncrement()));
+    updateUISurfaceToroidCrossSectionRadiusHeightLabel();
+    mUISurfaceToroidArcHorizontalSliderCtrl->setValue(llround(gHMD.getUISurfaceArcHorizontal() / F_PI, mUISurfaceToroidArcHorizontalSliderCtrl->getIncrement()));
+    updateUISurfaceToroidArcHorizontalLabel();
+    mUISurfaceToroidArcVerticalSliderCtrl->setValue(llround(gHMD.getUISurfaceArcVertical() / F_PI, mUISurfaceToroidArcVerticalSliderCtrl->getIncrement()));
+    updateUISurfaceToroidArcVerticalLabel();
     updateDirty();
 }
 
-void LLFloaterHMDConfigDebug::updateUIShapePresetLabel()
+void LLFloaterHMDConfigDebug::updateUIShapePresetLabel(BOOL typeChanged)
 {
     mUISurfaceShapePresetLabelCtrl->setValue(gHMD.getUIShapeName());
+    // This method is called from a number of places since the preset index can be changed as a side effect of a number
+    // of other values being modified.  So, to keep the slider in sync with the actual value, we update the slider value
+    // here to match the real value.
+    if (gHMD.getUIShapePresetIndex() != (S32)mUISurfaceShapePresetSliderCtrl->getValueF32())
+    {
+        mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndex(), TRUE);
+    }
+    if (typeChanged)
+    {
+        LLButton* buttonAdd = getChild<LLButton>("hmd_config_debug_hmd_add_preset");
+        LLButton* buttonRemove = getChild<LLButton>("hmd_config_debug_hmd_remove_preset");
+        switch (gHMD.getUIShapePresetType())
+        {
+        case LLHMD::kCustom:
+            if (buttonAdd) buttonAdd->setEnabled(TRUE);
+            if (buttonRemove) buttonRemove->setEnabled(FALSE);
+            break;
+        case LLHMD::kDefault:
+            if (buttonAdd) buttonAdd->setEnabled(FALSE);
+            if (buttonRemove) buttonRemove->setEnabled(FALSE);
+            break;
+        case LLHMD::kUser:
+            if (buttonAdd) buttonAdd->setEnabled(FALSE);
+            if (buttonRemove) buttonRemove->setEnabled(TRUE);
+            break;
+        }
+    }
 }
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidRadiusWidth()
 {
-    F32 f = mUISurfaceToroidRadiusWidthSliderCtrl->getValueF32();
+    F32 f = llround(mUISurfaceToroidRadiusWidthSliderCtrl->getValueF32(), mUISurfaceToroidRadiusWidthSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceToroidRadiusWidth(f);
     updateUISurfaceToroidRadiusWidthLabel();
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
     updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::updateUISurfaceToroidRadiusWidthLabel()
 {
-    std::ostringstream s;
-    s << gHMD.getUISurfaceToroidRadiusWidth();
-    mUISurfaceToroidRadiusWidthAmountCtrl->setValue(s.str());
+    mUISurfaceToroidRadiusWidthAmountCtrl->setValue(llformat("%.1f", gHMD.getUISurfaceToroidRadiusWidth()));
 }
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidRadiusDepth()
 {
-    F32 f = mUISurfaceToroidRadiusDepthSliderCtrl->getValueF32();
+    F32 f = llround(mUISurfaceToroidRadiusDepthSliderCtrl->getValueF32(), mUISurfaceToroidRadiusDepthSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceToroidRadiusDepth(f);
     updateUISurfaceToroidRadiusDepthLabel();
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
     updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::updateUISurfaceToroidRadiusDepthLabel()
 {
-    std::ostringstream s;
-    s << gHMD.getUISurfaceToroidRadiusDepth();
-    mUISurfaceToroidRadiusDepthAmountCtrl->setValue(s.str());
+    mUISurfaceToroidRadiusDepthAmountCtrl->setValue(llformat("%.1f", gHMD.getUISurfaceToroidRadiusDepth()));
 }
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidCrossSectionRadiusWidth()
 {
-    F32 f = mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getValueF32();
+    F32 f = llround(mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getValueF32(), mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceToroidCrossSectionRadiusWidth(f);
     updateUISurfaceToroidCrossSectionRadiusWidthLabel();
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
     updateDirty();
 }
 
@@ -424,70 +476,71 @@ void LLFloaterHMDConfigDebug::updateUISurfaceToroidCrossSectionRadiusWidthLabel(
 {
     std::ostringstream s;
     s << gHMD.getUISurfaceToroidCrossSectionRadiusWidth();
-    mUISurfaceToroidCrossSectionRadiusWidthAmountCtrl->setValue(s.str());
+    mUISurfaceToroidCrossSectionRadiusWidthAmountCtrl->setValue(llformat("%.1f", gHMD.getUISurfaceToroidCrossSectionRadiusWidth()));
 }
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidCrossSectionRadiusHeight()
 {
-    F32 f = mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getValueF32();
+    F32 f = llround(mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getValueF32(), mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceToroidCrossSectionRadiusHeight(f);
     updateUISurfaceToroidCrossSectionRadiusHeightLabel();
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
     updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::updateUISurfaceToroidCrossSectionRadiusHeightLabel()
 {
-    std::ostringstream s;
-    s << gHMD.getUISurfaceToroidCrossSectionRadiusHeight();
-    mUISurfaceToroidCrossSectionRadiusHeightAmountCtrl->setValue(s.str());
+    mUISurfaceToroidCrossSectionRadiusHeightAmountCtrl->setValue(llformat("%.1f", gHMD.getUISurfaceToroidCrossSectionRadiusHeight()));
 }
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidArcHorizontal()
 {
-    F32 f = mUISurfaceToroidArcHorizontalSliderCtrl->getValueF32();
+    F32 f = llround(mUISurfaceToroidArcHorizontalSliderCtrl->getValueF32(), mUISurfaceToroidArcHorizontalSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceArcHorizontal(f * F_PI);
     updateUISurfaceToroidArcHorizontalLabel();
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
     updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::updateUISurfaceToroidArcHorizontalLabel()
 {
-    std::ostringstream s;
-    s << (gHMD.getUISurfaceArcHorizontal() / F_PI) << " PI";
-    mUISurfaceToroidArcHorizontalAmountCtrl->setValue(s.str());
+	LLStringUtil::format_map_t args;
+	args["[VAL]"] = llformat("%.1f", gHMD.getUISurfaceArcHorizontal() / F_PI);
+	mUISurfaceToroidArcHorizontalAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsRadians", args));
 }
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidArcVertical()
 {
-    F32 f = mUISurfaceToroidArcVerticalSliderCtrl->getValueF32();
+    F32 f = llround(mUISurfaceToroidArcVerticalSliderCtrl->getValueF32(), mUISurfaceToroidArcVerticalSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceArcVertical(f * F_PI);
     updateUISurfaceToroidArcVerticalLabel();
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
     updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::updateUISurfaceToroidArcVerticalLabel()
 {
-    std::ostringstream s;
-    s << (gHMD.getUISurfaceArcVertical() / F_PI) << " PI";
-    mUISurfaceToroidArcVerticalAmountCtrl->setValue(s.str());
+	LLStringUtil::format_map_t args;
+	args["[VAL]"] = llformat("%.1f", gHMD.getUISurfaceArcVertical() / F_PI);
+	mUISurfaceToroidArcVerticalAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsRadians", args));
 }
 
 void LLFloaterHMDConfigDebug::onSetEyeToScreenDistance()
 {
-    F32 f = mEyeToScreenSliderCtrl->getValueF32();
-    gHMD.setEyeToScreenDistance(f / 1000.0f);
+    F32 f = llround(mEyeToScreenSliderCtrl->getValueF32(), mEyeToScreenSliderCtrl->getIncrement());
+    gHMD.setEyeToScreenDistance(llround(f / 1000.0f, mEyeToScreenSliderCtrl->getIncrement() / 1000.0f));
     updateEyeToScreenDistanceLabel();
     updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::updateEyeToScreenDistanceLabel()
 {
-    std::ostringstream s;
-    s << (gHMD.getEyeToScreenDistance() * 1000.0f) << " mm";
-    mEyeToScreenAmountCtrl->setValue(s.str());
+	LLStringUtil::format_map_t args;
+	args["[VAL]"] = llformat("%.1f", gHMD.getEyeToScreenDistance() * 1000.0f);
+	mEyeToScreenAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsMillimeters", args));
 }
 
 void LLFloaterHMDConfigDebug::onCheckMotionPrediction()
@@ -499,17 +552,17 @@ void LLFloaterHMDConfigDebug::onCheckMotionPrediction()
 
 void LLFloaterHMDConfigDebug::onSetMotionPredictionDelta()
 {
-    F32 f = mMotionPredictionDeltaSliderCtrl->getValueF32();
-    gHMD.setMotionPredictionDelta(f / 1000.0f);
+    F32 f = llround(mMotionPredictionDeltaSliderCtrl->getValueF32(), mMotionPredictionDeltaSliderCtrl->getIncrement());
+    gHMD.setMotionPredictionDelta(llround(f / 1000.0f, mMotionPredictionDeltaSliderCtrl->getIncrement() / 1000.0f));
     updateMotionPredictionDeltaLabel();
     updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::updateMotionPredictionDeltaLabel()
 {
-    std::ostringstream s;
-    s << (gHMD.getMotionPredictionDelta() * 1000.0f) << " ms";
-    mMotionPredictionDeltaAmountCtrl->setValue(s.str());
+	LLStringUtil::format_map_t args;
+	args["[VAL]"] = llformat("%.0f", gHMD.getMotionPredictionDelta() * 1000.0f);
+	mMotionPredictionDeltaAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsMilliseconds", args));
 }
 
 void LLFloaterHMDConfigDebug::updateDirty()
@@ -534,7 +587,7 @@ void LLFloaterHMDConfigDebug::updateDirty()
     mDirty = FALSE;
     for (U32 i = 0; i < numVals; ++i)
     {
-        mDirty = mDirty || (cur[i][0] != cur[i][1] ? TRUE : FALSE);
+        mDirty = mDirty || !is_approx_equal(cur[i][0], cur[i][1]);
     }
     mDirty = mDirty || (mMotionPredictionCheckBoxCtrl->get() != mMotionPredictionCheckedOriginal);
 }

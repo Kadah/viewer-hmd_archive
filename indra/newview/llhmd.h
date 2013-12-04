@@ -68,10 +68,17 @@ public:
         kFlag_ChangingRenderContext     = 1 << 8,
     };
 
+    enum eUIPresetType
+    {
+        kCustom = 0,
+        kDefault,
+        kUser,
+    };
 
     struct UISurfaceShapeSettings
     {
-        char mName[32];
+        U32 mPresetType;
+        U32 mPresetTypeIndex;
         F32 mOffsetX;
         F32 mOffsetY;
         F32 mOffsetZ;
@@ -223,7 +230,7 @@ public:
     LLCoordWindow getMainClientSize() const { return mMainClientSize; }
     LLCoordWindow getHMDClientSize() const { return LLCoordWindow(getHMDWidth(), getHMDHeight()); }
 
-    const char* getUIShapeName() const { return mUIShape.mName; }
+    std::string getUIShapeName() const;
     F32 getUISurfaceArcHorizontal() const { return mUIShape.mArcHorizontal; }
     void setUISurfaceArcHorizontal(F32 f) { setUISurfaceParam(&mUIShape.mArcHorizontal, f); }
     F32 getUISurfaceArcVertical() const { return mUIShape.mArcVertical; }
@@ -242,14 +249,17 @@ public:
     void setUISurfaceOffsetHeight(F32 f) { setUISurfaceParam(&mUIShape.mOffsetY, f); }
     F32 getUISurfaceOffsetDepth() const { return mUIShape.mOffsetZ; }
     void setUISurfaceOffsetDepth(F32 f) { setUISurfaceParam(&mUIShape.mOffsetZ, f); }
+    U32 getUIShapePresetType() const { return mUIShape.mPresetType; }
+    U32 getUIShapePresetTypeIndex() const { return mUIShape.mPresetTypeIndex; }
     S32 getUIShapePresetIndex() const { return mUIShapePreset; }
     void setUIShapePresetIndex(S32 idx);
     S32 getUIShapePresetIndexDefault() const { return 1; }
-    const LLHMD::UISurfaceShapeSettings& getUIShapePreset(S32 idx);
+    LLHMD::UISurfaceShapeSettings getUIShapePreset(S32 idx);
+    S32 getNumUIShapePresets() const { return (S32)mUIPresetValues.size(); }
+    BOOL addPreset();
+    BOOL removePreset(S32 idx);
 
     LLViewerTexture* getCursorImage(U32 cursorType) { return (cursorType < mCursorTextures.size()) ? mCursorTextures[cursorType].get() : NULL; }
-    LLViewerTexture* getCalibrateBackground() { return mCalibrateBackgroundTexture; }
-    LLViewerTexture* getCalibrateForeground() { return mCalibrateForegroundTexture; }
 
     LLVertexBuffer* createUISurface();
     void getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* uv = NULL);
@@ -290,6 +300,7 @@ public:
     static void onChangeUIMagnification();
     static void onChangeUIShapePreset();
     static void onChangeWorldCursorSizeMult();
+    static void onChangePresetValues();
 
 private:
     void calculateUIEyeDepth();
@@ -304,6 +315,7 @@ private:
     F32 mEyeDepth;
     F32 mUIEyeDepth;
     S32 mUIShapePreset;
+    U32 mNextUserPresetIndex;
     F32 mBaseModelView[16];
     F32 mBaseModelViewInv[16];
     F32 mBaseProjection[16];
@@ -324,12 +336,10 @@ private:
     LLVector4a mMouseWorldRaycastTangent;
     F32 mMouseWorldSizeMult;
     F32 mPresetUIAspect;
+    std::vector<UISurfaceShapeSettings> mUIPresetValues;
     std::vector<LLPointer<LLViewerTexture> > mCursorTextures;
     LLPointer<LLViewerTexture> mCalibrateBackgroundTexture;
     LLPointer<LLViewerTexture> mCalibrateForegroundTexture;
-
-    static const LLHMD::UISurfaceShapeSettings sHMDUISurfacePresets[];
-    static const size_t sNumHMDUISurfacePresets;
 };
 
 extern LLHMD gHMD;

@@ -78,7 +78,7 @@ BOOL LLHMDImplOculus::preInit()
     OVR::System::Init(OVR::Log::ConfigureDefaultLog(OVR::LogMask_None));
 
     mSensorDevice = NULL;
-    mSensorFusion = new OVR::SensorFusion(mSensorDevice);
+    mSensorFusion = new OVR::SensorFusion(NULL);
     mpDeviceStatusNotificationsQueue = new OVR::Array<DeviceStatusNotificationDesc>();
     
     mDeviceManager = *OVR::DeviceManager::Create();
@@ -117,10 +117,26 @@ BOOL LLHMDImplOculus::preInit()
         {
             LL_INFOS("HMD") << "HMD Preinit: Could not find connected HMD device" << LL_ENDL;
         }
+        mSensorDevice = *(mHMD->GetSensor());
     }
     else
     {
-        LL_INFOS("HMD") << "HMD Preinit abort: could not create Oculus Rift HMD device" << LL_ENDL;
+        LL_INFOS("HMD") << "HMD Preinit: could not create Oculus Rift HMD device" << LL_ENDL;
+        mSensorDevice = *mDeviceManager->EnumerateDevices<OVR::SensorDevice>().CreateDevice();
+    }
+
+    if (mSensorDevice)
+    {
+        if (mSensorFusion->AttachToSensor(mSensorDevice))
+        {
+            LL_INFOS("HMD") << "HMD Sensor device found and successfully attached to SensorFusion" << LL_ENDL;
+        }
+        else
+        {
+            LL_INFOS("HMD") << "HMD Sensor device found, but could not attach to SensorFusion" << LL_ENDL;
+        }
+        mSensorFusion->SetDelegateMessageHandler(this);
+        mSensorFusion->SetPredictionEnabled(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
     }
 
     // consider ourselves pre-initialized if we get here
@@ -156,62 +172,62 @@ void LLHMDImplOculus::handleMessages()
         {
             switch(desc.Handle.GetType())
             {
-                case OVR::Device_Sensor:
-                    if (desc.Handle.IsAvailable() && !desc.Handle.IsCreated())
+            case OVR::Device_Sensor:
+                if (desc.Handle.IsAvailable() && !desc.Handle.IsCreated())
+                {
+                    if (!mSensorDevice)
                     {
-                        if (!mSensorDevice)
+                        mSensorDevice = *desc.Handle.CreateDeviceTyped<OVR::SensorDevice>();
+                        mSensorFusion->AttachToSensor(mSensorDevice);
+                        mSensorFusion->SetDelegateMessageHandler(this);
+                        mSensorFusion->SetPredictionEnabled(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
+                        LL_INFOS("HMD") << "HMD Sensor Device Added" << LL_ENDL;
+                    }
+                    else
+                    if (!was_already_created )
+                    {
+                        // A new sensor has been detected, but it is not currently used.
+                    }
+                }
+                break;
+            case OVR::Device_LatencyTester:
+                if (desc.Handle.IsAvailable() && !desc.Handle.IsCreated())
+                {
+                    if (!mpLatencyTester)
+                    {
+                        mpLatencyTester = *desc.Handle.CreateDeviceTyped<OVR::LatencyTestDevice>();
+                        mLatencyUtil.SetDevice(mpLatencyTester);
+                        LL_INFOS("HMD") << "HMD Latency Tester Device Added" << LL_ENDL;
+                    }
+                }
+                break;
+            case OVR::Device_HMD:
+                {
+                    OVR::HMDInfo info;
+                    bool validInfo = desc.Handle.GetDeviceInfo(&info) && info.HResolution > 0;
+                    if (validInfo &&
+                        info.DisplayDeviceName[0] &&
+                        (!mHMD || !info.IsSameDisplay(mStereoConfig.GetHMDInfo())))
+                    {
+                        if (!mHMD || !desc.Handle.IsDevice(mHMD))
                         {
-                            mSensorDevice = *desc.Handle.CreateDeviceTyped<OVR::SensorDevice>();
-                            mSensorFusion->AttachToSensor(mSensorDevice);
-                            mSensorFusion->SetDelegateMessageHandler(this);
-                            mSensorFusion->SetPredictionEnabled(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
-                            LL_INFOS("HMD") << "HMD Sensor Device Added" << LL_ENDL;
+                            mHMD = *desc.Handle.CreateDeviceTyped<OVR::HMDDevice>();
                         }
-                        else
-                        if (!was_already_created )
+                        if (mHMD)
                         {
-                            // A new sensor has been detected, but it is not currently used.
+                            info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
+                            info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
+                            mDisplayName = utf8str_to_utf16str(info.DisplayDeviceName);
+                            mDisplayId = info.DisplayId;
+                            mStereoConfig.SetHMDInfo(info);
+                            gHMD.isHMDConnected(TRUE);
+                            LL_INFOS("HMD") << "HMD Device " << utf16str_to_utf8str(mDisplayName) << ", ID [" << mDisplayId << "] Added" << LL_ENDL;
                         }
                     }
-                    break;
-                case OVR::Device_LatencyTester:
-                    if (desc.Handle.IsAvailable() && !desc.Handle.IsCreated())
-                    {
-                        if (!mpLatencyTester)
-                        {
-                            mpLatencyTester = *desc.Handle.CreateDeviceTyped<OVR::LatencyTestDevice>();
-                            mLatencyUtil.SetDevice(mpLatencyTester);
-                            LL_INFOS("HMD") << "HMD Latency Tester Device Added" << LL_ENDL;
-                        }
-                    }
-                    break;
-                case OVR::Device_HMD:
-                    {
-                        OVR::HMDInfo info;
-                        bool validInfo = desc.Handle.GetDeviceInfo(&info) && info.HResolution > 0;
-                        if (validInfo &&
-                            info.DisplayDeviceName[0] &&
-                            (!mHMD || !info.IsSameDisplay(mStereoConfig.GetHMDInfo())))
-                        {
-                            if (!mHMD || !desc.Handle.IsDevice(mHMD))
-                            {
-                                mHMD = *desc.Handle.CreateDeviceTyped<OVR::HMDDevice>();
-                            }
-                            if (mHMD)
-                            {
-                                info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
-                                info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
-                                mDisplayName = utf8str_to_utf16str(info.DisplayDeviceName);
-                                mDisplayId = info.DisplayId;
-                                mStereoConfig.SetHMDInfo(info);
-                                gHMD.isHMDConnected(TRUE);
-                                LL_INFOS("HMD") << "HMD Device " << utf16str_to_utf8str(mDisplayName) << ", ID [" << mDisplayId << "] Added" << LL_ENDL;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    break;
+                }
+                break;
+            default:
+                break;
             }
         }
         else 

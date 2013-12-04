@@ -2885,7 +2885,7 @@
               <menu_item_check.on_click
                function="ToggleControl"
                parameter="HMDDebugMode" />
-                         </menu_item_check>
+            </menu_item_check>
         </menu>
 
         <menu

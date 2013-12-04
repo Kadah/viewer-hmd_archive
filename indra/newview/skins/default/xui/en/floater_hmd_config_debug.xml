@@ -106,7 +106,7 @@ UI Surface Shape Preset
             width="70"
             follows="right"
             halign="right">
-Default
+1
           </text>
           <slider_bar
             name="hmd_config_debug_uisurface_shape_preset_slider"
@@ -583,6 +583,30 @@ Motion Prediction Delta
           height="25"
           width="90">
           <button
+            name="hmd_config_debug_hmd_add_preset"
+            label="Add Preset"
+            follows="all">
+            <commit_callback function="HMDConfigDebug.AddPreset" />
+          </button>
+        </layout_panel>
+          <layout_panel
+            auto_resize="false"
+            text_color="white"
+            height="25"
+            width="90">
+              <button
+                name="hmd_config_debug_hmd_remove_preset"
+                label="Remove Preset"
+                follows="all">
+                  <commit_callback function="HMDConfigDebug.RemovePreset" />
+              </button>
+          </layout_panel>
+          <layout_panel
+          auto_resize="false"
+          text_color="white"
+          height="25"
+          width="90">
+          <button
             name="hmd_config_debug_hmd_reset_values_button"
             label="Reset Values"
             follows="all">
@@ -612,7 +636,7 @@ Motion Prediction Delta
             follows="all">
             <commit_callback function="HMDConfigDebug.Save" />
           </button>
-        </layout_panel>
+        </layout_panel>          
       </layout_stack>
     </layout_panel>
   </layout_stack>

@@ -2187,8 +2187,16 @@ For AI Character: Get the closest navigable point to the point provided.
 
 	<!-- mouselook -->
 	<string name="LeaveMouselook">Press ESC to return to World View</string>
+    
+    <!-- HMD -->
+    <string name="HMDPresetCustom">Custom</string>
+    <string name="HMDPresetDefault">Default [INDEX]</string>
+    <string name="HMDPresetUser">User [INDEX]</string>
+    <string name="HMDConfigUnitsMillimeters">[VAL] mm</string>
+    <string name="HMDConfigUnitsMilliseconds">[VAL] ms</string>
+    <string name="HMDConfigUnitsRadians">[VAL] PI</string>
 
-	<!-- inventory -->
+    <!-- inventory -->
 	<string name="InventoryNoMatchingItems">Didn't find what you're looking for? Try [secondlife:///app/search/all/[SEARCH_TERM] Search].</string>
 	<string name="PlacesNoMatchingItems">Didn't find what you're looking for? Try [secondlife:///app/search/places/[SEARCH_TERM] Search].</string>
 	<string name="FavoritesNoMatchingItems">Drag a landmark here to add it to your favorites.</string>
