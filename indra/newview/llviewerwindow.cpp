@@ -838,20 +838,27 @@ public:
 			}
 		}
 
-		if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gHMD.isDebugMode())
+		if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gSavedSettings.getBOOL("HMDDebugShowOrientation"))
 		{
-          //  if (gHMD.isHMDMode())
-          //  {
-          //      // for debugging: put text in center of screen
-          //      xpos = llmax((mWindow->getWorldViewWidthScaled() / 2) - 200, 0);
-          //      ypos = (mWindow->getWorldViewHeightScaled() / 2) - (y_inc / 2);
-          //  }
             F32 roll, pitch, yaw;
             gHMD.getHMDRollPitchYaw(roll, pitch, yaw);
 			addText(xpos, ypos, llformat("HMD Orient Euler: [roll=%f, pitch=%f, yaw=%f]", roll, pitch, yaw));
 			ypos += y_inc;
         }
-	}
+
+		if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gSavedSettings.getBOOL("HMDDebugShowLatency"))
+		{
+            const char* res = gHMD.getLatencyTesterResults();
+            if (res && *res)
+            {
+                //      // for debugging: put text in center of screen
+                //      xpos = llmax((mWindow->getWorldViewWidthScaled() / 2) - 200, 0);
+                //      ypos = (mWindow->getWorldViewHeightScaled() / 2) - (y_inc / 2);
+			    addText(xpos, ypos, llformat("HMD Latency: %s", res));
+			    ypos += y_inc;
+            }
+        }
+    }
 
 	void draw()
 	{

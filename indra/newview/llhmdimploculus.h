@@ -109,6 +109,8 @@ public:
 
     void resetOrientation() { if (gHMD.isPostDetectionInitialized()) { mSensorFusion->Reset(); } }
 
+    const char* getLatencyTesterResults() { if (gHMD.isPostDetectionInitialized() && mLatencyUtil.HasDevice()) { return mLatencyUtil.GetResultsString(); } else { return ""; } }
+
     // OVR::MessageHandler override
     virtual void OnMessage(const OVR::Message& msg);
 

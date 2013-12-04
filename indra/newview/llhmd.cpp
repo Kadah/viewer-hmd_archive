@@ -118,8 +118,8 @@ BOOL LLHMD::init()
         mImpl = new LLHMDImplOculus();
     }
 
-    gSavedSettings.getControl("HMDDebugMode")->getSignal()->connect(boost::bind(&onChangeHMDDebugMode));
-    onChangeHMDDebugMode();
+    gSavedSettings.getControl("HMDAdvancedMode")->getSignal()->connect(boost::bind(&onChangeHMDAdvancedMode));
+    onChangeHMDAdvancedMode();
     gSavedSettings.getControl("HMDInterpupillaryDistance")->getSignal()->connect(boost::bind(&onChangeInterpupillaryDistance));
     // intentionally not calling onChangeInterpupillaryDistance here
     gSavedSettings.getControl("HMDEyeToScreenDistance")->getSignal()->connect(boost::bind(&onChangeEyeToScreenDistance));
@@ -244,7 +244,7 @@ BOOL LLHMD::init()
     return preInitResult;
 }
 
-void LLHMD::onChangeHMDDebugMode() { gHMD.isDebugMode(gSavedSettings.getBOOL("HMDDebugMode")); }
+void LLHMD::onChangeHMDAdvancedMode() { gHMD.isAdvancedMode(gSavedSettings.getBOOL("HMDAdvancedMode")); }
 void LLHMD::onChangeInterpupillaryDistance() { gHMD.setInterpupillaryOffset(gSavedSettings.getF32("HMDInterpupillaryDistance")); }
 void LLHMD::onChangeEyeToScreenDistance() { gHMD.setEyeToScreenDistance(gSavedSettings.getF32("HMDEyeToScreenDistance")); }
 void LLHMD::onChangeEyeDepth() { gHMD.mEyeDepth = gSavedSettings.getF32("HMDEyeDepth"); }
@@ -901,6 +901,8 @@ BOOL LLHMD::removePreset(S32 idx)
     }
     return TRUE;
 }
+
+const char* LLHMD::getLatencyTesterResults() { return mImpl ? mImpl->getLatencyTesterResults() : NULL; }
 
 // Creates a surface that is part of an outer shell of a torus.
 // Results are in local-space with -z forward, y up (i.e. standard OpenGL)

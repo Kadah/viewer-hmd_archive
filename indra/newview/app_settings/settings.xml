@@ -4435,16 +4435,38 @@
       <key>Value</key>
       <integer>0</integer>
     </map>	
-    <key>HMDDebugMode</key>
+    <key>HMDAdvancedMode</key>
     <map>
       <key>Comment</key>
-      <string>Enable Head Mounted Display Debugging Mode.</string>
+      <string>Enable Head Mounted Display Advanced Mode.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
       <integer>0</integer>
+    </map>
+    <key>HMDDebugShowLatency</key>
+    <map>
+        <key>Comment</key>
+        <string>Display HMD Latency Info (requires Latency Test tool)</string>
+        <key>Persist</key>
+        <integer>0</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+    </map>
+    <key>HMDDebugShowOrientation</key>
+    <map>
+        <key>Comment</key>
+        <string>Display HMD Orientation Info</string>
+        <key>Persist</key>
+        <integer>0</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
     </map>
     <key>HMDEyeDepth</key>
     <map>

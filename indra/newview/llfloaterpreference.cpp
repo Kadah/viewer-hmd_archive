@@ -1714,7 +1714,7 @@ void LLFloaterPreference::onClickSpellChecker()
 
 void LLFloaterPreference::onClickOpenHMDConfig()
 {
-    if (gHMD.isDebugMode())
+    if (gHMD.isAdvancedMode())
     {
         LLFloaterReg::showInstance("floater_hmd_config_debug");
     }

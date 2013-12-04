@@ -4137,7 +4137,7 @@ class LLViewCycleDisplay : public view_listener_t
             {
                 nextRenderMode = LLHMD::RenderMode_HMD;
             }
-            else if (gHMD.isPreDetectionInitialized() && gHMD.isDebugMode())
+            else if (gHMD.isPreDetectionInitialized() && gHMD.isAdvancedMode())
             {
                 nextRenderMode = LLHMD::RenderMode_ScreenStereo;
             }
@@ -4147,7 +4147,7 @@ class LLViewCycleDisplay : public view_listener_t
             }
             break;
         case LLHMD::RenderMode_HMD:
-            nextRenderMode = gHMD.isDebugMode() ? LLHMD::RenderMode_ScreenStereo : LLHMD::RenderMode_None;
+            nextRenderMode = gHMD.isAdvancedMode() ? LLHMD::RenderMode_ScreenStereo : LLHMD::RenderMode_None;
             break;
         case LLHMD::RenderMode_ScreenStereo:
         default:

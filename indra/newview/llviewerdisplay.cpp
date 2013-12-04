@@ -637,7 +637,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
         case LLViewerCamera::LEFT_EYE:
         case LLViewerCamera::RIGHT_EYE:
             {
-				if ((!gHMD.isDebugMode() && !gHMD.isPostDetectionInitialized()) || render_mode == LLHMD::RenderMode_None)
+				if ((!gHMD.isAdvancedMode() && !gHMD.isPostDetectionInitialized()) || render_mode == LLHMD::RenderMode_None)
                 {
                     continue;
                 }

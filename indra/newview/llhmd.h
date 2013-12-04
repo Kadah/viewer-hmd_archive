@@ -64,7 +64,7 @@ public:
         kFlag_MainIsFullScreen          = 1 << 4,
         kFlag_CursorIntersectsWorld     = 1 << 5,
         kFlag_CursorIntersectsUI        = 1 << 6,
-        kFlag_DebugMode                 = 1 << 7,
+        kFlag_AdvancedMode              = 1 << 7,
         kFlag_ChangingRenderContext     = 1 << 8,
     };
 
@@ -114,8 +114,8 @@ public:
     void cursorIntersectsWorld(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsWorld; } else { mFlags &= ~kFlag_CursorIntersectsWorld; } }
     BOOL cursorIntersectsUI() const { return ((mFlags & kFlag_CursorIntersectsUI) != 0) ? TRUE : FALSE; }
     void cursorIntersectsUI(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsUI; } else { mFlags &= ~kFlag_CursorIntersectsUI; } }
-    BOOL isDebugMode() const { return ((mFlags & kFlag_DebugMode) != 0) ? TRUE : FALSE; }
-    void isDebugMode(BOOL b) { if (b) { mFlags |= kFlag_DebugMode; } else { mFlags &= ~kFlag_DebugMode; } }
+    BOOL isAdvancedMode() const { return ((mFlags & kFlag_AdvancedMode) != 0) ? TRUE : FALSE; }
+    void isAdvancedMode(BOOL b) { if (b) { mFlags |= kFlag_AdvancedMode; } else { mFlags &= ~kFlag_AdvancedMode; } }
     BOOL isChangingRenderContext() const { return ((mFlags & kFlag_ChangingRenderContext) != 0) ? TRUE : FALSE; }
     void isChangingRenderContext(BOOL b) { if (b) { mFlags |= kFlag_ChangingRenderContext; } else { mFlags &= ~kFlag_ChangingRenderContext; } }
 
@@ -259,6 +259,8 @@ public:
     BOOL addPreset();
     BOOL removePreset(S32 idx);
 
+    const char* getLatencyTesterResults();
+
     LLViewerTexture* getCursorImage(U32 cursorType) { return (cursorType < mCursorTextures.size()) ? mCursorTextures[cursorType].get() : NULL; }
 
     LLVertexBuffer* createUISurface();
@@ -291,7 +293,7 @@ public:
 
     void saveSettings();
 
-    static void onChangeHMDDebugMode();
+    static void onChangeHMDAdvancedMode();
     static void onChangeInterpupillaryDistance();
     static void onChangeEyeToScreenDistance();
     static void onChangeEyeDepth();
@@ -427,6 +429,8 @@ public:
     virtual F32 getOrthoPixelOffset() const { return kDefaultOrthoPixelOffset; }
 
     virtual void resetOrientation() {}
+
+    virtual const char* getLatencyTesterResults() { return ""; }
 };
 
 #endif // LL_LLHMD_H

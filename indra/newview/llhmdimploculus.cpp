@@ -98,9 +98,18 @@ BOOL LLHMDImplOculus::preInit()
         bool validInfo = mHMD->GetDeviceInfo(&info) && info.HResolution > 0;
         if (validInfo)
         {
+            // Retrieve relevant profile settings if available, otherwise use saved settings
+            OVR::Profile* pUserProfile = mHMD->GetProfile();
+            if (pUserProfile)
+            {
+                info.InterpupillaryDistance = pUserProfile->GetIPD();
+            }
+            else
+            {
+                info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
+            }
             mDisplayName = utf8str_to_utf16str(info.DisplayDeviceName);
             mDisplayId = info.DisplayId;
-            info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
             info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
             mStereoConfig.SetHMDInfo(info);
             gHMD.isHMDConnected(TRUE);
@@ -215,7 +224,15 @@ void LLHMDImplOculus::handleMessages()
                         }
                         if (mHMD)
                         {
-                            info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
+                            OVR::Profile* pUserProfile = mHMD->GetProfile();
+                            if (pUserProfile)
+                            {
+                                info.InterpupillaryDistance = pUserProfile->GetIPD();
+                            }
+                            else
+                            {
+                                info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
+                            }
                             info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
                             mDisplayName = utf8str_to_utf16str(info.DisplayDeviceName);
                             mDisplayId = info.DisplayId;
@@ -254,7 +271,15 @@ void LLHMDImplOculus::handleMessages()
                     OVR::HMDInfo info;
                     if (mHMD && mHMD->GetDeviceInfo(&info) && info.HResolution > 0)
                     {
-                        info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
+                        OVR::Profile* pUserProfile = mHMD->GetProfile();
+                        if (pUserProfile)
+                        {
+                            info.InterpupillaryDistance = pUserProfile->GetIPD();
+                        }
+                        else
+                        {
+                            info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
+                        }
                         info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
                         mDisplayName = utf8str_to_utf16str(info.DisplayDeviceName);
                         mDisplayId = info.DisplayId;
@@ -404,12 +429,6 @@ void LLHMDImplOculus::onIdle()
     }
 
     // Process latency tester results.
-    const char* results = mLatencyUtil.GetResultsString();
-    if (results != NULL)
-    {
-        LL_DEBUGS("HMD") << "LATENCY TESTER:" << results << LL_ENDL;
-    }
-
     // Have to place this as close as possible to where the HMD orientation is read.
     mLatencyUtil.ProcessInputs();
 
