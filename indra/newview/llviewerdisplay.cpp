@@ -255,7 +255,8 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 	LLFastTimer t(FTM_RENDER);
 
 	if (gWindowResized)
-	{ //skip render on frames where window has been resized
+	{ 
+        //skip render on frames where window has been resized...unless we're taking the final snapshot, that is.
 		LLFastTimer t(FTM_RESIZE_WINDOW);
 		gGL.flush();
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -264,7 +265,10 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 		gPipeline.resizeScreenTexture();
 		gResizeScreenTexture = FALSE;
 		gWindowResized = FALSE;
-		return;
+        if (!LLAppViewer::instance()->isSavingFinalSnapshot())
+        {
+		    return;
+        }
 	}
 
 	if (LLPipeline::sRenderDeferred)
@@ -611,7 +615,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
         switch(i)
         {
         case LLViewerCamera::CENTER_EYE:
-            if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected())
+            if (!gDisconnected && !gSnapshot && gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected())
             {
                 if (render_mode == LLHMD::RenderMode_HMD)
                 {
@@ -1038,12 +1042,6 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 			}
 
 			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderFlush");		
-		
-			/*if (!for_snapshot)
-			{
-				LLFastTimer t(FTM_RENDER_UI);
-				render_ui(1.0f, 0);
-			}*/
 
 			if (to_texture)
 			{
@@ -1080,20 +1078,24 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
 
 			LLPipeline::sUnderWaterRender = FALSE;
 
-			LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUI");
-		}
-
-		if (!for_snapshot)
-		{
-			LLFastTimer t(FTM_RENDER_UI);
-            render_ui(1.0f, 0);
+		    LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUI");
+		    if (!for_snapshot)
+		    {
+			    LLFastTimer t(FTM_RENDER_UI);
+                render_ui(1.0f, 0);
+		    }
 		}
 	}
-			
-	LLSpatialGroup::sNoDelete = FALSE;
-	gPipeline.clearReferences();
 
-	gPipeline.rebuildGroups();
+    // this prevents forced shutdown while in HMD mode showing only a black screen
+    LLViewerCamera::sCurrentEye = LLViewerCamera::CENTER_EYE;
+
+    if (!gDisconnected)
+    {
+	    LLSpatialGroup::sNoDelete = FALSE;
+	    gPipeline.clearReferences();
+	    gPipeline.rebuildGroups();
+    }
 
 	LLAppViewer::instance()->pingMainloopTimeout("Display:FrameStats");
 	
@@ -1503,16 +1505,9 @@ void render_ui(F32 zoom_factor, int subfield)
             render_hud_elements();  // in-world text, labels, nametags
             if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
             {
-			    LLFastTimer t(FTM_RENDER_UI);
-                if (!gDisconnected)
-                {
-                    render_ui_3d(FALSE);
-				    LLGLState::checkStates();
-                }
-                else
-                {
-                    render_disconnected_background();
-                }
+                //LLFastTimer t(FTM_RENDER_UI);
+                render_ui_3d(FALSE);
+				LLGLState::checkStates();
             }
 
             render_hmd_mouse_cursor_3d();

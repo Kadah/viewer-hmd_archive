@@ -673,6 +673,7 @@ LLAppViewer::LLAppViewer() :
 	mPurgeOnExit(false),
 	mSecondInstance(false),
 	mSavedFinalSnapshot(false),
+    mIsSavingFinalSnapshot(false),
 	mSavePerAccountSettings(false),		// don't save settings on logout unless login succeeded.
 	mQuitRequested(false),
 	mLogoutRequestSent(false),
@@ -4385,6 +4386,13 @@ void LLAppViewer::saveFinalSnapshot()
 {
 	if (!mSavedFinalSnapshot)
 	{
+        if (gHMD.isHMDMode())
+        {
+            // Final snapshot should never be from HMD mode
+            gHMD.setRenderMode(LLHMD::RenderMode_None);
+        }
+
+        mIsSavingFinalSnapshot = TRUE;
 		gSavedSettings.setVector3d("FocusPosOnLogout", gAgentCamera.calcFocusPositionTargetGlobal());
 		gSavedSettings.setVector3d("CameraPosOnLogout", gAgentCamera.calcCameraPositionTargetGlobal());
 		gViewerWindow->setCursor(UI_CURSOR_WAIT);
@@ -4397,6 +4405,7 @@ void LLAppViewer::saveFinalSnapshot()
 		snap_filename += SCREEN_LAST_FILENAME;
 		// use full pixel dimensions of viewer window (not post-scale dimensions)
 		gViewerWindow->saveSnapshot(snap_filename, gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw(), FALSE, TRUE);
+        mIsSavingFinalSnapshot = FALSE;
 		mSavedFinalSnapshot = TRUE;
 	}
 }

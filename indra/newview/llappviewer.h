@@ -114,7 +114,8 @@ public:
     void badNetworkHandler(); // Cause a crash state due to bad network packet.
 
 	bool hasSavedFinalSnapshot() { return mSavedFinalSnapshot; }
-	void saveFinalSnapshot(); 
+	void saveFinalSnapshot();
+    bool isSavingFinalSnapshot() { return mIsSavingFinalSnapshot; }
 
     void loadNameCache();
     void saveNameCache();
@@ -260,6 +261,7 @@ private:
 	LLViewerJoystick* joystick;
 
 	bool mSavedFinalSnapshot;
+    bool mIsSavingFinalSnapshot;
 	bool mSavePerAccountSettings;		// only save per account settings if login succeeded
 
 	boost::optional<U32> mForceGraphicsLevel;

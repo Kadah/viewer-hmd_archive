@@ -407,10 +407,6 @@ void LLHMD::onIdle() { if (mImpl) { mImpl->onIdle(); } }
 void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 {
 #if LL_HMD_SUPPORTED
-    if (!mImpl)
-    {
-        return;
-    }
     U32 newRenderMode = llclamp(mode, (U32)RenderMode_None, (U32)RenderMode_Last);
     if (newRenderMode != mRenderMode)
     {
@@ -434,7 +430,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     {
                         // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
                         // the HMD is still connected, etc.
-                        if (!gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
+                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
                         {
                             // can't render to the HMD window, so abort
                             mRenderMode = RenderMode_ScreenStereo;
@@ -502,7 +498,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     {
                         // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
                         // the HMD is still connected, etc.
-                        if (!gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
+                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
                         {
                             // can't render to the HMD window, so abort
                             mRenderMode = RenderMode_None;
@@ -548,7 +544,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 setFocusWindowMain();
             }
         }
-        if (isPostDetectionInitialized() && isHMDConnected() && isHMDMode())
+        if (mImpl && isPostDetectionInitialized() && isHMDConnected() && isHMDMode())
         {
             mImpl->resetOrientation();
         }
