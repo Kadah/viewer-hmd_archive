@@ -2,6 +2,7 @@
 <menu_bar name="Main Menu">
 	<menu label="Yo" name="Me">
 		<menu_item_call label="Perfil..." name="Profile"/>
+		<menu_item_call label="Publicar en Facebook..." name="PostToFacebook"/>
 		<menu_item_call label="Apariencia" name="ChangeOutfit"/>
 		<menu_item_call label="Elige un avatar..." name="Avatar Picker"/>
 		<menu_item_check label="Inventario..." name="Inventory"/>
@@ -12,6 +13,7 @@
 		<menu label="Movimiento" name="Movement">
 			<menu_item_call label="Sentarte" name="Sit Down Here"/>
 			<menu_item_check label="Volar" name="Fly"/>
+			<menu_item_call label="Dejar de volar" name="Stop flying"/>
 			<menu_item_check label="Correr siempre" name="Always Run"/>
 			<menu_item_call label="Parar mis animaciones" name="Stop Animating My Avatar"/>
 			<menu_item_call label="Caminar / Correr / Volar..." name="Walk / run / fly"/>
@@ -28,6 +30,8 @@
 		<menu_item_call label="Botones de la barra de herramientas..." name="Toolbars"/>
 		<menu_item_call label="Ocultar todos los controles" name="Hide UI"/>
 		<menu_item_check label="Mostrar los HUD anexados" name="Show HUD Attachments"/>
+		<menu_item_call label="Alternar el modo HMD" name="Toggle HMD Mode"/>
+		<menu_item_call label="Añadir monitor adicional" name="Add Extra Monitor"/>
 		<menu_item_call label="Salir de [APP_NAME]" name="Quit"/>
 	</menu>
 	<menu label="Comunicarme" name="Communicate">
@@ -164,8 +168,7 @@
 	</menu>
 	<menu label="Ayuda" name="Help">
 		<menu_item_call label="Cómo..." name="How To"/>
-		<menu_item_call label="Ayuda de [SECOND_LIFE]" name="Second Life Help"/>
-		<menu_item_call label="Guía del usuario" name="User’s guide"/>
+		<menu_item_call label="Guía rápida" name="Quickstart"/>
 		<menu_item_call label="Base de Conocimientos" name="Knowledge Base"/>
 		<menu_item_call label="Wiki" name="Wiki"/>
 		<menu_item_call label="Foros comunitarios" name="Community Forums"/>
@@ -224,6 +227,7 @@
 		<menu_item_call label="Vaciar la caché de grupo" name="ClearGroupCache"/>
 		<menu_item_check label="Vista subjetiva suavizada" name="Mouse Smoothing"/>
 		<menu_item_call label="Recuperar las teclas" name="Release Keys"/>
+		<menu_item_check label="Modo HMD avanzado" name="Advanced HMD Mode"/>
 		<menu label="Atajos de teclado" name="Shortcuts">
 			<menu_item_check label="Mostrar el menú Avanzado - acceso directo antiguo" name="Show Advanced Menu - legacy shortcut"/>
 			<menu_item_call label="Cerrar la ventana" name="Close Window"/>
@@ -258,11 +262,14 @@
 			<menu_item_check label="Show Time" name="Show Time"/>
 			<menu_item_check label="Mostrar coste de carga" name="Show Upload Cost"/>
 			<menu_item_check label="Show Render Info" name="Show Render Info"/>
+			<menu_item_check label="Mostrar información de renderización de avatar" name="Show Avatar Render Info"/>
 			<menu_item_check label="Mostrar información de textura" name="Show Texture Info"/>
 			<menu_item_check label="Show Color Under Cursor" name="Show Color Under Cursor"/>
 			<menu_item_check label="Mostrar la memoria" name="Show Memory"/>
 			<menu_item_check label="Mostrar información de memoria privada" name="Show Private Mem Info"/>
 			<menu_item_check label="Show Updates to Objects" name="Show Updates"/>
+			<menu_item_check label="Mostrar información de la orientación de HMD" name="Show HMD Orientation"/>
+			<menu_item_check label="Mostrar información de la prueba de latencia de HMD" name="Show HMD Latency"/>
 		</menu>
 		<menu label="Force an Error" name="Force Errors">
 			<menu_item_call label="Force Breakpoint" name="Force Breakpoint"/>
@@ -317,6 +324,11 @@
 			<menu_item_call label="Drop a Packet" name="Drop a Packet"/>
 		</menu>
 		<menu_item_call label="Bumps, Pushes &amp; Hits" name="Bumps, Pushes &amp;amp; Hits"/>
+		<menu label="Recorder" name="Recorder">
+			<menu_item_call label="Iniciar la grabación de evento" name="Start event recording"/>
+			<menu_item_call label="Detener grabación de evento" name="Stop event recording"/>
+			<menu_item_call label="Reproducir grabación de evento" name="Playback event recording"/>
+		</menu>
 		<menu label="Mundo virtual" name="DevelopWorld">
 			<menu_item_check label="Anular el sol del Sim" name="Sim Sun Override"/>
 			<menu_item_check label="Meteorología fija" name="Fixed Weather"/>
@@ -325,6 +337,7 @@
 		<menu label="UI" name="UI">
 			<menu_item_call label="Prueba de navegadores de medios" name="Web Browser Test"/>
 			<menu_item_call label="Navegador de contenido web" name="Web Content Browser"/>
+			<menu_item_call label="Prueba de conexión con FB" name="FB Connect Test"/>
 			<menu_item_call label="Print Selected Object Info" name="Print Selected Object Info"/>
 			<menu_item_check label="Consola de depuración de región" name="Region Debug Console"/>
 			<menu_item_check label="Debug Clicks" name="Debug Clicks"/>

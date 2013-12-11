@@ -296,6 +296,24 @@ support@secondlife.com.
 	<string name="TestingDisconnect">
 		Тестирование отключения клиента
 	</string>
+	<string name="SocialFacebookConnecting">
+		Подключение к Facebook...
+	</string>
+	<string name="SocialFacebookPosting">
+		Публикация...
+	</string>
+	<string name="SocialFacebookDisconnecting">
+		Отключение от Facebook...
+	</string>
+	<string name="SocialFacebookErrorConnecting">
+		Неполадка при подключении к Facebook
+	</string>
+	<string name="SocialFacebookErrorPosting">
+		Неполадка при публикации в Facebook
+	</string>
+	<string name="SocialFacebookErrorDisconnecting">
+		Неполадка при отключении от Facebook
+	</string>
 	<string name="TooltipPerson">
 		Человек
 	</string>
@@ -851,7 +869,7 @@ support@secondlife.com.
 		Не в сети
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		[AREA] м² L$[PRICE]
+		[AREA] м² L$[PRICE] ([SQMPRICE] L$/м²)
 	</string>
 	<string name="worldmap_results_none_found">
 		Ничего не найдено.
@@ -934,14 +952,20 @@ support@secondlife.com.
 	<string name="ControlYourCamera">
 		Управлять камерой
 	</string>
+	<string name="TeleportYourAgent">
+		Телепортировать вас
+	</string>
+	<string name="ManageEstateSilently">
+		Автоматическое управление владением
+	</string>
+	<string name="ChangeYourDefaultAnimations">
+		Изменить стандартные анимации
+	</string>
 	<string name="NotConnected">
 		Нет подключения
 	</string>
 	<string name="AgentNameSubst">
 		(Вы)
-	</string>
-	<string name="TeleportYourAgent">
-		Телепортировать вас
 	</string>
 	<string name="JoinAnExperience">
 		Присоединитесь
@@ -1011,6 +1035,12 @@ support@secondlife.com.
 	</string>
 	<string name="bitmap_image_files">
 		Изображения BMP
+	</string>
+	<string name="png_image_files">
+		Изображения PNG
+	</string>
+	<string name="save_texture_image_files">
+		Изображения Targa или PNG
 	</string>
 	<string name="avi_movie_file">
 		Видео AVI
@@ -1251,6 +1281,24 @@ support@secondlife.com.
 	</string>
 	<string name="LeaveMouselook">
 		Нажмите ESC, чтобы вернуться к обычному обзору
+	</string>
+	<string name="HMDPresetCustom">
+		Задать
+	</string>
+	<string name="HMDPresetDefault">
+		Стандартная [INDEX]
+	</string>
+	<string name="HMDPresetUser">
+		Пользовательская [INDEX]
+	</string>
+	<string name="HMDConfigUnitsMillimeters">
+		[VAL] мм
+	</string>
+	<string name="HMDConfigUnitsMilliseconds">
+		[VAL] мс
+	</string>
+	<string name="HMDConfigUnitsRadians">
+		[VAL] PI
 	</string>
 	<string name="InventoryNoMatchingItems">
 		Не нашли того, что вам нужно? Воспользуйтесь [secondlife:///app/search/all/[SEARCH_TERM] поиском].
@@ -1835,6 +1883,18 @@ support@secondlife.com.
 	</string>
 	<string name="RegionInfoAllowedGroups">
 		Допущенные группы: ([ALLOWEDGROUPS], не более [MAXACCESS])
+	</string>
+	<string name="RegionInfoEstateManagers">
+		Менеджеры землевладения: ([ESTATEMANAGERS], не более [MAXMANAGERS])
+	</string>
+	<string name="RegionInfoBannedResidents">
+		Забаненные жители: ([BANNEDAGENTS], не более [MAXBANNED])
+	</string>
+	<string name="RegionInfoListTypeAllowedAgents">
+		Допущенные жители
+	</string>
+	<string name="RegionInfoListTypeBannedAgents">
+		Забаненные жители
 	</string>
 	<string name="ScriptLimitsParcelScriptMemory">
 		Память под скрипты на участке
@@ -4020,6 +4080,9 @@ support@secondlife.com.
 	<string name="share_alert">
 		Перетаскивайте вещи из инвентаря сюда
 	</string>
+	<string name="facebook_post_success">
+		Вы опубликовали сообщение в Facebook.
+	</string>
 	<string name="no_session_message">
 		(Сеанс IM не существует)
 	</string>
@@ -4913,6 +4976,9 @@ support@secondlife.com.
 	<string name="Command_Gestures_Label">
 		Жесты
 	</string>
+	<string name="Command_HMD_Mode_Label">
+		Режим ГД
+	</string>
 	<string name="Command_HowTo_Label">
 		Инструкции
 	</string>
@@ -4955,6 +5021,9 @@ support@secondlife.com.
 	<string name="Command_Snapshot_Label">
 		Снимок
 	</string>
+	<string name="Command_Social_Label">
+		Facebook
+	</string>
 	<string name="Command_Speak_Label">
 		Говорить
 	</string>
@@ -4990,6 +5059,9 @@ support@secondlife.com.
 	</string>
 	<string name="Command_Gestures_Tooltip">
 		Жесты для аватара
+	</string>
+	<string name="Command_HMD_Mode_Tooltip">
+		Использовать режим визуализации головного дисплея (ГД)
 	</string>
 	<string name="Command_HowTo_Tooltip">
 		Выполнение типичных задач
@@ -5032,6 +5104,9 @@ support@secondlife.com.
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		Сделать снимок
+	</string>
+	<string name="Command_Social_Tooltip">
+		Опубликовать в Facebook
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Говорите с людьми вокруг вас с помощью микрофона

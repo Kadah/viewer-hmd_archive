@@ -41,6 +41,11 @@
 					Vista do mouse
 				</panel_camera_item.text>
 			</panel_camera_item>
+			<panel_camera_item name="first_person_view">
+				<panel_camera_item.text name="first_person_view_text">
+					Visão em primeira pessoa
+				</panel_camera_item.text>
+			</panel_camera_item>
 		</panel>
 		<panel name="zoom" tool_tip="Aproximar a Câmera in direção ao Foco">
 			<joystick_rotate name="cam_rotate_stick" tool_tip="Girar câmera ao redor do foco"/>

@@ -1468,12 +1468,12 @@ SHA1 指紋：[MD5_DIGEST]
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		我們已為你的 [APP_NAME] 軟體下載了更新。
-[VERSION] 版本 [[RELEASE_NOTES_FULL_URL] 關於此更新的資訊]
+[VERSION] 版本 [[INFO_URL] 關於此更新的資訊]
 		<usetemplate name="okcancelbuttons" notext="稍候..." yestext="立即安裝及重新啟動 [APP_NAME]"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		我們已為你的 [APP_NAME] 軟體下載了更新。
-[VERSION] 版本 [[RELEASE_NOTES_FULL_URL] 關於此更新的資訊]
+    [VERSION] 版本 [[INFO_URL] 關於此更新的資訊]
 		<usetemplate name="okcancelbuttons" notext="稍候..." yestext="立即安裝及重新啟動 [APP_NAME]"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1699,6 +1699,13 @@ SHA1 指紋：[MD5_DIGEST]
 			<input name="message">
 				在 [REGION] 和我會面
 			</input>
+			<button name="OK" text="確定"/>
+			<button name="Cancel" text="取消"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		用下列訊息對 [NAME] 發出瞬間傳送請求
+		<form name="form">
 			<button name="OK" text="確定"/>
 			<button name="Cancel" text="取消"/>
 		</form>
@@ -2443,6 +2450,9 @@ SHA1 指紋：[MD5_DIGEST]
 	<notification name="SystemMessage">
 		[MESSAGE]
 	</notification>
+	<notification name="FacebookConnect">
+		[MESSAGE]
+	</notification>
 	<notification name="PaymentReceived">
 		[MESSAGE]
 	</notification>
@@ -2557,6 +2567,9 @@ SHA1 指紋：[MD5_DIGEST]
 	</notification>
 	<notification name="RegionTPAccessBlocked">
 		你所欲前往的地區含有超過你目前偏好的分級的內容。  你可以到「我自己 &gt; 偏好設定 &gt; 一般設定」變更你的偏好設定。
+	</notification>
+	<notification name="RegionAboutToShutdown">
+		你試圖進入的地區即將關閉。
 	</notification>
 	<notification name="URBannedFromRegion">
 		這個區域禁止你進入。
@@ -2703,6 +2716,16 @@ SHA1 指紋：[MD5_DIGEST]
 	<notification name="TeleportOfferSent">
 		已向 [TO_NAME] 發出瞬間傳送邀請
 	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] 請求你瞬間傳送他到你的地點。
+[MESSAGE]
+
+給予瞬間傳送？
+		<form name="form">
+			<button name="Yes" text="是"/>
+			<button name="No" text="不要"/>
+		</form>
+	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
 [URL]
@@ -2755,11 +2778,11 @@ SHA1 指紋：[MD5_DIGEST]
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		本地區將在 [MINUTES] 分鐘後重新啟動。
+		本地區 &quot;[NAME]&quot; 將在 [MINUTES] 分鐘後重新啟動。
 如果你繼續留在這地區，你將會被登出。
 	</notification>
 	<notification name="RegionRestartSeconds">
-		本地區將在 [SECONDS] 秒後重新啟動。
+		本地區 &quot;[NAME]&quot; 將在 [SECONDS] 秒後重新啟動。
 如果你繼續留在這地區，你將會被登出。
 	</notification>
 	<notification name="LoadWebPage">
@@ -3487,9 +3510,9 @@ SHA1 指紋：[MD5_DIGEST]
 	<notification name="EjectComingSoon">
 		你不再允許待在這裡，必須在 [EJECT_TIME] 秒內離開。
 	</notification>
-	<notification name="NoEnterServerFull">
-		你無法進入這地區，因為 
-伺服器滿載。
+	<notification name="NoEnterRegionMaybeFull">
+		你無法進入 &quot;[NAME]&quot; 地區。
+它可能滿載或即將重新啟動。
 	</notification>
 	<notification name="SaveBackToInvDisabled">
 		「儲存回收納區」功能已被停用。
@@ -3778,6 +3801,9 @@ SHA1 指紋：[MD5_DIGEST]
 	</notification>
 	<notification name="CantAttachNotEnoughScriptResources">
 		腳本資源不足，無法附著物件！
+	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		無法附著物件，該物件已被移除。
 	</notification>
 	<notification name="CantDropItemTrialUser">
 		你無法在此卸除物件，請到「自由嘗試」區域再試。

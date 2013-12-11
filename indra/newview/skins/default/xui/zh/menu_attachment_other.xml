@@ -15,5 +15,8 @@
 	<menu_item_call label="放大" name="Zoom In"/>
 	<menu_item_call label="支付" name="Pay..."/>
 	<menu_item_call label="物件檔案" name="Object Inspect"/>
+	<menu_item_check label="正常呈像" name="Normal"/>
+	<menu_item_check label="固定採用快顯替身" name="Always use impostor"/>
+	<menu_item_check label="永不採用快顯替身" name="Never use impostor"/>
 	<menu_item_call label="封鎖粒子所有人" name="Mute Particle"/>
 </context_menu>

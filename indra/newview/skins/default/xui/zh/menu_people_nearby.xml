@@ -3,6 +3,7 @@
 	<menu_item_call label="察看檔案" name="view_profile"/>
 	<menu_item_call label="IM" name="im"/>
 	<menu_item_call label="發給瞬間傳送請求" name="offer_teleport"/>
+	<menu_item_call label="要求瞬間傳送" name="request_teleport"/>
 	<menu_item_call label="語音通話" name="voice_call"/>
 	<menu_item_call label="檢視聊天歷史……" name="chat_history"/>
 	<menu_item_call label="加為朋友" name="add_friend"/>

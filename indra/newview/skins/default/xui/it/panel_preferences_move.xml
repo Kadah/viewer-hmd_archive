@@ -12,6 +12,7 @@
 	</text>
 	<check_box label="Le frecce di direzione mi fanno sempre spostare" name="arrow_keys_move_avatar_check"/>
 	<check_box label="Doppio click e tieni premuto per correre" name="tap_tap_hold_to_run"/>
+	<check_box label="Mantieni premuto il tasto Saltare o Accovacciarsi per iniziare a volare o interrompere il volo" name="automatic_fly"/>
 	<text name="mouse_lbl">
 		Mouse:
 	</text>
@@ -36,4 +37,5 @@
 		<combo_box.item label="Teleport al punto cliccato" name="2"/>
 	</combo_box>
 	<button label="Altri dispositivi" name="joystick_setup_button"/>
+	<button label="Head Mounted Display" name="hmd_config_button"/>
 </panel>

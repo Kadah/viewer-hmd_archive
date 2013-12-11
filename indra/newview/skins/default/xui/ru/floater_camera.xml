@@ -41,6 +41,11 @@
 					Обзор с помощью мыши
 				</panel_camera_item.text>
 			</panel_camera_item>
+			<panel_camera_item name="first_person_view">
+				<panel_camera_item.text name="first_person_view_text">
+					Вид от первого лица
+				</panel_camera_item.text>
+			</panel_camera_item>
 		</panel>
 		<panel name="zoom">
 			<joystick_rotate name="cam_rotate_stick" tool_tip="Повернуть камеру вокруг точки фокусировки"/>

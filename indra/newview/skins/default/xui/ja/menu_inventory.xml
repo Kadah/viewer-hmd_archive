@@ -74,6 +74,7 @@
 	<menu_item_call label="ローカルで再生する" name="Animation Audition"/>
 	<menu_item_call label="インスタントメッセージを送信する" name="Send Instant Message"/>
 	<menu_item_call label="テレポートを送る..." name="Offer Teleport..."/>
+	<menu_item_call label="テレポートをリクエスト..." name="Request Teleport..."/>
 	<menu_item_call label="コンファレンスチャットを開始する" name="Conference Chat"/>
 	<menu_item_call label="アクティブ" name="Activate"/>
 	<menu_item_call label="非アクティブ" name="Deactivate"/>

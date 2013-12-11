@@ -21,6 +21,15 @@
 	<text name="ShadersPrefText4">
 		Ultra
 	</text>
+	<slider label="Detalle de avatar:" name="AvatarMeshDetail2"/>
+	<text name="AvatarMeshDetailText2">
+		Bajo
+	</text>
+	<slider label="Distancia de dibujo:" name="DrawDistance"/>
+	<text name="DrawDistanceMeterText2">
+		m
+	</text>
+	<check_box initial_value="true" label="Modelo de iluminación avanzado" name="UseLightShaders2"/>
 	<panel label="CustomGraphics" name="CustomGraphics Panel">
 		<text name="ShadersText">
 			Shaders:

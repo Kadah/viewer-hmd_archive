@@ -5,6 +5,7 @@
 	<menu_item_call label="Ouvrir l&apos;historique du chat..." name="Chat history"/>
 	<menu_item_call label="Voir le profil" name="View Profile"/>
 	<menu_item_call label="Téléporter" name="teleport"/>
+	<menu_item_call label="Demander téléportation" name="request_teleport"/>
 	<menu_item_call label="Devenir amis" name="add_friend"/>
 	<menu_item_call label="Supprimer cet ami" name="remove_friend"/>
 	<menu_item_call label="Inviter dans le groupe..." name="Invite"/>

@@ -12,6 +12,7 @@
 	</text>
 	<check_box label="Ok tuşları beni her zaman hareket ettirir" name="arrow_keys_move_avatar_check"/>
 	<check_box label="Koşmak için iki kez dokun ve tut" name="tap_tap_hold_to_run"/>
+	<check_box label="Uçmayı başlatmak veya durdurmak için atla veya çömel tuşunu basılı tutun" name="automatic_fly"/>
 	<text name="mouse_lbl">
 		Fare:
 	</text>
@@ -36,4 +37,5 @@
 		<combo_box.item label="Tıklanan noktaya ışınla" name="2"/>
 	</combo_box>
 	<button label="Diğer Aygıtlar" name="joystick_setup_button"/>
+	<button label="Kafaya Monte Ekranlar" name="hmd_config_button"/>
 </panel>

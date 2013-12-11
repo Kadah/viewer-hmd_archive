@@ -1470,12 +1470,12 @@ ou você pode instalar a instalação agora.
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		Baixamos uma atualização para a instalação do [APP_NAME].
-Versão [VERSION] [[RELEASE_NOTES_FULL_URL] sobre esta atualização]
+Versão [VERSION] Informação [[INFO_URL] sobre essa atualização]
 		<usetemplate name="okcancelbuttons" notext="Depois..." yestext="Instalar agora e reiniciar o [APP_NAME]"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		Baixamos uma atualização para a instalação do [APP_NAME].
-Versão [VERSION] [[RELEASE_NOTES_FULL_URL] sobre esta atualização]
+    Versão [VERSION] Informação [[INFO_URL] sobre essa atualização]
 		<usetemplate name="okcancelbuttons" notext="Depois..." yestext="Instalar agora e reiniciar o [APP_NAME]"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1700,6 +1700,13 @@ Por favor volte mais tarde.
 			<input name="message">
 				Junte-se a mim em [REGION]
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Cancelar"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Solicitar teletransporte a [NAME] com a seguinte mensagem
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="Cancelar"/>
 		</form>
@@ -2444,6 +2451,9 @@ Selecione só um objeto.
 	<notification name="SystemMessage">
 		[MESSAGE]
 	</notification>
+	<notification name="FacebookConnect">
+		[MESSAGE]
+	</notification>
 	<notification name="PaymentReceived">
 		[MESSAGE]
 	</notification>
@@ -2556,6 +2566,9 @@ Os únicos scripts que funcionam são os do proprietário do terreno.
 	</notification>
 	<notification name="RegionTPAccessBlocked">
 		A região que você está tentando visitar tem conteúdo que excede suas preferências atuais.  Você pode alterar suas preferências acessando Eu &gt; Preferências &gt; Geral.
+	</notification>
+	<notification name="RegionAboutToShutdown">
+		A região em que você está tentando entrar está prestes a fechar.
 	</notification>
 	<notification name="URBannedFromRegion">
 		Você está banido da região.
@@ -2702,6 +2715,16 @@ No entanto, esta região tem conteúdo acessível apenas para adultos.
 	<notification name="TeleportOfferSent">
 		Oferta de teletransporte enviada para [TO_NAME]
 	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] está solicitando teletransporte para o seu local.
+[MESSAGE]
+
+Oferecer teletransporte?
+		<form name="form">
+			<button name="Yes" text="Sim"/>
+			<button name="No" text="Não"/>
+		</form>
+	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
 [URL]
@@ -2754,11 +2777,11 @@ Ele será um item no seu inventário, para você possa contatá-lo facilmente.
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		Esta região será reiniciada em [MINUTES] minutos. 
+		A região &quot;[NAME]&quot; será reiniciada em [MINUTES] minutos.
 Se permanecer aqui, você será desconectado.
 	</notification>
 	<notification name="RegionRestartSeconds">
-		Esta região será reiniciada em [SECONDS] segundos. 
+		A região &quot;[NAME]&quot; será reiniciada em [SECONDS] segundos.
 Se permanecer aqui, você será desconectado.
 	</notification>
 	<notification name="LoadWebPage">
@@ -3478,9 +3501,9 @@ Tente novamente em instantes.
 	<notification name="EjectComingSoon">
 		Você não tem mais permissão para ficar aqui e tem [EJECT_TIME] segundos para sair.
 	</notification>
-	<notification name="NoEnterServerFull">
-		Você não pode entrar nesta região porque 
-o servidor está cheio.
+	<notification name="NoEnterRegionMaybeFull">
+		Você não pode entrar na região &quot;[NAME]&quot;.
+Ela pode estar lotada ou será reiniciada em breve.
 	</notification>
 	<notification name="SaveBackToInvDisabled">
 		Salvar no inventário foi desativado.
@@ -3769,6 +3792,9 @@ o servidor está cheio.
 	</notification>
 	<notification name="CantAttachNotEnoughScriptResources">
 		Não há recursos de script disponíveis suficientes para anexar objeto!
+	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		Não é possível vincular objetos porque já está sendo removido.
 	</notification>
 	<notification name="CantDropItemTrialUser">
 		Não é possível largar objetos aqui. Tente a área de Avaliação grátis.

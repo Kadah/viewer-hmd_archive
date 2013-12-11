@@ -5,6 +5,7 @@
 	<menu_item_call label="Sohbet geçmişini aç..." name="Chat history"/>
 	<menu_item_call label="Profili Göster" name="View Profile"/>
 	<menu_item_call label="Işınlama Teklif Et" name="teleport"/>
+	<menu_item_call label="Işınlanma Talep Et" name="request_teleport"/>
 	<menu_item_call label="Arkadaş Ekle" name="add_friend"/>
 	<menu_item_call label="Arkadaşı Çıkar" name="remove_friend"/>
 	<menu_item_call label="Gruba davet et..." name="Invite"/>

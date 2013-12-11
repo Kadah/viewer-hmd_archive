@@ -2,6 +2,7 @@
 <menu_bar name="Main Menu">
 	<menu label="Moi" name="Me">
 		<menu_item_call label="Profil..." name="Profile"/>
+		<menu_item_call label="Publier sur Facebook…" name="PostToFacebook"/>
 		<menu_item_call label="Apparence..." name="ChangeOutfit"/>
 		<menu_item_call label="Choisir un avatar..." name="Avatar Picker"/>
 		<menu_item_check label="Inventaire..." name="Inventory"/>
@@ -12,6 +13,7 @@
 		<menu label="Déplacement" name="Movement">
 			<menu_item_call label="M&apos;asseoir" name="Sit Down Here"/>
 			<menu_item_check label="Voler" name="Fly"/>
+			<menu_item_call label="Atterrir" name="Stop flying"/>
 			<menu_item_check label="Toujours courir" name="Always Run"/>
 			<menu_item_call label="Arrêter mon animation" name="Stop Animating My Avatar"/>
 			<menu_item_call label="Marcher / Courir / Voler..." name="Walk / run / fly"/>
@@ -29,6 +31,8 @@
 		<menu_item_call label="Boutons des barres d&apos;outils..." name="Toolbars"/>
 		<menu_item_call label="Masquer tous les contrôles" name="Hide UI"/>
 		<menu_item_check label="Afficher les éléments HUD" name="Show HUD Attachments"/>
+		<menu_item_call label="Activer/désactiver le mode HMD" name="Toggle HMD Mode"/>
+		<menu_item_call label="Ajouter un écran supplémentaire" name="Add Extra Monitor"/>
 		<menu_item_call label="Quitter [APP_NAME]" name="Quit"/>
 	</menu>
 	<menu label="Communiquer" name="Communicate">
@@ -165,8 +169,7 @@
 	</menu>
 	<menu label="Aide" name="Help">
 		<menu_item_call label="Aide rapide..." name="How To"/>
-		<menu_item_call label="Aide de [SECOND_LIFE]" name="Second Life Help"/>
-		<menu_item_call label="Guide de l&apos;utilisateur" name="User’s guide"/>
+		<menu_item_call label="Démarrage rapide" name="Quickstart"/>
 		<menu_item_call label="Base de connaissances" name="Knowledge Base"/>
 		<menu_item_call label="Wiki" name="Wiki"/>
 		<menu_item_call label="Forums de la communauté" name="Community Forums"/>
@@ -226,6 +229,7 @@
 		<menu_item_call label="Effacer le cache du groupe" name="ClearGroupCache"/>
 		<menu_item_check label="Effet de lissage de la souris" name="Mouse Smoothing"/>
 		<menu_item_call label="Libérer les touches" name="Release Keys"/>
+		<menu_item_check label="Mode HMD avancé" name="Advanced HMD Mode"/>
 		<menu label="Raccourcis" name="Shortcuts">
 			<menu_item_check label="Afficher le menu Avancé - raccourci existant" name="Show Advanced Menu - legacy shortcut"/>
 			<menu_item_call label="Fermer la fenêtre" name="Close Window"/>
@@ -263,12 +267,15 @@
 			<menu_item_check label="Afficher l&apos;heure" name="Show Time"/>
 			<menu_item_check label="Afficher le coût du chargement" name="Show Upload Cost"/>
 			<menu_item_check label="Afficher les infos de rendu" name="Show Render Info"/>
+			<menu_item_check label="Afficher les infos de rendu d’avatar" name="Show Avatar Render Info"/>
 			<menu_item_check label="Afficher les infos de texture" name="Show Texture Info"/>
 			<menu_item_check label="Afficher les matrices" name="Show Matrices"/>
 			<menu_item_check label="Afficher la couleur sous le curseur" name="Show Color Under Cursor"/>
 			<menu_item_check label="Afficher la mémoire" name="Show Memory"/>
 			<menu_item_check label="Afficher les infos de mémoire privées" name="Show Private Mem Info"/>
 			<menu_item_check label="Afficher les mises à jour des objets" name="Show Updates"/>
+			<menu_item_check label="Afficher les infos d&apos;orientation HMD" name="Show HMD Orientation"/>
+			<menu_item_check label="Afficher les infos du test de latence HMD" name="Show HMD Latency"/>
 		</menu>
 		<menu label="Forcer une erreur" name="Force Errors">
 			<menu_item_call label="Forcer le point de rupture" name="Force Breakpoint"/>
@@ -348,6 +355,9 @@
 		<menu_item_call label="Dump caméra scriptée" name="Dump Scripted Camera"/>
 		<menu_item_call label="Collisions, coups et bousculades" name="Bumps, Pushes &amp;amp; Hits"/>
 		<menu label="Enregistreur" name="Recorder">
+			<menu_item_call label="Commencer l’enregistrement de l’événement" name="Start event recording"/>
+			<menu_item_call label="Arrêter l’enregistrement de l’événement" name="Stop event recording"/>
+			<menu_item_call label="Lire l’enregistrement de l’événement" name="Playback event recording"/>
 			<menu_item_call label="Commencer la lecture" name="Start Playback"/>
 			<menu_item_call label="Arrêter la lecture" name="Stop Playback"/>
 			<menu_item_check label="Lecture en boucle" name="Loop Playback"/>
@@ -362,6 +372,7 @@
 		<menu label="Interface" name="UI">
 			<menu_item_call label="Test du navigateur de médias" name="Web Browser Test"/>
 			<menu_item_call label="Navigateur du contenu Web" name="Web Content Browser"/>
+			<menu_item_call label="Test de connexion FB" name="FB Connect Test"/>
 			<menu_item_call label="Dump SelectMgr" name="Dump SelectMgr"/>
 			<menu_item_call label="Dump inventaire" name="Dump Inventory"/>
 			<menu_item_call label="Dump Timers" name="Dump Timers"/>

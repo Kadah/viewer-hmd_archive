@@ -74,6 +74,7 @@
 	<menu_item_call label="Esegui localmente" name="Animation Audition"/>
 	<menu_item_call label="Invia un Instant Message" name="Send Instant Message"/>
 	<menu_item_call label="Offri teletrasporto..." name="Offer Teleport..."/>
+	<menu_item_call label="Richiedi teleport..." name="Request Teleport..."/>
 	<menu_item_call label="Inizia una conferenza chat" name="Conference Chat"/>
 	<menu_item_call label="Attiva" name="Activate"/>
 	<menu_item_call label="Disattiva" name="Deactivate"/>

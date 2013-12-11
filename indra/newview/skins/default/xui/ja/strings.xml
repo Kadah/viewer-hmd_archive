@@ -296,6 +296,24 @@ support@secondlife.com にお問い合わせください。
 	<string name="TestingDisconnect">
 		ビューワの接続を切るテスト中
 	</string>
+	<string name="SocialFacebookConnecting">
+		Facebook に接続中...
+	</string>
+	<string name="SocialFacebookPosting">
+		投稿中...
+	</string>
+	<string name="SocialFacebookDisconnecting">
+		Facebook から切断中...
+	</string>
+	<string name="SocialFacebookErrorConnecting">
+		Facebook への接続時のエラー
+	</string>
+	<string name="SocialFacebookErrorPosting">
+		Facebook への投稿時のエラー
+	</string>
+	<string name="SocialFacebookErrorDisconnecting">
+		Facebook からの切断時のエラー
+	</string>
 	<string name="TooltipPerson">
 		人
 	</string>
@@ -854,7 +872,7 @@ support@secondlife.com にお問い合わせください。
 		オフライン
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		[AREA] 平方メートル L$[PRICE]
+		[AREA] m² L$[PRICE] ([SQMPRICE] L$/m²)
 	</string>
 	<string name="worldmap_results_none_found">
 		見つかりませんでした。
@@ -937,14 +955,20 @@ support@secondlife.com にお問い合わせください。
 	<string name="ControlYourCamera">
 		カメラのコントロール
 	</string>
+	<string name="TeleportYourAgent">
+		あなたをテレポート
+	</string>
+	<string name="ManageEstateSilently">
+		不動産をサイレントで管理
+	</string>
+	<string name="ChangeYourDefaultAnimations">
+		デフォルトのアニメーションを変更
+	</string>
 	<string name="NotConnected">
 		接続されていません
 	</string>
 	<string name="AgentNameSubst">
 		(あなた)
-	</string>
-	<string name="TeleportYourAgent">
-		あなたをテレポート
 	</string>
 	<string name="JoinAnExperience">
 		体験に参加する
@@ -1014,6 +1038,12 @@ support@secondlife.com にお問い合わせください。
 	</string>
 	<string name="bitmap_image_files">
 		ビットマップ画像
+	</string>
+	<string name="png_image_files">
+		PNG 画像
+	</string>
+	<string name="save_texture_image_files">
+		Targa または PNG 画像
 	</string>
 	<string name="avi_movie_file">
 		AVI ムービーファイル
@@ -1254,6 +1284,24 @@ support@secondlife.com にお問い合わせください。
 	</string>
 	<string name="LeaveMouselook">
 		ESC キーを押してワールドビューに戻ります
+	</string>
+	<string name="HMDPresetCustom">
+		カスタム
+	</string>
+	<string name="HMDPresetDefault">
+		デフォルト [INDEX]
+	</string>
+	<string name="HMDPresetUser">
+		ユーザー [INDEX]
+	</string>
+	<string name="HMDConfigUnitsMillimeters">
+		[VAL] mm
+	</string>
+	<string name="HMDConfigUnitsMilliseconds">
+		[VAL] ms
+	</string>
+	<string name="HMDConfigUnitsRadians">
+		[VAL] PI
 	</string>
 	<string name="InventoryNoMatchingItems">
 		お探しのものは見つかりましたか？ [secondlife:///app/search/all/[SEARCH_TERM] 検索] をお試しください。
@@ -1837,7 +1885,19 @@ support@secondlife.com にお問い合わせください。
 		許可された住人： （[ALLOWEDAGENTS] 人、最大 [MAXACCESS] 人）
 	</string>
 	<string name="RegionInfoAllowedGroups">
-		許可されたグループ： （[ALLOWEDGROUPS]、最大 [MAXACCESS] ）
+		許可されたグループ：（[ALLOWEDGROUPS]、最大 [MAXACCESS] ）
+	</string>
+	<string name="RegionInfoEstateManagers">
+		不動産マネージャー:([ESTATEMANAGERS]、最大 [MAXMANAGERS])
+	</string>
+	<string name="RegionInfoBannedResidents">
+		立入禁止された住人:([BANNEDAGENTS]、最大 [MAXBANNED])
+	</string>
+	<string name="RegionInfoListTypeAllowedAgents">
+		立入を許可された住人
+	</string>
+	<string name="RegionInfoListTypeBannedAgents">
+		立入禁止された住人
 	</string>
 	<string name="ScriptLimitsParcelScriptMemory">
 		区画スクリプトメモリ
@@ -4026,6 +4086,9 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 	<string name="share_alert">
 		インベントリからここにアイテムをドラッグします
 	</string>
+	<string name="facebook_post_success">
+		Facebook に投稿しました。
+	</string>
 	<string name="no_session_message">
 		（IM セッションが存在しません）
 	</string>
@@ -4907,6 +4970,9 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 	<string name="Command_Gestures_Label">
 		ジェスチャー
 	</string>
+	<string name="Command_HMD_Mode_Label">
+		HMD モード
+	</string>
 	<string name="Command_HowTo_Label">
 		ハウツー
 	</string>
@@ -4949,6 +5015,9 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 	<string name="Command_Snapshot_Label">
 		スナップショット
 	</string>
+	<string name="Command_Social_Label">
+		Facebook
+	</string>
 	<string name="Command_Speak_Label">
 		話す
 	</string>
@@ -4984,6 +5053,9 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 	</string>
 	<string name="Command_Gestures_Tooltip">
 		アバターのジェスチャー
+	</string>
+	<string name="Command_HMD_Mode_Tooltip">
+		ヘッドマウントディスプレイ (HMD) 表示モード
 	</string>
 	<string name="Command_HowTo_Tooltip">
 		一般的タスクの実行方法
@@ -5026,6 +5098,9 @@ www.secondlife.com から最新バージョンをダウンロードしてくだ�
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		ピクチャを撮る
+	</string>
+	<string name="Command_Social_Tooltip">
+		Facebook へ投稿
 	</string>
 	<string name="Command_Speak_Tooltip">
 		マイクを使って近くの人と話す

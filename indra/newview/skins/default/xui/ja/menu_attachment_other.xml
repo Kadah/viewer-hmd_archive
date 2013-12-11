@@ -15,5 +15,8 @@
 	<menu_item_call label="ズームイン" name="Zoom In"/>
 	<menu_item_call label="支払う" name="Pay..."/>
 	<menu_item_call label="オブジェクトのプロフィール" name="Object Inspect"/>
+	<menu_item_check label="標準レンダリング" name="Normal"/>
+	<menu_item_check label="常に簡略化されたアバターを使用" name="Always use impostor"/>
+	<menu_item_check label="簡略化されたアバターを使用しない" name="Never use impostor"/>
 	<menu_item_call label="パーティクル所有者をブロック" name="Mute Particle"/>
 </context_menu>

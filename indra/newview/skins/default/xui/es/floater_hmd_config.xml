@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<floater name="floater_hmd_config" title="Configuración de HMD">
+	<layout_stack>
+		<layout_panel>
+			<layout_stack>
+				<layout_panel>
+					<text name="interpupillary_offset_slider_amount">
+						64,0 mm
+					</text>
+					<slider_bar initial_value="64" name="interpupillary_offset_slider" tool_tip="La distancica configurada entre los centros de los ojos del usuario, en milímetros"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="uisurface_shape_preset_value">
+						Predeterminado
+					</text>
+					<slider_bar initial_value="1,0" name="uisurface_shape_preset_slider" tool_tip="Forma de la superficie de la IU en el modo HMD"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="ui_magnification_slider_amount">
+						600
+					</text>
+					<slider_bar initial_value="600,0" name="ui_magnification_slider" tool_tip="Ampliación de la IU a la distancia predeterminada del ojo a la pantalla"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="uisurface_offset_depth_slider_amount">
+						0,0
+					</text>
+					<slider_bar initial_value="0,0" name="uisurface_offset_depth_slider" tool_tip="Desplazamiento delantero de la superficie de la IU"/>
+				</layout_panel>
+			</layout_stack>
+		</layout_panel>
+		<layout_panel>
+			<layout_stack>
+				<layout_panel>
+					<button label="Restablecer valores" name="hmd_reset_values_button"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="Cancelar" name="hmd_cancel_button"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="Guardar" name="hmd_save_button"/>
+				</layout_panel>
+			</layout_stack>
+		</layout_panel>
+	</layout_stack>
+</floater>

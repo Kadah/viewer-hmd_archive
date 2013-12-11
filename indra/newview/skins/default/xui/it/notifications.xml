@@ -1479,12 +1479,12 @@ oppure puoi installarlo adesso.
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		È stato scaricato un aggiornamento dell&apos;installazione di [APP_NAME].
-Versione [VERSION] [[RELEASE_NOTES_FULL_URL] Informazioni su questo aggiornamento]
+Versione [VERSION] [[INFO_URL] Informazioni su questo aggiornamento]
 		<usetemplate name="okcancelbuttons" notext="Più tardi..." yestext="Installa ora e riavvia [APP_NAME]"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		È stato scaricato un aggiornamento dell&apos;installazione di [APP_NAME].
-Versione [VERSION] [[RELEASE_NOTES_FULL_URL] Informazioni su questo aggiornamento]
+    Versione [VERSION] [[INFO_URL] Informazioni su questo aggiornamento]
 		<usetemplate name="okcancelbuttons" notext="Più tardi..." yestext="Installa ora e riavvia [APP_NAME]"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1711,6 +1711,13 @@ Riprova più tardi.
 			<input name="message">
 				Raggiungimi a [REGION]
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Annulla"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Richiedi teleport a [NAME] con il messaggio seguente
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="Annulla"/>
 		</form>
@@ -2458,6 +2465,9 @@ Prova a selezionare una parte di terreno più piccola.
 	<notification name="SystemMessage">
 		[MESSAGE]
 	</notification>
+	<notification name="FacebookConnect">
+		[MESSAGE]
+	</notification>
 	<notification name="PaymentReceived">
 		[MESSAGE]
 	</notification>
@@ -2572,6 +2582,9 @@ Qui funzionano soltanto gli script del proprietario del terreno.
 	</notification>
 	<notification name="RegionTPAccessBlocked">
 		La regione che cerchi di visitare include contenuti che non corripondono al livello selezionato nelle preferenze.  Per cambiare le preferenze seleziona Io &gt; Preferenze &gt; Generale.
+	</notification>
+	<notification name="RegionAboutToShutdown">
+		La regione in cui cerchi di entrare sta per essere disattivata.
 	</notification>
 	<notification name="URBannedFromRegion">
 		Tu hai l&apos;accesso bloccato a questa regione.
@@ -2718,6 +2731,16 @@ Questa regione include però contenuti accessibili solo agli adulti.
 	<notification name="TeleportOfferSent">
 		Offerta di Teleport inviata a [TO_NAME]
 	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] sta richiedendo il teletrasporto alla tua posizione.
+[MESSAGE]
+
+Offrire il teletrasporto?
+		<form name="form">
+			<button name="Yes" text="Sì"/>
+			<button name="No" text="No"/>
+		</form>
+	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
 [URL]
@@ -2770,12 +2793,12 @@ Questo sarà aggiunto nel tuo inventario come segnalibro per consentirti di invi
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		Questa regione verrà riavviata fra [MINUTES] minuti.
-Se rimani qui verrai scollegato da Second Life.
+		La regione &quot;[NAME]&quot; verrà riavviata fra [MINUTES] minuti.
+Se rimani in questa regione verrai scollegato da Second Life.
 	</notification>
 	<notification name="RegionRestartSeconds">
-		Questa regione verrà riavviata fra [SECONDS] secondi.
-Se rimani qui verrai scollegato da Second Life.
+		La regione &quot;[NAME]&quot; verrà riavviata fra [SECONDS] secondi.
+Se rimani in questa regione verrai scollegato da Second Life.
 	</notification>
 	<notification name="LoadWebPage">
 		Caricare la pagina Web [URL]?
@@ -3502,9 +3525,9 @@ Riprova tra un minuto.
 	<notification name="EjectComingSoon">
 		Non sei più benvenuto qui e hai [EJECT_TIME] secondi per andartene.
 	</notification>
-	<notification name="NoEnterServerFull">
-		Non puoi entrare in questa regione perché 
-il server è pieno.
+	<notification name="NoEnterRegionMaybeFull">
+		Non puoi entrare nella regione &quot;[NAME]&quot; perché
+potrebbe essere piena o in riavvio.
 	</notification>
 	<notification name="SaveBackToInvDisabled">
 		Opzione Salva nell&apos;inventario disattivata
@@ -3793,6 +3816,9 @@ il server è pieno.
 	</notification>
 	<notification name="CantAttachNotEnoughScriptResources">
 		Risorse di script non sufficienti per collegare l&apos;oggetto.
+	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		L&apos;oggetto non può essere collegato perché è già in fase di rimozione.
 	</notification>
 	<notification name="CantDropItemTrialUser">
 		Non puoi lasciare oggetti qui, prova la zona Prova gratuita.

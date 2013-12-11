@@ -9,15 +9,6 @@
 	<floater.string name="move_tooltip">
 		攝影機上下左右移動
 	</floater.string>
-	<floater.string name="camera_modes_title">
-		攝影機模式
-	</floater.string>
-	<floater.string name="pan_mode_title">
-		環繞縮放平移
-	</floater.string>
-	<floater.string name="presets_mode_title">
-		預設視角
-	</floater.string>
 	<floater.string name="free_mode_title">
 		視角物件
 	</floater.string>
@@ -48,6 +39,11 @@
 			<panel_camera_item name="mouselook_view">
 				<panel_camera_item.text name="mouselook_view_text">
 					第一人稱視角
+				</panel_camera_item.text>
+			</panel_camera_item>
+			<panel_camera_item name="first_person_view">
+				<panel_camera_item.text name="first_person_view_text">
+					以我為主的視角
 				</panel_camera_item.text>
 			</panel_camera_item>
 		</panel>

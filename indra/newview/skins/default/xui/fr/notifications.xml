@@ -1475,12 +1475,12 @@ Vous pouvez également l&apos;installer dès maintenant.
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		Nous avons téléchargé une mise à jour de votre installation [APP_NAME].
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Informations relatives à cette mise à jour]
+Version [VERSION] [Informations au sujet de cette mise à jour [INFO_URL]]
 		<usetemplate name="okcancelbuttons" notext="Ultérieurement..." yestext="Installer maintenant et redémarrer [APP_NAME]"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		Nous avons téléchargé une mise à jour de votre installation [APP_NAME].
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Informations relatives à cette mise à jour]
+    Version [VERSION] [Informations au sujet de cette mise à jour [INFO_URL]]
 		<usetemplate name="okcancelbuttons" notext="Ultérieurement..." yestext="Installer maintenant et redémarrer [APP_NAME]"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1706,6 +1706,13 @@ Veuillez réessayer ultérieurement.
 			<input name="message">
 				On se rejoint à [REGION] ?
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Annuler"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Demander la téléportation à [NAME] avec le message suivant
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="Annuler"/>
 		</form>
@@ -2453,6 +2460,9 @@ Veuillez sélectionner un terrain plus petit.
 	<notification name="SystemMessage">
 		[MESSAGE]
 	</notification>
+	<notification name="FacebookConnect">
+		[MESSAGE]
+	</notification>
 	<notification name="PaymentReceived">
 		[MESSAGE]
 	</notification>
@@ -2567,6 +2577,9 @@ Aucun script ne marche ici à part ceux du propriétaire du terrain.
 	</notification>
 	<notification name="RegionTPAccessBlocked">
 		La région que vous essayez de visiter comporte du contenu dont le niveau dépasse celui de vos préférences actuelles. Vous pouvez modifier vos préférences en accédant à Moi &gt; Préférences &gt; Général.
+	</notification>
+	<notification name="RegionAboutToShutdown">
+		La région dans laquelle vous essayez d’entrer est sur le point de fermer.
 	</notification>
 	<notification name="URBannedFromRegion">
 		Vous avez été banni de cette région.
@@ -2713,6 +2726,16 @@ Toutefois, cette région comporte du contenu uniquement accessible aux adultes.
 	<notification name="TeleportOfferSent">
 		Offre de téléportation envoyée à [TO_NAME]
 	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] demande à être téléporté là où vous vous trouvez.
+[MESSAGE]
+
+Proposer une téléportation ?
+		<form name="form">
+			<button name="Yes" text="Oui"/>
+			<button name="No" text="Non"/>
+		</form>
+	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
 [URL]
@@ -2765,11 +2788,11 @@ Un signet sera ajouté dans votre inventaire afin que vous puissiez envoyer rapi
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		La région va redémarrer dans [MINUTES] minutes.
+		La région « [NAME] » va redémarrer dans [MINUTES] minutes.
 Si vous restez dans cette région, vous serez déconnecté(e).
 	</notification>
 	<notification name="RegionRestartSeconds">
-		La région va redémarrer dans [SECONDS] secondes.
+		La région « [NAME] » va redémarrer dans [SECONDS] secondes.
 Si vous restez dans cette région, vous serez déconnecté(e).
 	</notification>
 	<notification name="LoadWebPage">
@@ -3496,9 +3519,9 @@ Veuillez réessayer dans une minute.
 	<notification name="EjectComingSoon">
 		Votre présence ici n&apos;est plus autorisée et vous disposez de [EJECT_TIME] secondes pour partir.
 	</notification>
-	<notification name="NoEnterServerFull">
-		Vous ne pouvez pas pénétrer dans cette région car 
-le serveur est plein.
+	<notification name="NoEnterRegionMaybeFull">
+		Vous ne pouvez pas entrer dans la région « [NAME] ».
+Il est possible qu’elle soit pleine ou sur le point de redémarrer.
 	</notification>
 	<notification name="SaveBackToInvDisabled">
 		Le réenregistrement dans l&apos;inventaire a été désactivé.
@@ -3787,6 +3810,9 @@ le serveur est plein.
 	</notification>
 	<notification name="CantAttachNotEnoughScriptResources">
 		Ressources de script insuffisantes pour attacher cet objet.
+	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		Impossible d’attacher l’objet car il est déjà en cours de suppression.
 	</notification>
 	<notification name="CantDropItemTrialUser">
 		Vous ne pouvez pas déposer d&apos;objets ici. Essayez la zone de période d&apos;essai gratuite.

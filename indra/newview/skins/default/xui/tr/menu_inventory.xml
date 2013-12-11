@@ -74,6 +74,7 @@
 	<menu_item_call label="Yerel Olarak Oynat" name="Animation Audition"/>
 	<menu_item_call label="Anlık İleti Gönder" name="Send Instant Message"/>
 	<menu_item_call label="Işınlama Teklif Et..." name="Offer Teleport..."/>
+	<menu_item_call label="Işınlanma Talep Et..." name="Request Teleport..."/>
 	<menu_item_call label="Konferans Sohbeti Başlat" name="Conference Chat"/>
 	<menu_item_call label="Etkinleştir" name="Activate"/>
 	<menu_item_call label="Devre Dışı Bırak" name="Deactivate"/>

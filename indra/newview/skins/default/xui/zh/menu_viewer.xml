@@ -2,6 +2,7 @@
 <menu_bar name="Main Menu">
 	<menu label="我自己" name="Me">
 		<menu_item_call label="檔案..." name="Profile"/>
+		<menu_item_call label="發佈到臉書…" name="PostToFacebook"/>
 		<menu_item_call label="外觀…" name="ChangeOutfit"/>
 		<menu_item_call label="選擇一個化身…" name="Avatar Picker"/>
 		<menu_item_check label="收納區…" name="Inventory"/>
@@ -12,6 +13,7 @@
 		<menu label="動作" name="Movement">
 			<menu_item_call label="坐下" name="Sit Down Here"/>
 			<menu_item_check label="飛行" name="Fly"/>
+			<menu_item_call label="停止飛行" name="Stop flying"/>
 			<menu_item_check label="以跑代步" name="Always Run"/>
 			<menu_item_call label="停止我身上的動作" name="Stop Animating My Avatar"/>
 			<menu_item_call label="行走 / 跑步 / 飛行…" name="Walk / run / fly"/>
@@ -27,6 +29,8 @@
 		<menu_item_call label="工具列按鈕…" name="Toolbars"/>
 		<menu_item_call label="隱藏所有控制" name="Hide UI"/>
 		<menu_item_check label="顯示 HUD 附件" name="Show HUD Attachments"/>
+		<menu_item_call label="切換頭戴顯示器模式" name="Toggle HMD Mode"/>
+		<menu_item_call label="新增額外顯示器" name="Add Extra Monitor"/>
 		<menu_item_call label="退出 [APP_NAME]" name="Quit"/>
 	</menu>
 	<menu label="溝通" name="Communicate">
@@ -163,8 +167,7 @@
 	</menu>
 	<menu label="幫助" name="Help">
 		<menu_item_call label="簡易教學…" name="How To"/>
-		<menu_item_call label="[SECOND_LIFE] 幫助" name="Second Life Help"/>
-		<menu_item_call label="使用者指南" name="User’s guide"/>
+		<menu_item_call label="快速上手" name="Quickstart"/>
 		<menu_item_call label="知識庫" name="Knowledge Base"/>
 		<menu_item_call label="維基" name="Wiki"/>
 		<menu_item_call label="社群論壇" name="Community Forums"/>
@@ -224,6 +227,7 @@
 		<menu_item_call label="清除群組快取資料" name="ClearGroupCache"/>
 		<menu_item_check label="滑鼠平滑移動" name="Mouse Smoothing"/>
 		<menu_item_call label="釋出按鍵" name="Release Keys"/>
+		<menu_item_check label="進階頭戴顯示器模式" name="Advanced HMD Mode"/>
 		<menu label="快速鍵" name="Shortcuts">
 			<menu_item_check label="顯示進階選單 － 舊版捷徑" name="Show Advanced Menu - legacy shortcut"/>
 			<menu_item_call label="關閉視窗" name="Close Window"/>
@@ -261,12 +265,15 @@
 			<menu_item_check label="顯示時間" name="Show Time"/>
 			<menu_item_check label="顯示上傳費用" name="Show Upload Cost"/>
 			<menu_item_check label="顯示呈像資訊" name="Show Render Info"/>
+			<menu_item_check label="顯示化身呈像資訊" name="Show Avatar Render Info"/>
 			<menu_item_check label="顯示材質資訊" name="Show Texture Info"/>
 			<menu_item_check label="顯示矩陣" name="Show Matrices"/>
 			<menu_item_check label="游標下顯示顏色" name="Show Color Under Cursor"/>
 			<menu_item_check label="顯示記憶體" name="Show Memory"/>
 			<menu_item_check label="顯示私區記憶體資訊" name="Show Private Mem Info"/>
 			<menu_item_check label="顯示更新到物件" name="Show Updates"/>
+			<menu_item_check label="顯示頭戴顯示器方向資訊" name="Show HMD Orientation"/>
+			<menu_item_check label="顯示頭戴顯示器延遲測試資訊" name="Show HMD Latency"/>
 		</menu>
 		<menu label="強制錯誤" name="Force Errors">
 			<menu_item_call label="強制中斷點" name="Force Breakpoint"/>
@@ -346,6 +353,9 @@
 		<menu_item_call label="傾印腳本控制的攝影機" name="Dump Scripted Camera"/>
 		<menu_item_call label="碰撞、推擠與打擊" name="Bumps, Pushes &amp;amp; Hits"/>
 		<menu label="錄製器" name="Recorder">
+			<menu_item_call label="開始活動錄影" name="Start event recording"/>
+			<menu_item_call label="停止活動錄影" name="Stop event recording"/>
+			<menu_item_call label="播放活動錄影" name="Playback event recording"/>
 			<menu_item_call label="開始播放" name="Start Playback"/>
 			<menu_item_call label="停止播放" name="Stop Playback"/>
 			<menu_item_check label="循環播放" name="Loop Playback"/>
@@ -360,6 +370,7 @@
 		<menu label="使用者界面" name="UI">
 			<menu_item_call label="媒體瀏覽器測試" name="Web Browser Test"/>
 			<menu_item_call label="網頁內容瀏覽器" name="Web Content Browser"/>
+			<menu_item_call label="臉書連通測試" name="FB Connect Test"/>
 			<menu_item_call label="傾印 SelectMgr" name="Dump SelectMgr"/>
 			<menu_item_call label="傾印收納區" name="Dump Inventory"/>
 			<menu_item_call label="傾印碼錶" name="Dump Timers"/>

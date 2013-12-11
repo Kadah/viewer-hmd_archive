@@ -1483,13 +1483,13 @@ o instalarla ahora.
 		<usetemplate name="okcancelbuttons" notext="Salir de Second Life" yestext="Descargar e instalar ahora"/>
 	</notification>
 	<notification name="DownloadBackgroundTip">
-		Hemos descargado una actualización para la instalación de [APP_NAME].
-Versión [VERSION] [[RELEASE_NOTES_FULL_URL]; información acerca de esta actualización]
+		Hemos descargado una actualización de tu instalación de [APP_NAME].
+Versión [VERSION] [[INFO_URL] Información sobre esta actualización]
 		<usetemplate name="okcancelbuttons" notext="Más tarde..." yestext="Instalar ahora y reiniciar [NOMBRE_APL]"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
-		Hemos descargado una actualización para la instalación de [APP_NAME].
-Versión [VERSION] [[RELEASE_NOTES_FULL_URL]; información acerca de esta actualización]
+		Hemos descargado una actualización de tu instalación de [APP_NAME].
+    Versión [VERSION] [[INFO_URL] Información sobre esta actualización]
 		<usetemplate name="okcancelbuttons" notext="Más tarde..." yestext="Instalar ahora y reiniciar [APP_NAME]"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1716,6 +1716,13 @@ Vuelve a intentarlo más tarde.
 			<input name="message">
 				Ven conmigo a [REGION]
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Cancelar"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Solicita teleporte a [NAME] con el siguiente mensaje
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="Cancelar"/>
 		</form>
@@ -2461,6 +2468,9 @@ Inténtalo seleccionando un trozo más pequeño de terreno.
 	<notification name="SystemMessage">
 		[MESSAGE]
 	</notification>
+	<notification name="FacebookConnect">
+		[MESSAGE]
+	</notification>
 	<notification name="PaymentReceived">
 		[MESSAGE]
 	</notification>
@@ -2575,6 +2585,9 @@ Los scripts no funcionan aquí, excepto los pertenecientes al propietario del te
 	</notification>
 	<notification name="RegionTPAccessBlocked">
 		Tus preferencias de contenido actuales te impiden visitar la región que has seleccionado. Puedes cambiar las preferencias en Yo &gt; Preferencias &gt; General.
+	</notification>
+	<notification name="RegionAboutToShutdown">
+		La región en la que intentas entrar está a punto de cerrarse.
 	</notification>
 	<notification name="URBannedFromRegion">
 		Se te ha prohibido el acceso a la región.
@@ -2691,7 +2704,7 @@ Por favor, vuelve a intentarlo en unos momentos.
 	<notification name="TeleportOffered">
 		[NAME_SLURL] te ofrece teleportarte a su localización:
 
-“[MESSAGE]”
+&quot;[MESSAGE]”
 &lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; - [MATURITY_STR]
 		<form name="form">
 			<button name="Teleport" text="Teleportar"/>
@@ -2720,6 +2733,16 @@ No obstante, el contenido de esta región solo es accesible para los adultos.
 	</notification>
 	<notification name="TeleportOfferSent">
 		Teleporte ofrecido a [TO_NAME]
+	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] solicita teleporte a tu localización.
+[MESSAGE]
+
+¿Deseas ofrecerle teleporte?
+		<form name="form">
+			<button name="Yes" text="Sí"/>
+			<button name="No" text="No"/>
+		</form>
 	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
@@ -2773,11 +2796,11 @@ Esto añadirá un marcador en tu inventario para que puedas enviarle rápidament
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		Esta región se reiniciará en [MINUTES] minutos.
+		La región &quot;[NAME]&quot; se reiniciará en [MINUTES] minutos.
 Si permaneces en esta región serás desconectado.
 	</notification>
 	<notification name="RegionRestartSeconds">
-		Esta región se reiniciará en  [SECONDS] segundos.
+		La región &quot;[NAME]&quot; se reiniciará en [SECONDS] segundos.
 Si permaneces en esta región serás desconectado.
 	</notification>
 	<notification name="LoadWebPage">
@@ -3495,9 +3518,9 @@ Prueba otra vez dentro de un minuto.
 	<notification name="EjectComingSoon">
 		Te han expulsado de aquí y tienes [EJECT_TIME] segundos para salir.
 	</notification>
-	<notification name="NoEnterServerFull">
-		No puedes entrar en esta región porque 
-el servidor está lleno.
+	<notification name="NoEnterRegionMaybeFull">
+		No puedes entrar en la región &quot;[NAME]&quot;.
+Posiblemente esté llena o vaya a reiniciarse pronto.
 	</notification>
 	<notification name="SaveBackToInvDisabled">
 		Se ha deshabilitado Devolver el objeto a mi inventario.
@@ -3786,6 +3809,9 @@ el servidor está lleno.
 	</notification>
 	<notification name="CantAttachNotEnoughScriptResources">
 		No hay suficientes recursos de script disponibles para anexar el objeto
+	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		No se puede anexar el objeto porque ya está siendo eliminado.
 	</notification>
 	<notification name="CantDropItemTrialUser">
 		No se pueden soltar objetos aquí; inténtalo en la zona de prueba gratuita.

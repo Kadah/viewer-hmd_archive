@@ -1511,12 +1511,12 @@ http://secondlife.com/download から最新バージョンをダウンロード�
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		お使いの [APP_NAME] に必要なアップデートをダウンロードしました。
-バージョン [VERSION] [[RELEASE_NOTES_FULL_URL] このアップデートに関する情報]
+バージョン [VERSION] [[INFO_URL] このアップデートに関する情報]
 		<usetemplate name="okcancelbuttons" notext="後で実行" yestext="今すぐインストールして [APP_NAME] を再起動"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		お使いの [APP_NAME] に必要なアップデートをダウンロードしました。
-バージョン [VERSION] [[RELEASE_NOTES_FULL_URL] このアップデートに関する情報]
+バージョン [VERSION] [[INFO_URL] このアップデートに関する情報]
 		<usetemplate name="okcancelbuttons" notext="後で実行" yestext="今すぐインストールして [APP_NAME] を再起動"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1745,6 +1745,13 @@ http://wiki.secondlife.com/wiki/Setting_your_display_name を参照してくだ�
 			<input name="message">
 				[REGION] に来ませんか？
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="取り消し"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		次のメッセージ付きで [NAME] にテレポートをリクエスト
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="取り消し"/>
 		</form>
@@ -2500,6 +2507,9 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 	<notification name="SystemMessage">
 		[MESSAGE]
 	</notification>
+	<notification name="FacebookConnect">
+		[MESSAGE]
+	</notification>
 	<notification name="PaymentReceived">
 		[MESSAGE]
 	</notification>
@@ -2615,6 +2625,9 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 	</notification>
 	<notification name="RegionTPAccessBlocked">
 		訪問しようとしている地域（リージョン）には現在の環境設定を超えるコンテンツが含まれています。「ミー」 &gt; 「環境設定」 &gt; 「一般」を選択して、環境設定を変更できます。
+	</notification>
+	<notification name="RegionAboutToShutdown">
+		入ろうとしている地域は、まもなくシャットダウンします。
 	</notification>
 	<notification name="URBannedFromRegion">
 		あなたはリージョンへの立入が禁止されています。
@@ -2761,6 +2774,16 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 	<notification name="TeleportOfferSent">
 		[TO_NAME] にテレポートを送りました。
 	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] があなたの場所にテレポートされるようにリクエストしています。
+[MESSAGE]
+
+テレポートを送りますか?
+		<form name="form">
+			<button name="Yes" text="はい"/>
+			<button name="No" text="いいえ"/>
+		</form>
+	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
 [URL]
@@ -2813,11 +2836,11 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		このリージョンは [SECONDS] 分後に再起動されます。
+		このリージョン &quot;[NAME]&quot; は [MINUTES] 分後に再起動されます。
 このままここにいるとログアウトされます。
 	</notification>
 	<notification name="RegionRestartSeconds">
-		このリージョンは [SECONDS] 秒後に再起動されます。.
+		このリージョン &quot;[NAME]&quot; は [SECONDS] 秒後に再起動されます。
 このままここにいるとログアウトされます。
 	</notification>
 	<notification name="LoadWebPage">
@@ -3541,9 +3564,9 @@ M キーを押して変更します。
 	<notification name="EjectComingSoon">
 		ここへの入場が許可されていないため、[EJECT_TIME] 秒後に追放されます。
 	</notification>
-	<notification name="NoEnterServerFull">
-		サーバーが埋まっているため、
-このリージョンに入場することはできません。
+	<notification name="NoEnterRegionMaybeFull">
+		地域 &quot;[NAME]&quot; を入力できません。
+いっぱいになっているか、すぐに再起動される可能性があります。
 	</notification>
 	<notification name="SaveBackToInvDisabled">
 		「「持ち物」に保存」が無効になっています。
@@ -3827,6 +3850,9 @@ M キーを押して変更します。
 	</notification>
 	<notification name="CantAttachNotEnoughScriptResources">
 		オブジェクトの着用に使用できるスクリプトリソースが足りません。
+	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		オブジェクトはすでに削除されているため、添付できません。
 	</notification>
 	<notification name="CantDropItemTrialUser">
 		オブジェクトをここにドロップできません。フリートライアル領域をお試しください。

@@ -21,6 +21,15 @@
 	<text name="ShadersPrefText4">
 		超高
 	</text>
+	<slider label="化身細節：" name="AvatarMeshDetail2"/>
+	<text name="AvatarMeshDetailText2">
+		低
+	</text>
+	<slider label="描繪距離：" name="DrawDistance"/>
+	<text name="DrawDistanceMeterText2">
+		m
+	</text>
+	<check_box initial_value="true" label="進階照明模型" name="UseLightShaders2"/>
 	<panel label="自訂圖形" name="CustomGraphics Panel">
 		<text name="ShadersText">
 			著色器：

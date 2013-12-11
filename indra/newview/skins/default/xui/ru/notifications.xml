@@ -1478,12 +1478,12 @@ http://secondlife.com/download.
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		Загружено обновление для вашей версии [APP_NAME].
-Версия [VERSION]. [[RELEASE_NOTES_FULL_URL] Сведения об этом обновлении]
+Версия [VERSION]. [[INFO_URL] Сведения об этом обновлении]
 		<usetemplate name="okcancelbuttons" notext="Позже..." yestext="Установите обновление и перезапустите [APP_NAME]"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		Загружено обновление для вашей версии [APP_NAME].
-Версия [VERSION]. [[RELEASE_NOTES_FULL_URL] Сведения об этом обновлении]
+    Версия [VERSION]. [[INFO_URL] Сведения об этом обновлении]
 		<usetemplate name="okcancelbuttons" notext="Позже..." yestext="Установите обновление и перезапустите [APP_NAME]"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1709,6 +1709,13 @@ http://secondlife.com/download.
 			<input name="message">
 				Присоединиться ко мне в [REGION]
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Отмена"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Предложить телепортацию к [NAME] с отправкой сообщения
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="Отмена"/>
 		</form>
@@ -2453,6 +2460,9 @@ http://secondlife.com/download.
 	<notification name="SystemMessage">
 		[MESSAGE]
 	</notification>
+	<notification name="FacebookConnect">
+		[MESSAGE]
+	</notification>
 	<notification name="PaymentReceived">
 		[MESSAGE]
 	</notification>
@@ -2567,6 +2577,9 @@ http://secondlife.com/download.
 	</notification>
 	<notification name="RegionTPAccessBlocked">
 		Вы пытаетесь посетить регион, контент в котором не соответствует вашим настройкам.  Попробуйте изменить настройки в меню «Я &gt; Настройки &gt; Общие».
+	</notification>
+	<notification name="RegionAboutToShutdown">
+		Вы пытаетесь войти в регион, который скоро выключится.
 	</notification>
 	<notification name="URBannedFromRegion">
 		Вы забанены в регионе.
@@ -2713,6 +2726,16 @@ http://secondlife.com/download.
 	<notification name="TeleportOfferSent">
 		Предложение телепортации отправлено [TO_NAME]
 	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] хочет телепортироваться к вам.
+[MESSAGE]
+
+Предложить телепортацию?
+		<form name="form">
+			<button name="Yes" text="Да"/>
+			<button name="No" text="Нет"/>
+		</form>
+	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
 [URL]
@@ -2765,12 +2788,12 @@ http://secondlife.com/download.
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		Этот регион будет перезапущен через [MINUTES] мин.
-Если вы останетесь в этом регионе, вы выйдете из программы.
+		Регион «[NAME]» будет перезапущен через [MINUTES] мин.
+Если вы останетесь в этом регионе, вы выйдете из системы.
 	</notification>
 	<notification name="RegionRestartSeconds">
-		Этот регион будет перезапущен через [SECONDS] сек.
-Если вы останетесь в этом регионе, вы выйдете из программы.
+		Регион «[NAME]» будет перезапущен через [SECONDS] с.
+Если вы останетесь в этом регионе, вы выйдете из системы.
 	</notification>
 	<notification name="LoadWebPage">
 		Загрузить веб-страницу [URL]?
@@ -3497,9 +3520,9 @@ http://secondlife.com/download.
 	<notification name="EjectComingSoon">
 		Вам запрещено здесь присутствовать; у вас есть [EJECT_TIME] сек, чтобы покинуть это место.
 	</notification>
-	<notification name="NoEnterServerFull">
-		Вам нет доступа в этот регион: 
-серпер переполнен.
+	<notification name="NoEnterRegionMaybeFull">
+		Вам нет доступа в регион «[NAME]».
+Возможно, он заполнен или скоро перезапустится.
 	</notification>
 	<notification name="SaveBackToInvDisabled">
 		Сохранение в инвентаре отключено.
@@ -3787,6 +3810,9 @@ http://secondlife.com/download.
 	</notification>
 	<notification name="CantAttachNotEnoughScriptResources">
 		Недостаточно свободных ресурсов скриптинга для присоединения объекта!
+	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		Невозможно присоединить объект: он уже удаляется.
 	</notification>
 	<notification name="CantDropItemTrialUser">
 		Здесь нельзя сбрасывать объекты; перейдите в бесплатную область для гостей.

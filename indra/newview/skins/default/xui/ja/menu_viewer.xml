@@ -2,6 +2,7 @@
 <menu_bar name="Main Menu">
 	<menu label="ミー" name="Me">
 		<menu_item_call label="プロフィール..." name="Profile"/>
+		<menu_item_call label="Facebook へ投稿..." name="PostToFacebook"/>
 		<menu_item_call label="容姿..." name="ChangeOutfit"/>
 		<menu_item_call label="アバターを選択..." name="Avatar Picker"/>
 		<menu_item_check label="インベントリ..." name="Inventory"/>
@@ -12,6 +13,7 @@
 		<menu label="ムーブメント" name="Movement">
 			<menu_item_call label="座る" name="Sit Down Here"/>
 			<menu_item_check label="飛ぶ" name="Fly"/>
+			<menu_item_call label="飛行停止" name="Stop flying"/>
 			<menu_item_check label="常に走る" name="Always Run"/>
 			<menu_item_call label="私のアニメーションを停止する" name="Stop Animating My Avatar"/>
 			<menu_item_call label="歩行／走行／飛行..." name="Walk / run / fly"/>
@@ -29,6 +31,8 @@
 		<menu_item_call label="ツールバーのボタン..." name="Toolbars"/>
 		<menu_item_call label="全てのコントロールを非表示にする" name="Hide UI"/>
 		<menu_item_check label="HUD を表示" name="Show HUD Attachments"/>
+		<menu_item_call label="HMD モードを切り替え" name="Toggle HMD Mode"/>
+		<menu_item_call label="追加モニターを追加" name="Add Extra Monitor"/>
 		<menu_item_call label="[APP_NAME] を終了" name="Quit"/>
 	</menu>
 	<menu label="コミュニケーション" name="Communicate">
@@ -165,8 +169,7 @@
 	</menu>
 	<menu label="ヘルプ" name="Help">
 		<menu_item_call label="ハウツー..." name="How To"/>
-		<menu_item_call label="[SECOND_LIFE] ヘルプ" name="Second Life Help"/>
-		<menu_item_call label="ユーザーガイド" name="User’s guide"/>
+		<menu_item_call label="クイックスタート" name="Quickstart"/>
 		<menu_item_call label="ナレッジベース" name="Knowledge Base"/>
 		<menu_item_call label="Wiki" name="Wiki"/>
 		<menu_item_call label="コミュニティフォーラム" name="Community Forums"/>
@@ -226,6 +229,7 @@
 		<menu_item_call label="グループキャッシュのクリア" name="ClearGroupCache"/>
 		<menu_item_check label="マウスの平滑化" name="Mouse Smoothing"/>
 		<menu_item_call label="リリースキー" name="Release Keys"/>
+		<menu_item_check label="高度な HMD モード" name="Advanced HMD Mode"/>
 		<menu label="ショートカット" name="Shortcuts">
 			<menu_item_check label="アドバンスメニューを表示 - レガシーのショートカット" name="Show Advanced Menu - legacy shortcut"/>
 			<menu_item_call label="ウィンドウを閉じる" name="Close Window"/>
@@ -263,12 +267,15 @@
 			<menu_item_check label="時間を表示する" name="Show Time"/>
 			<menu_item_check label="アップロード代金を表示" name="Show Upload Cost"/>
 			<menu_item_check label="描画情報を表示する" name="Show Render Info"/>
+			<menu_item_check label="アバター描画情報を表示" name="Show Avatar Render Info"/>
 			<menu_item_check label="テクスチャ情報を表示" name="Show Texture Info"/>
 			<menu_item_check label="マトリックスを表示する" name="Show Matrices"/>
 			<menu_item_check label="カーソルを乗せた場所の色を表示する" name="Show Color Under Cursor"/>
 			<menu_item_check label="メモリを表示：" name="Show Memory"/>
 			<menu_item_check label="プライベートメモリ情報を表示" name="Show Private Mem Info"/>
 			<menu_item_check label="オブジェクトのアップデートを表示する" name="Show Updates"/>
+			<menu_item_check label="HMD の向き情報を表示" name="Show HMD Orientation"/>
+			<menu_item_check label="HMD レイテンシテスト情報を表示" name="Show HMD Latency"/>
 		</menu>
 		<menu label="エラー実行" name="Force Errors">
 			<menu_item_call label="ブレークポイント" name="Force Breakpoint"/>
@@ -348,6 +355,9 @@
 		<menu_item_call label="スクリプト付きカメラをダンプ" name="Dump Scripted Camera"/>
 		<menu_item_call label="衝突・プッシュ・打撃" name="Bumps, Pushes &amp;amp; Hits"/>
 		<menu label="レコーダー" name="Recorder">
+			<menu_item_call label="イベントの録画を開始" name="Start event recording"/>
+			<menu_item_call label="イベントの録画を停止" name="Stop event recording"/>
+			<menu_item_call label="イベントの録画を再生" name="Playback event recording"/>
 			<menu_item_call label="再生開始" name="Start Playback"/>
 			<menu_item_call label="再生停止" name="Stop Playback"/>
 			<menu_item_check label="再生をループ" name="Loop Playback"/>
@@ -362,6 +372,7 @@
 		<menu label="UI" name="UI">
 			<menu_item_call label="メディアブラウザのテスト" name="Web Browser Test"/>
 			<menu_item_call label="Web コンテンツブラウザ" name="Web Content Browser"/>
+			<menu_item_call label="FB 接続テスト" name="FB Connect Test"/>
 			<menu_item_call label="SelectMgr をダンプ" name="Dump SelectMgr"/>
 			<menu_item_call label="インベントリの出力" name="Dump Inventory"/>
 			<menu_item_call label="タイマーをダンプ" name="Dump Timers"/>

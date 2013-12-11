@@ -21,6 +21,15 @@
 	<text name="ShadersPrefText4">
 		Ultra
 	</text>
+	<slider label="Avatar ayrıntısı:" name="AvatarMeshDetail2"/>
+	<text name="AvatarMeshDetailText2">
+		Düşük
+	</text>
+	<slider label="Çizme mesafesi:" name="DrawDistance"/>
+	<text name="DrawDistanceMeterText2">
+		m
+	</text>
+	<check_box initial_value="true" label="Gelişmiş Aydınlatma Modeli" name="UseLightShaders2"/>
 	<panel label="ÖzelGrafikler" name="CustomGraphics Panel">
 		<text name="ShadersText">
 			Gölgelendiriciler:

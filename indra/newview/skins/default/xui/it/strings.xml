@@ -293,6 +293,24 @@ Prova ad accedere nuovamente tra un minuto.
 	<string name="TestingDisconnect">
 		Verifica scollegamento viewer
 	</string>
+	<string name="SocialFacebookConnecting">
+		Collegamento a Facebook...
+	</string>
+	<string name="SocialFacebookPosting">
+		Caricamento post...
+	</string>
+	<string name="SocialFacebookDisconnecting">
+		Interruzione del collegamento a Facebook...
+	</string>
+	<string name="SocialFacebookErrorConnecting">
+		Problema nel collegamento a Facebook
+	</string>
+	<string name="SocialFacebookErrorPosting">
+		Problema nel pubblicare su Facebook
+	</string>
+	<string name="SocialFacebookErrorDisconnecting">
+		Problema nell&apos;interruzione del collegamento da Facebook
+	</string>
 	<string name="TooltipPerson">
 		Persona
 	</string>
@@ -848,7 +866,7 @@ Prova ad accedere nuovamente tra un minuto.
 		Offline
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		L$ [PRICE] - [AREA] m²
+		[AREA] m² L$[PRICE] ([SQMPRICE] L$/m²)
 	</string>
 	<string name="worldmap_results_none_found">
 		Nessun risultato.
@@ -931,11 +949,17 @@ Prova ad accedere nuovamente tra un minuto.
 	<string name="ControlYourCamera">
 		Controllare la tua fotocamera
 	</string>
-	<string name="AgentNameSubst">
-		(Tu)
-	</string>
 	<string name="TeleportYourAgent">
 		Teleportarti
+	</string>
+	<string name="ManageEstateSilently">
+		Gestisci proprietà immobiliari senza messaggi
+	</string>
+	<string name="ChangeYourDefaultAnimations">
+		Cambia le animazioni predefinite
+	</string>
+	<string name="AgentNameSubst">
+		(Tu)
 	</string>
 	<string name="JoinAnExperience">
 		Partecipa a un&apos;esperienza
@@ -1005,6 +1029,12 @@ Prova ad accedere nuovamente tra un minuto.
 	</string>
 	<string name="bitmap_image_files">
 		Immagini Bitmap
+	</string>
+	<string name="png_image_files">
+		Immagini PNG
+	</string>
+	<string name="save_texture_image_files">
+		Immagini Targa o PNG
 	</string>
 	<string name="avi_movie_file">
 		File video AVI
@@ -1245,6 +1275,24 @@ Prova ad accedere nuovamente tra un minuto.
 	</string>
 	<string name="LeaveMouselook">
 		Premi ESC per tornare in visualizzazione normale
+	</string>
+	<string name="HMDPresetCustom">
+		Personalizzato
+	</string>
+	<string name="HMDPresetDefault">
+		Predefinito [INDEX]
+	</string>
+	<string name="HMDPresetUser">
+		Utente [INDEX]
+	</string>
+	<string name="HMDConfigUnitsMillimeters">
+		[VAL] mm
+	</string>
+	<string name="HMDConfigUnitsMilliseconds">
+		[VAL] ms
+	</string>
+	<string name="HMDConfigUnitsRadians">
+		[VAL] PI
 	</string>
 	<string name="InventoryNoMatchingItems">
 		Non riesci a trovare quello che cerchi? Prova [secondlife:///app/search/all/[SEARCH_TERM] Cerca].
@@ -1823,6 +1871,18 @@ Prova ad accedere nuovamente tra un minuto.
 	</string>
 	<string name="RegionInfoAllowedGroups">
 		Gruppi ammessi: ([ALLOWEDGROUPS], massimo [MAXACCESS])
+	</string>
+	<string name="RegionInfoEstateManagers">
+		Gestori delle proprietà immobiliari: ([ESTATEMANAGERS], max [MAXMANAGERS])
+	</string>
+	<string name="RegionInfoBannedResidents">
+		Residenti con divieto: ([BANNEDAGENTS], max [MAXBANNED])
+	</string>
+	<string name="RegionInfoListTypeAllowedAgents">
+		Residenti consentiti
+	</string>
+	<string name="RegionInfoListTypeBannedAgents">
+		Residenti con divieto
 	</string>
 	<string name="ScriptLimitsParcelScriptMemory">
 		Memoria dello script del lotto
@@ -3939,6 +3999,9 @@ Se il messaggio persiste, contatta [SUPPORT_SITE].
 	<string name="conference-title-incoming">
 		Chiamata in conferenza con [AGENT_NAME]
 	</string>
+	<string name="facebook_post_success">
+		Hai pubblicato su Facebook.
+	</string>
 	<string name="no_session_message">
 		(La sessione IM non esiste)
 	</string>
@@ -4820,6 +4883,9 @@ Prova a racchiudere il percorso dell&apos;editor in doppie virgolette.
 	<string name="Command_Gestures_Label">
 		Gesture
 	</string>
+	<string name="Command_HMD_Mode_Label">
+		Modalità HMD
+	</string>
 	<string name="Command_HowTo_Label">
 		Istruzioni
 	</string>
@@ -4862,6 +4928,9 @@ Prova a racchiudere il percorso dell&apos;editor in doppie virgolette.
 	<string name="Command_Snapshot_Label">
 		Istantanea
 	</string>
+	<string name="Command_Social_Label">
+		Facebook
+	</string>
 	<string name="Command_Speak_Label">
 		Parla
 	</string>
@@ -4897,6 +4966,9 @@ Prova a racchiudere il percorso dell&apos;editor in doppie virgolette.
 	</string>
 	<string name="Command_Gestures_Tooltip">
 		Gesti per il tuo avatar
+	</string>
+	<string name="Command_HMD_Mode_Tooltip">
+		Usa modalità di rendering per Head-Mounted Display (HMD)
 	</string>
 	<string name="Command_HowTo_Tooltip">
 		Come eseguire le attività più comuni
@@ -4939,6 +5011,9 @@ Prova a racchiudere il percorso dell&apos;editor in doppie virgolette.
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		Scatta una foto
+	</string>
+	<string name="Command_Social_Tooltip">
+		Pubblica su Facebook
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Parla con persone vicine usando il microfono

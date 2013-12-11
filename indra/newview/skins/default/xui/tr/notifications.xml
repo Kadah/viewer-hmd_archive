@@ -1477,13 +1477,13 @@ veya şimdi kurabilirsiniz.
 		<usetemplate name="okcancelbuttons" notext="Second Life&apos;tan çık" yestext="Karşıdan yükle ve şimdi kur"/>
 	</notification>
 	<notification name="DownloadBackgroundTip">
-		[APP_NAME] kurulumunuz için bir güncellemeyi karşıdan yükledik.
-Sürüm [VERSION] [[RELEASE_NOTES_FULL_URL] Bu güncelleme hakkında ayrıntılı bilgi]
+		[APP_NAME] kurulumunuz için bir güncelleme indirdik.
+Sürüm [VERSION] [[INFO_URL] Bu güncelleme hakkında ayrıntılı bilgi]
 		<usetemplate name="okcancelbuttons" notext="Sonra..." yestext="Şimdi kur ve [APP_NAME] uygulamasını yeniden başlat"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
-		[APP_NAME] kurulumunuz için bir güncellemeyi karşıdan yükledik.
-Sürüm [VERSION] [[RELEASE_NOTES_FULL_URL] Bu güncelleme hakkında ayrıntılı bilgi]
+		[APP_NAME] kurulumunuz için bir güncelleme indirdik.
+    Sürüm [VERSION] [[INFO_URL] Bu güncelleme hakkında ayrıntılı bilgi]
 		<usetemplate name="okcancelbuttons" notext="Sonra..." yestext="Şimdi kur ve [APP_NAME] uygulamasını yeniden başlat"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1709,6 +1709,13 @@ Lütfen daha sonra tekrar deneyin.
 			<input name="message">
 				[REGION] bölgesinde bana katılır mısın?
 			</input>
+			<button name="OK" text="Tamam"/>
+			<button name="Cancel" text="İptal"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Aşağıdaki iletiyle [NAME] konumuna ışınlanma talep edin
+		<form name="form">
 			<button name="OK" text="Tamam"/>
 			<button name="Cancel" text="İptal"/>
 		</form>
@@ -2453,6 +2460,9 @@ Daha küçük bir arazi parçası seçmeyi deneyin.
 	<notification name="SystemMessage">
 		[MESSAGE]
 	</notification>
+	<notification name="FacebookConnect">
+		[MESSAGE]
+	</notification>
 	<notification name="PaymentReceived">
 		[MESSAGE]
 	</notification>
@@ -2567,6 +2577,9 @@ Arazi sahibine ait olanlar dışında hiçbir komut dosyası çalışmayacak.
 	</notification>
 	<notification name="RegionTPAccessBlocked">
 		Ziyaret etmeye çalıştığınız bölge, mevcut tercihlerinizi aşan içeriğe sahip.  Ben &gt; Tercihler &gt; Genel sekmesini kullanarak tercihlerinizi değiştirebilirsiniz.
+	</notification>
+	<notification name="RegionAboutToShutdown">
+		Girmeye çalıştığınız bölge kapatılmak üzere.
 	</notification>
 	<notification name="URBannedFromRegion">
 		Bu bölgeye erişiminiz yasaklandı.
@@ -2683,7 +2696,7 @@ Lütfen biraz sonra tekrar deneyin.
 	<notification name="TeleportOffered">
 		[NAME_SLURL] size kendi konumuna ışınlanmayı teklif etti:
 
-“[MESSAGE]”
+&quot;[MESSAGE]”
 &lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; - [MATURITY_STR]
 		<form name="form">
 			<button name="Teleport" text="Işınla"/>
@@ -2712,6 +2725,16 @@ Ancak bu bölge sadece yetişkinlerin erişebileceği içeriğe sahip.
 	</notification>
 	<notification name="TeleportOfferSent">
 		Işınlanma teklifi [TO_NAME] adlı kişiye gönderildi
+	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] konumunuza ışınlanmayı talep ediyor.
+[MESSAGE]
+
+Işınlama teklif edilsin mi?
+		<form name="form">
+			<button name="Yes" text="Evet"/>
+			<button name="No" text="Hayır"/>
+		</form>
 	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
@@ -2765,11 +2788,11 @@ Kabul ettiğiniz takdirde, bu Sakine hızlı bir şekilde Aİ gönderebilmeniz i
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		Bu bölge [MINUTES] dakika içinde yeniden başlatılacak.
+		&quot;[NAME]&quot; bölgesi [MINUTES] dakika içinde yeniden başlatılacak.
 Bu bölgede kalmaya devam ederseniz oturumunuz sonlandırılacak.
 	</notification>
 	<notification name="RegionRestartSeconds">
-		Bu bölge [SECONDS] saniye içinde yeniden başlatılacak.
+		&quot;[NAME]&quot; bölgesi [SECONDS] saniye içinde yeniden başlatılacak.
 Bu bölgede kalmaya devam ederseniz oturumunuz sonlandırılacak.
 	</notification>
 	<notification name="LoadWebPage">
@@ -3496,9 +3519,9 @@ Lütfen bir dakika sonra tekrar deneyin.
 	<notification name="EjectComingSoon">
 		Daha fazla burada olma izniniz yok ve ayrılmak için [EJECT_TIME] saniyeniz var.
 	</notification>
-	<notification name="NoEnterServerFull">
-		Bu bölgeye giremezsiniz çünkü 
-sunucu dolu.
+	<notification name="NoEnterRegionMaybeFull">
+		&quot;[NAME]&quot; bölgesine giremezsiniz.
+Dolu olabilir veya yakında yeniden başlatılacak olabilir.
 	</notification>
 	<notification name="SaveBackToInvDisabled">
 		Envantere Geri Kaydet devre dışı bırakıldı.
@@ -3781,6 +3804,9 @@ sunucu dolu.
 	</notification>
 	<notification name="CantAttachNotEnoughScriptResources">
 		Nesneyi iliştirmek için yeterli komut dosyası kaynağı mevcut değil!
+	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		Nesne iliştirilemedi çünkü zaten kaldırılıyor.
 	</notification>
 	<notification name="CantDropItemTrialUser">
 		Buraya nesne düşüremezsiniz; Ücretsiz Deneme alanını deneyin.

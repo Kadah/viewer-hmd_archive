@@ -41,6 +41,11 @@
 					一人称視点
 				</panel_camera_item.text>
 			</panel_camera_item>
+			<panel_camera_item name="first_person_view">
+				<panel_camera_item.text name="first_person_view_text">
+					ファーストパーソン ビュー
+				</panel_camera_item.text>
+			</panel_camera_item>
 		</panel>
 		<panel name="zoom" tool_tip="向いている方法にカメラをズーム">
 			<joystick_rotate name="cam_rotate_stick" tool_tip="自分を軸にカメラを回す"/>

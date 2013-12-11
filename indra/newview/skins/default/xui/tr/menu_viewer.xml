@@ -2,6 +2,7 @@
 <menu_bar name="Main Menu">
 	<menu label="Ben" name="Me">
 		<menu_item_call label="Profil..." name="Profile"/>
+		<menu_item_call label="Facebook&apos;ta Yayınla..." name="PostToFacebook"/>
 		<menu_item_call label="Görünüm..." name="ChangeOutfit"/>
 		<menu_item_call label="Bir avatar seçin..." name="Avatar Picker"/>
 		<menu_item_check label="Envanter..." name="Inventory"/>
@@ -12,6 +13,7 @@
 		<menu label="Hareket" name="Movement">
 			<menu_item_call label="Otur" name="Sit Down Here"/>
 			<menu_item_check label="Uç" name="Fly"/>
+			<menu_item_call label="Uçmayı durdur" name="Stop flying"/>
 			<menu_item_check label="Daima Koş" name="Always Run"/>
 			<menu_item_call label="Beni Anime Etmeyi Durdur" name="Stop Animating My Avatar"/>
 			<menu_item_call label="Yürü / koş / uç..." name="Walk / run / fly"/>
@@ -27,6 +29,8 @@
 		<menu_item_call label="Araç çubuğu düğmeleri..." name="Toolbars"/>
 		<menu_item_call label="Tüm denetimleri sakla" name="Hide UI"/>
 		<menu_item_check label="BÜG Aksesuarlarını Göster" name="Show HUD Attachments"/>
+		<menu_item_call label="HMD Modunu Değiştir" name="Toggle HMD Mode"/>
+		<menu_item_call label="İlave Ekran Ekle" name="Add Extra Monitor"/>
 		<menu_item_call label="[APP_NAME]&apos;den Çık" name="Quit"/>
 	</menu>
 	<menu label="İletişim Kur" name="Communicate">
@@ -163,8 +167,7 @@
 	</menu>
 	<menu label="Yardım" name="Help">
 		<menu_item_call label="Nasıl yapılır..." name="How To"/>
-		<menu_item_call label="[SECOND_LIFE] Yardımı" name="Second Life Help"/>
-		<menu_item_call label="Kullanıcı kılavuzu" name="User’s guide"/>
+		<menu_item_call label="Hızlı Başlangıç" name="Quickstart"/>
 		<menu_item_call label="Bilgi Bankası" name="Knowledge Base"/>
 		<menu_item_call label="Wiki" name="Wiki"/>
 		<menu_item_call label="Topluluk Forumları" name="Community Forums"/>
@@ -224,6 +227,7 @@
 		<menu_item_call label="Grup Ön Belleğini Temizle" name="ClearGroupCache"/>
 		<menu_item_check label="Fare Düzleştirme" name="Mouse Smoothing"/>
 		<menu_item_call label="Bırakma Anahtarları" name="Release Keys"/>
+		<menu_item_check label="Gelişmiş HMD Modu" name="Advanced HMD Mode"/>
 		<menu label="Kısa Yollar" name="Shortcuts">
 			<menu_item_check label="Gelişmiş Menüyü Göster - eski kısayol" name="Show Advanced Menu - legacy shortcut"/>
 			<menu_item_call label="Pencereyi Kapat" name="Close Window"/>
@@ -261,12 +265,15 @@
 			<menu_item_check label="Zamanı Göster" name="Show Time"/>
 			<menu_item_check label="Karşıya Yükleme Maliyetini Göster" name="Show Upload Cost"/>
 			<menu_item_check label="İşleme Bilgisini Göster" name="Show Render Info"/>
+			<menu_item_check label="Avatar İşleme Bilgisini Göster" name="Show Avatar Render Info"/>
 			<menu_item_check label="Doku Bilgisini Göster" name="Show Texture Info"/>
 			<menu_item_check label="Matrisleri Göster" name="Show Matrices"/>
 			<menu_item_check label="İmlecin Altındaki Rengi Göster" name="Show Color Under Cursor"/>
 			<menu_item_check label="Belleği Göster" name="Show Memory"/>
 			<menu_item_check label="Özel Bellek Bilgisini Göster" name="Show Private Mem Info"/>
 			<menu_item_check label="Nesneler İçin Güncelleştirmeleri Göster" name="Show Updates"/>
+			<menu_item_check label="HMD Oryantasyon Bilgisini Göster" name="Show HMD Orientation"/>
+			<menu_item_check label="HMD Gecikme Süresi Test Bilgisi" name="Show HMD Latency"/>
 		</menu>
 		<menu label="Bir Hatayı Zorla" name="Force Errors">
 			<menu_item_call label="Kesme Noktasını Zorla" name="Force Breakpoint"/>
@@ -346,6 +353,9 @@
 		<menu_item_call label="Komut Dosyalı Kameranın Dökümünü Al" name="Dump Scripted Camera"/>
 		<menu_item_call label="Toslamalar, İtmeler ve Vurmalar" name="Bumps, Pushes &amp;amp; Hits"/>
 		<menu label="Kaydedici" name="Recorder">
+			<menu_item_call label="Olay kaydına başla" name="Start event recording"/>
+			<menu_item_call label="Olay kaydını durdur" name="Stop event recording"/>
+			<menu_item_call label="Olay kaydını oynat" name="Playback event recording"/>
 			<menu_item_call label="Oynatmayı Başlat" name="Start Playback"/>
 			<menu_item_call label="Oynatmayı Durdur" name="Stop Playback"/>
 			<menu_item_check label="Döngü Oynatma" name="Loop Playback"/>
@@ -360,6 +370,7 @@
 		<menu label="KA" name="UI">
 			<menu_item_call label="Ortam Tarayıcı Testi" name="Web Browser Test"/>
 			<menu_item_call label="Web İçerik Tarayıcısı" name="Web Content Browser"/>
+			<menu_item_call label="FB Bağlantı Testi" name="FB Connect Test"/>
 			<menu_item_call label="SelectMgr&apos;i Dökümünü Al" name="Dump SelectMgr"/>
 			<menu_item_call label="Envanterin Dökümünü Al" name="Dump Inventory"/>
 			<menu_item_call label="Zamanlayıcıların Dökümünü Al" name="Dump Timers"/>

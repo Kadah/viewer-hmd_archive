@@ -1490,12 +1490,12 @@ Sie können dieses Update von http://www.secondlife.com/downloads herunterladen 
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		Für Ihre [APP_NAME]-Installation wurde ein Update heruntergeladen.
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Informationen zu diesem Update]
+Version [VERSION] [[INFO_URL] Infos zu diesem Update]
 		<usetemplate name="okcancelbuttons" notext="Später..." yestext="Jetzt installieren und [APP_NAME] neu starten"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		Für Ihre [APP_NAME]-Installation wurde ein Update heruntergeladen.
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Informationen zu diesem Update]
+    Version [VERSION] [[INFO_URL] Infos zu diesem Update]
 		<usetemplate name="okcancelbuttons" notext="Später..." yestext="Jetzt installieren und [APP_NAME] neu starten"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1721,6 +1721,13 @@ Versuchen Sie es später erneut.
 			<input name="message">
 				Triff mich in [REGION]
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Abbrechen"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Teleport an [NAME] mit folgender Nachricht anfordern
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="Abbrechen"/>
 		</form>
@@ -2467,6 +2474,9 @@ Wählen Sie eine kleinere Landfläche.
 	<notification name="SystemMessage">
 		[MESSAGE]
 	</notification>
+	<notification name="FacebookConnect">
+		[MESSAGE]
+	</notification>
 	<notification name="PaymentReceived">
 		[MESSAGE]
 	</notification>
@@ -2581,6 +2591,9 @@ Hier funktionieren nur Skripts, die dem Landeigentümer gehören.
 	</notification>
 	<notification name="RegionTPAccessBlocked">
 		Die Region, die Sie besuchen möchten, enthält Inhalte, die Ihre aktuellen Einstellungen überschreiten. Sie können Ihre Einstellungen unter „Ich“ &gt; „Einstellungen“ &gt; „Allgemein“ ändern.
+	</notification>
+	<notification name="RegionAboutToShutdown">
+		Die Region, die Sie zu betreten versuchen, wird in Kürze heruntergefahren.
 	</notification>
 	<notification name="URBannedFromRegion">
 		Sie dürfen diese Region nicht betreten.
@@ -2727,6 +2740,16 @@ Diese Region enthält jedoch Inhalte, die nur für Erwachsene zugänglich sind.
 	<notification name="TeleportOfferSent">
 		Ein Teleportangebot wurde an [TO_NAME] geschickt
 	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] fordert den Teleport an Ihren Standort an.
+[MESSAGE]
+
+Teleport anbieten?
+		<form name="form">
+			<button name="Yes" text="Ja"/>
+			<button name="No" text="Nein"/>
+		</form>
+	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
 [URL]
@@ -2779,11 +2802,11 @@ In Ihrem Inventar wird ein Lesezeichen erstellt, damit Sie diesem Einwohner schn
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		Diese Region wird in [MINUTES] neu gestartet.
+		Die Region „[NAME]“ wird in [MINUTES] Minuten neu gestartet.
 Wenn Sie in dieser Region bleiben, werden Sie abgemeldet.
 	</notification>
 	<notification name="RegionRestartSeconds">
-		Diese Region wird in [SECONDS] neu gestartet.
+		Die Region „[NAME]“ wird in [SECONDS] Sekunden neu gestartet.
 Wenn Sie in dieser Region bleiben, werden Sie abgemeldet.
 	</notification>
 	<notification name="LoadWebPage">
@@ -3510,9 +3533,9 @@ Warten Sie kurz und versuchen Sie es noch einmal.
 	<notification name="EjectComingSoon">
 		Sie nicht hier nicht mehr zugelassen und haben [EJECT_TIME] Sekunden Zeit, um zu gehen.
 	</notification>
-	<notification name="NoEnterServerFull">
-		Sie können diese Region nicht betreten, da 
-der Server voll ist.
+	<notification name="NoEnterRegionMaybeFull">
+		Sie können Region „[NAME]“ nicht betreten.
+Sie ist entweder voll oder wird in Kürze neu gestartet.
 	</notification>
 	<notification name="SaveBackToInvDisabled">
 		Erneutes Speichern im Inventar ist deaktiviert.
@@ -3801,6 +3824,9 @@ der Server voll ist.
 	</notification>
 	<notification name="CantAttachNotEnoughScriptResources">
 		Nicht genügend Skriptressourcen verfügbar, um Objekt anzuhängen.
+	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		Sie können das Objekt nicht anhängen, da es gerade entfernt wird.
 	</notification>
 	<notification name="CantDropItemTrialUser">
 		Ablegen von Objekten hier nicht möglich; versuchen Sie es mit dem kostenlosen Testbereich.

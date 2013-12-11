@@ -296,6 +296,24 @@ Veuillez réessayer de vous connecter dans une minute.
 	<string name="TestingDisconnect">
 		Test de déconnexion du client
 	</string>
+	<string name="SocialFacebookConnecting">
+		Connexion à Facebook…
+	</string>
+	<string name="SocialFacebookPosting">
+		Publication…
+	</string>
+	<string name="SocialFacebookDisconnecting">
+		Déconnexion de Facebook…
+	</string>
+	<string name="SocialFacebookErrorConnecting">
+		Un problème est survenu lors de la connexion à Facebook.
+	</string>
+	<string name="SocialFacebookErrorPosting">
+		Un problème est survenu lors de la publication sur Facebook.
+	</string>
+	<string name="SocialFacebookErrorDisconnecting">
+		Un problème est survenu lors de la déconnexion de Facebook.
+	</string>
 	<string name="TooltipPerson">
 		Personne
 	</string>
@@ -854,7 +872,7 @@ Veuillez réessayer de vous connecter dans une minute.
 		Hors ligne
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		[AREA] m² [PRICE] L$
+		[AREA] m² [PRICE] ([SQMPRICE] L$/m²)
 	</string>
 	<string name="worldmap_results_none_found">
 		Aucun résultat.
@@ -937,14 +955,20 @@ Veuillez réessayer de vous connecter dans une minute.
 	<string name="ControlYourCamera">
 		Contrôler votre caméra
 	</string>
+	<string name="TeleportYourAgent">
+		Vous téléporter
+	</string>
+	<string name="ManageEstateSilently">
+		Gérer vos domaines silencieusement
+	</string>
+	<string name="ChangeYourDefaultAnimations">
+		Changer vos animations par défaut
+	</string>
 	<string name="NotConnected">
 		Pas connecté(e)
 	</string>
 	<string name="AgentNameSubst">
 		(Vous)
-	</string>
-	<string name="TeleportYourAgent">
-		Vous téléporter
 	</string>
 	<string name="JoinAnExperience">
 		Rejoindre une expérience
@@ -1014,6 +1038,12 @@ Veuillez réessayer de vous connecter dans une minute.
 	</string>
 	<string name="bitmap_image_files">
 		Images Bitmap
+	</string>
+	<string name="png_image_files">
+		Images PNG
+	</string>
+	<string name="save_texture_image_files">
+		Images Targa ou PNG
 	</string>
 	<string name="avi_movie_file">
 		Fichier de film AVI
@@ -1254,6 +1284,24 @@ Veuillez réessayer de vous connecter dans une minute.
 	</string>
 	<string name="LeaveMouselook">
 		Appuyez sur ESC pour quitter la vue subjective
+	</string>
+	<string name="HMDPresetCustom">
+		Personnalisée
+	</string>
+	<string name="HMDPresetDefault">
+		Valeur par défaut [INDEX]
+	</string>
+	<string name="HMDPresetUser">
+		Utilisateur [INDEX]
+	</string>
+	<string name="HMDConfigUnitsMillimeters">
+		[VAL] mm
+	</string>
+	<string name="HMDConfigUnitsMilliseconds">
+		[VAL] ms
+	</string>
+	<string name="HMDConfigUnitsRadians">
+		[VAL] PI
 	</string>
 	<string name="InventoryNoMatchingItems">
 		Vous n&apos;avez pas trouvé ce que vous cherchiez ? Essayez [secondlife:///app/search/all/[SEARCH_TERM] Rechercher].
@@ -1837,7 +1885,19 @@ Veuillez réessayer de vous connecter dans une minute.
 		Résidents autorisés : ([ALLOWEDAGENTS], max. [MAXACCESS])
 	</string>
 	<string name="RegionInfoAllowedGroups">
-		Groupes autorisés : ([ALLOWEDGROUPS], max. [MAXACCESS])
+		Groupes autorisés : ([ALLOWEDGROUPS], max [MAXACCESS])
+	</string>
+	<string name="RegionInfoEstateManagers">
+		Gérants du domaine : ([ESTATEMANAGERS], max. [MAXMANAGERS])
+	</string>
+	<string name="RegionInfoBannedResidents">
+		Résidents bannis : ([BANNEDAGENTS], max. [MAXBANNED])
+	</string>
+	<string name="RegionInfoListTypeAllowedAgents">
+		Résidents autorisés
+	</string>
+	<string name="RegionInfoListTypeBannedAgents">
+		Résidents bannis
 	</string>
 	<string name="ScriptLimitsParcelScriptMemory">
 		Mémoire des scripts de parcelles
@@ -4026,6 +4086,9 @@ Si ce message persiste, veuillez aller sur la page [SUPPORT_SITE].
 	<string name="share_alert">
 		Faire glisser les objets de l&apos;inventaire ici
 	</string>
+	<string name="facebook_post_success">
+		Vous avez publié sur Facebook.
+	</string>
 	<string name="no_session_message">
 		(Session IM inexistante)
 	</string>
@@ -4907,6 +4970,9 @@ Essayez avec le chemin d&apos;accès à l&apos;éditeur entre guillemets doubles
 	<string name="Command_Gestures_Label">
 		Gestes
 	</string>
+	<string name="Command_HMD_Mode_Label">
+		Mode HMD
+	</string>
 	<string name="Command_HowTo_Label">
 		Aide rapide
 	</string>
@@ -4949,6 +5015,9 @@ Essayez avec le chemin d&apos;accès à l&apos;éditeur entre guillemets doubles
 	<string name="Command_Snapshot_Label">
 		Photo
 	</string>
+	<string name="Command_Social_Label">
+		Facebook
+	</string>
 	<string name="Command_Speak_Label">
 		Parler
 	</string>
@@ -4984,6 +5053,9 @@ Essayez avec le chemin d&apos;accès à l&apos;éditeur entre guillemets doubles
 	</string>
 	<string name="Command_Gestures_Tooltip">
 		Gestes de votre avatar
+	</string>
+	<string name="Command_HMD_Mode_Tooltip">
+		Utiliser le mode de rendu HMD
 	</string>
 	<string name="Command_HowTo_Tooltip">
 		Comment effectuer les opérations courantes
@@ -5026,6 +5098,9 @@ Essayez avec le chemin d&apos;accès à l&apos;éditeur entre guillemets doubles
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		Prendre une photo
+	</string>
+	<string name="Command_Social_Tooltip">
+		Publier sur Facebook
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Parler aux personnes près de vous en utilisant votre micro

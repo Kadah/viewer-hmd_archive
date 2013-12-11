@@ -74,6 +74,7 @@
 	<menu_item_call label="Executar áudio" name="Animation Audition"/>
 	<menu_item_call label="Mandar MI" name="Send Instant Message"/>
 	<menu_item_call label="Oferecer teletransporte..." name="Offer Teleport..."/>
+	<menu_item_call label="Solicitar teletransporte..." name="Request Teleport..."/>
 	<menu_item_call label="Bate-papo em conferência" name="Conference Chat"/>
 	<menu_item_call label="Ativar" name="Activate"/>
 	<menu_item_call label="Desativar" name="Deactivate"/>

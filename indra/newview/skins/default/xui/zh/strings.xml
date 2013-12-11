@@ -291,6 +291,24 @@ http://secondlife.com/viewer-access-faq
 	<string name="TestingDisconnect">
 		測試瀏覽器斷線
 	</string>
+	<string name="SocialFacebookConnecting">
+		連通臉書中…
+	</string>
+	<string name="SocialFacebookPosting">
+		發佈中…
+	</string>
+	<string name="SocialFacebookDisconnecting">
+		臉書連通中斷中…
+	</string>
+	<string name="SocialFacebookErrorConnecting">
+		連通臉書時出問題
+	</string>
+	<string name="SocialFacebookErrorPosting">
+		發佈到臉書時出問題
+	</string>
+	<string name="SocialFacebookErrorDisconnecting">
+		試圖中斷臉書連通時出問題
+	</string>
 	<string name="TooltipPerson">
 		人
 	</string>
@@ -846,7 +864,7 @@ http://secondlife.com/viewer-access-faq
 		離線
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		[AREA] 平方公尺 L$[PRICE]
+		[AREA] m² L$[PRICE] ([SQMPRICE] L$/m²)
 	</string>
 	<string name="worldmap_results_none_found">
 		查無結果。
@@ -929,14 +947,20 @@ http://secondlife.com/viewer-access-faq
 	<string name="ControlYourCamera">
 		控制你的攝影機
 	</string>
+	<string name="TeleportYourAgent">
+		瞬間傳送你本人
+	</string>
+	<string name="ManageEstateSilently">
+		以「變更不予通知」模式管理領地
+	</string>
+	<string name="ChangeYourDefaultAnimations">
+		變更你預設的動作
+	</string>
 	<string name="NotConnected">
 		未聯接
 	</string>
 	<string name="AgentNameSubst">
 		（你）
-	</string>
-	<string name="TeleportYourAgent">
-		瞬間傳送你本人
 	</string>
 	<string name="JoinAnExperience">
 		加入體驗
@@ -1006,6 +1030,12 @@ http://secondlife.com/viewer-access-faq
 	</string>
 	<string name="bitmap_image_files">
 		Bitmap 圖像
+	</string>
+	<string name="png_image_files">
+		PNG 圖像
+	</string>
+	<string name="save_texture_image_files">
+		Targa 或 PNG 圖像
 	</string>
 	<string name="avi_movie_file">
 		AVI 視頻檔案
@@ -1247,6 +1277,24 @@ http://secondlife.com/viewer-access-faq
 	<string name="LeaveMouselook">
 		按下 ESC 鍵回復到世界的視角
 	</string>
+	<string name="HMDPresetCustom">
+		自訂
+	</string>
+	<string name="HMDPresetDefault">
+		預設 [INDEX]
+	</string>
+	<string name="HMDPresetUser">
+		使用者 [INDEX]
+	</string>
+	<string name="HMDConfigUnitsMillimeters">
+		[VAL] mm
+	</string>
+	<string name="HMDConfigUnitsMilliseconds">
+		[VAL] ms
+	</string>
+	<string name="HMDConfigUnitsRadians">
+		[VAL] PI
+	</string>
 	<string name="InventoryNoMatchingItems">
 		找不到你要找的嗎？ 請試試 [secondlife:///app/search/places/ 搜尋]。
 	</string>
@@ -1266,7 +1314,7 @@ http://secondlife.com/viewer-access-faq
 		https://marketplace.[MARKETPLACE_DOMAIN_NAME]/
 	</string>
 	<string name="MarketplaceURL_CreateStore">
-		http://community.secondlife.com/t5/English-Knowledge-Base/Selling-in-the-Marketplace/ta-p/700193#Section_.4
+		http://community.secondlife.com/t5/English-Knowledge-Base/Selling-in-the-Marketplace/ta-p/700193#Section_.3
 	</string>
 	<string name="MarketplaceURL_Dashboard">
 		https://marketplace.[MARKETPLACE_DOMAIN_NAME]/merchants/store/dashboard
@@ -1830,6 +1878,18 @@ http://secondlife.com/viewer-access-faq
 	</string>
 	<string name="RegionInfoAllowedGroups">
 		允許的群組：（[ALLOWEDGROUPS]，最多 [MAXACCESS]）
+	</string>
+	<string name="RegionInfoEstateManagers">
+		領地管理員：（[ESTATEMANAGERS]，最多可有 [MAXMANAGERS] 人)
+	</string>
+	<string name="RegionInfoBannedResidents">
+		封鎖的居民：（[BANNEDAGENTS]，最多可封鎖 [MAXBANNED] 名）
+	</string>
+	<string name="RegionInfoListTypeAllowedAgents">
+		允許的居民
+	</string>
+	<string name="RegionInfoListTypeBannedAgents">
+		被封鎖的居民
 	</string>
 	<string name="ScriptLimitsParcelScriptMemory">
 		地段腳本記憶體
@@ -4018,6 +4078,9 @@ http://secondlife.com/viewer-access-faq
 	<string name="share_alert">
 		將收納區物品拖曳到這裡
 	</string>
+	<string name="facebook_post_success">
+		成功發佈到臉書。
+	</string>
 	<string name="no_session_message">
 		（IM 會話不存在）
 	</string>
@@ -4911,6 +4974,9 @@ http://secondlife.com/viewer-access-faq
 	<string name="Command_Gestures_Label">
 		姿勢
 	</string>
+	<string name="Command_HMD_Mode_Label">
+		頭戴顯示器模式
+	</string>
 	<string name="Command_HowTo_Label">
 		簡易教學
 	</string>
@@ -4953,6 +5019,9 @@ http://secondlife.com/viewer-access-faq
 	<string name="Command_Snapshot_Label">
 		快照
 	</string>
+	<string name="Command_Social_Label">
+		臉書
+	</string>
 	<string name="Command_Speak_Label">
 		說話
 	</string>
@@ -4988,6 +5057,9 @@ http://secondlife.com/viewer-access-faq
 	</string>
 	<string name="Command_Gestures_Tooltip">
 		你化身可用的姿勢
+	</string>
+	<string name="Command_HMD_Mode_Tooltip">
+		使用頭戴顯示器(HMD)呈像模式
 	</string>
 	<string name="Command_HowTo_Tooltip">
 		如何完成常用的動作
@@ -5030,6 +5102,9 @@ http://secondlife.com/viewer-access-faq
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		拍一張照片
+	</string>
+	<string name="Command_Social_Tooltip">
+		發佈到臉書
 	</string>
 	<string name="Command_Speak_Tooltip">
 		用麥克風和附近人們交談

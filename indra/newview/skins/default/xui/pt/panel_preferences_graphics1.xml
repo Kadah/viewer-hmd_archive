@@ -22,6 +22,15 @@ rápido
 	<text name="ShadersPrefText4">
 		Ultra
 	</text>
+	<slider label="Detalhe do avatar:" name="AvatarMeshDetail2"/>
+	<text name="AvatarMeshDetailText2">
+		Baixo
+	</text>
+	<slider label="Distância de desenho:" name="DrawDistance"/>
+	<text name="DrawDistanceMeterText2">
+		m
+	</text>
+	<check_box initial_value="true" label="Modelo avançado de luzes" name="UseLightShaders2"/>
 	<panel label="CustomGraphics" name="CustomGraphics Panel">
 		<text name="ShadersText">
 			Sombreadores:
