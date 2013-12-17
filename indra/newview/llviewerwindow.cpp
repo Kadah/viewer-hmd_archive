@@ -840,6 +840,11 @@ public:
 
 		if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gSavedSettings.getBOOL("HMDDebugShowOrientation"))
 		{
+            //// for debugging: put text in center of screen
+            //xpos = llmax((mWindow->getWorldViewWidthScaled() / 2) - 200, 0);
+            //ypos = (mWindow->getWorldViewHeightScaled() / 2) - (y_inc / 2);
+			//addText(xpos, ypos, llformat("HMD Cursor UI: %s, World: %s", (gHMD.cursorIntersectsUI() ? "TRUE" : "FALSE"), (gHMD.cursorIntersectsWorld() ? "TRUE" : "FALSE")));
+			//ypos += y_inc;
             F32 roll, pitch, yaw;
             gHMD.getHMDRollPitchYaw(roll, pitch, yaw);
 			addText(xpos, ypos, llformat("HMD Orient Euler: [roll=%f, pitch=%f, yaw=%f]", roll, pitch, yaw));
@@ -3603,17 +3608,17 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 // Draws the selection outlines for the currently selected objects
 // Must be called after displayObjects is called, which sets the mGLName parameter
 // NOTE: This function gets called twice, once for HUD objects, once for non HUD objects
-void LLViewerWindow::renderSelections(BOOL for_hud)
+void LLViewerWindow::renderSelections(BOOL for_hud, BOOL updateSilhouettes)
 {
 	LLObjectSelectionHandle selection = LLSelectMgr::getInstance()->getSelection();
 
-	if (!for_hud)
+	if (updateSilhouettes)
 	{
 		// Call this once and only once
 		LLSelectMgr::getInstance()->updateSilhouettes();
 	}
 
-    BOOL isValidSelection = (selection && !selection->isEmpty()) &&
+    BOOL isValidSelection = //(selection && !selection->isEmpty()) &&
                             (   (for_hud && selection->getSelectType() == SELECT_TYPE_HUD) ||
                                 (!for_hud && selection->getSelectType() != SELECT_TYPE_HUD));
 	if (isValidSelection)
@@ -3706,7 +3711,7 @@ void LLViewerWindow::renderSelections(BOOL for_hud)
 			{
 				tool->render();
 			}
-			else
+			else if (!selection->isEmpty())
 			{
 				BOOL moveable_object_selected = FALSE;
 				BOOL all_selected_objects_move = TRUE;

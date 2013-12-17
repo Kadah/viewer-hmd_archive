@@ -39,7 +39,8 @@
 #include "llrendersphere.h"
 #include "llselectmgr.h"
 #include "llglheaders.h"
-
+#include "llhmd.h"
+#include "llviewercontrol.h"
 
 #include "llxmltree.h"
 
@@ -613,7 +614,8 @@ bool LLHUDEffectLookAt::calcTargetPosition()
 			BOOL looking_at_self = source_avatar->isSelf() && target_av->isSelf();
 
 			// if selecting self, stare forward
-			if (looking_at_self && mTargetOffsetGlobal.magVecSquared() < MIN_TARGET_OFFSET_SQUARED)
+			if (looking_at_self &&
+                (mTargetOffsetGlobal.magVecSquared() < MIN_TARGET_OFFSET_SQUARED || gHMD.isHMDMode() || gSavedSettings.getBOOL("DisableLookAtFollowsMouseCursor")))
 			{
 				//sets the lookat point in front of the avatar
 				mTargetOffsetGlobal.setVec(5.0, 0.0, 0.0);

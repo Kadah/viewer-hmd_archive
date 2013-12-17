@@ -246,14 +246,7 @@ void LLDrawPoolAlpha::render(S32 pass)
 
 	if (deferred_render && pass == 1)
 	{
-        if (gHMD.isHMDMode() && LLPipeline::sRenderingHUDs)
-        {
-            gGL.blendFunc(LLRender::BF_SOURCE_ALPHA, LLRender::BF_ONE_MINUS_SOURCE_ALPHA, LLRender::BF_ONE, LLRender::BF_ONE);
-        }
-        else
-        {
-		    gGL.blendFunc(LLRender::BF_SOURCE_ALPHA, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
-        }
+        gGL.setSceneBlendType(LLRender::BT_ALPHA);
 	}
 	else
 	{
@@ -311,7 +304,7 @@ void LLDrawPoolAlpha::render(S32 pass)
 		renderAlpha(getVertexDataMask(), pass);
 	}
 
-	gGL.setColorMask(true, gHMD.isHMDMode() && LLPipeline::sRenderingHUDs);
+	gGL.setColorMask(true, LLUI::getDestIsRenderTarget());
 
 	if (deferred_render && pass == 1)
 	{

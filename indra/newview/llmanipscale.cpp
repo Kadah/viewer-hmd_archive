@@ -517,7 +517,7 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
         if (use3D)
         {
             mMousePointGlobal.setZero();
-            const LLVector3& mouse_world = gHMD.getMouseWorld();
+            const LLVector3& mouse_world = LLViewerCamera::getInstance()->getOrigin();
             LLVector3 dir = LLVector3(gHMD.getMouseWorldEnd().getF32ptr()) - mouse_world;
             dir.normalize();
             F32 r2 = (mScaledBoxHandleSize * mScaledBoxHandleSize) * (0.5f * 0.5f);
@@ -854,6 +854,9 @@ void LLManipScale::drag( S32 x, S32 y )
 		dragCorner( x, y );
 	}
 	
+    // make sure mouse pointer actually moves during drag operations in HMD mode
+    mMousePointGlobal.setZero();
+
 	// store changes to override updates
 	for (LLObjectSelection::iterator iter = LLSelectMgr::getInstance()->getSelection()->begin();
 		 iter != LLSelectMgr::getInstance()->getSelection()->end(); iter++)
