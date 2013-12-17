@@ -938,11 +938,9 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
     if (use3D)
     {
 	    // Keep order consistent with insertion via stable_sort
-	    std::stable_sort( projected_manipulators.begin(),
-		    projected_manipulators.end(),
-		    ClosestToCamera3D() );
+	    std::stable_sort( projected_manipulators.begin(), projected_manipulators.end(), ClosestToCamera3D() );
 
-        const LLVector3& mouse_world = gHMD.getMouseWorld();
+        const LLVector3& mouse_world = LLViewerCamera::getInstance()->getOrigin();
         LLVector3 dir = LLVector3(gHMD.getMouseWorldEnd().getF32ptr()) - mouse_world;
         dir.normalize();
 	    for (std::vector<ManipulatorHandle>::iterator it = projected_manipulators.begin(), itEnd = projected_manipulators.end(); it != itEnd; ++it)
@@ -1537,23 +1535,14 @@ void LLManipTranslate::renderSnapGuides()
 			//draw grid behind objects
 			LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
 
-			{
+			if (!gHMD.isHMDMode())
+            {
 				LLGLDisable stencil(GL_STENCIL_TEST);
 				{
 					LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE, GL_GREATER);
 					gGL.getTexUnit(0)->bindManual(LLTexUnit::TT_TEXTURE, getGridTexName());
 					gGL.flush();
-                    if (gHMD.isHMDMode() && mObjectSelection && mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
-                    {
-                        // rendering to the UI surface with a source of BF_ZERO makes whatever is rendered next invisible
-                        // because we are rendering the UI to a rendertarget (which has a different blendfunc so that
-                        // the "unused" portion of the UI Surface is transparent.
-                        gGL.blendFunc(LLRender::BF_SOURCE_ALPHA, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
-                    }
-                    else
-                    {
-					    gGL.blendFunc(LLRender::BF_ZERO, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
-                    }
+					gGL.blendFunc(LLRender::BF_ZERO, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
 					renderGrid(u,v,tiles,0.9f, 0.9f, 0.9f,a*0.15f);
 					gGL.flush();
 					gGL.setSceneBlendType(LLRender::BT_ALPHA);
@@ -1645,6 +1634,27 @@ void LLManipTranslate::renderGrid(F32 x, F32 y, F32 size, F32 r, F32 g, F32 b, F
 	}
 
 	
+}
+
+void LLManipTranslate::renderGridVert(F32 x_trans, F32 y_trans, F32 r, F32 g, F32 b, F32 alpha)
+{
+	gGL.color4f(r, g, b, alpha);
+	switch (mManipPart)
+	{
+	case LL_YZ_PLANE:
+		gGL.vertex3f(0, x_trans, y_trans);
+		break;
+	case LL_XZ_PLANE:
+		gGL.vertex3f(x_trans, 0, y_trans);
+		break;
+	case LL_XY_PLANE:
+		gGL.vertex3f(x_trans, y_trans, 0);
+		break;
+	default:
+		gGL.vertex3f(0,0,0);
+		break;
+	}
+
 }
 
 void LLManipTranslate::highlightIntersection(LLVector3 normal, 
@@ -2280,27 +2290,6 @@ void LLManipTranslate::renderArrow(S32 which_arrow, S32 selected_arrow, F32 box_
 
 		gGL.popMatrix();
 	}
-}
-
-void LLManipTranslate::renderGridVert(F32 x_trans, F32 y_trans, F32 r, F32 g, F32 b, F32 alpha)
-{
-	gGL.color4f(r, g, b, alpha);
-	switch (mManipPart)
-	{
-	case LL_YZ_PLANE:
-		gGL.vertex3f(0, x_trans, y_trans);
-		break;
-	case LL_XZ_PLANE:
-		gGL.vertex3f(x_trans, 0, y_trans);
-		break;
-	case LL_XY_PLANE:
-		gGL.vertex3f(x_trans, y_trans, 0);
-		break;
-	default:
-		gGL.vertex3f(0,0,0);
-		break;
-	}
-
 }
 
 // virtual

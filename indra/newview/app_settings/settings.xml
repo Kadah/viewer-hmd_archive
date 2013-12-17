@@ -3060,6 +3060,17 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>DisableLookAtFollowsMouseCursor</key>
+    <map>
+        <key>Comment</key>
+        <string>Disable head turning following cursor motion in third person view</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+    </map>
     <key>DisableMouseWarp</key>
     <map>
       <key>Comment</key>

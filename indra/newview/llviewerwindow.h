@@ -367,7 +367,7 @@ public:
 	void			playSnapshotAnimAndSound();
 	
 	// draws selection boxes around selected objects, must call displayObjects first
-	void			renderSelections(BOOL for_hud);
+	void			renderSelections(BOOL for_hud, BOOL updateSilhouettes);
 	void			performPick();
 	void			returnEmptyPicks();
 

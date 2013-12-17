@@ -1268,25 +1268,13 @@ bool get_hud_matrices(const LLRect& screen_region, glh::matrix4f &proj, glh::mat
 					   clamp_rescale((F32)(screen_region.getCenterY() - screen_region.mBottom), 0.f, wvsh, 0.5f * scale_y, -0.5f * scale_y),
 					   0.f));
 		proj *= mat;
-        //if (gHMD.isHMDMode())
-        //{
-        //    mat.make_identity();
-        //    mat.set_translate(glh::vec3f(gHMD.getInterpupillaryOffset(), 0.0f, 0.0f));
-        //    proj = mat * proj;
-        //}
 
-		glh::matrix4f tmp_model((GLfloat*) OGL_TO_CFR_ROTATION);
+        glh::matrix4f tmp_model((GLfloat*) OGL_TO_CFR_ROTATION);
 		mat.set_scale(glh::vec3f(zoom_level, zoom_level, zoom_level));
 		mat.set_translate(glh::vec3f(-hud_bbox.getCenterLocal().mV[VX] + (hud_depth * 0.5f), 0.f, 0.f));
 		tmp_model *= mat;
-        //if (gHMD.isHMDMode())
-        //{
-        //    F32 viewOffset = gHMD.getInterpupillaryOffset();
-        //    mat.make_identity();
-        //    mat.set_translate(glh::vec3f(LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? viewOffset : -viewOffset, 0.0f, 0.0f));
-        //    tmp_model = mat * tmp_model;
-        //}
 		model = tmp_model;
+
 		return TRUE;
 	}
 	else
@@ -1750,7 +1738,7 @@ void render_ui_3d(BOOL hmdUIMode)
     }
 
     // render HUD selections/highlights
-    gViewerWindow->renderSelections(gHMD.isHMDMode() ? hmdUIMode : TRUE);
+    gViewerWindow->renderSelections(gHMD.isHMDMode() ? hmdUIMode : TRUE, FALSE);
 
     stop_glerror();
 

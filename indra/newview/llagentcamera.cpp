@@ -1119,14 +1119,17 @@ void LLAgentCamera::updateLookAt(const S32 mouse_x, const S32 mouse_y)
 		}
 		else if (cameraThirdPerson())
 		{
-			// range from -.5 to .5
-			F32 x_from_center = 
-				((F32) mouse_x / (F32) gViewerWindow->getWorldViewWidthScaled() ) - 0.5f;
-			F32 y_from_center = 
-				((F32) mouse_y / (F32) gViewerWindow->getWorldViewHeightScaled() ) - 0.5f;
+            if (!gHMD.isHMDMode() && !gSavedSettings.getBOOL("DisableLookAtFollowsMouseCursor"))
+            {
+			    // range from -.5 to .5
+			    F32 x_from_center = 
+				    ((F32) mouse_x / (F32) gViewerWindow->getWorldViewWidthScaled() ) - 0.5f;
+			    F32 y_from_center = 
+				    ((F32) mouse_y / (F32) gViewerWindow->getWorldViewHeightScaled() ) - 0.5f;
 
-			frameCamera.yaw( - x_from_center * gSavedSettings.getF32("YawFromMousePosition") * DEG_TO_RAD);
-			frameCamera.pitch( - y_from_center * gSavedSettings.getF32("PitchFromMousePosition") * DEG_TO_RAD);
+			    frameCamera.yaw( - x_from_center * gSavedSettings.getF32("YawFromMousePosition") * DEG_TO_RAD);
+			    frameCamera.pitch( - y_from_center * gSavedSettings.getF32("PitchFromMousePosition") * DEG_TO_RAD);
+            }
 			lookAtType = LOOKAT_TARGET_FREELOOK;
 		}
 
