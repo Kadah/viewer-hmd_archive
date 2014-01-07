@@ -66,6 +66,8 @@ public:
         kFlag_CursorIntersectsUI        = 1 << 6,
         kFlag_AdvancedMode              = 1 << 7,
         kFlag_ChangingRenderContext     = 1 << 8,
+        kFlag_HMDAllowed                = 1 << 9,
+        kFlag_MoveFollowsLookDir        = 1 << 10,
     };
 
     enum eUIPresetType
@@ -118,6 +120,10 @@ public:
     void isAdvancedMode(BOOL b) { if (b) { mFlags |= kFlag_AdvancedMode; } else { mFlags &= ~kFlag_AdvancedMode; } }
     BOOL isChangingRenderContext() const { return ((mFlags & kFlag_ChangingRenderContext) != 0) ? TRUE : FALSE; }
     void isChangingRenderContext(BOOL b) { if (b) { mFlags |= kFlag_ChangingRenderContext; } else { mFlags &= ~kFlag_ChangingRenderContext; } }
+    BOOL isHMDAllowed() const { return ((mFlags & kFlag_HMDAllowed) != 0) ? TRUE : FALSE; }
+    void isHMDAllowed(BOOL b) { if (b) { mFlags |= kFlag_HMDAllowed; } else { mFlags &= ~kFlag_HMDAllowed; } }
+    BOOL moveFollowsLookDir() const { return ((mFlags & kFlag_MoveFollowsLookDir) != 0) ? TRUE : FALSE; }
+    void moveFollowsLookDir(BOOL b) { if (b) { mFlags |= kFlag_MoveFollowsLookDir; } else { mFlags &= ~kFlag_MoveFollowsLookDir; } }
 
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
@@ -194,6 +200,8 @@ public:
     // head correction (difference in rotation between head and body)
     LLQuaternion getHeadRotationCorrection() const;
     void addHeadRotationCorrection(LLQuaternion quat);
+    void resetHeadRotationCorrection();
+    void resetOrientation();
 
     void setBaseModelView(F32* m);
     F32* getBaseModelView() { return mBaseModelView; }
@@ -262,10 +270,11 @@ public:
     const char* getLatencyTesterResults();
 
     LLViewerTexture* getCursorImage(U32 cursorType) { return (cursorType < mCursorTextures.size()) ? mCursorTextures[cursorType].get() : NULL; }
+    const LLVector2& getCursorHotspotOffset(U32 cursorType) { return (cursorType < mCursorHotSpotOffsets.size()) ? mCursorHotSpotOffsets[cursorType] : LLVector2::zero; }
 
     LLVertexBuffer* createUISurface();
     void getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* uv = NULL);
-    void updateHMDMouseInfo(S32 ui_x, S32 ui_y);
+    void updateHMDMouseInfo();
     const LLVector3& getMouseWorld() const { return mMouseWorld; }
     void updateMouseRaycast(const LLVector4a& mwe) { mMouseWorldEnd = mwe; }
     const LLVector4a& getMouseWorldEnd() const { return mMouseWorldEnd; }
@@ -303,6 +312,7 @@ public:
     static void onChangeUIShapePreset();
     static void onChangeWorldCursorSizeMult();
     static void onChangePresetValues();
+    static void onChangeMoveFollowsLookDir();
 
 private:
     void calculateUIEyeDepth();
@@ -340,6 +350,7 @@ private:
     F32 mPresetUIAspect;
     std::vector<UISurfaceShapeSettings> mUIPresetValues;
     std::vector<LLPointer<LLViewerTexture> > mCursorTextures;
+    std::vector<LLVector2> mCursorHotSpotOffsets;
     LLPointer<LLViewerTexture> mCalibrateBackgroundTexture;
     LLPointer<LLViewerTexture> mCalibrateForegroundTexture;
 };
@@ -425,6 +436,7 @@ public:
 
     virtual LLQuaternion getHeadRotationCorrection() const { return LLQuaternion::DEFAULT; }
     virtual void addHeadRotationCorrection(LLQuaternion quat) {}
+    virtual void resetHeadRotationCorrection() {}
 
     virtual F32 getOrthoPixelOffset() const { return kDefaultOrthoPixelOffset; }
 

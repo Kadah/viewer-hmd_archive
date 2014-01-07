@@ -1476,6 +1476,11 @@ BOOL LLViewerWindow::handleActivate(LLWindow *window, BOOL activated)
 
 BOOL LLViewerWindow::handleActivateApp(LLWindow *window, BOOL activating)
 {
+    if (!activating && gHMD.getRenderMode() == LLHMD::RenderMode_HMD)
+    {
+        // need to switch back to normal mode or the HMD window gets borked.
+        gHMD.setRenderMode(LLHMD::RenderMode_None, false);
+    }
 	//if (!activating) gAgentCamera.changeCameraToDefault();
 
 	LLViewerJoystick::getInstance()->setNeedsReset(true);
@@ -3600,7 +3605,7 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 
     if (gHMD.isHMDMode())
     {
-        gHMD.updateHMDMouseInfo(mCurrentMousePoint.mX, mCurrentMousePoint.mY);
+        gHMD.updateHMDMouseInfo();
     }
 }
 
@@ -3618,10 +3623,7 @@ void LLViewerWindow::renderSelections(BOOL for_hud, BOOL updateSilhouettes)
 		LLSelectMgr::getInstance()->updateSilhouettes();
 	}
 
-    BOOL isValidSelection = //(selection && !selection->isEmpty()) &&
-                            (   (for_hud && selection->getSelectType() == SELECT_TYPE_HUD) ||
-                                (!for_hud && selection->getSelectType() != SELECT_TYPE_HUD));
-	if (isValidSelection)
+	if (for_hud && selection->getSelectType() == SELECT_TYPE_HUD || (!for_hud && selection->getSelectType() != SELECT_TYPE_HUD))
 	{
 		LLSelectMgr::getInstance()->renderSilhouettes(for_hud);
 

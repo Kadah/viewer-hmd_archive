@@ -1342,8 +1342,9 @@ void render_hmd_mouse_cursor_3d()
         LLGLSUIDefault s1;
         LLGLDisable fog(GL_FOG);
         gPipeline.disableLights();
+        U32 cursorType = (U32)gViewerWindow->getWindow()->getCursor();
 
-        LLViewerTexture* pCursorTexture = gHMD.getCursorImage((U32)gViewerWindow->getWindow()->getCursor());
+        LLViewerTexture* pCursorTexture = gHMD.getCursorImage(cursorType);
         if (pCursorTexture)
         {
             if (LLGLSLShader::sNoFixedFunction)
@@ -1354,14 +1355,15 @@ void render_hmd_mouse_cursor_3d()
             gGL.color4f(1.0f,1.0f,1.0f,1.0f);
             gGL.getTexUnit(0)->bind(pCursorTexture);
 
+            const LLVector2& curoff = gHMD.getCursorHotspotOffset(cursorType);
             LLVector3 l	= camera->getLeftAxis() * scalingFactor;
             LLVector3 u	= camera->getUpAxis()   * scalingFactor;
-            // mouse-pointer upper-left is at the intersection point,
-            // thus the rect is offset right and down from the center
-            LLVector3 bottomLeft	= pt - u;
-            LLVector3 bottomRight	= pt - l - u;
-            LLVector3 topLeft		= pt;
-            LLVector3 topRight		= pt - l;
+            LLVector3 co = (curoff[VX] * l) + (curoff[VY] * u);
+            // mouse-pointer hotspot is at the intersection point
+            LLVector3 bottomLeft	= pt - u + co;
+            LLVector3 bottomRight	= pt - l - u + co;
+            LLVector3 topLeft		= pt + co;
+            LLVector3 topRight		= pt - l + co;
             // only go to 0.98 of the texture width so that annoying lines on right side are not drawn.
             // Even though the textures are blank on the right side, we still render a thin white line for no
             // apparent reason.  Only going to 0.98 of the texture width seems to solve this problem and since
@@ -1437,10 +1439,14 @@ void render_hmd_mouse_cursor_2d()
             }
             S32 mx = gViewerWindow->getCurrentMouseX();
             S32 my = gViewerWindow->getCurrentMouseY();
-            LLViewerTexture* pCursorTexture = gHMD.getCursorImage((U32)gViewerWindow->getWindow()->getCursor());
+            U32 cursorType = (U32)gViewerWindow->getWindow()->getCursor();
+            LLViewerTexture* pCursorTexture = gHMD.getCursorImage(cursorType);
             if (pCursorTexture)
             {
-                gl_draw_scaled_image(mx, my - 32, 32, 32, pCursorTexture);
+                const LLVector2& curoff = gHMD.getCursorHotspotOffset(cursorType);
+                S32 offx = llround(-32.0f * curoff[VX]);
+                S32 offy = -32 + llround(32.0f * curoff[VY]);
+                gl_draw_scaled_image(mx + offx, my + offy, 32, 32, pCursorTexture);
             }
             else
             {

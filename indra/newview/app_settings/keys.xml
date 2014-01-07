@@ -72,6 +72,7 @@
     <binding key="C" mask="SHIFT" command="push_down"/>
 
     <binding key="Q" mask="NONE" command="align_hips_to_eyes"/>
+    <binding key="`" mask="NONE" command="center_cursor"/>
 
     <binding key="F" mask="NONE" command="toggle_fly"/>
     <binding key="F" mask="SHIFT" command="toggle_fly"/>

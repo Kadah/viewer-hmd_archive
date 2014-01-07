@@ -168,23 +168,26 @@ void agent_push_backward( EKeystate s )
 
 void align_hips_to_eyes( EKeystate state )
 {
-	if (KEYSTATE_DOWN == state )
+	if (KEYSTATE_DOWN == state && gHMD.isHMDMode())
 	{
-		if ( gHMD.getRenderMode() != LLHMD::RenderMode_None )
-		{
-            float r, p, y;
-            gHMD.getHMDRollPitchYaw(r, p, y);
-            LLQuaternion current_head_yaw(y, gAgent.getUpAxis());
-            current_head_yaw *= gHMD.getHeadRotationCorrection();
-            gAgent.rotate(current_head_yaw);
+        float r, p, y;
+        gHMD.getHMDRollPitchYaw(r, p, y);
+        LLQuaternion current_head_yaw(y, gAgent.getUpAxis());
+        current_head_yaw *= gHMD.getHeadRotationCorrection();
+        gAgent.rotate(current_head_yaw);
 
-            gHMD.addHeadRotationCorrection(~current_head_yaw);
-		}
-		else
-		{
-			// not supported in non-rift modes
-		}
+        gHMD.resetOrientation();
+        //gHMD.addHeadRotationCorrection(~current_head_yaw);
 	}
+}
+
+void center_cursor( EKeystate state )
+{
+    gViewerWindow->moveCursorToCenter();
+    if (gHMD.isHMDMode())
+    {
+        gHMD.updateHMDMouseInfo();
+    }
 }
 
 static void agent_slide_leftright( EKeystate s, S32 direction, LLAgent::EDoubleTapRunMode mode )
@@ -627,6 +630,7 @@ REGISTER_KEYBOARD_ACTION("stop_moving", stop_moving);
 REGISTER_KEYBOARD_ACTION("start_chat", start_chat);
 REGISTER_KEYBOARD_ACTION("start_gesture", start_gesture);
 REGISTER_KEYBOARD_ACTION("align_hips_to_eyes", align_hips_to_eyes);
+REGISTER_KEYBOARD_ACTION("center_cursor", center_cursor);
 
 #undef REGISTER_KEYBOARD_ACTION
 

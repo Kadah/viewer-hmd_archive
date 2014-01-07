@@ -142,6 +142,8 @@ BOOL LLHMD::init()
     onChangeUIShapePreset();
     gSavedSettings.getControl("HMDWorldCursorSizeMult")->getSignal()->connect(boost::bind(&onChangeWorldCursorSizeMult));
     onChangeWorldCursorSizeMult();
+    gSavedSettings.getControl("HMDMoveFollowsLookDir")->getSignal()->connect(boost::bind(&onChangeMoveFollowsLookDir));
+    onChangeMoveFollowsLookDir();
 
     preInitResult = mImpl->preInit();
     if (preInitResult)
@@ -150,92 +152,137 @@ BOOL LLHMD::init()
         mCursorTextures.clear();
         //UI_CURSOR_ARROW
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_arrow.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_WAIT
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_waiting.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_HAND
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_hand.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_IBEAM
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_ibeam.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_CROSS
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_cross.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_SIZENWSE
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_sizenwse.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_SIZENESW
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_sizenesw.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_SIZEWE
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_sizewe.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_SIZENS
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_sizens.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_NO
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_no.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_WORKING
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/cursor_working.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLGRAB
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolgrab.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLLAND
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolland.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_TOOLFOCUS
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolfocus.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_TOOLCREATE
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolcreate.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_ARROWDRAG
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/arrowdrag.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_ARROWCOPY
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/arrowcop.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_ARROWDRAGMULTI
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/llarrowdragmulti.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_ARROWCOPYMULTI
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/arrowcopmulti.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_NOLOCKED
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/llnolocked.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_ARROWLOCKED
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/llarrowlocked.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_GRABLOCKED
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/llgrablocked.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLTRANSLATE
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltooltranslate.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_TOOLROTATE
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolrotate.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_TOOLSCALE
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolscale.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_TOOLCAMERA
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolcamera.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_TOOLPAN
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolpan.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_TOOLZOOMIN
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolzoomin.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_TOOLPICKOBJECT3
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/toolpickobject3.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_TOOLPLAY
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/toolplay.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_TOOLPAUSE
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/toolpause.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_TOOLMEDIAOPEN
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/toolmediaopen.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.0f, 0.0f));
         //UI_CURSOR_PIPETTE
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/toolpipette.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLSIT
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/toolsit.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLBUY
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/toolbuy.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLOPEN
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/toolopen.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLPATHFINDING
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolpathfinding.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLPATHFINDING_PATH_START
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolpathfindingpathstart.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLPATHFINDING_PATH_START_ADD
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolpathfindingpathstartadd.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLPATHFINDING_PATH_END
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolpathfindingpathend.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLPATHFINDING_PATH_END_ADD
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/lltoolpathfindingpathendadd.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
         //UI_CURSOR_TOOLNO
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/llno.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
+        mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
+
+        gHMD.isHMDAllowed(LLPipeline::sRenderDeferred);
     }
     else
 #endif
     {
+        gHMD.isHMDAllowed(FALSE);
         gHMD.isPreDetectionInitialized(FALSE);
         gHMD.isPostDetectionInitialized(FALSE);
         gHMD.failedInit(TRUE);  // if we fail pre-init, we're done forever (or at least until client is restarted).
@@ -343,6 +390,7 @@ void LLHMD::onChangePresetValues()
 
 void LLHMD::onChangeUIShapePreset() { gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset")); }
 void LLHMD::onChangeWorldCursorSizeMult() { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); }
+void LLHMD::onChangeMoveFollowsLookDir() { gHMD.moveFollowsLookDir(gSavedSettings.getBOOL("HMDMoveFollowsLookDir")); }
 
 void LLHMD::saveSettings()
 {
@@ -547,6 +595,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
         if (mImpl && isPostDetectionInitialized() && isHMDConnected() && isHMDMode())
         {
             mImpl->resetOrientation();
+            mImpl->resetHeadRotationCorrection();
         }
     }
 #else
@@ -743,6 +792,8 @@ F32 LLHMD::getDistortionScale() const { return mImpl ? mImpl->getDistortionScale
 LLQuaternion LLHMD::getHMDOrient() const { return mImpl ? mImpl->getHMDOrient() : LLQuaternion::DEFAULT; }
 LLQuaternion LLHMD::getHeadRotationCorrection() const { return mImpl ? mImpl->getHeadRotationCorrection() : LLQuaternion::DEFAULT; }
 void LLHMD::addHeadRotationCorrection(LLQuaternion quat) { if (mImpl) { mImpl->addHeadRotationCorrection(quat); } }
+void LLHMD::resetHeadRotationCorrection() { if (mImpl) { mImpl->resetHeadRotationCorrection(); } }
+void LLHMD::resetOrientation() { if (mImpl) { mImpl->resetOrientation(); } }
 void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { if (mImpl) { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); } else { roll = pitch = yaw = 0.0f; } }
 F32 LLHMD::getHMDRoll() const { return mImpl ? mImpl->getRoll() : 0.0f; }
 F32 LLHMD::getHMDPitch() const { return mImpl ? mImpl->getPitch() : 0.0f; }
@@ -993,7 +1044,7 @@ void LLHMD::getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* u
     }
 }
 
-void LLHMD::updateHMDMouseInfo(S32 ui_x, S32 ui_y)
+void LLHMD::updateHMDMouseInfo()
 {
 #if LL_HMD_SUPPORTED
     if (!isHMDMode())
@@ -1003,6 +1054,8 @@ void LLHMD::updateHMDMouseInfo(S32 ui_x, S32 ui_y)
     }
 
     // 1. determine horizontal and vertical angle on toroid based on ui_x, ui_y
+    S32 ui_x = gViewerWindow->getCurrentMouse().mX;
+    S32 ui_y = gViewerWindow->getCurrentMouse().mY;
     F32 uiw = (F32)gViewerWindow->getWorldViewRectScaled().getWidth();
     F32 uih = (F32)gViewerWindow->getWorldViewRectScaled().getHeight();
     F32 nx = llclamp((F32)ui_x / (F32)uiw, 0.0f, 1.0f);

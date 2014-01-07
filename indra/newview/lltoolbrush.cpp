@@ -479,7 +479,10 @@ void LLToolBrushLand::render()
 							  pos_world);
 			}
 		}
-		mGotHover = FALSE;
+        if (LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE)
+        {
+		    mGotHover = FALSE;
+        }
 	}
 }
 

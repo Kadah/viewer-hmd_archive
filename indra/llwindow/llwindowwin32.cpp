@@ -2016,7 +2016,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 						<< LL_ENDL;
 				}
 
-				if (window_imp->mFullscreen)
+				if (window_imp->mFullscreen && !window_imp->mHMDMode)
 				{
 					// When we run fullscreen, restoring or minimizing the app needs 
 					// to switch the screen resolution

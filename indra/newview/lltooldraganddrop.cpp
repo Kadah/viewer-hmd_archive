@@ -59,6 +59,7 @@
 #include "llvoavatarself.h"
 #include "llworld.h"
 #include "llpanelface.h"
+#include "llhmd.h"
 
 // syntactic sugar
 #define callMemberFunction(object,ptrToMember)  ((object).*(ptrToMember))
@@ -731,6 +732,10 @@ void LLToolDragAndDrop::dragOrDrop( S32 x, S32 y, MASK mask, BOOL drop,
 		if (handled)
 		{
 			mLastAccept = (EAcceptance)*acceptance;
+            if (gHMD.isHMDMode() && !drop)
+            {
+                gHMD.cursorIntersectsUI(TRUE);
+            }
 		}
 	}
 
@@ -807,6 +812,10 @@ void LLToolDragAndDrop::dragOrDrop( S32 x, S32 y, MASK mask, BOOL drop,
 		if (handled)
 		{
 			mLastAccept = (EAcceptance)*acceptance;
+            if (gHMD.isHMDMode() && !drop)
+            {
+                gHMD.cursorIntersectsUI(TRUE);
+            }
 		}
 	}
 

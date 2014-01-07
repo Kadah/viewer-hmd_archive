@@ -3368,6 +3368,11 @@ bool hmd_mode_running()
     return gHMD.isHMDMode();
 }
 
+bool hmd_mode_allowed()
+{
+    return gHMD.isHMDAllowed();
+}
+
 bool my_profile_visible()
 {
 	LLFloater* floaterp = LLAvatarActions::getProfileFloater(gAgentID);
@@ -4158,6 +4163,16 @@ class LLViewCycleDisplay : public view_listener_t
 #endif
         return true;
     }
+};
+
+
+class LLViewCheckHMDMode : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		bool new_value = gHMD.isHMDMode();
+		return new_value;
+	}
 };
 
 class LLAddExtraMonitor : public view_listener_t
@@ -8579,7 +8594,9 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLViewDefaultUISize(), "View.DefaultUISize");
 	view_listener_t::addMenu(new LLViewToggleUI(), "View.ToggleUI");
     view_listener_t::addMenu(new LLViewCycleDisplay(), "View.CycleDisplay");
+	view_listener_t::addMenu(new LLViewCheckHMDMode(), "View.CheckHMDMode");
     enable.add("HMD.IsHMDMode", boost::bind(&hmd_mode_running));
+    enable.add("HMD.IsHMDModeAllowed", boost::bind(&hmd_mode_allowed));
 
     view_listener_t::addMenu(new LLAddExtraMonitor(), "View.AddExtraMonitor");
 

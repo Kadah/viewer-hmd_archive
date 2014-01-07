@@ -41,6 +41,7 @@
 #include "llsky.h"
 #include "llvosky.h"
 #include "llrender.h"
+#include "llhmd.h"
 
 #ifdef LL_RELEASE_FOR_DOWNLOAD
 #define UNIFORM_ERRS LL_WARNS_ONCE("Shader")
@@ -671,6 +672,17 @@ void LLViewerShaderMgr::setShaders()
 		gViewerWindow->setCursor(UI_CURSOR_ARROW);
 	}
 	gPipeline.createGLBuffers();
+
+    if (gHMD.isPreDetectionInitialized())
+    {
+        gHMD.isHMDAllowed(LLPipeline::sRenderDeferred);
+        if (gHMD.isHMDMode() && !gHMD.isHMDAllowed())
+        {
+            // if we're in HMD mode and basic shaders is turned off, go back to normal rendering mode and HMD mode 
+            // requires basic shaders.
+            gHMD.setRenderMode(LLHMD::RenderMode_None);
+        }
+    }
 
 	reentrance = false;
 }

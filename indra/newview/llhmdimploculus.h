@@ -103,11 +103,12 @@ public:
     F32 getYaw() const { return mEyeYaw; }
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = mEyeRoll; pitch = mEyePitch; yaw = mEyeYaw; }
     LLQuaternion getHeadRotationCorrection() const { return mHeadRotationCorrection; }
-    void addHeadRotationCorrection(LLQuaternion quat) { mHeadRotationCorrection *= quat; }
+    void addHeadRotationCorrection(LLQuaternion quat) { mHeadRotationCorrection *= quat; mHeadRotationCorrection.normalize(); }
+    void resetHeadRotationCorrection() { mHeadRotationCorrection = LLQuaternion::DEFAULT; }
+    void resetOrientation() { if (gHMD.isPostDetectionInitialized()) { mSensorFusion->Reset(); } }
 
     F32 getOrthoPixelOffset() const { return gHMD.isPostDetectionInitialized() ? mCurrentEyeParams.OrthoProjection.M[0][3] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)OVR::Util::Render::StereoEye_Left ? 1.0f : -1.0f)); }
 
-    void resetOrientation() { if (gHMD.isPostDetectionInitialized()) { mSensorFusion->Reset(); } }
 
     const char* getLatencyTesterResults() { if (gHMD.isPostDetectionInitialized() && mLatencyUtil.HasDevice()) { return mLatencyUtil.GetResultsString(); } else { return ""; } }
 
