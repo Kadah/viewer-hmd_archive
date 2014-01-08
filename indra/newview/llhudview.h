@@ -43,6 +43,7 @@ public:
 
 protected:
 	/*virtual*/ BOOL handleMouseDown(S32 x, S32 y, MASK mask);
+	/*virtual*/ BOOL handleHover(S32 x, S32 y, MASK mask);
 };
 
 extern LLHUDView *gHUDView;

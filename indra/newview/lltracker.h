@@ -97,6 +97,7 @@ public:
 	// Draw in-world 3D tracking stuff
 	static void	render3D();
 
+    static BOOL handleHover(S32 x, S32 y);
 	static BOOL handleMouseDown(S32 x, S32 y);
 
 	static LLTracker* sTrackerp;

@@ -107,8 +107,8 @@ public:
 
 	// Warning!  These assume the current global matrices are correct
 	void projectScreenToPosAgent(const S32 screen_x, const S32 screen_y, LLVector3* pos_agent ) const;
-	BOOL projectPosAgentToScreen(const LLVector3 &pos_agent, LLCoordGL &out_point, const BOOL clamp = TRUE) const;
-	BOOL projectPosAgentToScreenEdge(const LLVector3 &pos_agent, LLCoordGL &out_point) const;
+	BOOL projectPosAgentToScreen(const LLVector3 &pos_agent, LLCoordGL &out_point, const BOOL clamp = TRUE, BOOL useHMDEyeWidth = TRUE) const;
+	BOOL projectPosAgentToScreenEdge(const LLVector3 &pos_agent, LLCoordGL &out_point, BOOL useHMDEyeWidth = TRUE) const;
 
 	const LLVector3* getVelocityDir() const {return &mVelocityDir;}
 	LLStat *getVelocityStat() { return &mVelocityStat; }
@@ -118,7 +118,6 @@ public:
 	F32     getAverageAngularSpeed() {return mAverageAngularSpeed;}
 
 	void getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, LLVector3 &right, BOOL allowRoll = FALSE);
-	LLVector3 roundToPixel(const LLVector3 &pos_agent);
 
 	// Sets the current matrix
 	/* virtual */ void setView(F32 vertical_fov_rads);

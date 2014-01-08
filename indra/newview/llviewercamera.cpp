@@ -536,7 +536,7 @@ void LLViewerCamera::projectScreenToPosAgent(const S32 screen_x, const S32 scree
 // Uses the last GL matrices set in set_perspective to project a point from
 // the agent's region space to screen coordinates.  Returns TRUE if point in within
 // the current window.
-BOOL LLViewerCamera::projectPosAgentToScreen(const LLVector3 &pos_agent, LLCoordGL &out_point, const BOOL clamp) const
+BOOL LLViewerCamera::projectPosAgentToScreen(const LLVector3 &pos_agent, LLCoordGL &out_point, const BOOL clamp, BOOL useHMDEyeWidth) const
 {
 	BOOL in_front = TRUE;
 	GLdouble	x, y, z;			// object's window coords, GL-style
@@ -557,7 +557,7 @@ BOOL LLViewerCamera::projectPosAgentToScreen(const LLVector3 &pos_agent, LLCoord
 	}
 
 	S32	viewport[4];
-    gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
+    gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? useHMDEyeWidth ? gHMD.getHMDEyeWidth() : gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
 	F64 mdlv[16];
 	F64 proj[16];
 	for (U32 i = 0; i < 16; i++)
@@ -651,7 +651,8 @@ BOOL LLViewerCamera::projectPosAgentToScreen(const LLVector3 &pos_agent, LLCoord
 // the agent's region space to the nearest edge in screen coordinates.
 // Returns TRUE if projection succeeds.
 BOOL LLViewerCamera::projectPosAgentToScreenEdge(const LLVector3 &pos_agent,
-												LLCoordGL &out_point) const
+												LLCoordGL &out_point,
+                                                BOOL useHMDEyeWidth) const
 {
 	LLVector3 dir_to_point = pos_agent - getOrigin();
 	dir_to_point /= dir_to_point.magVec();
@@ -663,7 +664,7 @@ BOOL LLViewerCamera::projectPosAgentToScreenEdge(const LLVector3 &pos_agent,
 	}
 
 	S32	viewport[4];
-    gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
+    gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? useHMDEyeWidth ? gHMD.getHMDEyeWidth() : gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
 	GLdouble	x, y, z;			// object's window coords, GL-style
 
 	F64 mdlv[16];
@@ -824,33 +825,6 @@ void LLViewerCamera::getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, 
 
 	up = up_axis * meters_per_pixel * gViewerWindow->getDisplayScale().mV[VY];
 	right = -1.f * pixel_aspect * meters_per_pixel * left_axis * gViewerWindow->getDisplayScale().mV[VX];
-}
-
-LLVector3 LLViewerCamera::roundToPixel(const LLVector3 &pos_agent)
-{
-	F32 dist = (pos_agent - getOrigin()).magVec();
-	// Convert to screen space and back, preserving the depth.
-	LLCoordGL screen_point;
-	if (!projectPosAgentToScreen(pos_agent, screen_point, FALSE))
-	{
-		// Off the screen, just return the original position.
-		return pos_agent;
-	}
-
-	LLVector3 ray_dir;
-
-	projectScreenToPosAgent(screen_point.mX, screen_point.mY, &ray_dir);
-	ray_dir -= getOrigin();
-	ray_dir.normVec();
-
-	LLVector3 pos_agent_rounded = getOrigin() + ray_dir*dist;
-
-	/*
-	LLVector3 pixel_x, pixel_y;
-	getPixelVectors(pos_agent_rounded, pixel_y, pixel_x);
-	pos_agent_rounded += 0.5f*pixel_x, 0.5f*pixel_y;
-	*/
-	return pos_agent_rounded;
 }
 
 BOOL LLViewerCamera::cameraUnderWater() const

@@ -74,3 +74,13 @@ BOOL LLHUDView::handleMouseDown(S32 x, S32 y, MASK mask)
 	}
 	return LLView::handleMouseDown(x, y, mask);
 }
+
+/*virtual*/
+BOOL LLHUDView::handleHover(S32 x, S32 y, MASK mask)
+{
+	if (LLTracker::handleHover(x, y))
+	{
+		return TRUE;
+	}
+	return LLView::handleHover(x, y, mask);
+}

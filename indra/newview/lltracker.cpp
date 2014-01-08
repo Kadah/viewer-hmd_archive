@@ -62,6 +62,7 @@
 #include "llworld.h"
 #include "llworldmapview.h"
 #include "llviewercontrol.h"
+#include "llhmd.h"
 
 const F32 DESTINATION_REACHED_RADIUS    = 3.0f;
 const F32 DESTINATION_VISITED_RADIUS    = 6.0f;
@@ -340,27 +341,49 @@ void LLTracker::trackLocation(const LLVector3d& pos_global, const std::string& f
 BOOL LLTracker::handleMouseDown(S32 x, S32 y)
 {
 	BOOL eat_mouse_click = FALSE;
-	// fortunately, we can always compute the tracking arrow center
-	S32 dist_sqrd = (x - instance()->mHUDArrowCenterX) * (x - instance()->mHUDArrowCenterX) + 
-					(y - instance()->mHUDArrowCenterY) * (y - instance()->mHUDArrowCenterY);
-	if (dist_sqrd < ARROW_OFF_RADIUS_SQRD)
-	{
-		/* tracking autopilot destination has been disabled
-		   -- 2004.01.09, Leviathan
-		// turn off tracking
-		if (gAgent.getAutoPilot())
-		{
-			gAgent.stopAutoPilot(TRUE);	// TRUE because cancelled by user
-			eat_mouse_click = TRUE;
-		}
-		*/
-		if (getTrackingStatus())
-		{
-			instance()->stopTrackingAll();
-			eat_mouse_click = TRUE;
-		}
-	}
+    if (getTrackingStatus())
+    {
+	    // fortunately, we can always compute the tracking arrow center
+	    S32 dist_sqrd = (x - instance()->mHUDArrowCenterX) * (x - instance()->mHUDArrowCenterX) + 
+					    (y - instance()->mHUDArrowCenterY) * (y - instance()->mHUDArrowCenterY);
+	    if (dist_sqrd < ARROW_OFF_RADIUS_SQRD)
+	    {
+            if (gHMD.isHMDMode())
+            {
+                gHMD.cursorIntersectsUI(TRUE);
+            }
+		    /* tracking autopilot destination has been disabled
+		       -- 2004.01.09, Leviathan
+		    // turn off tracking
+		    if (gAgent.getAutoPilot())
+		    {
+			    gAgent.stopAutoPilot(TRUE);	// TRUE because cancelled by user
+			    eat_mouse_click = TRUE;
+		    }
+		    */
+		    //if (getTrackingStatus())
+		    //{
+			    instance()->stopTrackingAll();
+			    eat_mouse_click = TRUE;
+		    //}
+	    }
+    }
 	return eat_mouse_click;
+}
+
+//static
+BOOL LLTracker::handleHover(S32 x, S32 y)
+{
+    if (getTrackingStatus() && gHMD.isHMDMode())
+    {
+	    S32 dist_sqrd = (x - instance()->mHUDArrowCenterX) * (x - instance()->mHUDArrowCenterX) + 
+					    (y - instance()->mHUDArrowCenterY) * (y - instance()->mHUDArrowCenterY);
+	    if (dist_sqrd < ARROW_OFF_RADIUS_SQRD)
+	    {
+            gHMD.cursorIntersectsUI(TRUE);
+        }
+    }
+    return FALSE;
 }
 
 
@@ -659,10 +682,10 @@ void LLTracker::drawMarker(const LLVector3d& pos_global, const LLColor4& color)
 	LLCoordGL screen;
 	S32 x = 0;
 	S32 y = 0;
-	const BOOL CLAMP = TRUE;
+	BOOL CLAMP = !gHMD.isHMDMode();
 
-	if (LLViewerCamera::getInstance()->projectPosAgentToScreen(pos_local, screen, CLAMP)
-		|| LLViewerCamera::getInstance()->projectPosAgentToScreenEdge(pos_local, screen) )
+	if (LLViewerCamera::getInstance()->projectPosAgentToScreen(pos_local, screen, CLAMP, FALSE)
+		|| LLViewerCamera::getInstance()->projectPosAgentToScreenEdge(pos_local, screen, FALSE) )
 	{
 		gHUDView->screenPointToLocal(screen.mX, screen.mY, &x, &y);
 

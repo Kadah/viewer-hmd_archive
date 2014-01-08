@@ -1044,22 +1044,26 @@ void LLHMD::getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* u
     }
 }
 
-void LLHMD::updateHMDMouseInfo()
+
+void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
 {
-#if LL_HMD_SUPPORTED
     if (!isHMDMode())
     {
-        mMouseWorld.set(0.0f, 0.0f, 0.0f);
+        world.set(0.0f, 0.0f, 0.0f);
         return;
     }
 
-    // 1. determine horizontal and vertical angle on toroid based on ui_x, ui_y
-    S32 ui_x = gViewerWindow->getCurrentMouse().mX;
-    S32 ui_y = gViewerWindow->getCurrentMouse().mY;
+    // 1. determine horizontal and vertical percentage within toroidal UI surface based on mouse_x, mouse_y
     F32 uiw = (F32)gViewerWindow->getWorldViewRectScaled().getWidth();
     F32 uih = (F32)gViewerWindow->getWorldViewRectScaled().getHeight();
-    F32 nx = llclamp((F32)ui_x / (F32)uiw, 0.0f, 1.0f);
-    F32 ny = llclamp((F32)ui_y / (F32)uih, 0.0f, 1.0f);
+    F32 nx = llclamp((F32)mouse_x / (F32)uiw, 0.0f, 1.0f);
+    F32 ny = llclamp((F32)mouse_y / (F32)uih, 0.0f, 1.0f);
+    calculateMouseWorld2(nx, ny, world);
+}
+
+void LLHMD::calculateMouseWorld2(F32 nx, F32 ny, LLVector3& world)
+{
+    // 1. determine horizontal and vertical angle on toroid based on nx, ny
     F32 ha = ((mUIShape.mArcHorizontal * -0.5f) + (nx * mUIShape.mArcHorizontal));
     F32 va = (F_PI - (mUIShape.mArcVertical * 0.5f)) + (ny * mUIShape.mArcVertical);
 
@@ -1069,14 +1073,109 @@ void LLHMD::updateHMDMouseInfo()
 
     // 3. convert eye-space to world coordinates (taking into account the ui-magnification that essentially 
     //    translates the view forward (or backward, depending on the mag level) along the axis going into the 
-    //    center of the UI surface).  
+    //    center of the UI surface).
+    // Also:  Profit!
     glh::matrix4f uivInv(mUIModelViewInv);
     glh::vec4f w(eyeSpacePos.mV);
     uivInv.mult_matrix_vec(w);
-    mMouseWorld.set(w[VX], w[VY], w[VZ]);
-#endif
+    world.set(w[VX], w[VY], w[VZ]);
 }
 
+
+#if LL_HMD_EXPERIMENTAL 
+
+BOOL getLinePlaneIntersection(const LLPlane& pl, const LLVector3& l1, const LLVector3& l2, LLVector3& intersection)
+{
+    LLVector3 n;
+    pl.getVector3(n);
+    LLVector3 line = l1 - l2;
+    F32 d1 = line * n;
+    F32 d2 = -pl.dist(l2);
+    F32 t = d2 / d1;
+    if (t >= 0.0f && t <= 1.0f)
+    {
+	    intersection = l2 + (line * t);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+// Returns the signed squared triangle area.  Note that a negative area is possible depending on the winding order of
+// the points.  If you want the actual area, just take the square root of the absolute value of the returned number.
+F32 getSignedSquaredTriangleArea(const LLVector3& a, const LLVector3& b, const LLVector3& c)
+{
+    return (((a[VX] - c[VX]) * (b[VY] - c[VY])) - ((a[VY] - c[VY]) * (b[VX] - c[VX]))) * 0.5f;
+}
+
+// returns -1 for CounterClockwise, 1 for Clockwise, 0 for Collinear.
+S32 getWindingOrder(const LLVector3& a, const LLVector3& b, const LLVector3& c, F32 tolerance)
+{
+    F32 r = getSignedSquaredTriangleArea(a, b, c);
+    return (r <= -tolerance) ? -1 : (r >= tolerance) ? 1 : 0;
+}
+
+#endif // LL_HMD_EXPERIMENTAL
+
+void LLHMD::updateHMDMouseInfo()
+{
+#if LL_HMD_SUPPORTED
+    calculateMouseWorld(gViewerWindow->getCurrentMouse().mX, gViewerWindow->getCurrentMouse().mY, mMouseWorld);
+
+#if LL_HMD_EXPERIMENTAL 
+    // Experimental
+    LLViewerCamera* camera = LLViewerCamera::getInstance();
+    LLVector3 uil, uir, pl_int, pr_int;
+    LLPlane& pl = camera->getAgentPlane(LLCamera::AGENT_PLANE_LEFT);
+    LLPlane& pr = camera->getAgentPlane(LLCamera::AGENT_PLANE_RIGHT);
+    calculateMouseWorld(0, getHMDHeight() / 2, uil);
+    calculateMouseWorld(getHMDUIWidth(), getHMDHeight() / 2, uir);
+    if (!getLinePlaneIntersection(pl, uil, uir, pl_int) || !getLinePlaneIntersection(pr, uil, uir, pr_int))
+    {
+        LL_WARNS("HMD") << "no intersection between ui-surface and frustum.  Should not be possible!" << LL_ENDL;
+        mCamFrustumUILocs.set(-1.0f, -1.0f);
+        return;
+    }
+
+    LLVector3 origin = camera->getOrigin();
+    //S32 wo1 = getWindingOrder(origin, pl_int, uil, F_APPROXIMATELY_ZERO);
+    //S32 wo2 = getWindingOrder(origin, pl_int, uir, F_APPROXIMATELY_ZERO);
+    //S32 wo3 = getWindingOrder(origin, pr_int, uil, F_APPROXIMATELY_ZERO);
+    //S32 wo4 = getWindingOrder(origin, pr_int, uir, F_APPROXIMATELY_ZERO);
+    BOOL plint_lt_uil = getWindingOrder(origin, pl_int, uil, F_APPROXIMATELY_ZERO) > 0;
+    //BOOL plint_gt_uir = (wo1 <= 0) && (wo2 <= 0);
+    BOOL print_lt_uil = plint_lt_uil && getWindingOrder(origin, pr_int, uil, F_APPROXIMATELY_ZERO) > 0;
+    //BOOL print_gt_uir = (wo4 <= 0);
+    F32 ui_width = (uir - uil).lengthSquared();
+    mCamFrustumUILocs[VX] = (plint_lt_uil ? -1.0f : 1.0f) * (uil - pl_int).lengthSquared() / ui_width;
+    mCamFrustumUILocs[VY] = (print_lt_uil ? -1.0f : 1.0f) * (uil - pr_int).lengthSquared() / ui_width;
+
+    //LLVector3 left, right;
+    //if (wo1 <= 0)
+    //{
+    //    if (wo2 <= 0)
+    //    {
+    //        // 5) uil | uir | pl_int | pr_int
+    //    }
+    //    else if (wo4 <= 0)
+    //    {
+    //        // 4) uil | pl_int | uir | pr_int
+    //    }
+    //    else
+    //    {
+    //        // 3) uil | pl_int | pr_int | uir
+    //    }
+    //}
+    //else if (wo3 <= 0)
+    //{
+    //    // 2) pl_int | uil | pr_int | uir
+    //}
+    //else
+    //{
+    //    // 1) pl_int | pr_int | uil | uir
+    //}
+#endif // LL_HMD_EXPERIMENTAL
+#endif // LL_HMD_SUPPORTED
+}
 
 BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
 {

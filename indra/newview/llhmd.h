@@ -33,6 +33,7 @@
     // We do not support the Oculus Rift on other platforms at the moment
     #define LL_HMD_SUPPORTED 0
 #endif
+#define LL_HMD_EXPERIMENTAL 0
 
 #include "llpointer.h"
 
@@ -274,6 +275,7 @@ public:
 
     LLVertexBuffer* createUISurface();
     void getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* uv = NULL);
+    void calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world);
     void updateHMDMouseInfo();
     const LLVector3& getMouseWorld() const { return mMouseWorld; }
     void updateMouseRaycast(const LLVector4a& mwe) { mMouseWorldEnd = mwe; }
@@ -314,9 +316,14 @@ public:
     static void onChangePresetValues();
     static void onChangeMoveFollowsLookDir();
 
+#if LL_HMD_EXPERIMENTAL 
+    const LLVector2& getCamFrustumLocs() const { return mCamFrustumUILocs; }
+#endif
+
 private:
     void calculateUIEyeDepth();
     void setUISurfaceParam(F32* p, F32 f);
+    void calculateMouseWorld2(F32 nx, F32 ny, LLVector3& world);
 
 private:
     LLHMDImpl* mImpl;
@@ -353,6 +360,9 @@ private:
     std::vector<LLVector2> mCursorHotSpotOffsets;
     LLPointer<LLViewerTexture> mCalibrateBackgroundTexture;
     LLPointer<LLViewerTexture> mCalibrateForegroundTexture;
+#if LL_HMD_EXPERIMENTAL 
+    LLVector2 mCamFrustumUILocs;
+#endif
 };
 
 extern LLHMD gHMD;
