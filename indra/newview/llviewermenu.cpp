@@ -3368,11 +3368,6 @@ bool hmd_mode_running()
     return gHMD.isHMDMode();
 }
 
-bool hmd_mode_allowed()
-{
-    return gHMD.isHMDAllowed();
-}
-
 bool my_profile_visible()
 {
 	LLFloater* floaterp = LLAvatarActions::getProfileFloater(gAgentID);
@@ -4138,17 +4133,42 @@ class LLViewCycleDisplay : public view_listener_t
         switch (curRenderMode)
         {
         case LLHMD::RenderMode_None:
-            if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected())
             {
-                nextRenderMode = LLHMD::RenderMode_HMD;
-            }
-            else if (gHMD.isPreDetectionInitialized() && gHMD.isAdvancedMode())
-            {
-                nextRenderMode = LLHMD::RenderMode_ScreenStereo;
-            }
-            else
-            {
-                nextRenderMode = LLHMD::RenderMode_None;
+                // check to ensure that HMD mode is possible and notify user of reasons if it is not.
+                BOOL hmdModePossible = TRUE;
+                if (!gHMD.isPreDetectionInitialized())
+                {
+		            LLNotificationsUtil::add("HMDModeErrorPreInitFailed");
+                    return true;
+                }
+                else if (!gHMD.isHMDAllowed())
+                {
+		            LLNotificationsUtil::add("HMDModeErrorALM");
+                    return true;
+                }
+                else if (!gHMD.isHMDConnected())
+                {
+		            LLNotificationsUtil::add("HMDModeErrorNoDevice");
+                    hmdModePossible = FALSE;
+                }
+                else if (!gHMD.isHMDSensorConnected())
+                {
+		            LLNotificationsUtil::add("HMDModeErrorNoSensor");
+                    hmdModePossible = FALSE;
+                }
+                else if (!gHMD.isPostDetectionInitialized())
+                {
+		            LLNotificationsUtil::add("HMDModeErrorNoWindow");
+                    hmdModePossible = FALSE;
+                }
+                if (hmdModePossible)
+                {
+                    nextRenderMode = LLHMD::RenderMode_HMD;
+                }
+                else if (gHMD.isAdvancedMode())
+                {
+                    nextRenderMode = LLHMD::RenderMode_ScreenStereo;
+                }
             }
             break;
         case LLHMD::RenderMode_HMD:
@@ -8596,7 +8616,6 @@ void initialize_menus()
     view_listener_t::addMenu(new LLViewCycleDisplay(), "View.CycleDisplay");
 	view_listener_t::addMenu(new LLViewCheckHMDMode(), "View.CheckHMDMode");
     enable.add("HMD.IsHMDMode", boost::bind(&hmd_mode_running));
-    enable.add("HMD.IsHMDModeAllowed", boost::bind(&hmd_mode_allowed));
 
     view_listener_t::addMenu(new LLAddExtraMonitor(), "View.AddExtraMonitor");
 

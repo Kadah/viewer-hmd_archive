@@ -49,6 +49,7 @@
 #include "llviewerregion.h"
 #include "llviewerwindow.h"
 #include "llnotificationsutil.h"
+#include "llhmd.h"
 
 bool on_load_url_external_response(const LLSD& notification, const LLSD& response, bool async );
 
@@ -141,7 +142,12 @@ bool on_load_url_external_response(const LLSD& notification, const LLSD& respons
 		std::string escaped_url = LLWeb::escapeURL(url);
 		if (gViewerWindow)
 		{
+            U32 oldRenderMode = gHMD.suspendHMDMode();
 			gViewerWindow->getWindow()->spawnWebBrowser(escaped_url, async);
+            if (async)
+            {
+                gHMD.resumeHMDMode(oldRenderMode);
+            }
 		}
 	}
 	return false;

@@ -69,6 +69,8 @@ public:
         kFlag_ChangingRenderContext     = 1 << 8,
         kFlag_HMDAllowed                = 1 << 9,
         kFlag_MoveFollowsLookDir        = 1 << 10,
+        kFlag_HMDSensorConnected        = 1 << 11,
+        kFlag_LatencyTesterConnected    = 1 << 12,
     };
 
     enum eUIPresetType
@@ -125,6 +127,10 @@ public:
     void isHMDAllowed(BOOL b) { if (b) { mFlags |= kFlag_HMDAllowed; } else { mFlags &= ~kFlag_HMDAllowed; } }
     BOOL moveFollowsLookDir() const { return ((mFlags & kFlag_MoveFollowsLookDir) != 0) ? TRUE : FALSE; }
     void moveFollowsLookDir(BOOL b) { if (b) { mFlags |= kFlag_MoveFollowsLookDir; } else { mFlags &= ~kFlag_MoveFollowsLookDir; } }
+    BOOL isHMDSensorConnected() const { return ((mFlags & kFlag_HMDSensorConnected) != 0) ? TRUE : FALSE; }
+    void isHMDSensorConnected(BOOL b) { if (b) { mFlags |= kFlag_HMDSensorConnected; } else { mFlags &= ~kFlag_HMDSensorConnected; } }
+    BOOL isLatencyTesterConnected() const { return ((mFlags & kFlag_LatencyTesterConnected) != 0) ? TRUE : FALSE; }
+    void isLatencyTesterConnected(BOOL b) { if (b) { mFlags |= kFlag_LatencyTesterConnected; } else { mFlags &= ~kFlag_LatencyTesterConnected; } }
 
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
@@ -140,6 +146,8 @@ public:
     void onAppFocusLost();
     void renderUnusedMainWindow();
     void renderUnusedHMDWindow();
+    U32 suspendHMDMode();
+    void resumeHMDMode(U32 prevRenderMode);
 
     // 0 = center, 1 = left, 2 = right.  Input clamped to [0,2]
     U32 getCurrentEye() const;

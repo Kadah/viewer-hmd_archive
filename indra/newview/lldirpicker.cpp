@@ -36,6 +36,7 @@
 #include "lltrans.h"
 #include "llwindow.h"	// beforeDialog()
 #include "llviewercontrol.h"
+#include "llhmd.h"
 
 #if LL_LINUX || LL_SOLARIS || LL_DARWIN
 # include "llfilepicker.h"
@@ -86,56 +87,58 @@ LLDirPicker::~LLDirPicker()
 
 BOOL LLDirPicker::getDir(std::string* filename)
 {
-	if( mLocked )
-	{
-		return FALSE;
-	}
+    if( mLocked )
+    {
+        return FALSE;
+    }
 
-	// if local file browsing is turned off, return without opening dialog
-	if ( check_local_file_access_enabled() == false )
-	{
-		return FALSE;
-	}
+    // if local file browsing is turned off, return without opening dialog
+    if ( check_local_file_access_enabled() == false )
+    {
+        return FALSE;
+    }
 
-	BOOL success = FALSE;
+    BOOL success = FALSE;
 
-	// Modal, so pause agent
-	send_agent_pause();
+    // Modal, so pause agent
+    send_agent_pause();
+    U32 oldRenderMode = gHMD.suspendHMDMode();
 
-   BROWSEINFO bi;
-   memset(&bi, 0, sizeof(bi));
+    BROWSEINFO bi;
+    memset(&bi, 0, sizeof(bi));
 
-   bi.ulFlags   = BIF_USENEWUI;
-   bi.hwndOwner = (HWND)gViewerWindow->getPlatformWindow();
-   bi.lpszTitle = NULL;
+    bi.ulFlags   = BIF_USENEWUI;
+    bi.hwndOwner = (HWND)gViewerWindow->getPlatformWindow();
+    bi.lpszTitle = NULL;
 
-   ::OleInitialize(NULL);
+    ::OleInitialize(NULL);
 
-   LPITEMIDLIST pIDL = ::SHBrowseForFolder(&bi);
+    LPITEMIDLIST pIDL = ::SHBrowseForFolder(&bi);
 
-   if(pIDL != NULL)
-   {
-      WCHAR buffer[_MAX_PATH] = {'\0'};
+    if(pIDL != NULL)
+    {
+        WCHAR buffer[_MAX_PATH] = {'\0'};
 
-      if(::SHGetPathFromIDList(pIDL, buffer) != 0)
-      {
-		  	// Set the string value.
+        if(::SHGetPathFromIDList(pIDL, buffer) != 0)
+        {
+            // Set the string value.
 
-   			mDir = utf16str_to_utf8str(llutf16string(buffer));
-	         success = TRUE;
-      }
+            mDir = utf16str_to_utf8str(llutf16string(buffer));
+            success = TRUE;
+        }
 
-      // free the item id list
-      CoTaskMemFree(pIDL);
-   }
+        // free the item id list
+        CoTaskMemFree(pIDL);
+    }
 
-   ::OleUninitialize();
+    ::OleUninitialize();
 
-	send_agent_resume();
+    gHMD.resumeHMDMode(oldRenderMode);
+    send_agent_resume();
 
-	// Account for the fact that the app has been stalled.
-	LLFrameTimer::updateFrameTime();
-	return success;
+    // Account for the fact that the app has been stalled.
+    LLFrameTimer::updateFrameTime();
+    return success;
 }
 
 std::string LLDirPicker::getDirName()

@@ -107,7 +107,6 @@
            label_ref="Command_HMD_Mode_Label"
            tooltip_ref="Command_HMD_Mode_Tooltip"
            execute_function="View.CycleDisplay"
-           is_enabled_function="HMD.IsHMDModeAllowed"
            is_running_function="HMD.IsHMDMode"
            />
   <command name="howto"

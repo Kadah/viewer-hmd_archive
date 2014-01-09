@@ -615,7 +615,7 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
         switch(i)
         {
         case LLViewerCamera::CENTER_EYE:
-            if (!gDisconnected && !gSnapshot && gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected())
+            if (!gDisconnected && !gSnapshot && gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected())
             {
                 if (render_mode == LLHMD::RenderMode_HMD)
                 {
@@ -646,10 +646,11 @@ void display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL for_snapshot)
                     continue;
                 }
                 gHMD.setCurrentEye(i);
-                if (gHMD.isPostDetectionInitialized() &&
+                if (i == LLViewerCamera::LEFT_EYE &&
+                    render_mode == LLHMD::RenderMode_HMD &&
+                    gHMD.isPostDetectionInitialized() &&
                     gHMD.isHMDConnected() &&
-                    i == LLViewerCamera::LEFT_EYE &&
-                    render_mode == LLHMD::RenderMode_HMD)
+                    gHMD.isHMDSensorConnected())
                 {
                     if (!gHMD.setRenderWindowHMD())
                     {
@@ -1318,6 +1319,12 @@ void render_hmd_mouse_cursor_3d()
 {
     if (gHMD.isHMDMode() && !gHMD.cursorIntersectsUI())
     {
+        LLWindow* window = gViewerWindow->getWindow();
+        if (!window || window->isCursorHidden())
+        {
+            return;
+        }
+
         LLViewerCamera* camera = LLViewerCamera::getInstance();
         LLVector3 origin = camera->getOrigin();
         LLVector3 pt;
@@ -1429,6 +1436,12 @@ void render_hmd_mouse_cursor_2d()
 {
     if (gHMD.isHMDMode())
     {
+        LLWindow* window = gViewerWindow->getWindow();
+        if (!window || window->isCursorHidden())
+        {
+            return;
+        }
+
         if (gHMD.cursorIntersectsUI())
         {
             gGL.pushMatrix();

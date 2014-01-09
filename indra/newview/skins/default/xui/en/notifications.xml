@@ -10209,5 +10209,45 @@ Cannot create large prims that intersect other players.  Please re-try when othe
      name="okignore"
      yestext="OK"/>
   </notification>
-  
+
+  <notification
+   icon="alertmodal.tga"
+   name="HMDModeErrorPreInitFailed"
+   type="alertmodal">
+   <tag>fail</tag>
+Internal Problem: Cannot enter HMD mode because pre-initialization of the HMD device manager failed.  This probably means that the HMD device library is not installed or is a different version than expected.  Reinstalling the Second Life client may fix this.
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="HMDModeErrorALM"
+   type="alertmodal">
+   <tag>fail</tag>
+Cannot enter HMD mode because Advanced Lighting Model is not enabled.  Advanced Lighting Model is required for proper rendering in HMD mode.
+  </notification>
+    
+  <notification
+   icon="alertmodal.tga"
+   name="HMDModeErrorNoDevice"
+   type="alertmodal">
+   <tag>fail</tag>
+Cannot enter HMD mode because there is no HMD hardware detected.  Check your HMD's monitor cable to make sure it is secure.
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="HMDModeErrorNoSensor"
+   type="alertmodal">
+   <tag>fail</tag>
+Cannot enter HMD mode because there is no HMD Sensor hardware detected.  Check that your HMD device has power and the USB cable is securely connected.
+  </notification>
+    
+  <notification
+   icon="alertmodal.tga"
+   name="HMDModeErrorNoWindow"
+   type="alertmodal">
+   <tag>fail</tag>
+Internal Problem: Cannot enter HMD mode because the HMD rendering window could not be created.   Restarting the client will probably fix this.
+  </notification>
+    
 </notifications>

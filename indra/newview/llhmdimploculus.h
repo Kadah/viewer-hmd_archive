@@ -46,7 +46,7 @@ public:
     BOOL preInit();
     BOOL postDetectionInit();
     void handleMessages();
-    bool isReady() { return mHMD && mSensorDevice && gHMD.isHMDConnected(); }
+    bool isReady() { return mHMD && mSensorDevice && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected(); }
     void shutdown();
     void onIdle();
     U32 getCurrentEye() const { return mCurrentEye; }

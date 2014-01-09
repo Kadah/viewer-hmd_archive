@@ -136,6 +136,7 @@ BOOL LLHMDImplOculus::preInit()
 
     if (mSensorDevice)
     {
+        gHMD.isHMDSensorConnected(TRUE);
         if (mSensorFusion->AttachToSensor(mSensorDevice))
         {
             LL_INFOS("HMD") << "HMD Sensor device found and successfully attached to SensorFusion" << LL_ENDL;
@@ -190,6 +191,7 @@ void LLHMDImplOculus::handleMessages()
                         mSensorFusion->AttachToSensor(mSensorDevice);
                         mSensorFusion->SetDelegateMessageHandler(this);
                         mSensorFusion->SetPredictionEnabled(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
+                        gHMD.isHMDSensorConnected(TRUE);
                         LL_INFOS("HMD") << "HMD Sensor Device Added" << LL_ENDL;
                     }
                     else
@@ -206,6 +208,7 @@ void LLHMDImplOculus::handleMessages()
                     {
                         mpLatencyTester = *desc.Handle.CreateDeviceTyped<OVR::LatencyTestDevice>();
                         mLatencyUtil.SetDevice(mpLatencyTester);
+                        gHMD.isLatencyTesterConnected(TRUE);
                         LL_INFOS("HMD") << "HMD Latency Tester Device Added" << LL_ENDL;
                     }
                 }
@@ -254,12 +257,14 @@ void LLHMDImplOculus::handleMessages()
             {
                 mSensorFusion->AttachToSensor(NULL);
                 mSensorDevice.Clear();
+                gHMD.isHMDSensorConnected(FALSE);
                 LL_INFOS("HMD") << "HMD Sensor Device Removed" << LL_ENDL;
             }
             else if (desc.Handle.IsDevice(mpLatencyTester))
             {
                 mLatencyUtil.SetDevice(NULL);
                 mpLatencyTester.Clear();
+                gHMD.isLatencyTesterConnected(FALSE);
                 LL_INFOS("HMD") << "HMD Latency Tester Device Removed" << LL_ENDL;
             }
             else if (desc.Handle.IsDevice(mHMD))
@@ -318,6 +323,7 @@ BOOL LLHMDImplOculus::postDetectionInit()
     if (mpLatencyTester)
     {
         mLatencyUtil.SetDevice(mpLatencyTester);
+        gHMD.isLatencyTesterConnected(TRUE);
     }
 
     // get device's "monitor" info

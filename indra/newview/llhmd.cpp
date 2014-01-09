@@ -459,7 +459,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
     if (newRenderMode != mRenderMode)
     {
         LLWindow* windowp = gViewerWindow->getWindow();
-        if (!windowp || (newRenderMode == RenderMode_HMD && (!isPostDetectionInitialized() || !isHMDConnected())))
+        if (!windowp || (newRenderMode == RenderMode_HMD && (!isPostDetectionInitialized() || !isHMDConnected() || !isHMDSensorConnected())))
         {
             return;
         }
@@ -478,7 +478,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     {
                         // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
                         // the HMD is still connected, etc.
-                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
+                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected() || !gHMD.isHMDSensorConnected())
                         {
                             // can't render to the HMD window, so abort
                             mRenderMode = RenderMode_ScreenStereo;
@@ -546,7 +546,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     {
                         // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
                         // the HMD is still connected, etc.
-                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
+                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected() || !gHMD.isHMDSensorConnected())
                         {
                             // can't render to the HMD window, so abort
                             mRenderMode = RenderMode_None;
@@ -592,7 +592,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 setFocusWindowMain();
             }
         }
-        if (mImpl && isPostDetectionInitialized() && isHMDConnected() && isHMDMode())
+        if (mImpl && isPostDetectionInitialized() && isHMDConnected() && isHMDSensorConnected() && isHMDMode())
         {
             mImpl->resetOrientation();
             mImpl->resetHeadRotationCorrection();
@@ -688,6 +688,7 @@ void LLHMD::renderUnusedMainWindow()
     if (gHMD.getRenderMode() == LLHMD::RenderMode_HMD
         && gHMD.isPostDetectionInitialized()
         && gHMD.isHMDConnected()
+        && gHMD.isHMDSensorConnected()
         && gViewerWindow
         && gViewerWindow->getWindow()
 #if LL_DARWIN
@@ -712,6 +713,7 @@ void LLHMD::renderUnusedHMDWindow()
 #if LL_HMD_SUPPORTED
     if (gHMD.isPostDetectionInitialized()
         && gHMD.isHMDConnected()
+        && gHMD.isHMDSensorConnected()
         && gHMD.getRenderMode() != LLHMD::RenderMode_HMD
         && gViewerWindow
         && gViewerWindow->getWindow())
@@ -729,6 +731,23 @@ void LLHMD::renderUnusedHMDWindow()
 #endif
 }
 
+U32 LLHMD::suspendHMDMode()
+{
+    U32 oldMode = getRenderMode();
+    if (isHMDMode())
+    {
+        setRenderMode(RenderMode_None);
+    }
+    return oldMode;
+}
+
+void LLHMD::resumeHMDMode(U32 prevRenderMode)
+{
+    if (prevRenderMode != RenderMode_None)
+    {
+        setRenderMode(prevRenderMode);
+    }
+}
 
 U32 LLHMD::getCurrentEye() const { return mImpl ? mImpl->getCurrentEye() : 0; }
 void LLHMD::setCurrentEye(U32 eye) { if (mImpl) { mImpl->setCurrentEye(eye); } }

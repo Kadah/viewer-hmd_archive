@@ -174,7 +174,7 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3 &center,
         gHMD.setUIModelView((F32*)getModelview().mMatrix);
     }
     setOriginAndLookAt(origin, up_direction, point_of_interest);
-    if (gHMD.isHMDMode() && gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected())
+    if (gHMD.isHMDMode() && gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected())
     {
         gHMD.setBaseLookAt((F32*)getModelview().mMatrix);
         float r, p, y;

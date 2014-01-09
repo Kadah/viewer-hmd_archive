@@ -678,8 +678,8 @@ void LLViewerShaderMgr::setShaders()
         gHMD.isHMDAllowed(LLPipeline::sRenderDeferred);
         if (gHMD.isHMDMode() && !gHMD.isHMDAllowed())
         {
-            // if we're in HMD mode and basic shaders is turned off, go back to normal rendering mode and HMD mode 
-            // requires basic shaders.
+            // if we're in HMD mode and basic shaders or Advanced Lighting Model are turned off,
+            // go back to normal rendering mode
             gHMD.setRenderMode(LLHMD::RenderMode_None);
         }
     }

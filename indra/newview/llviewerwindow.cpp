@@ -838,7 +838,7 @@ public:
 			}
 		}
 
-		if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gSavedSettings.getBOOL("HMDDebugShowOrientation"))
+		if (gHMD.isPostDetectionInitialized() && gHMD.isHMDSensorConnected() && gSavedSettings.getBOOL("HMDDebugShowOrientation"))
 		{
             //// for debugging: put text in center of screen
             //xpos = llmax((mWindow->getWorldViewWidthScaled() / 2) - 200, 0);
@@ -851,7 +851,7 @@ public:
 			ypos += y_inc;
         }
 
-		if (gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gSavedSettings.getBOOL("HMDDebugShowLatency"))
+		if (gHMD.isPostDetectionInitialized() && gHMD.isLatencyTesterConnected() && gSavedSettings.getBOOL("HMDDebugShowLatency"))
 		{
             const char* res = gHMD.getLatencyTesterResults();
             if (res && *res)
