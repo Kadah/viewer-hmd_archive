@@ -120,7 +120,7 @@ LLWindow::LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags)
 	  mFlags(flags),
 	  mHighSurrogate(0),
       mCurRCIdx(0),
-      mUseDisplayMirroring(FALSE)
+      mUseDisplayMirroring(TRUE)
 {
 }
 
