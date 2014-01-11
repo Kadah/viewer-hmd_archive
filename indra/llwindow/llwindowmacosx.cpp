@@ -1822,11 +1822,10 @@ MASK LLWindowMacOSX::modifiersToMask(S16 modifiers)
 void LLWindowMacOSX::addExtraWindow(BOOL useMirroring)
 {
     llinfos << "Merov : Hit the extra window init!" << llendl;
-    mUseDisplayMirroring = useMirroring;
     LLRect second_screen;
     BOOL is_primary = FALSE;
     llutf16string display_name = utf8str_to_utf16str("Test");
-    S32 screen_id = (mUseDisplayMirroring ? getDisplayId(0) : getDisplayId(1));
+    S32 screen_id = (getDisplayCount() == 1 ? getDisplayId(0) : getDisplayId(1));
     getDisplayInfo(display_name, screen_id, second_screen, is_primary);
     //getRenderWindow(mainFullScreen);
     //gHMD.isMainFullScreen(mainFullScreen);
@@ -1848,7 +1847,7 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
 {
     LL_INFOS("Window") << "initHMDWindow" << LL_ENDL;
 
-    if (mUseDisplayMirroring)
+    if (getDisplayCount() == 1)
     {
         mWindow[1] = mWindow[0];
         mGLView[1] = mGLView[0];
@@ -1879,7 +1878,7 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
 BOOL LLWindowMacOSX::destroyHMDWindow()
 {
     LL_INFOS("Window") << "destroyHMDWindow" << LL_ENDL;
-    if (!mUseDisplayMirroring)
+    if (getDisplayCount() != 1)
     {
         // Destroy the LLOpenGLView
         if (mGLView[1] != NULL)
@@ -1914,7 +1913,7 @@ BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
     }
     LL_DEBUGS("Window") << "setRenderWindow : start" << LL_ENDL;
 
-    if (!mUseDisplayMirroring)
+    if (getDisplayCount() != 1)
     {
         // Set the view on the current context
         setCGLCurrentContext(mGLView[idx]);

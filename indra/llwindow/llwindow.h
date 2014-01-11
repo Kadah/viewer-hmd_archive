@@ -175,7 +175,7 @@ public:
     virtual BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary) = 0;
     virtual void enableVSync(BOOL b) {}
     // Experimental : allow testing of Mac code for dual screen mode without Oculus Rift plugged in
-    virtual void addExtraWindow(BOOL useMirroring) { mUseDisplayMirroring = useMirroring; }
+    virtual void addExtraWindow() { }
     
 protected:
 	LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags);
@@ -213,7 +213,6 @@ protected:
 
     // HMD support
     S32         mCurRCIdx;
-    bool        mUseDisplayMirroring;   // Experimental: used for Mac while we're fixing the second display issues
 
  	// Handle a UTF-16 encoding unit received from keyboard.
  	// Converting the series of UTF-16 encoding units to UTF-32 data,

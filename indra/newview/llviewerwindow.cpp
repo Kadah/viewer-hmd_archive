@@ -2086,7 +2086,7 @@ void LLViewerWindow::addExtraWindow()
 {
     if (mWindow)
     {
-        mWindow->addExtraWindow(gSavedSettings.getBOOL("HMDUseMirroring"));
+        mWindow->addExtraWindow();
     }
 }
 

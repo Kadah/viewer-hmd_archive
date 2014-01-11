@@ -691,9 +691,6 @@ void LLHMD::renderUnusedMainWindow()
         && gHMD.isHMDSensorConnected()
         && gViewerWindow
         && gViewerWindow->getWindow()
-#if LL_DARWIN
-        && !gSavedSettings.getBOOL("HMDUseMirroring")
-#endif
        )
     {
         if (gHMD.setRenderWindowMain())

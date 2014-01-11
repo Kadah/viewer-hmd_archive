@@ -4723,17 +4723,6 @@
       <key>Value</key>
       <real>1.0</real>
     </map>
-    <key>HMDUseMirroring</key>
-    <map>
-      <key>Comment</key>
-      <string>(Mac only) True = Render HMD mode to main window, FALSE = Render HMD to separate window</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <real>1</real>
-    </map>
     <key>HMDUseMotionPrediction</key>
     <map>
       <key>Comment</key>
