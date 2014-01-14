@@ -45,6 +45,9 @@ public:
 
     BOOL preInit();
     BOOL postDetectionInit();
+    void initHMDDevice(BOOL initSensor);
+    void initHMDSensor();
+    void initHMDLatencyTester();
     void handleMessages();
     bool isReady() { return mHMD && mSensorDevice && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected(); }
     void shutdown();
@@ -136,8 +139,6 @@ private:
     OVR::Util::LatencyTest mLatencyUtil;
     OVR::Ptr<OVR::LatencyTestDevice> mpLatencyTester;
     OVR::Util::Render::StereoEyeParams mCurrentEyeParams;
-    llutf16string mDisplayName;     // Identity of the Oculus on Windows
-    long mDisplayId;                // Identity of the Oculus on Mac
     F32 mEyePitch;
     F32 mEyeRoll;
     F32 mEyeYaw;

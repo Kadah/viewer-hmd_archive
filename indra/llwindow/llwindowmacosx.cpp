@@ -132,6 +132,8 @@ LLWindowMacOSX::LLWindowMacOSX(LLWindowCallbacks* callbacks,
 	mWindow[0] = mWindow[1] = NULL;
     mGLView[0] = mGLView[1] = NULL;
     mCurRCIdx = 0;
+    mHMDMode = FALSE;
+    mHMDWidth = mHMDHeight = 0;
 	mContext = NULL;
 	mPixelFormat = NULL;
 	mDisplay = CGMainDisplayID();
@@ -770,18 +772,33 @@ BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
 	float rect[4];
 	S32 err = -1;
 
-	if(mFullscreen)
+	if (mFullscreen)
 	{
-		size->mX = mFullscreenWidth;
-		size->mY = mFullscreenHeight;
-		err = noErr;
+        if (mHMDMode)
+        {
+            size->mX = llmin(mFullscreenWidth, mHMDWidth);
+            size->mY = llmin(mFullscreenHeight, mHMDHeight);
+        }
+        else
+        {
+            size->mX = mFullscreenWidth;
+            size->mY = mFullscreenHeight;
+        }
+        err = noErr;
 	}
 	else if (mWindow[mCurRCIdx])
 	{
 		getContentViewBounds(mWindow[mCurRCIdx], rect);
-
-		size->mX = rect[2];
-		size->mY = rect[3];
+        if (mHMDMode)
+        {
+            size->mX = llmin((S32)rect[2], mHMDWidth);
+            size->mY = llmin((S32)rect[3], mHMDHeight);
+        }
+        else
+        {
+            size->mX = rect[2];
+            size->mY = rect[3];
+        }
 	}
 	else
 	{
@@ -796,19 +813,34 @@ BOOL LLWindowMacOSX::getSize(LLCoordWindow *size)
 	float rect[4];
 	S32 err = -1;
 	
-	if(mFullscreen)
-	{
-		size->mX = mFullscreenWidth;
-		size->mY = mFullscreenHeight;
-		err = noErr;
-	}
-	else if (mWindow[mCurRCIdx])
-	{
-		getContentViewBounds(mWindow[mCurRCIdx], rect);
-		
-		size->mX = rect[2];
-		size->mY = rect[3];
-	}
+    if (mFullscreen)
+    {
+        if (mHMDMode)
+        {
+            size->mX = llmin(mFullscreenWidth, mHMDWidth);
+            size->mY = llmin(mFullscreenHeight, mHMDHeight);
+        }
+        else
+        {
+            size->mX = mFullscreenWidth;
+            size->mY = mFullscreenHeight;
+        }
+        err = noErr;
+    }
+    else if (mWindow[mCurRCIdx])
+    {
+        getContentViewBounds(mWindow[mCurRCIdx], rect);
+        if (mHMDMode)
+        {
+            size->mX = llmin((S32)rect[2], mHMDWidth);
+            size->mY = llmin((S32)rect[3], mHMDHeight);
+        }
+        else
+        {
+            size->mX = rect[2];
+            size->mY = rect[3];
+        }
+    }
 	else
 	{
 		llerrs << "LLWindowMacOSX::getPosition(): no window and not fullscreen!" << llendl;
@@ -1212,21 +1244,32 @@ LLWindow::LLWindowResolution* LLWindowMacOSX::getSupportedResolutions(S32 &num_r
 
 BOOL LLWindowMacOSX::convertCoords(LLCoordGL from, LLCoordWindow *to)
 {
-	to->mX = from.mX;
-	to->mY = from.mY;
-	return TRUE;
+    if (to)
+    {
+	    to->mX = from.mX;
+	    to->mY = from.mY;
+        if (mHMDMode && mCurRCIdx == 0)
+        {
+            to->mY = llmin(to->mY, mHMDHeight);
+	    return TRUE;
+    }
+    return FALSE;
 }
 
 BOOL LLWindowMacOSX::convertCoords(LLCoordWindow from, LLCoordGL* to)
 {
-	to->mX = from.mX;
-	to->mY = from.mY;
-	return TRUE;
+    if (to)
+    {
+	    to->mX = from.mX;
+        to->mY = from.mY;
+	    return TRUE;
+    }
+    return FALSE;
 }
 
 BOOL LLWindowMacOSX::convertCoords(LLCoordScreen from, LLCoordWindow* to)
 {
-	if (mWindow[mCurRCIdx])
+	if (mWindow[mCurRCIdx] && to)
 	{
 		float mouse_point[2];
 
@@ -1245,7 +1288,7 @@ BOOL LLWindowMacOSX::convertCoords(LLCoordScreen from, LLCoordWindow* to)
 
 BOOL LLWindowMacOSX::convertCoords(LLCoordWindow from, LLCoordScreen *to)
 {
-	if (mWindow[mCurRCIdx])
+	if (mWindow[mCurRCIdx] && to)
 	{
 		float mouse_point[2];
 
@@ -1538,7 +1581,10 @@ void LLWindowMacOSX::showCursor()
 		//		llinfos << "showCursor: showing" << llendl;
 		mCursorHidden = FALSE;
 		mHideCursorPermanent = FALSE;
-		showNSCursor();
+        if (!mHMDMode)
+        {
+		    showNSCursor();
+        }
 	}
 	else
 	{
@@ -1817,60 +1863,42 @@ MASK LLWindowMacOSX::modifiersToMask(S16 modifiers)
 	return mask;
 }
 
-// Experimental : dual screen rendering and Mac testing method
-/*virtual*/
-void LLWindowMacOSX::addExtraWindow(BOOL useMirroring)
-{
-    llinfos << "Merov : Hit the extra window init!" << llendl;
-    LLRect second_screen;
-    BOOL is_primary = FALSE;
-    llutf16string display_name = utf8str_to_utf16str("Test");
-    S32 screen_id = (getDisplayCount() == 1 ? getDisplayId(0) : getDisplayId(1));
-    getDisplayInfo(display_name, screen_id, second_screen, is_primary);
-    //getRenderWindow(mainFullScreen);
-    //gHMD.isMainFullScreen(mainFullScreen);
-    if (!initHMDWindow(0, 0, 1024, 1024))
-    {
-        llinfos << "Merov : Window creation failed!" << llendl;
-    }
-    else
-    {
-        llinfos << "Merov : Window creation successful!" << llendl;
-        setRenderWindow(1, TRUE);
-    }
-    return;
-}
-
 // HMD Support
 /*virtual*/
 BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
 {
     LL_INFOS("Window") << "initHMDWindow" << LL_ENDL;
+    destroyHMDWindow();
 
-    if (getDisplayCount() == 1)
+    S32 screen_count = getDisplayCount();
+    for (S32 screen_id = 0; screen_id < screen_count; screen_id++)
     {
-        mWindow[1] = mWindow[0];
-        mGLView[1] = mGLView[0];
-    }
-    else
-    {
-        if (mWindow[1] == NULL)
+        if (getDisplayId(screen_id) == (long)left)
         {
-            // The Oculus is assumed to be on screen 1 (non primary) in that case
-            LL_INFOS("Window") << "Creating the HMD window" << LL_ENDL;
-            mWindow[1] = createFullScreenWindow(1);
-        }
-        if ((mWindow[1] != NULL) && (mGLView[1] == NULL))
-        {
-            LL_INFOS("Window") << "Creating the HMD GL view" << LL_ENDL;
-            mGLView[1] = createFullScreenView(mWindow[1]);
-        }
-        if ((mWindow[1] == NULL) || (mGLView[1] == NULL))
-        {
-            LL_INFOS("Window") << "Error creating HMD window" << LL_ENDL;
-            return FALSE;
+            mHMDScreenId = screen_id;
+            break;
         }
     }
+    if (mHMDScreenId < 0)
+    {
+        // Not found -> exit with error
+        return FALSE;
+    }
+
+    LL_INFOS("Window") << "Creating the HMD window on screen " << mHMDScreenId << LL_ENDL;
+    mWindow[1] = createFullScreenWindow(mHMDScreenId);
+    if (mWindow[1] != NULL)
+    {
+        LL_INFOS("Window") << "Creating the HMD GL view" << LL_ENDL;
+        mGLView[1] = createFullScreenView(mWindow[1]);
+    }
+    if (mWindow[1] == NULL || mGLView[1] == NULL)
+    {
+        LL_INFOS("Window") << "Error creating HMD window" << LL_ENDL;
+        destroyHMDWindow();
+        return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -1878,30 +1906,31 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
 BOOL LLWindowMacOSX::destroyHMDWindow()
 {
     LL_INFOS("Window") << "destroyHMDWindow" << LL_ENDL;
-    if (getDisplayCount() != 1)
+
+    // Destroy the LLOpenGLView
+    if (mGLView[1] != NULL)
     {
-        // Destroy the LLOpenGLView
-        if (mGLView[1] != NULL)
-        {
-            removeGLView(mGLView[1]);
-            mGLView[1] = NULL;
-        }
+        removeGLView(mGLView[1]);
+        mGLView[1] = NULL;
+    }
 	
-        // Close the window
-        if(mWindow[1] != NULL)
-        {
-            NSWindowRef dead_window = mWindow[1];
-            mWindow[1] = NULL;
-            closeWindow(dead_window);
-        }
-	}
+    // Close the window
+    if(mWindow[1] != NULL)
+    {
+        NSWindowRef dead_window = mWindow[1];
+        mWindow[1] = NULL;
+        closeWindow(dead_window);
+    }
+
+    mHMDScreenId = -1;
+
     return TRUE;
 }
 
 /*virtual*/
 BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
 {
-    if ((idx < 0) || (idx > 1) || !mGLView[idx])
+    if (idx < 0 || idx > 1 || !mGLView[idx])
     {
         // Incorrect parameter or no view -> error
         return FALSE;
@@ -1911,18 +1940,14 @@ BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
         // Already set to the correct window, nothing to do
         return TRUE;
     }
-    LL_DEBUGS("Window") << "setRenderWindow : start" << LL_ENDL;
+    //LL_DEBUGS("Window") << "setRenderWindow : start" << LL_ENDL;
 
-    if (getDisplayCount() != 1)
-    {
-        // Set the view on the current context
-        setCGLCurrentContext(mGLView[idx]);
-    }
+    mFullscreen = fullScreen;
+
+    // Set the view on the current context
+    setCGLCurrentContext(mGLView[idx]);
     
-	makeFirstResponder(mWindow[idx], mGLView[idx]);
-    makeWindowOrderFront(mWindow[idx]);
-    
-    LL_DEBUGS("Window") << "setRenderWindow : successful" << LL_ENDL;
+    //LL_DEBUGS("Window") << "setRenderWindow : successful" << LL_ENDL;
     mCurRCIdx = idx;
     return TRUE;
 }
@@ -1930,7 +1955,25 @@ BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
 /*virtual*/
 BOOL LLWindowMacOSX::setFocusWindow(S32 idx, BOOL clipping, S32 w, S32 h)
 {
-    // *TODO : Implement the focus grabbing if the context setting is not enough
+    if (idx < 0 || idx > 1 || !mWindow[idx] || !mGLView[idx])
+    {
+        // Incorrect parameter or no view -> error
+        return FALSE;
+    }
+    mHMDMode = clipping;
+    mHMDWidth = mHMDMode ? w : 0;
+    mHMDHeight = mHMDMode ? h : 0;
+    makeFirstResponder(mWindow[idx], mGLView[idx]);
+    makeWindowOrderFront(mWindow[idx]);
+    if (mHMDMode)
+    {
+        hideNSCursor();
+    }
+    else if (!isCursorHidden())
+    {
+        showCursor();
+    }
+
     return TRUE;
 }
 
@@ -1938,33 +1981,6 @@ BOOL LLWindowMacOSX::setFocusWindow(S32 idx, BOOL clipping, S32 w, S32 h)
 S32 LLWindowMacOSX::getDisplayCount()
 {
     return getDisplayCountObjC();
-}
-
-/*virtual*/
-// Note: displayName is used on the Windows side of the universe...
-BOOL LLWindowMacOSX::getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary)
-{
-    // Find the screen the Oculus displayId corresponds to
-    S32 screen_count = getDisplayCount();
-    S32 screen_id = 0;
-    for (; screen_id < screen_count; screen_id++)
-    {
-        if (getDisplayId(screen_id) == displayId)
-            break;
-    }
-    // Not found -> exit with error
-    if (screen_id == screen_count)
-        return FALSE;
-    // Screen size given the NS way in a 4 floats array: x0, y0, width, height
-    float screen_size[4];
-    getScreenSize(screen_id, screen_size);
-    rcWork.set((S32)(screen_size[0]),
-                (S32)(screen_size[1]+screen_size[3]),
-                (S32)(screen_size[0]+screen_size[2]),
-                (S32)(screen_size[1]));
-    // On Mac, the primary screen is the one with index 0
-    isPrimary = (screen_id == 0);
-   return TRUE;
 }
 
 /*virtual*/

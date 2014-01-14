@@ -1073,7 +1073,10 @@ void LLManipTranslate::render()
 	}
 	{
 		renderTranslationHandles();
-		renderSnapGuides();
+        if (!gHMD.isHMDMode())
+        {
+		    renderSnapGuides();
+        }
 	}
 	gGL.popMatrix();
 

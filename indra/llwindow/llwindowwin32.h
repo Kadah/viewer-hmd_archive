@@ -119,7 +119,6 @@ public:
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
     /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping, S32 w = 0, S32 h = 0);
     /*virtual*/ S32 getDisplayCount();
-    /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary);
     /*virtual*/ void enableVSync(BOOL b);
 
 	static std::vector<std::string> getDynamicFallbackFontList();

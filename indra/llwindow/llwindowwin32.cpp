@@ -4096,49 +4096,6 @@ S32 LLWindowWin32::getDisplayCount()
     }
 }
 
-// Note: displayId is used on the Mac side of the universe...
-BOOL LLWindowWin32::getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary)
-{
-    MonitorSet monitors;
-    monitors.MonitorCount = 0;
-    ::EnumDisplayMonitors(NULL, NULL, monitor_enum_proc, (LPARAM)&monitors);
-    MONITORINFOEX info;
-    S32 foundMonitorNum = -1;
-    LL_INFOS("HMD") << "HMD getDisplayInfo('" << utf16str_to_utf8str(displayName) << "', " << displayId << ") found " << monitors.MonitorCount << " monitors" << LL_ENDL;
-    for (S32 i = 0; i < monitors.MonitorCount; i++)
-    {
-        info.cbSize = sizeof(MONITORINFOEX);
-        if (::GetMonitorInfo(monitors.Monitors[i], &info) && info.szDevice[0])
-        {
-            llutf16string displayNameTest1(info.szDevice);
-            llutf16string displayNameTest2(info.szDevice);
-            // for some reason, the library return seems to sometimes add "\\Monitor0" to the display name it gives.
-            // however, the display names returned by GetMonitorInfo do not have that.  So we check for both
-            // forms.
-            displayNameTest2.append(L"\\Monitor0");
-
-            LL_INFOS("HMD") << "HMD Monitor " << i << ": '" << utf16str_to_utf8str(displayNameTest1) << "'" << LL_ENDL;
-            if (foundMonitorNum < 0 && (!displayName.compare(displayNameTest1) || !displayName.compare(displayNameTest2)))
-            {
-                foundMonitorNum = i;
-                isPrimary = (info.dwFlags & MONITORINFOF_PRIMARY) ? TRUE : FALSE;
-                rcWork.set(info.rcWork.left, info.rcWork.top, info.rcWork.right, info.rcWork.bottom);
-                LL_INFOS("HMD") << "Found matching HMD display " << i << ": '" << utf16str_to_utf8str(displayNameTest1) << "' with rect " << rcWork << LL_ENDL;
-            }
-        }
-    }
-
-    if (foundMonitorNum < 0)
-    {
-        LL_INFOS("HMD") << "No acceptable HMD display found that matches desired display name or ID" << LL_ENDL;
-        return FALSE;
-    }
-    else
-    {
-        return TRUE;
-    }
-}
-
 void LLWindowWin32::enableVSync(BOOL b)
 {
 	if (wglSwapIntervalEXT)

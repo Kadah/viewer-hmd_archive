@@ -4195,15 +4195,6 @@ class LLViewCheckHMDMode : public view_listener_t
 	}
 };
 
-class LLAddExtraMonitor : public view_listener_t
-{
-    bool handleEvent(const LLSD& userdata)
-    {
-        gViewerWindow->addExtraWindow();
-        return true;
-    }
-};
-
 class LLEditDuplicate : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
@@ -8616,8 +8607,6 @@ void initialize_menus()
     view_listener_t::addMenu(new LLViewCycleDisplay(), "View.CycleDisplay");
 	view_listener_t::addMenu(new LLViewCheckHMDMode(), "View.CheckHMDMode");
     enable.add("HMD.IsHMDMode", boost::bind(&hmd_mode_running));
-
-    view_listener_t::addMenu(new LLAddExtraMonitor(), "View.AddExtraMonitor");
 
 	view_listener_t::addMenu(new LLViewEnableMouselook(), "View.EnableMouselook");
 	view_listener_t::addMenu(new LLViewEnableJoystickFlycam(), "View.EnableJoystickFlycam");

@@ -100,7 +100,6 @@ public:
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen) { return FALSE; };
     /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping, S32 w = 0, S32 h = 0) { return FALSE; };
     /*virtual*/ S32 getDisplayCount() { return 1; };
-    /*virtual*/ BOOL getDisplayInfo(const llutf16string& displayName, long displayId, LLRect& rcWork, BOOL& isPrimary) { return FALSE; };
 	
 	LLWindowMesaHeadless(LLWindowCallbacks* callbacks,
                          const std::string& title, const std::string& name, S32 x, S32 y, S32 width, S32 height,

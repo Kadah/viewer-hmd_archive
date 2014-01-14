@@ -257,7 +257,6 @@ public:
 	void*			getPlatformWindow() const;
 	void*			getMediaWindow() 	const;
 	void			focusClient()		const;
-    void            addExtraWindow();
 
 	LLCoordGL		getLastMouse()		const	{ return mLastMousePoint; }
 	S32				getLastMouseX()		const	{ return mLastMousePoint.mX; }

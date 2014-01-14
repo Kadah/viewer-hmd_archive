@@ -2081,15 +2081,6 @@ void LLViewerWindow::initWorldUI()
 	}
 }
 
-// Experimental
-void LLViewerWindow::addExtraWindow()
-{
-    if (mWindow)
-    {
-        mWindow->addExtraWindow();
-    }
-}
-
 // Destroy the UI
 void LLViewerWindow::shutdownViews()
 {

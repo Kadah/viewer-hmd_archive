@@ -53,7 +53,6 @@ LLHMDImplOculus::LLHMDImplOculus()
     , mHeadRotationCorrection(LLQuaternion::DEFAULT)
     , mpDeviceStatusNotificationsQueue(NULL)
     , mpLatencyTester(NULL)
-    , mDisplayId(-1)
     , mEyePitch(0.0f)
     , mEyeRoll(0.0f)
     , mEyeYaw(0.0f)
@@ -92,10 +91,25 @@ BOOL LLHMDImplOculus::preInit()
     mDeviceManager->SetMessageHandler(this);
 
     mHMD = *mDeviceManager->EnumerateDevices<OVR::HMDDevice>().CreateDevice();
+    initHMDDevice(TRUE);
+    mpLatencyTester = *(mDeviceManager->EnumerateDevices<OVR::LatencyTestDevice>().CreateDevice());
+    initHMDLatencyTester();
+
+    // consider ourselves pre-initialized if we get here
+    LL_INFOS("HMD") << "HMD Preinit successful" << LL_ENDL;
+
+    gHMD.isPreDetectionInitialized(TRUE);
+    return TRUE;
+}
+
+
+void LLHMDImplOculus::initHMDDevice(BOOL initSensor)
+{
+    gHMD.isHMDConnected(FALSE);
     if (mHMD)
     {
         OVR::HMDInfo info;
-        bool validInfo = mHMD->GetDeviceInfo(&info) && info.HResolution > 0;
+        bool validInfo = !mHMD->IsDisconnected() && mHMD->GetDeviceInfo(&info) && info.HResolution > 0;
         if (validInfo)
         {
             // Retrieve relevant profile settings if available, otherwise use saved settings
@@ -108,32 +122,75 @@ BOOL LLHMDImplOculus::preInit()
             {
                 info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
             }
-            mDisplayName = utf8str_to_utf16str(info.DisplayDeviceName);
-            mDisplayId = info.DisplayId;
             info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
             mStereoConfig.SetHMDInfo(info);
             gHMD.isHMDConnected(TRUE);
+
+            // *** Configure Stereo settings.
+            mStereoConfig.SetFullViewport(OVR::Util::Render::Viewport(0,0, info.HResolution, info.VResolution));
+            mStereoConfig.SetStereoMode(OVR::Util::Render::Stereo_LeftRight_Multipass);
+
+            // Configure proper Distortion Fit.
+            // For 7" screen, fit to touch left side of the view, leaving a bit of invisible
+            // screen on the top (saves on rendering cost).
+            // For smaller screens (5.5"), fit to the top.
+            if (info.HScreenSize > 0.0f)
+            {
+                if (info.HScreenSize > 0.140f) // 7"
+                {
+                    mStereoConfig.SetDistortionFitPointVP(-1.0f, 0.0f);
+                }
+                else
+                {
+                    mStereoConfig.SetDistortionFitPointVP(0.0f, 1.0f);
+                }
+            }
+
             if (info.DisplayDeviceName[0])
             {
-                LL_INFOS("HMD") << "HMD Preinit: Found connected HMD device " << info.DisplayDeviceName << "[" << info.DisplayId << "]" << LL_ENDL;
+                LL_INFOS("HMD") << "HMD initHMDDevice: Found connected HMD device " << info.DisplayDeviceName << "[" << info.DisplayId << "]" << LL_ENDL;
             }
             else
             {
-                LL_INFOS("HMD") << "HMD Preinit: Found connected HMD device with ID [" << info.DisplayId << "]" << LL_ENDL;
+                LL_INFOS("HMD") << "HMD initHMDDevice: Found connected HMD device with ID [" << info.DisplayId << "]" << LL_ENDL;
             }
         }
         else
         {
-            LL_INFOS("HMD") << "HMD Preinit: Could not find connected HMD device" << LL_ENDL;
+            LL_INFOS("HMD") << "HMD initHMDDevice: Could not find connected HMD device" << LL_ENDL;
         }
-        mSensorDevice = *(mHMD->GetSensor());
     }
     else
     {
-        LL_INFOS("HMD") << "HMD Preinit: could not create Oculus Rift HMD device" << LL_ENDL;
-        mSensorDevice = *mDeviceManager->EnumerateDevices<OVR::SensorDevice>().CreateDevice();
+        // check for HMD window and destroy if it exists
+        if (gHMD.isPostDetectionInitialized())
+        {
+            LLWindow* pWin = gViewerWindow ? gViewerWindow->getWindow() : NULL;
+            if (pWin)
+            {
+                pWin->destroyHMDWindow();
+            }
+            gHMD.isPostDetectionInitialized(FALSE);
+        }
     }
+    if (initSensor)
+    {
+        if (mHMD)
+        {
+            mSensorDevice = *(mHMD->GetSensor());
+        }
+        else
+        {
+            LL_INFOS("HMD") << "HMD initHMDDevice: could not create Oculus Rift HMD device" << LL_ENDL;
+            mSensorDevice = *mDeviceManager->EnumerateDevices<OVR::SensorDevice>().CreateDevice();
+        }
+        initHMDSensor();
+    }
+}
 
+
+void LLHMDImplOculus::initHMDSensor()
+{
     if (mSensorDevice)
     {
         gHMD.isHMDSensorConnected(TRUE);
@@ -148,12 +205,26 @@ BOOL LLHMDImplOculus::preInit()
         mSensorFusion->SetDelegateMessageHandler(this);
         mSensorFusion->SetPredictionEnabled(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
     }
+    else
+    {
+        gHMD.isHMDSensorConnected(FALSE);
+        mSensorFusion->AttachToSensor(NULL);
+    }
+}
 
-    // consider ourselves pre-initialized if we get here
-    LL_INFOS("HMD") << "HMD Preinit successful" << LL_ENDL;
 
-    gHMD.isPreDetectionInitialized(TRUE);
-    return TRUE;
+void LLHMDImplOculus::initHMDLatencyTester()
+{
+    if (mpLatencyTester)
+    {
+        mLatencyUtil.SetDevice(mpLatencyTester);
+        gHMD.isLatencyTesterConnected(TRUE);
+    }
+    else
+    {
+        mLatencyUtil.SetDevice(NULL);
+        gHMD.isLatencyTesterConnected(FALSE);
+    }
 }
 
 
@@ -176,41 +247,24 @@ void LLHMDImplOculus::handleMessages()
             queue_is_empty = (mpDeviceStatusNotificationsQueue->GetSize() == 0);
         }
         
-        bool was_already_created = desc.Handle.IsCreated();
-        
         if (desc.Action == OVR::Message_DeviceAdded)
         {
             switch(desc.Handle.GetType())
             {
             case OVR::Device_Sensor:
-                if (desc.Handle.IsAvailable() && !desc.Handle.IsCreated())
+                if (desc.Handle.IsAvailable() && !desc.Handle.IsCreated() && !mSensorDevice)
                 {
-                    if (!mSensorDevice)
-                    {
-                        mSensorDevice = *desc.Handle.CreateDeviceTyped<OVR::SensorDevice>();
-                        mSensorFusion->AttachToSensor(mSensorDevice);
-                        mSensorFusion->SetDelegateMessageHandler(this);
-                        mSensorFusion->SetPredictionEnabled(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
-                        gHMD.isHMDSensorConnected(TRUE);
-                        LL_INFOS("HMD") << "HMD Sensor Device Added" << LL_ENDL;
-                    }
-                    else
-                    if (!was_already_created )
-                    {
-                        // A new sensor has been detected, but it is not currently used.
-                    }
+                    mSensorDevice = *desc.Handle.CreateDeviceTyped<OVR::SensorDevice>();
+                    initHMDSensor();
+                    LL_INFOS("HMD") << "HMD Sensor Device Added" << LL_ENDL;
                 }
                 break;
             case OVR::Device_LatencyTester:
-                if (desc.Handle.IsAvailable() && !desc.Handle.IsCreated())
+                if (desc.Handle.IsAvailable() && !desc.Handle.IsCreated() && !mpLatencyTester)
                 {
-                    if (!mpLatencyTester)
-                    {
-                        mpLatencyTester = *desc.Handle.CreateDeviceTyped<OVR::LatencyTestDevice>();
-                        mLatencyUtil.SetDevice(mpLatencyTester);
-                        gHMD.isLatencyTesterConnected(TRUE);
-                        LL_INFOS("HMD") << "HMD Latency Tester Device Added" << LL_ENDL;
-                    }
+                    mpLatencyTester = *desc.Handle.CreateDeviceTyped<OVR::LatencyTestDevice>();
+                    initHMDLatencyTester();
+                    LL_INFOS("HMD") << "HMD Latency Tester Device Added" << LL_ENDL;
                 }
                 break;
             case OVR::Device_HMD:
@@ -218,31 +272,14 @@ void LLHMDImplOculus::handleMessages()
                     OVR::HMDInfo info;
                     bool validInfo = desc.Handle.GetDeviceInfo(&info) && info.HResolution > 0;
                     if (validInfo &&
-                        info.DisplayDeviceName[0] &&
                         (!mHMD || !info.IsSameDisplay(mStereoConfig.GetHMDInfo())))
                     {
                         if (!mHMD || !desc.Handle.IsDevice(mHMD))
                         {
                             mHMD = *desc.Handle.CreateDeviceTyped<OVR::HMDDevice>();
                         }
-                        if (mHMD)
-                        {
-                            OVR::Profile* pUserProfile = mHMD->GetProfile();
-                            if (pUserProfile)
-                            {
-                                info.InterpupillaryDistance = pUserProfile->GetIPD();
-                            }
-                            else
-                            {
-                                info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
-                            }
-                            info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
-                            mDisplayName = utf8str_to_utf16str(info.DisplayDeviceName);
-                            mDisplayId = info.DisplayId;
-                            mStereoConfig.SetHMDInfo(info);
-                            gHMD.isHMDConnected(TRUE);
-                            LL_INFOS("HMD") << "HMD Device " << utf16str_to_utf8str(mDisplayName) << ", ID [" << mDisplayId << "] Added" << LL_ENDL;
-                        }
+                        initHMDDevice(FALSE);
+                        LL_INFOS("HMD") << "HMD Device Added" << LL_ENDL;
                     }
                 }
                 break;
@@ -250,53 +287,37 @@ void LLHMDImplOculus::handleMessages()
                 break;
             }
         }
-        else 
-        if (desc.Action == OVR::Message_DeviceRemoved)
+        else if (desc.Action == OVR::Message_DeviceRemoved)
         {
             if (desc.Handle.IsDevice(mSensorDevice))
             {
-                mSensorFusion->AttachToSensor(NULL);
+                if (gHMD.isHMDMode())
+                {
+                    gHMD.setRenderMode(LLHMD::RenderMode_None);
+                }
                 mSensorDevice.Clear();
-                gHMD.isHMDSensorConnected(FALSE);
+                initHMDSensor();
                 LL_INFOS("HMD") << "HMD Sensor Device Removed" << LL_ENDL;
             }
             else if (desc.Handle.IsDevice(mpLatencyTester))
             {
-                mLatencyUtil.SetDevice(NULL);
                 mpLatencyTester.Clear();
-                gHMD.isLatencyTesterConnected(FALSE);
+                initHMDLatencyTester();
                 LL_INFOS("HMD") << "HMD Latency Tester Device Removed" << LL_ENDL;
             }
             else if (desc.Handle.IsDevice(mHMD))
             {
-                gHMD.isHMDConnected(FALSE);
+                if (gHMD.isHMDMode())
+                {
+                    gHMD.setRenderMode(LLHMD::RenderMode_None);
+                }
                 if (mHMD && !mHMD->IsDisconnected())
                 {
                     mHMD = mHMD->Disconnect(mSensorDevice);
-                    OVR::HMDInfo info;
-                    if (mHMD && mHMD->GetDeviceInfo(&info) && info.HResolution > 0)
-                    {
-                        OVR::Profile* pUserProfile = mHMD->GetProfile();
-                        if (pUserProfile)
-                        {
-                            info.InterpupillaryDistance = pUserProfile->GetIPD();
-                        }
-                        else
-                        {
-                            info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
-                        }
-                        info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
-                        mDisplayName = utf8str_to_utf16str(info.DisplayDeviceName);
-                        mDisplayId = info.DisplayId;
-                        mStereoConfig.SetHMDInfo(info);
-                        LL_INFOS("HMD") << "HMD Device " << utf16str_to_utf8str(mDisplayName) << ", ID [" << mDisplayId << "] Removed" << LL_ENDL;
-                    }
+                    LL_INFOS("HMD") << "HMD Device Removed" << LL_ENDL;
                 }
+                gHMD.isHMDConnected(FALSE);
             }
-        }
-        else
-        {
-            // unknown action - TODO: what do we do here if anything?
         }
     }
 }
@@ -319,49 +340,24 @@ void LLHMDImplOculus::OnMessage(const OVR::Message& msg)
 
 BOOL LLHMDImplOculus::postDetectionInit()
 {
-    mpLatencyTester = *(mDeviceManager->EnumerateDevices<OVR::LatencyTestDevice>().CreateDevice());
-    if (mpLatencyTester)
-    {
-        mLatencyUtil.SetDevice(mpLatencyTester);
-        gHMD.isLatencyTesterConnected(TRUE);
-    }
-
-    // get device's "monitor" info
-    BOOL dummy;
-    BOOL mainFullScreen = FALSE;
-    LLRect r;
     LLWindow* pWin = gViewerWindow->getWindow();
-    pWin->getDisplayInfo(mDisplayName, mDisplayId, r, dummy);
+    BOOL mainFullScreen = FALSE;
     S32 rcIdx = pWin->getRenderWindow(mainFullScreen);
     if (rcIdx == 0)
     {
         gHMD.isMainFullScreen(mainFullScreen);
     }
-    LL_INFOS("HMD") << "Got HMD Display Info: " << utf16str_to_utf8str(mDisplayName) << " [" << rcIdx << "], rect=" << r << " is " << (mainFullScreen ? " " : "NOT") << " fullscreen" << LL_ENDL;
-    if (!pWin->initHMDWindow(r.mLeft, r.mTop, r.mRight - r.mLeft, r.mBottom - r.mTop))
+    const OVR::HMDInfo& info = mStereoConfig.GetHMDInfo();
+#if LL_WINDOWS
+    if (!pWin->initHMDWindow(info.DesktopX, info.DesktopY, info.HResolution, info.VResolution))
+#elif LL_DARWIN
+    if (!pWin->initHMDWindow(info.DisplayId, 0, info.HResolution, info.VResolution))
+#else
+    if (FALSE)
+#endif
     {
-        LL_INFOS("HMD") << "HMD Window init with rect " << r << " Failed!" << LL_ENDL;
+        LL_INFOS("HMD") << "HMD Window init failed!" << LL_ENDL;
         return FALSE;
-    }
-
-    // *** Configure Stereo settings.
-    mStereoConfig.SetFullViewport(OVR::Util::Render::Viewport(0,0, mStereoConfig.GetHMDInfo().HResolution, mStereoConfig.GetHMDInfo().VResolution));
-    mStereoConfig.SetStereoMode(OVR::Util::Render::Stereo_LeftRight_Multipass);
-
-    // Configure proper Distortion Fit.
-    // For 7" screen, fit to touch left side of the view, leaving a bit of invisible
-    // screen on the top (saves on rendering cost).
-    // For smaller screens (5.5"), fit to the top.
-    if (mStereoConfig.GetHMDInfo().HScreenSize > 0.0f)
-    {
-        if (mStereoConfig.GetHMDInfo().HScreenSize > 0.140f) // 7"
-        {
-            mStereoConfig.SetDistortionFitPointVP(-1.0f, 0.0f);
-        }
-        else
-        {
-            mStereoConfig.SetDistortionFitPointVP(0.0f, 1.0f);
-        }
     }
 
     gHMD.isPostDetectionInitialized(TRUE);
