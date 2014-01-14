@@ -1251,6 +1251,7 @@ BOOL LLWindowMacOSX::convertCoords(LLCoordGL from, LLCoordWindow *to)
         if (mHMDMode && mCurRCIdx == 0)
         {
             to->mY = llmin(to->mY, mHMDHeight);
+        }
 	    return TRUE;
     }
     return FALSE;
@@ -1942,7 +1943,7 @@ BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
     }
     //LL_DEBUGS("Window") << "setRenderWindow : start" << LL_ENDL;
 
-    mFullscreen = fullScreen;
+    mFullscreen = fullscreen;
 
     // Set the view on the current context
     setCGLCurrentContext(mGLView[idx]);
