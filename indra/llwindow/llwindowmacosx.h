@@ -173,7 +173,10 @@ protected:
 	void setupFailure(const std::string& text, const std::string& caption, U32 type);
 	void adjustCursorDecouple(bool warpingMouse = false);
 	static MASK modifiersToMask(S16 modifiers);
-	
+
+    void calculateHMDClientHeightDiff();
+    void calculateHMDClientHeightDiff(S32 actualClientHeight);
+
 #if LL_OS_DRAGDROP_ENABLED
 	
 	//static OSErr dragTrackingHandler(DragTrackingMessage message, WindowRef theWindow, void * handlerRefCon, DragRef theDrag);
@@ -211,12 +214,12 @@ protected:
 	BOOL		mMinimized;
 	U32			mFSAASamples;
 	BOOL		mForceRebuild;
+    S32	        mDragOverrideCursor;
     BOOL        mHMDMode;
     S32         mHMDWidth;
     S32         mHMDHeight;
     S32         mHMDScreenId;
-	
-	S32	mDragOverrideCursor;
+	S32         mHMDClientHeightDiff;
 
 	// Input method management through Text Service Manager.
 	BOOL		mLanguageTextInputAllowed;
