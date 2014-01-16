@@ -643,10 +643,14 @@ void LLHMD::setFocusWindowMain()
                 // this is handled by the appfocuslost message in windows, but since that doesn't get called on Mac, we have to
                 // handle the critical parts here instead.
                 gViewerWindow->showCursor();
-                gViewerWindow->getWindow()->setMouseClipping(FALSE);
             }
         }
 #endif // LL_DARWIN
+        // in the case of switching from debug HMD mode to normal mode, no appfocus message is sent since 
+        // we're already focused on the main window, so we have to manually disable mouse clipping.  In the case
+        // where we are switching from HMD to normal mode, then this is just a redundant call, but doesn't hurt
+        // anything.
+        gViewerWindow->getWindow()->setMouseClipping(FALSE);
     }
     if (!res)
     {
@@ -659,6 +663,10 @@ void LLHMD::setFocusWindowMain()
 void LLHMD::setFocusWindowHMD()
 {
 #if LL_HMD_SUPPORTED
+    if (!gViewerWindow->isMouseInWindow())
+    {
+        gViewerWindow->moveCursorToCenter();
+    }
     isChangingRenderContext(TRUE);
     if (!gViewerWindow->getWindow()->setFocusWindow(1, TRUE, getHMDWidth(), getHMDHeight()))
     {
@@ -688,6 +696,10 @@ void LLHMD::onAppFocusGained()
         {
             gViewerWindow->getWindow()->setMouseClipping(TRUE);
         }
+        else
+        {
+            gViewerWindow->getWindow()->setMouseClipping(FALSE);
+        }
         isChangingRenderContext(FALSE);
     }
     else
@@ -701,6 +713,10 @@ void LLHMD::onAppFocusGained()
         else if (mRenderMode == (U32)RenderMode_ScreenStereo)
         {
             gViewerWindow->getWindow()->setMouseClipping(TRUE);
+        }
+        else
+        {
+            gViewerWindow->getWindow()->setMouseClipping(FALSE);
         }
     }
 #endif // LL_HMD_SUPPORTED

@@ -299,6 +299,7 @@ public:
 	void			hideCursor();
 	BOOL            getCursorHidden() { return mCursorHidden; }
 	void			moveCursorToCenter();								// move to center of window
+    BOOL            isMouseInWindow() const { return mMouseInWindow; }
 													
 	void			setShowProgress(const BOOL show);
 	BOOL			getShowProgress() const;
