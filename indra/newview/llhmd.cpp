@@ -679,6 +679,9 @@ void LLHMD::setFocusWindowHMD()
 void LLHMD::onAppFocusGained()
 {
 #if LL_HMD_SUPPORTED
+    BOOL fs = FALSE;
+    S32 winIdx = gViewerWindow->getWindow()->getRenderWindow(fs);
+    LL_INFOS("HMD") << "HMD onAppFocusGained: changingContext = " << isChangingRenderContext() << ", HMDMode = " << isHMDMode() << ", Window = " << winIdx << ", fs = " << fs << LL_ENDL;
     if (isChangingRenderContext())
     {
         if (isHMDMode())
@@ -707,6 +710,9 @@ void LLHMD::onAppFocusGained()
 void LLHMD::onAppFocusLost()
 {
 #if LL_HMD_SUPPORTED
+    BOOL fs = FALSE;
+    S32 winIdx = gViewerWindow->getWindow()->getRenderWindow(fs);
+    LL_INFOS("HMD") << "HMD onAppFocusGained: changingContext = " << isChangingRenderContext() << ", HMDMode = " << isHMDMode() << ", Window = " << winIdx << ", fs = " << fs << LL_ENDL;
     if (!isChangingRenderContext() && mRenderMode == (U32)RenderMode_HMD)
     {
         // Make sure we change the render window to main so that we avoid BSOD in the graphics drivers when

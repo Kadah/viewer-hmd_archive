@@ -80,7 +80,7 @@ NSWindowRef createNSWindow(int x, int y, int width, int height, int screen_index
 #include <OpenGL/OpenGL.h>
 GLViewRef createOpenGLView(NSWindowRef window, unsigned int samples, bool vsync);
 GLViewRef createOpenGLViewTest(NSWindowRef window, int width, int height);
-NSWindowRef createFullScreenWindow(int screen_index, bool deferCreation, bool hideOnDeactivate);
+NSWindowRef createFullScreenWindow(int screen_index, bool hideOnDeactivate);
 GLViewRef createFullScreenView(NSWindowRef window);
 void glSwapBuffers(void* context);
 CGLContextObj getCGLContextObj(GLViewRef view);

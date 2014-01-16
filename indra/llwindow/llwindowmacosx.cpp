@@ -1053,13 +1053,13 @@ BOOL LLWindowMacOSX::getCursorPosition(LLCoordWindow *position)
 	float cursor_point[2];
 	LLCoordScreen screen_pos;
 
-	if (mWindow[mCurRCIdx] == NULL)
+	if (mWindow[0] == NULL)
     {
 		return FALSE;
     }
 	
-	getCursorPos(mWindow[mCurRCIdx], cursor_point);
-
+	getCursorPos(mWindow[0], cursor_point);
+    
 	if(mCursorDecoupled)
 	{
 		//		CGMouseDelta x, y;
@@ -1075,6 +1075,33 @@ BOOL LLWindowMacOSX::getCursorPosition(LLCoordWindow *position)
 		cursor_point[1] += mCursorLastEventDeltaY;
 	}
 
+    if (mHMDMode)
+    {
+        float cx = cursor_point[0];
+        float cy = cursor_point[1];
+
+        
+        
+        cursor_point[0] = llmax(0.0f, llmin((float)mHMDWidth, cursor_point[0]));
+        cursor_point[1] = llmax(0.0f, llmin((float)mHMDHeight, cursor_point[1]));
+        
+        if (cx < 0.0f || cx > (float)mHMDWidth || cy < 0.0f || cy > (float)mHMDHeight)
+        {
+            LLCoordWindow wp;
+            wp.mX = (S32)cursor_point[0];
+            wp.mY = (S32)cursor_point[1];
+            float mouse_point[2];
+            mouse_point[0] = cursor_point[0];
+            mouse_point[1] = cursor_point[1];
+            convertWindowToScreen(mWindow[0], mouse_point);
+            CGPoint newPosition;
+            newPosition.x = mouse_point[0];
+            newPosition.y = mouse_point[1];
+            CGSetLocalEventsSuppressionInterval(0.0);
+            CGWarpMouseCursorPosition(newPosition);
+        }
+    }
+    
 	position->mX = cursor_point[0];
 	position->mY = cursor_point[1];
 
@@ -1083,7 +1110,7 @@ BOOL LLWindowMacOSX::getCursorPosition(LLCoordWindow *position)
 
 void LLWindowMacOSX::adjustCursorDecouple(bool warpingMouse)
 {
-	if(mIsMouseClipping && mCursorHidden)
+	if(mIsMouseClipping && (mCursorHidden | mHMDMode))
 	{
 		if(warpingMouse)
 		{
@@ -1100,7 +1127,7 @@ void LLWindowMacOSX::adjustCursorDecouple(bool warpingMouse)
 	else
 	{
 		// The cursor should not be decoupled.  Make sure it isn't.
-		if(mCursorDecoupled)
+		if(mCursorDecoupled && !mHMDMode)
 		{
 			//			llinfos << "adjustCursorDecouple: recoupling cursor" << llendl;
 			CGAssociateMouseAndMouseCursorPosition(true);
@@ -1295,6 +1322,7 @@ BOOL LLWindowMacOSX::convertCoords(LLCoordWindow from, LLCoordScreen *to)
 
 		mouse_point[0] = from.mX;
 		mouse_point[1] = from.mY;
+
 		convertWindowToScreen(mWindow[mCurRCIdx], mouse_point);
 
 		to->mX = mouse_point[0];
@@ -1494,6 +1522,10 @@ void LLWindowMacOSX::updateCursor()
 	if(result != noErr)
 	{
 		setArrowCursor();
+		if(mCursorHidden || mHMDMode)
+		{
+			hideNSCursor();
+		}
 	}
 
 	mCurrentCursor = mNextCursor;
@@ -1501,7 +1533,14 @@ void LLWindowMacOSX::updateCursor()
 
 ECursorType LLWindowMacOSX::getCursor() const
 {
-	return mCurrentCursor;
+    if (mDragOverrideCursor >= 0)
+    {
+        return (ECursorType)mDragOverrideCursor;
+    }
+    else
+    {
+	    return mCurrentCursor;
+    }
 }
 
 void LLWindowMacOSX::initCursors()
@@ -1889,7 +1928,7 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
     }
 
     LL_INFOS("Window") << "Creating the HMD window on screen " << mHMDScreenId << LL_ENDL;
-    mWindow[1] = createFullScreenWindow(mHMDScreenId, FALSE, FALSE);
+    mWindow[1] = createFullScreenWindow(mHMDScreenId, FALSE);
     if (mWindow[1] != NULL)
     {
         LL_INFOS("Window") << "Creating the HMD GL view" << LL_ENDL;
@@ -1969,7 +2008,6 @@ BOOL LLWindowMacOSX::setFocusWindow(S32 idx, BOOL clipping, S32 w, S32 h)
     mHMDMode = clipping;
     mHMDWidth = mHMDMode ? w : 0;
     mHMDHeight = mHMDMode ? h : 0;
-    calculateHMDClientHeightDiff();
     if (mHMDMode && !oldHMDMode && !mCursorHidden)
     {
         hideNSCursor();
@@ -1981,35 +2019,6 @@ BOOL LLWindowMacOSX::setFocusWindow(S32 idx, BOOL clipping, S32 w, S32 h)
 
     return TRUE;
 }
-
-
-void LLWindowMacOSX::calculateHMDClientHeightDiff()
-{
-    mHMDClientHeightDiff = 0;
-    if (mHMDMode && mCurRCIdx == 0 && mWindow[mCurRCIdx])
-    {
-        S32 h = 0;
-        if (mFullscreen)
-        {
-            h = mFullscreenHeight;
-        }
-        else
-        {
-            float rect[4];
-            getContentViewBounds(mWindow[mCurRCIdx], rect);
-            h = (S32)rect[3];
-        }
-        calculateHMDClientHeightDiff(h);
-    }
-}
-
-
-void LLWindowMacOSX::calculateHMDClientHeightDiff(S32 actualClientHeight)
-{
-    mHMDClientHeightDiff = (mHMDMode && mCurRCIdx == 0) ? llmax(0, actualClientHeight - mHMDHeight) : 0;
-}
-
-
 
 
 /*virtual*/
@@ -2078,6 +2087,12 @@ void LLWindowMacOSX::handleDragNDrop(std::string url, LLWindowCallbacks::DragNDr
 	LLCoordGL gl_pos;
 	convertCoords(window_coords, &gl_pos);
 	
+    if (mHMDMode)
+    {
+        gl_pos.mX = llmax(0, llmin(mHMDWidth, gl_pos.mX));
+        gl_pos.mY = llmax(0, llmin(mHMDHeight, gl_pos.mY));
+    }
+
 	if(!url.empty())
 	{
 		LLWindowCallbacks::DragNDropResult res =
@@ -2119,6 +2134,10 @@ void LLWindowMacOSX::handleDragNDrop(std::string url, LLWindowCallbacks::DragNDr
 			switch (mDragOverrideCursor) {
 				case 0:
 					setArrowCursor();
+                    if(mCursorHidden || mHMDMode)
+                    {
+                        hideNSCursor();
+                    }
 					break;
 				case UI_CURSOR_NO:
 					setNotAllowedCursor();

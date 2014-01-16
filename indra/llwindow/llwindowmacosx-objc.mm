@@ -239,15 +239,15 @@ GLViewRef createOpenGLViewTest(NSWindowRef window, int width, int height)
 // Full screen window and view creation
 // Adapted from https://developer.apple.com/library/mac/documentation/graphicsimaging/Conceptual/OpenGL-MacProgGuide/opengl_fullscreen/opengl_cgl.html
 
-NSWindowRef createFullScreenWindow(int screen_index, bool deferCreation, bool hideOnDeactivate)
+NSWindowRef createFullScreenWindow(int screen_index, bool hideOnDeactivate)
 {
     // Create a screen-sized window on the display you want to take over
     NSScreen* current_screen = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_index];
     NSRect display_rect = [current_screen frame];
-    LLNSWindow *full_screen_window = [[LLNSWindow alloc] initWithContentRect: display_rect styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:deferCreation];
+    LLNSWindow *full_screen_window = [[LLNSWindow alloc] initWithContentRect: display_rect styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:YES];
     
     // Set the window level to be above the menu bar
-    [full_screen_window setLevel:NSMainMenuWindowLevel+1];
+    [full_screen_window setLevel: NSMainMenuWindowLevel+1];
     
     // Perform any other window configuration you desire
     [full_screen_window setOpaque:YES];

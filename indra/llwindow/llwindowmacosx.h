@@ -174,9 +174,6 @@ protected:
 	void adjustCursorDecouple(bool warpingMouse = false);
 	static MASK modifiersToMask(S16 modifiers);
 
-    void calculateHMDClientHeightDiff();
-    void calculateHMDClientHeightDiff(S32 actualClientHeight);
-
 #if LL_OS_DRAGDROP_ENABLED
 	
 	//static OSErr dragTrackingHandler(DragTrackingMessage message, WindowRef theWindow, void * handlerRefCon, DragRef theDrag);
