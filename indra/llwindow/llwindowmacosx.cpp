@@ -133,7 +133,7 @@ LLWindowMacOSX::LLWindowMacOSX(LLWindowCallbacks* callbacks,
     mGLView[0] = mGLView[1] = NULL;
     mCurRCIdx = 0;
     mHMDMode = FALSE;
-    mHMDWidth = mHMDHeight = 0;
+    mHMDWidth = mHMDHeight = mHMDClientHeightDiff = 0;
 	mContext = NULL;
 	mPixelFormat = NULL;
 	mDisplay = CGMainDisplayID();
@@ -1320,8 +1320,6 @@ BOOL LLWindowMacOSX::convertCoords(LLCoordGL from, LLCoordScreen *to)
 }
 
 
-
-
 void LLWindowMacOSX::setupFailure(const std::string& text, const std::string& caption, U32 type)
 {
 	destroyContext();
@@ -1436,7 +1434,7 @@ void LLWindowMacOSX::updateCursor()
 	default:
 	case UI_CURSOR_ARROW:
 		setArrowCursor();
-		if(mCursorHidden)
+		if(mCursorHidden || mHMDMode)
 		{
 			// Since InitCursor resets the hide level, correct for it here.
 			hideNSCursor();
@@ -1565,7 +1563,10 @@ void LLWindowMacOSX::hideCursor()
 		//		llinfos << "hideCursor: hiding" << llendl;
 		mCursorHidden = TRUE;
 		mHideCursorPermanent = TRUE;
-		hideNSCursor();
+        if (!mHMDMode)
+        {
+		    hideNSCursor();
+        }
 	}
 	else
 	{
@@ -1883,11 +1884,12 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
     if (mHMDScreenId < 0)
     {
         // Not found -> exit with error
+        LL_INFOS("Window") << "Failed to create HMD window - could not find display id " << left << LL_ENDL;
         return FALSE;
     }
 
     LL_INFOS("Window") << "Creating the HMD window on screen " << mHMDScreenId << LL_ENDL;
-    mWindow[1] = createFullScreenWindow(mHMDScreenId);
+    mWindow[1] = createFullScreenWindow(mHMDScreenId, FALSE, FALSE);
     if (mWindow[1] != NULL)
     {
         LL_INFOS("Window") << "Creating the HMD GL view" << LL_ENDL;
@@ -1947,6 +1949,8 @@ BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
 
     // Set the view on the current context
     setCGLCurrentContext(mGLView[idx]);
+    makeFirstResponder(mWindow[idx], mGLView[idx]);
+    makeWindowOrderFront(mWindow[idx]);
     
     //LL_DEBUGS("Window") << "setRenderWindow : successful" << LL_ENDL;
     mCurRCIdx = idx;
@@ -1961,22 +1965,52 @@ BOOL LLWindowMacOSX::setFocusWindow(S32 idx, BOOL clipping, S32 w, S32 h)
         // Incorrect parameter or no view -> error
         return FALSE;
     }
+    BOOL oldHMDMode = mHMDMode;
     mHMDMode = clipping;
     mHMDWidth = mHMDMode ? w : 0;
     mHMDHeight = mHMDMode ? h : 0;
-    makeFirstResponder(mWindow[idx], mGLView[idx]);
-    makeWindowOrderFront(mWindow[idx]);
-    if (mHMDMode)
+    calculateHMDClientHeightDiff();
+    if (mHMDMode && !oldHMDMode && !mCursorHidden)
     {
         hideNSCursor();
     }
-    else if (!isCursorHidden())
+    else if (!mCursorHidden && oldHMDMode && !mHMDMode)
     {
-        showCursor();
+        showNSCursor();
     }
 
     return TRUE;
 }
+
+
+void LLWindowMacOSX::calculateHMDClientHeightDiff()
+{
+    mHMDClientHeightDiff = 0;
+    if (mHMDMode && mCurRCIdx == 0 && mWindow[mCurRCIdx])
+    {
+        S32 h = 0;
+        if (mFullscreen)
+        {
+            h = mFullscreenHeight;
+        }
+        else
+        {
+            float rect[4];
+            getContentViewBounds(mWindow[mCurRCIdx], rect);
+            h = (S32)rect[3];
+        }
+        calculateHMDClientHeightDiff(h);
+    }
+}
+
+
+void LLWindowMacOSX::calculateHMDClientHeightDiff(S32 actualClientHeight)
+{
+    mHMDClientHeightDiff = (mHMDMode && mCurRCIdx == 0) ? llmax(0, actualClientHeight - mHMDHeight) : 0;
+}
+
+
+
 
 /*virtual*/
 S32 LLWindowMacOSX::getDisplayCount()

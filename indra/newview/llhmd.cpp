@@ -622,22 +622,41 @@ BOOL LLHMD::setRenderWindowHMD()
 
 void LLHMD::setFocusWindowMain()
 {
-    isChangingRenderContext(TRUE);
 #if LL_HMD_SUPPORTED
+    BOOL res = FALSE;
+    isChangingRenderContext(TRUE);
     if (isHMDMode())
     {
-        gViewerWindow->getWindow()->setFocusWindow(0, TRUE, getHMDWidth(), getHMDHeight());
+        res = gViewerWindow->getWindow()->setFocusWindow(0, TRUE, getHMDWidth(), getHMDHeight());
     }
     else
-#endif
     {
-        gViewerWindow->getWindow()->setFocusWindow(0, FALSE, 0, 0);
+        res = gViewerWindow->getWindow()->setFocusWindow(0, FALSE, 0, 0);
+#if LL_DARWIN
+        if (res)
+        {
+            // setFocusWindow on Mac does not call FocusGained or FocusLost, except for calling FocusLost the first time.
+            // WHY that is, I have no idea.   But in order to make things behave, we need to call them directly here.
+            onAppFocusGained();
+            if (!isHMDMode())
+            {
+                // this is handled by the appfocuslost message in windows, but since that doesn't get called on Mac, we have to
+                // handle the critical parts here instead.
+                gViewerWindow->showCursor();
+            }
+        }
+#endif // LL_DARWIN
         // in the case of switching from debug HMD mode to normal mode, no appfocus message is sent since 
         // we're already focused on the main window, so we have to manually disable mouse clipping.  In the case
         // where we are switching from HMD to normal mode, then this is just a redundant call, but doesn't hurt
         // anything.
         gViewerWindow->getWindow()->setMouseClipping(FALSE);
     }
+    if (!res)
+    {
+        isChangingRenderContext(FALSE);
+    }
+#endif // LL_HMD_SUPPORTED
 }
 
 
@@ -649,13 +668,25 @@ void LLHMD::setFocusWindowHMD()
         gViewerWindow->moveCursorToCenter();
     }
     isChangingRenderContext(TRUE);
-    gViewerWindow->getWindow()->setFocusWindow(1, TRUE, getHMDWidth(), getHMDHeight());
-#endif
+    if (!gViewerWindow->getWindow()->setFocusWindow(1, TRUE, getHMDWidth(), getHMDHeight()))
+    {
+        isChangingRenderContext(FALSE);
+    }
+#if LL_DARWIN
+    else
+    {
+        // setFocusWindow on Mac does not call FocusGained or FocusLost, except for calling FocusLost the first time.
+        // WHY that is, I have no idea.   But in order to make things behave, we need to call them directly here.
+        onAppFocusGained();
+    }
+#endif // LL_DARWIN
+#endif // LL_HMD_SUPPORTED
 }
 
 
 void LLHMD::onAppFocusGained()
 {
+#if LL_HMD_SUPPORTED
     if (isChangingRenderContext())
     {
         if (isHMDMode())
@@ -685,11 +716,13 @@ void LLHMD::onAppFocusGained()
             gViewerWindow->getWindow()->setMouseClipping(FALSE);
         }
     }
+#endif // LL_HMD_SUPPORTED
 }
 
 
 void LLHMD::onAppFocusLost()
 {
+#if LL_HMD_SUPPORTED
     if (!isChangingRenderContext() && mRenderMode == (U32)RenderMode_HMD)
     {
         // Make sure we change the render window to main so that we avoid BSOD in the graphics drivers when
@@ -697,6 +730,7 @@ void LLHMD::onAppFocusLost()
         setRenderWindowMain();
         setRenderMode(RenderMode_None, false);
     }
+#endif // LL_HMD_SUPPORTED
 }
 
 
