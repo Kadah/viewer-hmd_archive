@@ -61,6 +61,7 @@
 #include "llglheaders.h"
 #include "lltrans.h"
 #include "llvoavatarself.h"
+#include "llhmd.h"
 
 const F32 RADIUS_PIXELS = 100.f;		// size in screen space
 const F32 SQ_RADIUS = RADIUS_PIXELS * RADIUS_PIXELS;
@@ -745,17 +746,17 @@ void LLManipRotate::renderActiveRing( F32 radius, F32 width, const LLColor4& fro
 
 void LLManipRotate::renderSnapGuides()
 {
+	if (gHMD.isHMDMode() || !gSavedSettings.getBOOL("SnapEnabled"))
+	{
+		return;
+	}
+
 	LLVector3 grid_origin;
 	LLVector3 grid_scale;
 	LLQuaternion grid_rotation;
 	LLVector3 constraint_axis = getConstraintAxis();
 
 	LLSelectMgr::getInstance()->getGrid(grid_origin, grid_rotation, grid_scale);
-
-	if (!gSavedSettings.getBOOL("SnapEnabled"))
-	{
-		return;
-	}
 
 	LLVector3 center = gAgent.getPosAgentFromGlobal( mRotationCenter );
 	LLVector3 cam_at_axis;

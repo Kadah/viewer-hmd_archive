@@ -171,6 +171,7 @@ protected:
 	BOOL createContext(int x, int y, int width, int height, int bits, BOOL fullscreen, BOOL disable_vsync);
 	void destroyContext();
 	void setupFailure(const std::string& text, const std::string& caption, U32 type);
+    void keepMouseWithinBounds(float* cp, S32 winIdx, S32 w, S32 h);
 	void adjustCursorDecouple(bool warpingMouse = false);
 	static MASK modifiersToMask(S16 modifiers);
 

@@ -1569,7 +1569,7 @@ void LLManipScale::updateSnapGuides(const LLBBox& bbox)
 
 void LLManipScale::renderSnapGuides(const LLBBox& bbox)
 {
-	if (!gSavedSettings.getBOOL("SnapEnabled"))
+	if (gHMD.isHMDMode() || !gSavedSettings.getBOOL("SnapEnabled"))
 	{
 		return;
 	}

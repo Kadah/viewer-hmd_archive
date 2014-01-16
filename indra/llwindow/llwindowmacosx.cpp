@@ -1077,35 +1077,32 @@ BOOL LLWindowMacOSX::getCursorPosition(LLCoordWindow *position)
 
     if (mHMDMode)
     {
-        float cx = cursor_point[0];
-        float cy = cursor_point[1];
-
-        
-        
-        cursor_point[0] = llmax(0.0f, llmin((float)mHMDWidth, cursor_point[0]));
-        cursor_point[1] = llmax(0.0f, llmin((float)mHMDHeight, cursor_point[1]));
-        
-        if (cx < 0.0f || cx > (float)mHMDWidth || cy < 0.0f || cy > (float)mHMDHeight)
-        {
-            LLCoordWindow wp;
-            wp.mX = (S32)cursor_point[0];
-            wp.mY = (S32)cursor_point[1];
-            float mouse_point[2];
-            mouse_point[0] = cursor_point[0];
-            mouse_point[1] = cursor_point[1];
-            convertWindowToScreen(mWindow[0], mouse_point);
-            CGPoint newPosition;
-            newPosition.x = mouse_point[0];
-            newPosition.y = mouse_point[1];
-            CGSetLocalEventsSuppressionInterval(0.0);
-            CGWarpMouseCursorPosition(newPosition);
-        }
+        keepMouseWithinBounds(cursor_point, 0, mHMDWidth, mHMDHeight);
     }
-    
+
 	position->mX = cursor_point[0];
 	position->mY = cursor_point[1];
 
 	return TRUE;
+}
+
+void LLWindowMacOSX::keepMouseWithinBounds(float* cp, S32 winIdx, S32 w, S32 h)
+{
+    BOOL outOfBounds = cp[0] < 0.0f || cp[0] > (float)w || cp[1] < 0.0f || cp[1] > (float)h;
+    if (outOfBounds)
+    {
+        cp[0] = llmax(0.0f, llmin((float)w, cp[0]));
+        cp[1] = llmax(0.0f, llmin((float)h, cp[1]));
+        float scrPt[2];
+        scrPt[0] = cp[0];
+        scrPt[1] = cp[1];
+        convertWindowToScreen(mWindow[winIdx], scrPt);
+        CGPoint newPosition;
+        newPosition.x = scrPt[0];
+        newPosition.y = scrPt[1];
+        CGSetLocalEventsSuppressionInterval(0.0);
+        CGWarpMouseCursorPosition(newPosition);
+    }
 }
 
 void LLWindowMacOSX::adjustCursorDecouple(bool warpingMouse)
@@ -2083,15 +2080,15 @@ void LLWindowMacOSX::handleDragNDrop(std::string url, LLWindowCallbacks::DragNDr
 	float mouse_point[2];
 	// This will return the mouse point in window coords
 	getCursorPos(mWindow[mCurRCIdx], mouse_point);
-	LLCoordWindow window_coords(mouse_point[0], mouse_point[1]);
-	LLCoordGL gl_pos;
-	convertCoords(window_coords, &gl_pos);
 	
     if (mHMDMode)
     {
-        gl_pos.mX = llmax(0, llmin(mHMDWidth, gl_pos.mX));
-        gl_pos.mY = llmax(0, llmin(mHMDHeight, gl_pos.mY));
+        keepMouseWithinBounds(mouse_point, 0, mHMDWidth, mHMDHeight);
     }
+
+	LLCoordWindow window_coords(mouse_point[0], mouse_point[1]);
+	LLCoordGL gl_pos;
+	convertCoords(window_coords, &gl_pos);
 
 	if(!url.empty())
 	{
