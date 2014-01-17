@@ -10249,5 +10249,14 @@ Cannot enter HMD mode because there is no HMD Sensor hardware detected.  Check t
    <tag>fail</tag>
 Internal Problem: Cannot enter HMD mode because the HMD rendering window could not be created.   Restarting the client will probably fix this.
   </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="FloaterTypeDisabled"
+   type="alertmodal">
+   <tag>fail</tag>
+[NAME] functionality is currently disabled.
+  </notification>
+    
     
 </notifications>

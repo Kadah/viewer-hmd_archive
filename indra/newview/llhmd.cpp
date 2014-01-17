@@ -29,25 +29,25 @@
 
 #include "llviewerprecompiledheaders.h"
 #include "llhmd.h"
+#include "llhmdimploculus.h"
 
-#include "llfloaterreg.h"
-#include "llviewerwindow.h"
 #include "llagent.h"
-#include "llviewercamera.h"
-#include "llwindow.h"
+#include "llagentcamera.h"
+#include "llfloatercamera.h"
+#include "llfloaterreg.h"
 #include "llfocusmgr.h"
 #include "llnotificationsutil.h"
-#include "llviewercontrol.h"
-#include "pipeline.h"
-#include "llagentcamera.h"
-#include "llviewertexture.h"
-#include "raytrace.h"
+#include "lltool.h"
+#include "lltrans.h"
 #include "llui.h"
 #include "llview.h"
-#include "lltool.h"
-#include "llfloatercamera.h"
-#include "llhmdimploculus.h"
-#include "lltrans.h"
+#include "llviewercamera.h"
+#include "llviewercontrol.h"
+#include "llviewertexture.h"
+#include "llviewerwindow.h"
+#include "llwindow.h"
+#include "pipeline.h"
+#include "raytrace.h"
 
 
 const F32 LLHMDImpl::kDefaultHScreenSize = 0.14976f;
@@ -525,6 +525,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         {
                             windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
                         }
+                        LLFloaterReg::setBlockInstance(false, "snapshot");
                     }
                     break;
                 }
@@ -539,6 +540,11 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 windowp->getPosition(&mMainWindowPos);
                 renderUnusedMainWindow();
                 mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
+                // snapshots are disabled in HMD mode due to problems with always rendering UI and sometimes
+                // rendering black screen before saving.  This is probably a solvable issue, but not in the 
+                // time constraints given right now, so disabling them until someone has a chance to fix
+                // the issues.
+                LLFloaterReg::setBlockInstance(true, "snapshot");
                 switch (mRenderMode)
                 {
                 case RenderMode_HMD:

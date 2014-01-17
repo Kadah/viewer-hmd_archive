@@ -311,7 +311,7 @@ set(viewer_SOURCE_FILES
     llhasheduniqueid.cpp
     llhints.cpp
     llhmd.cpp
-	llhmdimploculus.cpp
+    llhmdimploculus.cpp
     llhomelocationresponder.cpp
     llhudeffect.cpp
     llhudeffectbeam.cpp
@@ -326,8 +326,8 @@ set(viewer_SOURCE_FILES
     llhudrender.cpp
     llhudtext.cpp
     llhudview.cpp
-	llfloaterhmdconfig.cpp
-	llfloaterhmdconfigdebug.cpp
+    llfloaterhmdconfig.cpp
+    llfloaterhmdconfigdebug.cpp
     llfloaterimsessiontab.cpp
     llfloaterimsession.cpp
     llfloaterimcontainer.cpp
@@ -903,7 +903,7 @@ set(viewer_HEADER_FILES
     llhints.h
     llhomelocationresponder.h
     llhmd.h
-	llhmdimploculus.h
+    llhmdimploculus.h
     llhudeffect.h
     llhudeffectbeam.h
     llhudeffectlookat.h

@@ -196,5 +196,9 @@ void LLPanelContents::onClickNewScript(void *userdata)
 void LLPanelContents::onClickPermissions(void *userdata)
 {
 	LLPanelContents* self = (LLPanelContents*)userdata;
-	gFloaterView->getParentFloater(self)->addDependentFloater(LLFloaterReg::showInstance("bulk_perms"));
+    LLFloater* bulkPerms = LLFloaterReg::showInstance("bulk_perms");
+    if (self && bulkPerms)
+    {
+	    gFloaterView->getParentFloater(self)->addDependentFloater(bulkPerms);
+    }
 }

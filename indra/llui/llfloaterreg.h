@@ -70,6 +70,7 @@ private:
 	 * Defines list of floater names that can be shown despite state of sBlockShowFloaters.
 	 */
 	static std::set<std::string> sAlwaysShowableList;
+	static std::set<std::string> sBlockedFloaterList;
 	
 public:
 	// Registration
@@ -99,6 +100,10 @@ public:
 	static const_instance_list_t& getFloaterList(const std::string& name);
 
 	// Visibility Management
+
+    // enable/disable showing/creating of any instances of the specified type. If block is true
+    // and any instances are currently "visible" (minimized or not), they will be closed.
+    static void setBlockInstance(bool block, const std::string& name);
 	// return NULL if instance not found or can't create instance (no builder)
 	static LLFloater* showInstance(const std::string& name, const LLSD& key = LLSD(), BOOL focus = FALSE);
 	// Close a floater (may destroy or set invisible)

@@ -132,8 +132,7 @@ public:
 	{
 		// open the new pick panel on the Picks floater
 		LLFloater* picks_floater = LLFloaterReg::showInstance("picks");
-
-		LLPanelPicks* picks = picks_floater->findChild<LLPanelPicks>("panel_picks");
+		LLPanelPicks* picks = picks_floater ? picks_floater->findChild<LLPanelPicks>("panel_picks") : NULL;
 		if (picks)
 		{
 			picks->createNewPick();
@@ -252,8 +251,7 @@ public:
 	{
 		// open the new classified panel on the Picks floater
 		LLFloater* picks_floater = LLFloaterReg::showInstance("picks");
-
-		LLPanelPicks* picks = picks_floater->findChild<LLPanelPicks>("panel_picks");
+		LLPanelPicks* picks = picks_floater ? picks_floater->findChild<LLPanelPicks>("panel_picks") : NULL;
 		if (picks)
 		{
 			picks->createNewClassified();
