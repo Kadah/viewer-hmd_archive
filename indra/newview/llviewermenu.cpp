@@ -4163,7 +4163,14 @@ class LLViewCycleDisplay : public view_listener_t
                 }
                 if (hmdModePossible)
                 {
-                    nextRenderMode = LLHMD::RenderMode_HMD;
+                    if (gHMD.isHMDMirror())
+                    {
+                        nextRenderMode = LLHMD::RenderMode_ScreenStereo;
+                    }
+                    else
+                    {
+                        nextRenderMode = LLHMD::RenderMode_HMD;
+                    }
                 }
                 else if (gHMD.isAdvancedMode())
                 {

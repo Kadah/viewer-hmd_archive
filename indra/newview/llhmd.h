@@ -71,6 +71,7 @@ public:
         kFlag_MoveFollowsLookDir        = 1 << 10,
         kFlag_HMDSensorConnected        = 1 << 11,
         kFlag_LatencyTesterConnected    = 1 << 12,
+        kFlag_HMDMirror                 = 1 << 13,
     };
 
     enum eUIPresetType
@@ -131,6 +132,8 @@ public:
     void isHMDSensorConnected(BOOL b) { if (b) { mFlags |= kFlag_HMDSensorConnected; } else { mFlags &= ~kFlag_HMDSensorConnected; } }
     BOOL isLatencyTesterConnected() const { return ((mFlags & kFlag_LatencyTesterConnected) != 0) ? TRUE : FALSE; }
     void isLatencyTesterConnected(BOOL b) { if (b) { mFlags |= kFlag_LatencyTesterConnected; } else { mFlags &= ~kFlag_LatencyTesterConnected; } }
+    BOOL isHMDMirror() const { return ((mFlags & kFlag_HMDMirror) != 0) ? TRUE : FALSE; }
+    void isHMDMirror(BOOL b) { if (b) { mFlags |= kFlag_HMDMirror; } else { mFlags &= ~kFlag_HMDMirror; } }
 
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }

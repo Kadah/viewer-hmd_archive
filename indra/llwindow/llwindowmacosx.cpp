@@ -1107,7 +1107,7 @@ void LLWindowMacOSX::keepMouseWithinBounds(float* cp, S32 winIdx, S32 w, S32 h)
 
 void LLWindowMacOSX::adjustCursorDecouple(bool warpingMouse)
 {
-	if(mIsMouseClipping && (mCursorHidden | mHMDMode))
+	if(mIsMouseClipping && mCursorHidden)
 	{
 		if(warpingMouse)
 		{
@@ -1124,7 +1124,7 @@ void LLWindowMacOSX::adjustCursorDecouple(bool warpingMouse)
 	else
 	{
 		// The cursor should not be decoupled.  Make sure it isn't.
-		if(mCursorDecoupled && !mHMDMode)
+		if(mCursorDecoupled)
 		{
 			//			llinfos << "adjustCursorDecouple: recoupling cursor" << llendl;
 			CGAssociateMouseAndMouseCursorPosition(true);
@@ -1903,7 +1903,7 @@ MASK LLWindowMacOSX::modifiersToMask(S16 modifiers)
 
 // HMD Support
 /*virtual*/
-BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
+BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror)
 {
     LL_INFOS("Window") << "initHMDWindow" << LL_ENDL;
     destroyHMDWindow();
@@ -1922,6 +1922,13 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
         // Not found -> exit with error
         LL_INFOS("Window") << "Failed to create HMD window - could not find display id " << left << LL_ENDL;
         return FALSE;
+    }
+
+    isMirror = CGDisplayMirrorsDisplay((CGDirectDisplayID)left) != kCGNullDirectDisplay;
+    if (isMirror)
+    {
+        // don't create a window in this case since we just want to use the "advanced" HMD mode in this case
+        return TRUE;
     }
 
     LL_INFOS("Window") << "Creating the HMD window on screen " << mHMDScreenId << LL_ENDL;

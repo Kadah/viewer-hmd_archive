@@ -3893,7 +3893,41 @@ BOOL LLWindowWin32::handleImeRequests(U32 request, U32 param, LRESULT *result)
 }
 
 
-BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
+BOOL LLWindowWin32::testMainDisplayIsMirrored(S32 left, S32 top, S32 width, S32 height)
+{
+    if (!mWindowHandle[0])
+    {
+        return FALSE;
+    }
+    HMONITOR mainWindowMonitorHandle = MonitorFromWindow(mWindowHandle[0], MONITOR_DEFAULTTOPRIMARY);
+    POINT ptHMD;
+    ptHMD.x = (LONG)(left + (width / 2));
+    ptHMD.y = (LONG)(top + (height / 2));
+    HMONITOR hmdWindowMonitorHandle = MonitorFromPoint(ptHMD, MONITOR_DEFAULTTONULL);
+
+    if (hmdWindowMonitorHandle == NULL)
+    {
+        LL_WARNS("HMD") << "No monitor found for HMD coordinates [" << ptHMD.x << "," << ptHMD.y << "]!" << LL_ENDL;
+        return FALSE;
+    }
+
+    MONITORINFOEX infoMain, infoHMD;
+    infoMain.cbSize = infoHMD.cbSize = sizeof(MONITORINFOEX);
+    GetMonitorInfo(mainWindowMonitorHandle, &infoMain);
+    GetMonitorInfo(hmdWindowMonitorHandle, &infoHMD);
+    llutf16string devMain(infoMain.szDevice);
+    llutf16string devHMD(infoHMD.szDevice);
+    //LL_INFOS("HMD") << "Main Monitor = " << utf16str_to_utf8str(devMain) << LL_ENDL;
+    //LL_INFOS("HMD") << "HMD Monitor = " << utf16str_to_utf8str(devHMD) << LL_ENDL;
+    if (devMain.compare(devHMD) == 0)
+    {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+
+BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror)
 {
     WNDCLASS wc;
     memset(&wc, 0, sizeof(wc));
@@ -3933,6 +3967,14 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height)
         }
         mPostQuit = TRUE;
     }
+
+    isMirror = testMainDisplayIsMirrored(left, top, width, height);
+    if (isMirror)
+    {
+        // don't create a window in this case since we just want to use the "advanced" HMD mode in this case
+        return TRUE;
+    }
+
     // create window
     mWindowHandle[1] = CreateWindowEx(  mDwExStyle[1],
                                         L"HMDWindow",

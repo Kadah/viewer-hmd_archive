@@ -114,7 +114,7 @@ public:
 	LLWindowCallbacks::DragNDropResult completeDragNDropRequest( const LLCoordGL gl_coord, const MASK mask, LLWindowCallbacks::DragNDropAction action, const std::string url );
 
     // HMD support
-    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height);
+    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror);
     /*virtual*/ BOOL destroyHMDWindow();
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
     /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping, S32 w = 0, S32 h = 0);
@@ -161,6 +161,7 @@ protected:
     BOOL    getCurrentWindowRect(RECT& r, RECT* pActualRect = NULL);
     void    calculateHMDClientHeightDiff();
     void    calculateHMDClientHeightDiff(S32 actualClientHeight);
+    BOOL    testMainDisplayIsMirrored(S32 left, S32 top, S32 width, S32 height);
 
 protected:
 	//

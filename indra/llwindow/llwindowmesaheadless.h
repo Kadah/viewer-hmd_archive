@@ -94,13 +94,6 @@ public:
 	/*virtual*/ void *getPlatformWindow() { return 0; };
 	/*virtual*/ void bringToFront() {};
 
-    // HMD not supported on this platform
-    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height) { return FALSE; };
-    /*virtual*/ BOOL destroyHMDWindow() { return FALSE; };
-    /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen) { return FALSE; };
-    /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping, S32 w = 0, S32 h = 0) { return FALSE; };
-    /*virtual*/ S32 getDisplayCount() { return 1; };
-	
 	LLWindowMesaHeadless(LLWindowCallbacks* callbacks,
                          const std::string& title, const std::string& name, S32 x, S32 y, S32 width, S32 height,
 				  U32 flags,  BOOL fullscreen, BOOL clearBg,

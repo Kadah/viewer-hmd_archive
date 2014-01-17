@@ -123,13 +123,6 @@ public:
 
 	/*virtual*/ void spawnWebBrowser(const std::string& escaped_url, bool async);
 	
-    // HMD not (yet) supported on linux
-    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height) { return FALSE; };
-    /*virtual*/ BOOL destroyHMDWindow() { return FALSE; };
-    /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen) { return FALSE; };
-    /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping, S32 w = 0, S32 h = 0) { return FALSE; };
-    /*virtual*/ S32 getDisplayCount() { return 1; };
-
 	static std::vector<std::string> getDynamicFallbackFontList();
 
 	// Not great that these are public, but they have to be accessible

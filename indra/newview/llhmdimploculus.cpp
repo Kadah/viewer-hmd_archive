@@ -348,10 +348,11 @@ BOOL LLHMDImplOculus::postDetectionInit()
         gHMD.isMainFullScreen(mainFullScreen);
     }
     const OVR::HMDInfo& info = mStereoConfig.GetHMDInfo();
+    BOOL isMirror = FALSE;
 #if LL_WINDOWS
-    if (!pWin->initHMDWindow(info.DesktopX, info.DesktopY, info.HResolution, info.VResolution))
+    if (!pWin->initHMDWindow(info.DesktopX, info.DesktopY, info.HResolution, info.VResolution, isMirror))
 #elif LL_DARWIN
-    if (!pWin->initHMDWindow(info.DisplayId, 0, info.HResolution, info.VResolution))
+    if (!pWin->initHMDWindow(info.DisplayId, 0, info.HResolution, info.VResolution, isMirror))
 #else
     if (FALSE)
 #endif
@@ -362,6 +363,7 @@ BOOL LLHMDImplOculus::postDetectionInit()
 
     gHMD.isPostDetectionInitialized(TRUE);
     gHMD.failedInit(FALSE);
+    gHMD.isHMDMirror(isMirror);
 
     setCurrentEye(OVR::Util::Render::StereoEye_Center);
 

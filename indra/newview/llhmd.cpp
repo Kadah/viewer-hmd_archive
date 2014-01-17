@@ -628,24 +628,34 @@ void LLHMD::setFocusWindowMain()
     if (isHMDMode())
     {
         res = gViewerWindow->getWindow()->setFocusWindow(0, TRUE, getHMDWidth(), getHMDHeight());
+        if (res && isHMDMirror())
+        {
+            // in this case, appFocusGained is not called because we're not changing windows,
+            // so just call manually
+            onAppFocusGained();
+        }
     }
     else
     {
         res = gViewerWindow->getWindow()->setFocusWindow(0, FALSE, 0, 0);
-#if LL_DARWIN
         if (res)
         {
-            // setFocusWindow on Mac does not call FocusGained or FocusLost, except for calling FocusLost the first time.
-            // WHY that is, I have no idea.   But in order to make things behave, we need to call them directly here.
-            onAppFocusGained();
-            if (!isHMDMode())
+#if !LL_DARWIN
+            // setFocusWindow on Mac does not call FocusGained or FocusLost.  In order to make things behave,
+            // we always need to call them directly here, whether the display is mirrored or not.
+            if (isHMDMirror())
+#endif // LL_DARWIN
             {
-                // this is handled by the appfocuslost message in windows, but since that doesn't get called on Mac, we have to
-                // handle the critical parts here instead.
-                gViewerWindow->showCursor();
+                onAppFocusGained();
+                if (!isHMDMode())
+                {
+                    // this is handled by the appfocuslost message in windows, but since that doesn't get called on Mac, we have to
+                    // handle the critical parts here instead.
+                    gViewerWindow->showCursor();
+                }
+
             }
         }
-#endif // LL_DARWIN
         // in the case of switching from debug HMD mode to normal mode, no appfocus message is sent since 
         // we're already focused on the main window, so we have to manually disable mouse clipping.  In the case
         // where we are switching from HMD to normal mode, then this is just a redundant call, but doesn't hurt
@@ -687,9 +697,6 @@ void LLHMD::setFocusWindowHMD()
 void LLHMD::onAppFocusGained()
 {
 #if LL_HMD_SUPPORTED
-    BOOL fs = FALSE;
-    S32 winIdx = gViewerWindow->getWindow()->getRenderWindow(fs);
-    LL_INFOS("HMD") << "HMD onAppFocusGained: changingContext = " << isChangingRenderContext() << ", HMDMode = " << isHMDMode() << ", Window = " << winIdx << ", fs = " << fs << LL_ENDL;
     if (isChangingRenderContext())
     {
         if (isHMDMode())
@@ -726,9 +733,6 @@ void LLHMD::onAppFocusGained()
 void LLHMD::onAppFocusLost()
 {
 #if LL_HMD_SUPPORTED
-    BOOL fs = FALSE;
-    S32 winIdx = gViewerWindow->getWindow()->getRenderWindow(fs);
-    LL_INFOS("HMD") << "HMD onAppFocusGained: changingContext = " << isChangingRenderContext() << ", HMDMode = " << isHMDMode() << ", Window = " << winIdx << ", fs = " << fs << LL_ENDL;
     if (!isChangingRenderContext() && mRenderMode == (U32)RenderMode_HMD)
     {
         // Make sure we change the render window to main so that we avoid BSOD in the graphics drivers when
