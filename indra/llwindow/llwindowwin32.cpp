@@ -3929,6 +3929,9 @@ BOOL LLWindowWin32::testMainDisplayIsMirrored(S32 left, S32 top, S32 width, S32 
 
 BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror)
 {
+    mHMDWidth = width;
+    mHMDHeight = height;
+
     WNDCLASS wc;
     memset(&wc, 0, sizeof(wc));
     wc.lpszClassName    = L"HMDWindow";
@@ -4004,6 +4007,20 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL
     ShowWindow(mWindowHandle[1], SW_SHOW);
     wglSwapIntervalEXT(1);
 
+    if (mWindowHandle[0])
+    {
+        // the above just lost focus to the main window.   It DID gain focus on the secondary window, but because
+        // the SetWindowLong hadn't happened yet, the message was ignored.  Thus, we are focused on the secondary
+        // window, so we still accept keyboard input, but until we do something to focus on the main window again
+        // the focus is on the HMD window.  This state will cause confusion in the HMD code and will mean that 
+        // changing to HMD mode via keyboard then clicking will actually cause a focuslost message to be sent with
+        // gHMD.isChangingRenderContext set to FALSE...which will cause us to shift out of HMD mode as if we had
+        // alt-tabbed.  *sigh*  To prevent this, we just need to make sure that we set the focus to the main
+        // window here, which ensures that the app focus is correct.
+        SetForegroundWindow(mWindowHandle[0]);
+        SetFocus(mWindowHandle[0]);
+    }
+
     return TRUE;
 }
 
@@ -4062,19 +4079,22 @@ BOOL LLWindowWin32::setRenderWindow(S32 idx, BOOL fullScreen)
 }
 
 
-BOOL LLWindowWin32::setFocusWindow(S32 idx, BOOL clipping, S32 w, S32 h)
+BOOL LLWindowWin32::setFocusWindow(S32 idx)
 {
     if (idx < 0 || idx > 1 || !mWindowHandle[idx])
     {
         return FALSE;
     }
-    mHMDMode = clipping;
-    mHMDWidth = mHMDMode ? w : 0;
-    mHMDHeight = mHMDMode ? h : 0;
-    mCurRCIdx = idx;
     SetForegroundWindow(mWindowHandle[idx]);
     SetFocus(mWindowHandle[idx]);
     calculateHMDClientHeightDiff();
+    return TRUE;
+}
+
+
+void LLWindowWin32::setHMDMode(BOOL mode, U32 min_width, U32 min_height)
+{
+    mHMDMode = mode;
     if (mHMDMode)
     {
         while (ShowCursor(FALSE) >= 0) {}
@@ -4083,7 +4103,7 @@ BOOL LLWindowWin32::setFocusWindow(S32 idx, BOOL clipping, S32 w, S32 h)
     {
         showCursor();
     }
-    return TRUE;
+    setMinSize(min_width, min_height, false);
 }
 
 

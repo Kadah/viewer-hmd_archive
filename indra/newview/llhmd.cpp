@@ -484,7 +484,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             mRenderMode = RenderMode_ScreenStereo;
                             return;
                         }
-                        gViewerWindow->reshape(mImpl->getHMDWidth(), mImpl->getHMDHeight());
                         if (!setRenderWindowHMD())
                         {
                             // Somehow, we've lost the HMD window, so just recreate it
@@ -498,6 +497,8 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             }
                         }
                         windowp->enableVSync(TRUE);
+                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        gViewerWindow->reshape(mImpl->getHMDWidth(), mImpl->getHMDHeight());
                     }
                     break;
                 case RenderMode_ScreenStereo:
@@ -505,7 +506,9 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     // not much to do here except resize the main window
                     {
                         setRenderWindowMain();
+                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         windowp->setSize(getHMDClientSize());
+                        windowp->setPosition(mMainWindowPos);
                         windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
                     }
                     break;
@@ -517,15 +520,17 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         {
                             setRenderWindowMain();
                         }
-                        LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("CameraAngle"));
-                        windowp->setPosition(getMainWindowPos());
-                        windowp->setSize(getMainClientSize());
-                        LLFloaterCamera::onHMDChange();
+                        windowp->setHMDMode(FALSE, gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
+                        windowp->setPosition(mMainWindowPos);
+                        windowp->setSize(mMainWindowSize);
                         if (oldMode == RenderMode_HMD)
                         {
                             windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
                         }
+                        LLFloaterCamera::onHMDChange();
                         LLFloaterReg::setBlockInstance(false, "snapshot");
+                        LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("CameraAngle"));
+                        gViewerWindow->reshape(mMainClientSize.mX, mMainClientSize.mY);
                     }
                     break;
                 }
@@ -535,9 +540,9 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
         default:
             {
                 // clear the main window and save off size settings
-                windowp->getSize(&mMainWindowSize);
+                windowp->getFramePos(&mMainWindowPos);
+                windowp->getFrameSize(&mMainWindowSize);
                 windowp->getSize(&mMainClientSize);
-                windowp->getPosition(&mMainWindowPos);
                 renderUnusedMainWindow();
                 mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
                 // snapshots are disabled in HMD mode due to problems with always rendering UI and sometimes
@@ -558,8 +563,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             mRenderMode = RenderMode_None;
                             return;
                         }
-                        LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
-                        gViewerWindow->reshape(mImpl->getHMDWidth(), mImpl->getHMDHeight());
                         if (!setRenderWindowHMD())
                         {
                             // Somehow, we've lost the HMD window, so just recreate it
@@ -573,13 +576,18 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             }
                         }
                         windowp->enableVSync(TRUE);
+                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
+                        gViewerWindow->reshape(mImpl->getHMDWidth(), mImpl->getHMDHeight());
                     }
                     break;
                 case RenderMode_ScreenStereo:
                     // switching from Normal to ScreenStereo
                     {
-                        LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
+                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         windowp->setSize(getHMDClientSize());
+                        windowp->setPosition(mMainWindowPos);
+                        LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
                     }
                     break;
                 }
@@ -629,46 +637,38 @@ BOOL LLHMD::setRenderWindowHMD()
 void LLHMD::setFocusWindowMain()
 {
 #if LL_HMD_SUPPORTED
-    BOOL res = FALSE;
     isChangingRenderContext(TRUE);
-    if (isHMDMode())
+    BOOL res = gViewerWindow->getWindow()->setFocusWindow(0);
+    if (res)
     {
-        res = gViewerWindow->getWindow()->setFocusWindow(0, TRUE, getHMDWidth(), getHMDHeight());
-        if (res && isHMDMirror())
+        if (isHMDMode() && isHMDMirror())
         {
             // in this case, appFocusGained is not called because we're not changing windows,
             // so just call manually
             onAppFocusGained();
         }
-    }
-    else
-    {
-        res = gViewerWindow->getWindow()->setFocusWindow(0, FALSE, 0, 0);
-        if (res)
+        else if (!isHMDMode())
         {
 #if !LL_DARWIN
             // setFocusWindow on Mac does not call FocusGained or FocusLost.  In order to make things behave,
-            // we always need to call them directly here, whether the display is mirrored or not.
+            // we always need to call them directly here, whether the display is mirrored or not.  On non-Mac platforms
+            // we only need to call onAppFocusGained directly if we're in Mirroring mode.
             if (isHMDMirror())
 #endif // LL_DARWIN
             {
                 onAppFocusGained();
-                if (!isHMDMode())
-                {
-                    // this is handled by the appfocuslost message in windows, but since that doesn't get called on Mac, we have to
-                    // handle the critical parts here instead.
-                    gViewerWindow->showCursor();
-                }
-
+                //// this is handled by the appfocuslost message in windows, but since that doesn't get called on Mac, we have to
+                //// handle the critical parts here instead.
+                //gViewerWindow->showCursor();
             }
+            // in the case of switching from debug HMD mode to normal mode, no appfocus message is sent since 
+            // we're already focused on the main window, so we have to manually disable mouse clipping.  In the case
+            // where we are switching from HMD to normal mode, then this is just a redundant call, but doesn't hurt
+            // anything.
+            gViewerWindow->getWindow()->setMouseClipping(FALSE);
         }
-        // in the case of switching from debug HMD mode to normal mode, no appfocus message is sent since 
-        // we're already focused on the main window, so we have to manually disable mouse clipping.  In the case
-        // where we are switching from HMD to normal mode, then this is just a redundant call, but doesn't hurt
-        // anything.
-        gViewerWindow->getWindow()->setMouseClipping(FALSE);
     }
-    if (!res)
+    else
     {
         isChangingRenderContext(FALSE);
     }
@@ -684,7 +684,7 @@ void LLHMD::setFocusWindowHMD()
         gViewerWindow->moveCursorToCenter();
     }
     isChangingRenderContext(TRUE);
-    if (!gViewerWindow->getWindow()->setFocusWindow(1, TRUE, getHMDWidth(), getHMDHeight()))
+    if (!gViewerWindow->getWindow()->setFocusWindow(1))
     {
         isChangingRenderContext(FALSE);
     }

@@ -758,6 +758,7 @@ BOOL LLWindowMacOSX::getPosition(LLCoordScreen *position)
 
 		position->mX = rect[0];
 		position->mY = rect[1];
+		err = noErr;
 	}
 	else
 	{
@@ -765,6 +766,28 @@ BOOL LLWindowMacOSX::getPosition(LLCoordScreen *position)
 	}
 
 	return (err == noErr);
+}
+
+// returns the upper-left screen coordinates for the window frame (including the title bar and any borders)
+BOOL LLWindowMacOSX::getFramePos(LLCoordScreen* pos)
+{
+    if (pos)
+    {
+        if (mFullscreen)
+        {
+            pos->mX = pos->mY = 0;
+            return TRUE;
+        }
+        else if (mWindow[mCurRCIdx])
+        {
+            float sz[4];
+            getWindowSize(mWindow[mCurRCIdx], sz);
+            pos->mX = sz[0];
+            pos->mY = sz[1];
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 
 BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
@@ -799,6 +822,7 @@ BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
             size->mX = rect[2];
             size->mY = rect[3];
         }
+        err = noErr;
 	}
 	else
 	{
@@ -840,12 +864,51 @@ BOOL LLWindowMacOSX::getSize(LLCoordWindow *size)
             size->mX = rect[2];
             size->mY = rect[3];
         }
+        err = noErr;
     }
 	else
 	{
 		llerrs << "LLWindowMacOSX::getPosition(): no window and not fullscreen!" << llendl;
 	}
 	
+	return (err == noErr);
+}
+
+BOOL LLWindowMacOSX::getFrameSize(LLCoordScreen* size)
+{
+	S32 err = -1;
+
+	if (mFullscreen)
+	{
+        if (mHMDMode)
+        {
+            size->mX = llmin(mFullscreenWidth, mHMDWidth);
+            size->mY = llmin(mFullscreenHeight, mHMDHeight);
+        }
+        else
+        {
+            size->mX = mFullscreenWidth;
+            size->mY = mFullscreenHeight;
+        }
+        err = noErr;
+	}
+	else if (mWindow[mCurRCIdx])
+	{
+	    float rect[4];
+		getWindowSize(mWindow[mCurRCIdx], rect);
+        if (mHMDMode)
+        {
+            size->mX = llmin((S32)rect[2], mHMDWidth);
+            size->mY = llmin((S32)rect[3], mHMDHeight);
+        }
+        else
+        {
+            size->mX = rect[2];
+            size->mY = rect[3];
+            err = noErr;
+        }
+	}
+
 	return (err == noErr);
 }
 
@@ -1908,6 +1971,9 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOO
     LL_INFOS("Window") << "initHMDWindow" << LL_ENDL;
     destroyHMDWindow();
 
+    mHMDWidth = width;
+    mHMDHeight = height;
+
     S32 screen_count = getDisplayCount();
     for (S32 screen_id = 0; screen_id < screen_count; screen_id++)
     {
@@ -1943,6 +2009,14 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOO
         LL_INFOS("Window") << "Error creating HMD window" << LL_ENDL;
         destroyHMDWindow();
         return FALSE;
+    }
+
+    if (mWindow[0] && mGLView[0])
+    {
+        // the above just stole the focus from the main window, so unless we want the initial 
+        // focus status to be screwed up, we need to set it back to the main window here.
+        makeFirstResponder(mWindow[0], mGLView[0]);
+        makeWindowOrderFront(mWindow[0]);
     }
 
     return TRUE;
@@ -1981,14 +2055,15 @@ BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
         // Incorrect parameter or no view -> error
         return FALSE;
     }
+    //LL_DEBUGS("Window") << "setRenderWindow : start" << LL_ENDL;
+
+    mFullscreen = fullscreen;
+
     if (mCurRCIdx == idx)
     {
         // Already set to the correct window, nothing to do
         return TRUE;
     }
-    //LL_DEBUGS("Window") << "setRenderWindow : start" << LL_ENDL;
-
-    mFullscreen = fullscreen;
 
     // Set the view on the current context
     setCGLCurrentContext(mGLView[idx]);
@@ -2001,17 +2076,20 @@ BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
 }
 
 /*virtual*/
-BOOL LLWindowMacOSX::setFocusWindow(S32 idx, BOOL clipping, S32 w, S32 h)
+BOOL LLWindowMacOSX::setFocusWindow(S32 idx)
 {
     if (idx < 0 || idx > 1 || !mWindow[idx] || !mGLView[idx])
     {
         // Incorrect parameter or no view -> error
         return FALSE;
     }
+    return TRUE;
+}
+
+void LLWindowMacOSX::setHMDMode(BOOL mode, U32 min_width, U32 min_height)
+{
     BOOL oldHMDMode = mHMDMode;
-    mHMDMode = clipping;
-    mHMDWidth = mHMDMode ? w : 0;
-    mHMDHeight = mHMDMode ? h : 0;
+    mHMDMode = mode;
     if (mHMDMode && !oldHMDMode && !mCursorHidden)
     {
         hideNSCursor();
@@ -2020,10 +2098,8 @@ BOOL LLWindowMacOSX::setFocusWindow(S32 idx, BOOL clipping, S32 w, S32 h)
     {
         showNSCursor();
     }
-
-    return TRUE;
+    setMinSize(min_width, min_height, false);
 }
-
 
 /*virtual*/
 S32 LLWindowMacOSX::getDisplayCount()

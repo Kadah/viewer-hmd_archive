@@ -117,7 +117,8 @@ public:
     /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror);
     /*virtual*/ BOOL destroyHMDWindow();
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
-    /*virtual*/ BOOL setFocusWindow(S32 idx, BOOL clipping, S32 w = 0, S32 h = 0);
+    /*virtual*/ BOOL setFocusWindow(S32 idx);
+    /*virtual*/ void setHMDMode(BOOL mode, U32 min_width = 0, U32 min_height = 0);
     /*virtual*/ S32 getDisplayCount();
     /*virtual*/ void enableVSync(BOOL b);
 

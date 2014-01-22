@@ -229,6 +229,14 @@ void LLWindow::setMinSize(U32 min_width, U32 min_height, bool enforce_immediatel
 	}
 }
 
+
+//virtual
+void LLWindow::getMinSize(U32& min_width, U32& min_height)
+{
+    min_width = mMinWindowWidth;
+    min_height = mMinWindowHeight;
+}
+
 //virtual
 void LLWindow::processMiscNativeEvents()
 {

@@ -76,6 +76,7 @@ public:
 	BOOL setSize(LLCoordScreen size);
 	BOOL setSize(LLCoordWindow size);
 	virtual void setMinSize(U32 min_width, U32 min_height, bool enforce_immediately = true);
+    virtual void getMinSize(U32& min_width, U32& min_height);
 	virtual BOOL switchContext(BOOL fullscreen, const LLCoordScreen &size, BOOL disable_vsync, const LLCoordScreen * const posp = NULL) = 0;
 	virtual BOOL setCursorPosition(LLCoordWindow position) = 0;
 	virtual BOOL getCursorPosition(LLCoordWindow *position) = 0;
@@ -170,9 +171,14 @@ public:
     virtual BOOL destroyHMDWindow() { return FALSE; };
     S32 getRenderWindow(BOOL& fullScreen) const { fullScreen = mFullscreen; return mCurRCIdx; }
     virtual BOOL setRenderWindow(S32 idx, BOOL fullscreen) { return FALSE; };
-    virtual BOOL setFocusWindow(S32 idx, BOOL clipping, S32 w = 0, S32 h = 0) { return FALSE; };
+    virtual BOOL setFocusWindow(S32 idx) { return FALSE; };
+    virtual void setHMDMode(BOOL mode, U32 min_width = 0, U32 min_height = 0) {}
     virtual S32 getDisplayCount() { return 1; };
     virtual void enableVSync(BOOL b) {}
+
+    // See note in llwindowmacosx.h for why these methods exist
+    virtual BOOL getFramePos(LLCoordScreen* pos) { return getPosition(pos); }
+    virtual BOOL getFrameSize(LLCoordScreen* size) { return getSize(size); }
     
 protected:
 	LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags);
