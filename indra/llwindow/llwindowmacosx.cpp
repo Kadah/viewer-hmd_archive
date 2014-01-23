@@ -2057,21 +2057,21 @@ BOOL LLWindowMacOSX::setRenderWindow(S32 idx, BOOL fullscreen)
     }
     //LL_DEBUGS("Window") << "setRenderWindow : start" << LL_ENDL;
 
-    mFullscreen = fullscreen;
-
-    if (mCurRCIdx == idx)
+    if (mCurRCIdx == idx && fullscreen == mFullscreen)
     {
         // Already set to the correct window, nothing to do
         return TRUE;
     }
 
+    mCurRCIdx = idx;
+    mFullscreen = fullscreen;
+
     // Set the view on the current context
-    setCGLCurrentContext(mGLView[idx]);
-    makeFirstResponder(mWindow[idx], mGLView[idx]);
-    makeWindowOrderFront(mWindow[idx]);
+    setCGLCurrentContext(mGLView[mCurRCIdx]);
+    makeFirstResponder(mWindow[mCurRCIdx], mGLView[mCurRCIdx]);
+    makeWindowOrderFront(mWindow[mCurRCIdx]);
     
     //LL_DEBUGS("Window") << "setRenderWindow : successful" << LL_ENDL;
-    mCurRCIdx = idx;
     return TRUE;
 }
 

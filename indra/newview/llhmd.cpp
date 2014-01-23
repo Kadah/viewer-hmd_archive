@@ -521,8 +521,12 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             setRenderWindowMain();
                         }
                         windowp->setHMDMode(FALSE, gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
-                        windowp->setPosition(mMainWindowPos);
+#if LL_DARWIN
+                        windowp->setSize(mMainClientSize);
+#else
                         windowp->setSize(mMainWindowSize);
+#endif
+                        windowp->setPosition(mMainWindowPos);
                         if (oldMode == RenderMode_HMD)
                         {
                             windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
@@ -540,8 +544,10 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
         default:
             {
                 // clear the main window and save off size settings
-                windowp->getFramePos(&mMainWindowPos);
-                windowp->getFrameSize(&mMainWindowSize);
+                //windowp->getFramePos(&mMainWindowPos);
+                windowp->getPosition(&mMainWindowPos);
+                //windowp->getFrameSize(&mMainWindowSize);
+                windowp->getSize(&mMainWindowSize);
                 windowp->getSize(&mMainClientSize);
                 renderUnusedMainWindow();
                 mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
@@ -626,11 +632,15 @@ BOOL LLHMD::setRenderWindowMain()
 
 BOOL LLHMD::setRenderWindowHMD()
 {
+    BOOL res = FALSE;
 #if LL_HMD_SUPPORTED
-    return gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
-#else
-    return FALSE;
+#if LL_WINDOWS
+    res = gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
+#elif LL_DARWIN
+    res = gViewerWindow->getWindow()->setRenderWindow(1, FALSE);
 #endif
+#endif // LL_HMD_SUPPORTED
+    return res;
 }
 
 

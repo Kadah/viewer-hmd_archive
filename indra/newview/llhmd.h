@@ -248,7 +248,7 @@ public:
     S32 getMainClientHeight() const { return mMainClientSize.mY; }
     void setMainClientHeight(S32 h) { mMainClientSize.mY = h; }
     LLCoordWindow getMainClientSize() const { return mMainClientSize; }
-    LLCoordScreen getHMDClientSize() const { return LLCoordScreen(getHMDWidth(), getHMDHeight()); }
+    LLCoordWindow getHMDClientSize() const { return LLCoordWindow(getHMDWidth(), getHMDHeight()); }
 
     std::string getUIShapeName() const;
     F32 getUISurfaceArcHorizontal() const { return mUIShape.mArcHorizontal; }
