@@ -176,9 +176,8 @@ public:
     virtual S32 getDisplayCount() { return 1; };
     virtual void enableVSync(BOOL b) {}
 
-    // See note in llwindowmacosx.h for why these methods exist
+    // See note in llwindowmacosx.h for why this method exists
     virtual BOOL getFramePos(LLCoordScreen* pos) { return getPosition(pos); }
-    virtual BOOL getFrameSize(LLCoordScreen* size) { return getSize(size); }
     
 protected:
 	LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags);

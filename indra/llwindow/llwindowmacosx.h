@@ -142,24 +142,19 @@ public:
     // adding to get real info from the Mac since this class is very inconsistent about returning 
     // whole window (i.e. "Frame") vs. view size and position.  The following get functions in this class return
     // data that is not usable in the corresponding set functions:
-    // 
+    //
     // getPosition(LLCoordScreen* position) - returns position of the upper-left corner of the VIEW, not the windowframe
-    // getSize(LLCoordScreen *size) - returns the size of the VIEW, not the windowframe
     //
     // However, the following methods expect data from the Frame, not the view:
     // setPosition(LLCoordScreen position) - sets the position assuming you passed in the upper left of the FRAME
-    // setSize(LLCoordWindow size) - currently just adds 22 to size.mY before changing to 
-    //                               LLCoordScreen and calling setSize(LLCoordScreen size).
     //
-    // Needless to say, this makes getting and setting the window size/position problematical on the Mac.
+    // Needless to say, this makes getting and setting the window position problematical on the Mac.
     // I would fix these, but I'm afraid of what else is now relying upon the current behavior.  *sigh*
-    // Instead, I'll just add methods that get the "correct" data so that the setsize/pos methods can be called
+    // Instead, I'll just add methods that get the "correct" data so that the setPosition method can be called
     // with the correct data on the Mac.
     
     // returns the upper-left screen coordinates for the window frame (including the title bar and any borders)
     /*virtual*/ BOOL getFramePos(LLCoordScreen* pos);
-    // returns the size of the window frame (including title bars and borders)
-    /*virtual*/ BOOL getFrameSize(LLCoordScreen* size);
 
     
 protected:
@@ -239,10 +234,9 @@ protected:
 	BOOL		mForceRebuild;
     S32	        mDragOverrideCursor;
     BOOL        mHMDMode;
-    S32         mHMDWidth;
-    S32         mHMDHeight;
     S32         mHMDScreenId;
-	S32         mHMDClientHeightDiff;
+    S32         mHMDSize[2];
+    F32         mHMDScale[2];
 
 	// Input method management through Text Service Manager.
 	BOOL		mLanguageTextInputAllowed;

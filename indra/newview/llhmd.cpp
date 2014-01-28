@@ -484,6 +484,14 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             mRenderMode = RenderMode_ScreenStereo;
                             return;
                         }
+#if LL_DARWIN
+                        // resize main window to be the size of the HMD
+                        // to handle cursor positioning in HMD mode
+                        if (!isMainFullScreen())
+                        {
+                            windowp->setSize(getHMDClientSize());
+                        }
+#endif
                         if (!setRenderWindowHMD())
                         {
                             // Somehow, we've lost the HMD window, so just recreate it
@@ -507,8 +515,15 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     {
                         setRenderWindowMain();
                         windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-                        windowp->setSize(getHMDClientSize());
-                        windowp->setPosition(mMainWindowPos);
+                        if (isMainFullScreen())
+                        {
+                            gViewerWindow->reshape(mImpl->getHMDWidth(), mImpl->getHMDHeight());
+                        }
+                        else
+                        {
+                            windowp->setSize(getHMDClientSize());
+                            windowp->setPosition(mMainWindowPos);
+                        }
                         windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
                     }
                     break;
@@ -521,12 +536,15 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             setRenderWindowMain();
                         }
                         windowp->setHMDMode(FALSE, gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
+                        if (!isMainFullScreen())
+                        {
 #if LL_DARWIN
-                        windowp->setSize(mMainClientSize);
+                            windowp->setSize(mMainClientSize);
 #else
-                        windowp->setSize(mMainWindowSize);
+                            windowp->setSize(mMainWindowSize);
 #endif
-                        windowp->setPosition(mMainWindowPos);
+                            windowp->setPosition(mMainWindowPos);
+                        }
                         if (oldMode == RenderMode_HMD)
                         {
                             windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
@@ -544,9 +562,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
         default:
             {
                 // clear the main window and save off size settings
-                //windowp->getFramePos(&mMainWindowPos);
-                windowp->getPosition(&mMainWindowPos);
-                //windowp->getFrameSize(&mMainWindowSize);
+                windowp->getFramePos(&mMainWindowPos);
                 windowp->getSize(&mMainWindowSize);
                 windowp->getSize(&mMainClientSize);
                 renderUnusedMainWindow();
@@ -569,6 +585,14 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             mRenderMode = RenderMode_None;
                             return;
                         }
+#if LL_DARWIN
+                        // resize main window to be the size of the HMD
+                        // to handle cursor positioning in HMD mode
+                        if (!isMainFullScreen())
+                        {
+                            windowp->setSize(getHMDClientSize());
+                        }
+#endif
                         if (!setRenderWindowHMD())
                         {
                             // Somehow, we've lost the HMD window, so just recreate it
@@ -591,8 +615,15 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     // switching from Normal to ScreenStereo
                     {
                         windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-                        windowp->setSize(getHMDClientSize());
-                        windowp->setPosition(mMainWindowPos);
+                        if (isMainFullScreen())
+                        {
+                            gViewerWindow->reshape(mImpl->getHMDWidth(), mImpl->getHMDHeight());
+                        }
+                        else
+                        {
+                            windowp->setSize(getHMDClientSize());
+                            windowp->setPosition(mMainWindowPos);
+                        }
                         LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
                     }
                     break;
@@ -634,11 +665,7 @@ BOOL LLHMD::setRenderWindowHMD()
 {
     BOOL res = FALSE;
 #if LL_HMD_SUPPORTED
-#if LL_WINDOWS
     res = gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
-#elif LL_DARWIN
-    res = gViewerWindow->getWindow()->setRenderWindow(1, FALSE);
-#endif
 #endif // LL_HMD_SUPPORTED
     return res;
 }

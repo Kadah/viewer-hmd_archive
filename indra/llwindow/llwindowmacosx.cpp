@@ -133,7 +133,8 @@ LLWindowMacOSX::LLWindowMacOSX(LLWindowCallbacks* callbacks,
     mGLView[0] = mGLView[1] = NULL;
     mCurRCIdx = 0;
     mHMDMode = FALSE;
-    mHMDWidth = mHMDHeight = mHMDClientHeightDiff = 0;
+    mHMDSize[0] = mHMDSize[1] = 0;
+    mHMDScale[0] = mHMDScale[1] = 1.0f;
 	mContext = NULL;
 	mPixelFormat = NULL;
 	mDisplay = CGMainDisplayID();
@@ -743,10 +744,9 @@ void LLWindowMacOSX::gatherInput()
 
 BOOL LLWindowMacOSX::getPosition(LLCoordScreen *position)
 {
-	float rect[4];
 	S32 err = -1;
 
-	if(mFullscreen)
+	if(mFullscreen && !mHMDMode)
 	{
 		position->mX = 0;
 		position->mY = 0;
@@ -754,6 +754,7 @@ BOOL LLWindowMacOSX::getPosition(LLCoordScreen *position)
 	}
 	else if (mWindow[mCurRCIdx])
 	{
+        float rect[4];
 		getContentViewBounds(mWindow[mCurRCIdx], rect);
 
 		position->mX = rect[0];
@@ -773,17 +774,17 @@ BOOL LLWindowMacOSX::getFramePos(LLCoordScreen* pos)
 {
     if (pos)
     {
-        if (mFullscreen)
+        if (mFullscreen && !mHMDMode)
         {
             pos->mX = pos->mY = 0;
             return TRUE;
         }
         else if (mWindow[mCurRCIdx])
         {
-            float sz[4];
-            getWindowSize(mWindow[mCurRCIdx], sz);
-            pos->mX = sz[0];
-            pos->mY = sz[1];
+            float rect[4];
+            getWindowSize(mWindow[mCurRCIdx], rect);
+            pos->mX = llround(rect[0]);
+            pos->mY = llround(rect[1]);
             return TRUE;
         }
     }
@@ -792,38 +793,31 @@ BOOL LLWindowMacOSX::getFramePos(LLCoordScreen* pos)
 
 BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
 {
-	float rect[4];
 	S32 err = -1;
 
-	if (mFullscreen)
-	{
-        if (mHMDMode)
-        {
-            size->mX = llmin(mFullscreenWidth, mHMDWidth);
-            size->mY = llmin(mFullscreenHeight, mHMDHeight);
-        }
-        else
-        {
-            size->mX = mFullscreenWidth;
-            size->mY = mFullscreenHeight;
-        }
+    if (mFullscreen && !mHMDMode)
+    {
+        size->mX = mFullscreenWidth;
+        size->mY = mFullscreenHeight;
         err = noErr;
-	}
-	else if (mWindow[mCurRCIdx])
-	{
+    }
+    else if (mWindow[mCurRCIdx])
+    {
+        float rect[4];
 		getContentViewBounds(mWindow[mCurRCIdx], rect);
+        S32 sz[2] = { llround(rect[2]), llround(rect[3]) };
         if (mHMDMode)
         {
-            size->mX = llmin((S32)rect[2], mHMDWidth);
-            size->mY = llmin((S32)rect[3], mHMDHeight);
+            size->mX = llmin(sz[0], mHMDSize[0]);
+            size->mY = llmin(sz[1], mHMDSize[1]);
         }
         else
         {
-            size->mX = rect[2];
-            size->mY = rect[3];
+            size->mX = sz[0];
+            size->mY = sz[1];
         }
         err = noErr;
-	}
+    }
 	else
 	{
 		llerrs << "LLWindowMacOSX::getPosition(): no window and not fullscreen!" << llendl;
@@ -834,35 +828,28 @@ BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
 
 BOOL LLWindowMacOSX::getSize(LLCoordWindow *size)
 {
-	float rect[4];
 	S32 err = -1;
-	
-    if (mFullscreen)
+
+    if (mFullscreen && !mHMDMode)
     {
-        if (mHMDMode)
-        {
-            size->mX = llmin(mFullscreenWidth, mHMDWidth);
-            size->mY = llmin(mFullscreenHeight, mHMDHeight);
-        }
-        else
-        {
-            size->mX = mFullscreenWidth;
-            size->mY = mFullscreenHeight;
-        }
+        size->mX = mFullscreenWidth;
+        size->mY = mFullscreenHeight;
         err = noErr;
     }
     else if (mWindow[mCurRCIdx])
     {
-        getContentViewBounds(mWindow[mCurRCIdx], rect);
+        float rect[4];
+		getContentViewBounds(mWindow[mCurRCIdx], rect);
+        S32 sz[2] = { llround(rect[2]), llround(rect[3]) };
         if (mHMDMode)
         {
-            size->mX = llmin((S32)rect[2], mHMDWidth);
-            size->mY = llmin((S32)rect[3], mHMDHeight);
+            size->mX = llmin(sz[0], mHMDSize[0]);
+            size->mY = llmin(sz[1], mHMDSize[1]);
         }
         else
         {
-            size->mX = rect[2];
-            size->mY = rect[3];
+            size->mX = sz[0];
+            size->mY = sz[1];
         }
         err = noErr;
     }
@@ -874,53 +861,16 @@ BOOL LLWindowMacOSX::getSize(LLCoordWindow *size)
 	return (err == noErr);
 }
 
-BOOL LLWindowMacOSX::getFrameSize(LLCoordScreen* size)
-{
-	S32 err = -1;
-
-	if (mFullscreen)
-	{
-        if (mHMDMode)
-        {
-            size->mX = llmin(mFullscreenWidth, mHMDWidth);
-            size->mY = llmin(mFullscreenHeight, mHMDHeight);
-        }
-        else
-        {
-            size->mX = mFullscreenWidth;
-            size->mY = mFullscreenHeight;
-        }
-        err = noErr;
-	}
-	else if (mWindow[mCurRCIdx])
-	{
-	    float rect[4];
-		getWindowSize(mWindow[mCurRCIdx], rect);
-        if (mHMDMode)
-        {
-            size->mX = llmin((S32)rect[2], mHMDWidth);
-            size->mY = llmin((S32)rect[3], mHMDHeight);
-        }
-        else
-        {
-            size->mX = rect[2];
-            size->mY = rect[3];
-            err = noErr;
-        }
-	}
-
-	return (err == noErr);
-}
-
 BOOL LLWindowMacOSX::setPosition(const LLCoordScreen position)
 {
 	if (mWindow[mCurRCIdx])
 	{
-		float pos[2] = {position.mX, position.mY};
+        float pos[2] = {position.mX, position.mY};
 		setWindowPos(mWindow[mCurRCIdx], pos);
+        return TRUE;
 	}
 
-	return TRUE;
+	return FALSE;
 }
 
 BOOL LLWindowMacOSX::setSizeImpl(const LLCoordScreen size)
@@ -940,8 +890,24 @@ BOOL LLWindowMacOSX::setSizeImpl(const LLCoordWindow size)
 {
 	if (mWindow[mCurRCIdx])
 	{
-        const int titlePadding = 22;
-        setWindowSize(mWindow[mCurRCIdx], size.mX, size.mY + titlePadding);
+        int h = size.mY + (mFullscreen ? 0 : 22);
+        setWindowSize(mWindow[mCurRCIdx], size.mX, h);
+        
+        mHMDScale[0] = mHMDScale[1] = 1.0f;
+        if (mHMDMode && mWindow[0])
+        {
+            float client[4];
+            float hmd[2] = { (float)mHMDSize[0], (float)mHMDSize[1] };
+            getContentViewBounds(mWindow[0], client);
+            if (client[2] > 0.0f && client[2] < hmd[0])
+            {
+                mHMDScale[0] = hmd[0] / client[2];
+            }
+            if (client[3] > 0.0f && client[3] < hmd[1])
+            {
+                mHMDScale[1] = hmd[1] / client[3];
+            }
+        }
         return TRUE;
 	}
     
@@ -1140,7 +1106,7 @@ BOOL LLWindowMacOSX::getCursorPosition(LLCoordWindow *position)
 
     if (mHMDMode)
     {
-        keepMouseWithinBounds(cursor_point, 0, mHMDWidth, mHMDHeight);
+        keepMouseWithinBounds(cursor_point, 0, mHMDSize[0], mHMDSize[1]);
     }
 
 	position->mX = cursor_point[0];
@@ -1151,14 +1117,20 @@ BOOL LLWindowMacOSX::getCursorPosition(LLCoordWindow *position)
 
 void LLWindowMacOSX::keepMouseWithinBounds(float* cp, S32 winIdx, S32 w, S32 h)
 {
-    BOOL outOfBounds = cp[0] < 0.0f || cp[0] > (float)w || cp[1] < 0.0f || cp[1] > (float)h;
+    float cpt[2] =
+    {
+        cp[0] * mHMDMode ? mHMDScale[0] : 1.0f,
+        cp[1] * mHMDMode ? mHMDScale[1] : 1.0f,
+    };
+    
+    BOOL outOfBounds = cpt[0] < 0.0f || cpt[0] > (float)w || cpt[1] < 0.0f || cpt[1] > (float)h;
     if (outOfBounds)
     {
-        cp[0] = llmax(0.0f, llmin((float)w, cp[0]));
-        cp[1] = llmax(0.0f, llmin((float)h, cp[1]));
+        cpt[0] = llmax(0.0f, llmin((float)w, cpt[0]));
+        cpt[1] = llmax(0.0f, llmin((float)h, cpt[1]));
         float scrPt[2];
-        scrPt[0] = cp[0];
-        scrPt[1] = cp[1];
+        scrPt[0] = cpt[0];
+        scrPt[1] = cpt[1];
         convertWindowToScreen(mWindow[winIdx], scrPt);
         CGPoint newPosition;
         newPosition.x = scrPt[0];
@@ -1337,7 +1309,7 @@ BOOL LLWindowMacOSX::convertCoords(LLCoordGL from, LLCoordWindow *to)
 	    to->mY = from.mY;
         if (mHMDMode && mCurRCIdx == 0)
         {
-            to->mY = llmin(to->mY, mHMDHeight);
+            to->mY = llmin(to->mY, mHMDSize[1]);
         }
 	    return TRUE;
     }
@@ -1971,8 +1943,8 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOO
     LL_INFOS("Window") << "initHMDWindow" << LL_ENDL;
     destroyHMDWindow();
 
-    mHMDWidth = width;
-    mHMDHeight = height;
+    mHMDSize[0] = width;
+    mHMDSize[1] = height;
 
     S32 screen_count = getDisplayCount();
     for (S32 screen_id = 0; screen_id < screen_count; screen_id++)
@@ -2166,7 +2138,7 @@ void LLWindowMacOSX::handleDragNDrop(std::string url, LLWindowCallbacks::DragNDr
 	
     if (mHMDMode)
     {
-        keepMouseWithinBounds(mouse_point, 0, mHMDWidth, mHMDHeight);
+        keepMouseWithinBounds(mouse_point, 0, mHMDSize[0], mHMDSize[1]);
     }
 
 	LLCoordWindow window_coords(mouse_point[0], mouse_point[1]);
