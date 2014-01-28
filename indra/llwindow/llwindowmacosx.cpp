@@ -1045,13 +1045,19 @@ void LLWindowMacOSX::setMouseClipping( BOOL b )
 
 BOOL LLWindowMacOSX::setCursorPosition(const LLCoordWindow position)
 {
-	BOOL result = FALSE;
-	LLCoordScreen screen_pos;
-
-	if (!convertCoords(position, &screen_pos))
+    S32 oldIdx = mCurRCIdx;
+    if (mHMDMode && nCurRCIdx == 1)
+    {
+        mCurRCIdx = 0;
+    }
+    LLCoordScreen screen_pos;
+    BOOL result = convertCoords(position, &screen_pos);
+    mCurRCIdx = oldIdx;
+	if (!result)
 	{
 		return FALSE;
 	}
+    result = FALSE;
 
 	CGPoint newPosition;
 
