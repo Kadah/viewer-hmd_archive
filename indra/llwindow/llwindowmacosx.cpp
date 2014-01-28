@@ -1962,7 +1962,7 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOO
         return FALSE;
     }
 
-    isMirror = CGDisplayMirrorsDisplay((CGDirectDisplayID)left) != kCGNullDirectDisplay;
+    isMirror = CGDisplayIsInMirrorSet((CGDirectDisplayID)left);
     if (isMirror)
     {
         // don't create a window in this case since we just want to use the "advanced" HMD mode in this case
