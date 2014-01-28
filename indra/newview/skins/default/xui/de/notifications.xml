@@ -4065,4 +4065,22 @@ Sie ist entweder voll oder wird in Kürze neu gestartet.
 		Dateien können nicht verschoben werden. Vorheriger Pfad wurde wiederhergestellt.
 		<usetemplate ignoretext="Dateien können nicht verschoben werden. Vorheriger Pfad wurde wiederhergestellt." name="okignore" yestext="OK"/>
 	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		Internes Problem: Kein Übergang in HMD-Modus möglich, da die Vorinitialisierung des HMD-Gerätemanagers fehlgeschlagen ist. Wahrscheinlich ist die HMD-Gerätebibliothek nicht installiert oder liegt in einer anderen Version vor als erwartet. Installieren Sie den Second Life-Client neu, um das Problem zu beheben.
+	</notification>
+	<notification name="HMDModeErrorALM">
+		Kein Übergang in HMD-Modus möglich, da erweitertes Beleuchtungsmodell nicht aktiviert ist.  Zur korrekten Darstellung im HMD-Modus ist das erweiterte Beleuchtungsmodell erforderlich.
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		Kein Übergang in HMD-Modus möglich, da keine HMD-Hardware erkannt wird. Stellen Sie sicher, dass das HMD-Monitorkabel fest eingesteckt ist.
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		Kein Übergang in HMD-Modus möglich, da keine HMD-Sensor-Hardware erkannt wird. Stellen Sie sicher, dass Ihr HMD-Gerät angeschlossen und das USB-Kabel sicher eingesteckt ist.
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		Internes Problem: Kein Übergang in HMD-Modus möglich, da das HMD-Darstellungsfenster nicht erstellt werden konnte. Starten Sie den Client neu, um das Problem zu beheben.
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		Die Funktion „[NAME]“ ist gegenwärtig deaktiviert.
+	</notification>
 </notifications>

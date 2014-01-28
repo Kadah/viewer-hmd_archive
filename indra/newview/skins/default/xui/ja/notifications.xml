@@ -4091,4 +4091,22 @@ M キーを押して変更します。
 		ファイルを移動できません。以前のパスがリストアされました。
 		<usetemplate ignoretext="ファイルを移動できません。以前のパスがリストアされました。" name="okignore" yestext="OK"/>
 	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		内部エラー: HMD デバイス マネージャのプレ初期化が失敗したため、HMD モードに移行できません。これは、おそらく、HMD デバイスライブラリがインストールされていないか、予期されるバージョンと異なることが原因です。Second Life クライアントを再インストールすれば、解決される可能性があります。
+	</notification>
+	<notification name="HMDModeErrorALM">
+		高度なライティングモデルが有効になっていないため、HMD モードに移行できません。HMD モードで適切にレンダリングするには、高度なライティングモデルが必要です。
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		HMD ハードウェアが検出されないため、HMD モードに移行できません。HMD モニタ ケーブルがしっかりと接続されているか確認してください。
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		HMD センサ ハードウェアが検出されないため、HMD モードに移行できません。HMD デバイスに電源が入っていて、USB ケーブルがしっかりと接続されていることを確認してください。
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		内部エラー: 内部の問題: HMD レンダリング ウィンドウを作成できなかったため、HMD モードに移行できません。この問題は、おそらくクライアントを再起動すれば、解決されます。
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		[NAME] 機能は現在無効になっています。
+	</notification>
 </notifications>

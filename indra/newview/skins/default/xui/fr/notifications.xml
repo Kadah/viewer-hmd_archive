@@ -4051,4 +4051,22 @@ Il est possible qu’elle soit pleine ou sur le point de redémarrer.
 		Impossible de déplacer les fichiers. Chemin précédent rétabli.
 		<usetemplate ignoretext="Impossible de déplacer les fichiers. Chemin précédent rétabli." name="okignore" yestext="OK"/>
 	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		Problème interne : Impossible de passer en mode HMD car la pré-initialisation du gestionnaire du périphérique HMD a échoué. Cela signifie probablement que la bibilothèque de périphériques HMD n&apos;est pas installée ou n&apos;est pas la version attendue. Pour résoudre ce problème, essayez de réinstaller le client Second Life.
+	</notification>
+	<notification name="HMDModeErrorALM">
+		Impossible de passer en mode HMD car le modèle d&apos;éclairage avancé n&apos;est pas activé.  Le modèle d&apos;éclairage avancé est nécessaire pour obtenir un rendu adéquat en mode HMD.
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		Impossible de passer en mode HMD car aucun matériel HMD n&apos;a été détecté. Vérifiez que votre câble de moniteur HMD est bien branché.
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		Impossible de passer en mode HMD car aucun matériel de capteur HMD n&apos;a été détecté. Vérifiez que votre périphérique HMD est sous tension et que le câble USB est bien connecté.
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		Problème interne : Impossible de passer en mode HMD car la création de la fenêtre de rendu HMD a échoué. Pour résoudre ce problème, essayez de redémarrer le client.
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		La fonctionnalité [NAME] est désactivée.
+	</notification>
 </notifications>
