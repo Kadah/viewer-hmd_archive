@@ -1046,7 +1046,7 @@ void LLWindowMacOSX::setMouseClipping( BOOL b )
 BOOL LLWindowMacOSX::setCursorPosition(const LLCoordWindow position)
 {
     S32 oldIdx = mCurRCIdx;
-    if (mHMDMode && nCurRCIdx == 1)
+    if (mHMDMode && mCurRCIdx == 1)
     {
         mCurRCIdx = 0;
     }
