@@ -4050,4 +4050,22 @@ Posiblemente esté llena o vaya a reiniciarse pronto.
 		No se pueden mover los archivos. Ruta anterior restaurada.
 		<usetemplate ignoretext="No se pueden mover los archivos. Ruta anterior restaurada." name="okignore" yestext="OK"/>
 	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		Problema interno: no se puede activar el modo HMD por un error de inicialización previa del administrador de dispositivos HMD. Esto probablemente se debe a que la biblioteca de dispositivos HMD no está instalada o a que su versión no es la que se esperaba. Este problema podría resolverse instalando de nuevo el cliente de Second Life.
+	</notification>
+	<notification name="HMDModeErrorALM">
+		No se puede activar el modo HMD porque el Modelo de iluminación avanzado no está activado. Se necesita el Modelo de iluminación avanzado para conseguir un renderizado correcto en el modo HMD.
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		No se puede activar el modo HMD porque no se ha detectado el hardware de HMD. Comprueba si el cable del monitor de HMD está bien conectado.
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		No se puede activar el modo HMD porque no se ha detectado el hardware sensor de HMD. Comprueba si el dispositivo HMD está encendido y el cable USB está bien conectado.
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		Problema interno: no se puede activar el modo HMD porque no se ha podido crear la ventana de renderización de HMD. Este problema puede resolverse reiniciando el cliente.
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		La funcionalidad [NAME] actualmente está desactivada.
+	</notification>
 </notifications>

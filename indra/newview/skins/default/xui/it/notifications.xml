@@ -4057,4 +4057,22 @@ potrebbe essere piena o in riavvio.
 		Impossibile spostare i file. Il percorso precedente è stato ripristinato.
 		<usetemplate ignoretext="Impossibile spostare i file. Il percorso precedente è stato ripristinato." name="okignore" yestext="OK"/>
 	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		Problema interno: La modalità HMD non può essere avviata perché non è stata pre-inizializzata la gestione del dispositivo HMD. È probabile che la libreria del dispositivo HMD non sia installata o che la versione sia diversa dal previsto. Per risolvere il problema si potrebbe reinstallare il client Second Life.
+	</notification>
+	<notification name="HMDModeErrorALM">
+		La modalità HMD non può essere avviata perché non è attivato il Modello illuminazione avanzato.  Il Modello illuminazione avanzato è necessario per il rendering corretto in modalità HMD.
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		La modalità HMD non può essere avviata perché non è stato rilevato l&apos;hardware HMD. Verificare che il cavo del monitor HMD sia fissato saldamente.
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		La modalità HMD non può essere avviata perché non è stato rilevato l&apos;hardware per un sensore HMD. Verificare che il dispositivo HMD sia alimentato e che il cavo USB sia collegato saldamente.
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		Problema interno: La modalità HMD non può essere avviata perché non è possibile creare la finestra di rendering HMD. Per risolvere il problema si potrebbe riavviare il client.
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		La funzione [NAME] è al momento disattivata.
+	</notification>
 </notifications>

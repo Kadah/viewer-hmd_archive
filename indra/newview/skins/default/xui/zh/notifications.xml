@@ -4042,4 +4042,22 @@ SHA1 指紋：[MD5_DIGEST]
 		無法移動檔案。 已恢復前一個路徑。
 		<usetemplate ignoretext="無法移動檔案。 已恢復前一個路徑。" name="okignore" yestext="確定"/>
 	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		內部發生問題：無法進入頭戴顯示器(HMD)模式，因為HMD裝置管理程式前置初始化失敗。  原因可能是未安裝HMD裝置程式庫，或是已安裝的版本和預期的不符。  重新安裝第二人生客戶端或可解決這問題。
+	</notification>
+	<notification name="HMDModeErrorALM">
+		無法進入頭戴顯示器模式，因為未啟用進階照明模型。  必須啟用進階照明模型，才能在頭戴顯示器模式下正常呈像。
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		無法進入頭戴顯示器(HMD)模式，因為無法偵測到HMD硬體。  請檢查頭戴顯示器接線是否接好。
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		無法進入頭戴顯示器(HMD)模式，因為無法偵測到HMD感應器硬體。  請檢查你的HMD裝置是否打開，USB線是否插好。
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		內部發生問題：無法進入頭戴顯示器(HMD)模式，因為無法建立HMD呈像視窗。   重啟客戶端或可解決這問題。
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		[NAME]功能目前停用。
+	</notification>
 </notifications>

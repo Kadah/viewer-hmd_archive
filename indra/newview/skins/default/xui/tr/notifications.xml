@@ -4045,4 +4045,22 @@ Dolu olabilir veya yakında yeniden başlatılacak olabilir.
 		Dosyalar taşınamıyor. Önceki yol geri yüklendi.
 		<usetemplate ignoretext="Dosyalar taşınamıyor. Önceki yol geri yüklendi." name="okignore" yestext="Tamam"/>
 	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		Dahili Sorun: HMD moduna girilemiyor çünkü HMD cihaz yöneticisinin ön başlatılması başarısız oldu. Bunun muhtemel anlamı HMD cihaz kütüphanesinin yüklenmemiş olduğu veya beklenenden farklı bir sürüm olduğudur. Second Life istemcisinin tekrar kurulması bu sorunu çözebilir.
+	</notification>
+	<notification name="HMDModeErrorALM">
+		HMD moduna girilemiyor çünkü Gelişmiş Aydınlatma Modeli etkin değil. HMD modunda düzgün işleme için Gelişmiş Aydınlatma Modeli gerekir.
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		HMD moduna girilemiyor çünkü bir HMD donanımı algılanamadı. Güvenli olduğuna emin olmak için HMD&apos;nizin ekran kablosunu kontrol edin.
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		HMD moduna girilemiyor çünkü HMD Sensör donanımı algılanamadı. HMD cihazınıza güç beslendiğini ve USB kablosunun güvenli bir şekilde bağlandığına emin olun.
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		Dahili Sorun: HMD moduna girilemiyor çünkü HMD işleme penceresi oluşturulamadı. İstemcinin tekrar başlatılması bu sorunu muhtemelen çözecektir.
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		[NAME] işlevi şu anda devre dışı.
+	</notification>
 </notifications>
