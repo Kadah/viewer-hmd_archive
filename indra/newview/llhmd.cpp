@@ -292,26 +292,29 @@ BOOL LLHMD::init()
 }
 
 void LLHMD::onChangeHMDAdvancedMode() { gHMD.isAdvancedMode(gSavedSettings.getBOOL("HMDAdvancedMode")); }
-void LLHMD::onChangeInterpupillaryDistance() { gHMD.setInterpupillaryOffset(gSavedSettings.getF32("HMDInterpupillaryDistance")); }
-void LLHMD::onChangeEyeToScreenDistance() { gHMD.setEyeToScreenDistance(gSavedSettings.getF32("HMDEyeToScreenDistance")); }
-void LLHMD::onChangeEyeDepth() { gHMD.mEyeDepth = gSavedSettings.getF32("HMDEyeDepth"); }
-void LLHMD::onChangeUIMagnification() { gHMD.setUIMagnification(gSavedSettings.getF32("HMDUIMagnification")); }
+void LLHMD::onChangeInterpupillaryDistance() { if (!gHMD.isSavingSettings()) { gHMD.setInterpupillaryOffset(gSavedSettings.getF32("HMDInterpupillaryDistance")); } }
+void LLHMD::onChangeEyeToScreenDistance() { if (!gHMD.isSavingSettings()) { gHMD.setEyeToScreenDistance(gSavedSettings.getF32("HMDEyeToScreenDistance")); } }
+void LLHMD::onChangeEyeDepth() { if (!gHMD.isSavingSettings()) { gHMD.mEyeDepth = gSavedSettings.getF32("HMDEyeDepth"); } }
+void LLHMD::onChangeUIMagnification() { if (!gHMD.isSavingSettings()) { gHMD.setUIMagnification(gSavedSettings.getF32("HMDUIMagnification")); } }
 
 void LLHMD::onChangeUISurfaceSavedParams()
 {
-    gHMD.mUIShape.mPresetType = (U32)LLHMD::kCustom;
-    gHMD.mUIShape.mPresetTypeIndex = 1;
-    gHMD.mUIShape.mArcHorizontal = gSavedSettings.getF32("HMDUISurfaceArcHorizontal");
-    gHMD.mUIShape.mArcVertical = gSavedSettings.getF32("HMDUISurfaceArcVertical");
-    gHMD.mUIShape.mToroidRadiusWidth = gSavedSettings.getF32("HMDUISurfaceToroidWidth");
-    gHMD.mUIShape.mToroidRadiusDepth = gSavedSettings.getF32("HMDUISurfaceToroidDepth");
-    gHMD.mUIShape.mToroidCrossSectionRadiusWidth = gSavedSettings.getF32("HMDUISurfaceToroidCSWidth");
-    gHMD.mUIShape.mToroidCrossSectionRadiusHeight = gSavedSettings.getF32("HMDUISurfaceToroidCSHeight");
-    LLVector3 offsets = gSavedSettings.getVector3("HMDUISurfaceOffsets");
-    gHMD.mUIShape.mOffsetX = offsets[VX];
-    gHMD.mUIShape.mOffsetY = offsets[VY];
-    gHMD.mUIShape.mOffsetZ = offsets[VZ];
-    onChangeUISurfaceShape();
+    if (!gHMD.isSavingSettings())
+    {
+        gHMD.mUIShape.mPresetType = (U32)LLHMD::kCustom;
+        gHMD.mUIShape.mPresetTypeIndex = 1;
+        gHMD.mUIShape.mArcHorizontal = gSavedSettings.getF32("HMDUISurfaceArcHorizontal");
+        gHMD.mUIShape.mArcVertical = gSavedSettings.getF32("HMDUISurfaceArcVertical");
+        gHMD.mUIShape.mToroidRadiusWidth = gSavedSettings.getF32("HMDUISurfaceToroidWidth");
+        gHMD.mUIShape.mToroidRadiusDepth = gSavedSettings.getF32("HMDUISurfaceToroidDepth");
+        gHMD.mUIShape.mToroidCrossSectionRadiusWidth = gSavedSettings.getF32("HMDUISurfaceToroidCSWidth");
+        gHMD.mUIShape.mToroidCrossSectionRadiusHeight = gSavedSettings.getF32("HMDUISurfaceToroidCSHeight");
+        LLVector3 offsets = gSavedSettings.getVector3("HMDUISurfaceOffsets");
+        gHMD.mUIShape.mOffsetX = offsets[VX];
+        gHMD.mUIShape.mOffsetY = offsets[VY];
+        gHMD.mUIShape.mOffsetZ = offsets[VZ];
+        onChangeUISurfaceShape();
+    }
 }
 
 void LLHMD::onChangePresetValues()
@@ -388,13 +391,21 @@ void LLHMD::onChangePresetValues()
     }
 }
 
-void LLHMD::onChangeUIShapePreset() { gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset")); }
-void LLHMD::onChangeWorldCursorSizeMult() { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); }
+void LLHMD::onChangeUIShapePreset() { if (!gHMD.isSavingSettings()) { gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset")); } }
+void LLHMD::onChangeWorldCursorSizeMult() { if (!gHMD.isSavingSettings()) { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); } }
 void LLHMD::onChangeMoveFollowsLookDir() { gHMD.moveFollowsLookDir(gSavedSettings.getBOOL("HMDMoveFollowsLookDir")); }
 
 void LLHMD::saveSettings()
 {
-    // TODO: when we have correct defaults and settings.xml param names, enable this block.  For now, changes to these settings will revert to defaults after each session.
+    isSavingSettings(TRUE);
+    if (mUIShapePreset == 0)
+    {
+        // These SHOULD already be set to these values, but just in case..
+        mUIShape.mPresetType = (U32)LLHMD::kCustom;
+        mUIShape.mPresetTypeIndex = 1;
+
+        addPreset();
+    }
     gSavedSettings.setF32("HMDInterpupillaryDistance", gHMD.getInterpupillaryOffset());
     gSavedSettings.setF32("HMDUISurfaceArcHorizontal", gHMD.getUISurfaceArcHorizontal());
     gSavedSettings.setF32("HMDUISurfaceArcVertical", gHMD.getUISurfaceArcVertical());
@@ -410,6 +421,7 @@ void LLHMD::saveSettings()
     gSavedSettings.setF32("HMDEyeDepth", gHMD.getEyeDepth());
     gSavedSettings.setBOOL("HMDUseMotionPrediction", gHMD.useMotionPrediction());
     gSavedSettings.setF32("HMDWorldCursorSizeMult", gHMD.getWorldCursorSizeMult());
+    isSavingSettings(FALSE);
 
     static const char* kPresetTypeStrings[] = { "Custom", "Default", "User" };
     LLSDArray entries;
@@ -789,6 +801,7 @@ void LLHMD::onAppFocusLost()
 
 void LLHMD::renderUnusedMainWindow()
 {
+#if LL_HMD_SUPPORTED
     if (gHMD.getRenderMode() == LLHMD::RenderMode_HMD
         && gHMD.isPostDetectionInitialized()
         && gHMD.isHMDConnected()
@@ -806,6 +819,7 @@ void LLHMD::renderUnusedMainWindow()
             gViewerWindow->getWindow()->swapBuffers();
         }
     }
+#endif
 }
 
 
@@ -1024,16 +1038,16 @@ BOOL LLHMD::addPreset()
     {
         const UISurfaceShapeSettings& settings = mUIPresetValues[i];
         BOOL isSame = TRUE;
-        isSame = isSame && (mUIShape.mOffsetX == settings.mOffsetX);
-        isSame = isSame && (mUIShape.mOffsetY == settings.mOffsetY);
-        isSame = isSame && (mUIShape.mOffsetZ == settings.mOffsetZ);
-        isSame = isSame && (mUIShape.mToroidRadiusWidth == settings.mToroidRadiusWidth);
-        isSame = isSame && (mUIShape.mToroidRadiusDepth == settings.mToroidRadiusDepth);
-        isSame = isSame && (mUIShape.mToroidCrossSectionRadiusWidth == settings.mToroidCrossSectionRadiusWidth);
-        isSame = isSame && (mUIShape.mToroidCrossSectionRadiusHeight == settings.mToroidCrossSectionRadiusHeight);
-        isSame = isSame && (mUIShape.mArcHorizontal == settings.mArcHorizontal);
-        isSame = isSame && (mUIShape.mArcVertical == settings.mArcVertical);
-        isSame = isSame && (mUIShape.mUIMagnification == settings.mUIMagnification);
+        isSame = isSame && (is_approx_equal(mUIShape.mOffsetX, settings.mOffsetX));
+        isSame = isSame && (is_approx_equal(mUIShape.mOffsetY, settings.mOffsetY));
+        isSame = isSame && (is_approx_equal(mUIShape.mOffsetZ, settings.mOffsetZ));
+        isSame = isSame && (is_approx_equal(mUIShape.mToroidRadiusWidth, settings.mToroidRadiusWidth));
+        isSame = isSame && (is_approx_equal(mUIShape.mToroidRadiusDepth, settings.mToroidRadiusDepth));
+        isSame = isSame && (is_approx_equal(mUIShape.mToroidCrossSectionRadiusWidth, settings.mToroidCrossSectionRadiusWidth));
+        isSame = isSame && (is_approx_equal(mUIShape.mToroidCrossSectionRadiusHeight, settings.mToroidCrossSectionRadiusHeight));
+        isSame = isSame && (is_approx_equal(mUIShape.mArcHorizontal, settings.mArcHorizontal));
+        isSame = isSame && (is_approx_equal(mUIShape.mArcVertical, settings.mArcVertical));
+        isSame = isSame && (is_approx_equal(mUIShape.mUIMagnification, settings.mUIMagnification));
         if (isSame)
         {
             setUIShapePresetIndex(i);

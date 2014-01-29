@@ -72,6 +72,7 @@ public:
         kFlag_HMDSensorConnected        = 1 << 11,
         kFlag_LatencyTesterConnected    = 1 << 12,
         kFlag_HMDMirror                 = 1 << 13,
+        kFlag_SavingSettings            = 1 << 14,
     };
 
     enum eUIPresetType
@@ -134,6 +135,8 @@ public:
     void isLatencyTesterConnected(BOOL b) { if (b) { mFlags |= kFlag_LatencyTesterConnected; } else { mFlags &= ~kFlag_LatencyTesterConnected; } }
     BOOL isHMDMirror() const { return ((mFlags & kFlag_HMDMirror) != 0) ? TRUE : FALSE; }
     void isHMDMirror(BOOL b) { if (b) { mFlags |= kFlag_HMDMirror; } else { mFlags &= ~kFlag_HMDMirror; } }
+    BOOL isSavingSettings() const { return ((mFlags & kFlag_SavingSettings) != 0) ? TRUE : FALSE; }
+    void isSavingSettings(BOOL b) { if (b) { mFlags |= kFlag_SavingSettings; } else { mFlags &= ~kFlag_SavingSettings; } }
 
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }

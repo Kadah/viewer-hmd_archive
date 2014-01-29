@@ -233,6 +233,7 @@ void LLFloaterHMDConfigDebug::onOpen(const LLSD& key)
     if (pPanel->mUISurfaceShapePresetSliderCtrl)
     {
         pPanel->mUISurfaceShapePresetOriginal = (F32)gHMD.getUIShapePresetIndex();
+        pPanel->mUISurfaceShapePresetSliderCtrl->setMaxValue((F32)llmax(0, gHMD.getNumUIShapePresets() - 1));
         pPanel->mUISurfaceShapePresetSliderCtrl->setValue(pPanel->mUISurfaceShapePresetOriginal);
         pPanel->updateUIShapePresetLabel(TRUE);
     }
@@ -376,9 +377,13 @@ void LLFloaterHMDConfigDebug::updateUISurfaceOffsetDepthLabel()
 
 void LLFloaterHMDConfigDebug::onSetUIShapePreset()
 {
-    F32 f = mUISurfaceShapePresetSliderCtrl->getValueF32();
+    S32 f = llround(mUISurfaceShapePresetSliderCtrl->getValueF32());
     U32 oldType = gHMD.getUIShapePresetType();
-    gHMD.setUIShapePresetIndex((S32)f);
+    if (f > llround(mUISurfaceShapePresetSliderCtrl->getMaxValue()))
+    {
+        mUISurfaceShapePresetSliderCtrl->setMaxValue((F32)f);
+    }
+    gHMD.setUIShapePresetIndex(f);
     updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
 
     mUISurfaceOffsetDepthSliderCtrl->setValue(llround(gHMD.getUISurfaceOffsetDepth(), mUISurfaceOffsetDepthSliderCtrl->getIncrement()));
@@ -406,7 +411,7 @@ void LLFloaterHMDConfigDebug::updateUIShapePresetLabel(BOOL typeChanged)
     // This method is called from a number of places since the preset index can be changed as a side effect of a number
     // of other values being modified.  So, to keep the slider in sync with the actual value, we update the slider value
     // here to match the real value.
-    if (gHMD.getUIShapePresetIndex() != (S32)mUISurfaceShapePresetSliderCtrl->getValueF32())
+    if (gHMD.getUIShapePresetIndex() != llround(mUISurfaceShapePresetSliderCtrl->getValueF32()))
     {
         mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndex(), TRUE);
     }
