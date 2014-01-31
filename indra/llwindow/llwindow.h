@@ -73,8 +73,8 @@ public:
 	virtual BOOL getSize(LLCoordScreen *size) = 0;
 	virtual BOOL getSize(LLCoordWindow *size) = 0;
 	virtual BOOL setPosition(LLCoordScreen position) = 0;
-	BOOL setSize(LLCoordScreen size);
-	BOOL setSize(LLCoordWindow size);
+	BOOL setSize(LLCoordScreen size, BOOL adjustPosition = FALSE);
+	BOOL setSize(LLCoordWindow size, BOOL adjustPosition = FALSE);
 	virtual void setMinSize(U32 min_width, U32 min_height, bool enforce_immediately = true);
     virtual void getMinSize(U32& min_width, U32& min_height);
 	virtual BOOL switchContext(BOOL fullscreen, const LLCoordScreen &size, BOOL disable_vsync, const LLCoordScreen * const posp = NULL) = 0;
@@ -187,8 +187,8 @@ protected:
 	// Defaults to true
 	virtual BOOL canDelete();
 
-	virtual BOOL setSizeImpl(LLCoordScreen size) = 0;
-	virtual BOOL setSizeImpl(LLCoordWindow size) = 0;
+	virtual BOOL setSizeImpl(LLCoordScreen size, BOOL adjustPosition) = 0;
+	virtual BOOL setSizeImpl(LLCoordWindow size, BOOL adjustPosition) = 0;
 
 protected:
 	LLWindowCallbacks*	mCallbacks;

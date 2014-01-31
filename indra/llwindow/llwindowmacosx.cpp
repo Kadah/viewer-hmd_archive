@@ -873,12 +873,66 @@ BOOL LLWindowMacOSX::setPosition(const LLCoordScreen position)
 	return FALSE;
 }
 
-BOOL LLWindowMacOSX::setSizeImpl(const LLCoordScreen size)
+void LLWindowMacOSX::adjustWindowToFitScreen(LLCoordWindow& size)
+{
+    if (!mWindow[mCurRCIdx] || mFullscreen)
+    {
+        return;
+    }
+    float winBounds[4], screenBounds[4], initialPos[2];
+    getWindowSize(mWindow[mCurRCIdx], winBounds);
+    initialPos[0] = winBounds[0];
+    initialPos[1] = winBounds[1];
+    winBounds[2] = (F32)actualSize.mX;
+    winBounds[3] = (F32)actualSize.mY;
+    int screen_id = getScreenFromPoint(winBounds);
+    if (screen_id >= 0)
+    {
+        getScreenSize(screen_id, screenBounds);
+
+        // adjust screenBounds height to account for $@!%#& "god"bar and task bar
+        screenBounds[3] -= (84 + 100);
+
+        // check to see if window is too big for current screen
+        winBounds[2] = llmin(winBounds[2], screenBounds[2]);
+        winBounds[3] = llmin(winBounds[3], screenBounds[3]);
+        if (winBounds[0] < screenBounds[0])
+        {
+            winBounds[0] = screenBounds[0];
+        }
+        else if ((winBounds[0] + winBounds[2]) > (screenBounds[0] + screenBounds[2]))
+        {
+            winBounds[0] = (screenBounds[0] + screenBounds[2]) - winBounds[2];
+        }
+
+        // now ensure that window position (with adjusted size) fits on the screen
+        if (winBounds[1] < screenBounds[1])
+        {
+            winBounds[1] = screnBounds[1];
+        }
+        else if ((winBounds[1] + winBounds[3]) > (screenBounds[1] + screenBounds[3]))
+        {
+            winBounds[1] = (screenBounds[1] + screenBounds[3]) - winBounds[3];
+        }
+        if (!is_approx_equal(initialPos[0], winBounds[0]) || !is_approx_equal(initialPos[1], winBounds[1]))
+        {
+            setWindowPos(mWindow[mCurRCIdx], winBounds);
+        }
+        size.mX = llround(winBounds[2]);
+        size.mY = llround(winBounds[3]);
+    }
+}
+
+BOOL LLWindowMacOSX::setSizeImpl(const LLCoordScreen size, BOOL adjustPosition)
 {
 	if (mWindow[mCurRCIdx])
 	{
         LLCoordWindow to;
         convertCoords(size, &to);
+        if (adjustPosition && !mFullscreen)
+        {
+            adjustWindowToFitScreen(to);
+        }
 		setWindowSize(mWindow[mCurRCIdx], to.mX, to.mY);
         return TRUE;
 	}
@@ -886,12 +940,17 @@ BOOL LLWindowMacOSX::setSizeImpl(const LLCoordScreen size)
 	return FALSE;
 }
 
-BOOL LLWindowMacOSX::setSizeImpl(const LLCoordWindow size)
+BOOL LLWindowMacOSX::setSizeImpl(const LLCoordWindow size, BOOL adjustPosition)
 {
 	if (mWindow[mCurRCIdx])
 	{
-        int h = size.mY + (mFullscreen ? 0 : 22);
-        setWindowSize(mWindow[mCurRCIdx], size.mX, h);
+        LLCoordWindow actualSize(size);
+        actualSize.mY += (mFullscreen ? 0 : 22);
+        if (adjustPosition && !mFullscreen)
+        {
+            adjustWindowToFitScreen(actualSize);
+        }
+        setWindowSize(mWindow[mCurRCIdx], actualSize.mX, actualSize.mY);
         
         mHMDScale[0] = mHMDScale[1] = 1.0f;
         if (mHMDMode && mWindow[0])

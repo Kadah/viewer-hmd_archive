@@ -28,6 +28,7 @@
 
 #include "llfloaterhmdconfig.h"
 #include "llsliderctrl.h"
+#include "llcheckboxctrl.h"
 #include "llfloaterreg.h"
 #include "llhmd.h"
 #include "lltrans.h"
@@ -54,6 +55,7 @@ LLFloaterHMDConfig::LLFloaterHMDConfig(const LLSD& key)
     sInstance = this;
 
     mCommitCallbackRegistrar.add("HMDConfig.ResetValues", boost::bind(&LLFloaterHMDConfig::onClickResetValues, this));
+    mCommitCallbackRegistrar.add("HMDConfig.RemovePreset", boost::bind(&LLFloaterHMDConfig::onClickRemovePreset, this));
     mCommitCallbackRegistrar.add("HMDConfig.Cancel", boost::bind(&LLFloaterHMDConfig::onClickCancel, this));
     mCommitCallbackRegistrar.add("HMDConfig.Save", boost::bind(&LLFloaterHMDConfig::onClickSave, this));
 
@@ -120,7 +122,7 @@ void LLFloaterHMDConfig::onOpen(const LLSD& key)
         pPanel->mUISurfaceShapePresetOriginal = (F32)gHMD.getUIShapePresetIndex();
         pPanel->mUISurfaceShapePresetSliderCtrl->setMaxValue((F32)llmax(0, gHMD.getNumUIShapePresets() - 1));
         pPanel->mUISurfaceShapePresetSliderCtrl->setValue(pPanel->mUISurfaceShapePresetOriginal);
-        pPanel->updateUIShapePresetLabel();
+        pPanel->updateUIShapePresetLabel(TRUE);
     }
     mDirty = FALSE;
 }
@@ -142,6 +144,17 @@ void LLFloaterHMDConfig::onClickResetValues()
     mInterpupillaryOffsetSliderCtrl->setValue(gHMD.getInterpupillaryOffsetDefault() * 1000.0f);
     onSetInterpupillaryOffset();
     mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndexDefault());
+    onSetUIShapePreset();
+}
+
+void LLFloaterHMDConfig::onClickRemovePreset()
+{
+    if (!gHMD.removePreset((S32)mUISurfaceShapePresetSliderCtrl->getValue()))
+    {
+        return;
+    }
+    mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndex());
+    mUISurfaceShapePresetSliderCtrl->setMaxValue((F32)gHMD.getNumUIShapePresets());
     onSetUIShapePreset();
 }
 
@@ -187,9 +200,10 @@ void LLFloaterHMDConfig::updateInterpupillaryOffsetLabel()
 void LLFloaterHMDConfig::onSetUIMagnification()
 {
     F32 f = llround(mUIMagnificationSliderCtrl->getValueF32(), mUIMagnificationSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUIMagnification(f);
     updateUIMagnificationLabel();
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
     updateDirty();
 }
 
@@ -201,9 +215,10 @@ void LLFloaterHMDConfig::updateUIMagnificationLabel()
 void LLFloaterHMDConfig::onSetUISurfaceOffsetDepth()
 {
     F32 f = llround(mUISurfaceOffsetDepthSliderCtrl->getValueF32(), mUISurfaceOffsetDepthSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceOffsetDepth(f);
     updateUISurfaceOffsetDepthLabel();
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
     updateDirty();
 }
 
@@ -215,12 +230,13 @@ void LLFloaterHMDConfig::updateUISurfaceOffsetDepthLabel()
 void LLFloaterHMDConfig::onSetUIShapePreset()
 {
     S32 f = llround(mUISurfaceShapePresetSliderCtrl->getValueF32());
+    U32 oldType = gHMD.getUIShapePresetType();
     if (f > llround(mUISurfaceShapePresetSliderCtrl->getMaxValue()))
     {
         mUISurfaceShapePresetSliderCtrl->setMaxValue((F32)f);
     }
     gHMD.setUIShapePresetIndex(f);
-    updateUIShapePresetLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
 
     mUISurfaceOffsetDepthSliderCtrl->setValue(llround(gHMD.getUISurfaceOffsetDepth(), mUISurfaceOffsetDepthSliderCtrl->getIncrement()));
     updateUISurfaceOffsetDepthLabel();
@@ -229,7 +245,7 @@ void LLFloaterHMDConfig::onSetUIShapePreset()
     updateDirty();
 }
 
-void LLFloaterHMDConfig::updateUIShapePresetLabel()
+void LLFloaterHMDConfig::updateUIShapePresetLabel(BOOL typeChanged)
 {
     mUISurfaceShapePresetLabelCtrl->setValue(gHMD.getUIShapeName());
     // This method is called from a number of places since the preset index can be changed as a side effect of a number
@@ -238,6 +254,21 @@ void LLFloaterHMDConfig::updateUIShapePresetLabel()
     if (gHMD.getUIShapePresetIndex() != llround(mUISurfaceShapePresetSliderCtrl->getValueF32()))
     {
         mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndex(), TRUE);
+    }
+    if (typeChanged)
+    {
+        LLButton* buttonRemove = getChild<LLButton>("hmd_config_hmd_remove_preset");
+        switch (gHMD.getUIShapePresetType())
+        {
+        case LLHMD::kUser:
+            if (buttonRemove) buttonRemove->setEnabled(TRUE);
+            break;
+        case LLHMD::kCustom:
+        case LLHMD::kDefault:
+        default:
+            if (buttonRemove) buttonRemove->setEnabled(FALSE);
+            break;
+        }
     }
 }
 

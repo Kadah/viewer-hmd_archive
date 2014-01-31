@@ -59,8 +59,8 @@ public:
 	/*virtual*/ BOOL getSize(LLCoordScreen *size);
 	/*virtual*/ BOOL getSize(LLCoordWindow *size);
 	/*virtual*/ BOOL setPosition(LLCoordScreen position);
-	/*virtual*/ BOOL setSizeImpl(LLCoordScreen size);
-	/*virtual*/ BOOL setSizeImpl(LLCoordWindow size);
+	/*virtual*/ BOOL setSizeImpl(LLCoordScreen size, BOOL adjustPosition);
+	/*virtual*/ BOOL setSizeImpl(LLCoordWindow size, BOOL adjustPosition);
 	/*virtual*/ BOOL switchContext(BOOL fullscreen, const LLCoordScreen &size, BOOL disable_vsync, const LLCoordScreen * const posp = NULL);
 	/*virtual*/ BOOL setCursorPosition(LLCoordWindow position);
 	/*virtual*/ BOOL getCursorPosition(LLCoordWindow *position);
@@ -194,6 +194,8 @@ protected:
     void keepMouseWithinBounds(float* cp, S32 winIdx, S32 w, S32 h);
 	void adjustCursorDecouple(bool warpingMouse = false);
 	static MASK modifiersToMask(S16 modifiers);
+
+    void adjustWindowToFitScreen(LLCoordWindow& size);
 
 #if LL_OS_DRAGDROP_ENABLED
 	

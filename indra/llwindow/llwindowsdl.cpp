@@ -963,7 +963,7 @@ BOOL LLWindowSDL::setPosition(const LLCoordScreen position)
 	return TRUE;
 }
 
-BOOL LLWindowSDL::setSizeImpl(const LLCoordScreen size)
+BOOL LLWindowSDL::setSizeImpl(const LLCoordScreen size, BOOL adjustPosition)
 {
 	if(mWindow)
 	{
@@ -981,7 +981,7 @@ BOOL LLWindowSDL::setSizeImpl(const LLCoordScreen size)
 	return FALSE;
 }
 
-BOOL LLWindowSDL::setSizeImpl(const LLCoordWindow size)
+BOOL LLWindowSDL::setSizeImpl(const LLCoordWindow size, BOOL adjustPosition)
 {
 	if(mWindow)
 	{

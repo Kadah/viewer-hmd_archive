@@ -533,3 +533,22 @@ void getScreenSize(int screen_id, float* size)
 	size[2] = frame.size.width;
 	size[3] = frame.size.height;
 }
+
+int getScreenFromPoint(float* pos)
+{
+	NSPoint point;
+	point.x = pos[0];
+	point.y = pos[1];
+	int numScreens = (int)[[NSScreen screens] count];
+	for (int i = 0; i < numScreens; ++i)
+	{
+		NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:i];
+		NSRect frame = [s frame];
+		if (NSPointInRect(point, [s frame]))
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+

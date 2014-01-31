@@ -50,6 +50,7 @@ public:
     void onClickCancel();
     void onClickSave();
     void onClickResetValues();
+    void onClickRemovePreset();
 
 protected:
     void onSetInterpupillaryOffset();
@@ -59,7 +60,7 @@ protected:
     void onSetUIMagnification();
     void updateUIMagnificationLabel();
     void onSetUIShapePreset();
-    void updateUIShapePresetLabel();
+    void updateUIShapePresetLabel(BOOL typeChanged);
 
     void updateDirty();
 

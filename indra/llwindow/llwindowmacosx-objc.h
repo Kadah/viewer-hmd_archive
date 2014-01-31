@@ -156,5 +156,6 @@ unsigned int getModifiers();
 int getDisplayCountObjC();
 long getDisplayId(int screen_id);
 void getScreenSize(int screen_id, float* size);
+int getScreenFromPoint(float* pos);
 
 #endif // LL_LLWINDOWMACOSX_OBJC_H

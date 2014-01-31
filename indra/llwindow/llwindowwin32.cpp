@@ -915,11 +915,11 @@ BOOL LLWindowWin32::setPosition(const LLCoordScreen position)
 		return FALSE;
 	}
 	getSize(&size);
-	moveWindow(position, size);
+	moveWindow(position, size, FALSE);
 	return TRUE;
 }
 
-BOOL LLWindowWin32::setSizeImpl(const LLCoordScreen size)
+BOOL LLWindowWin32::setSizeImpl(const LLCoordScreen size, BOOL adjustPosition)
 {
 	LLCoordScreen position;
 
@@ -938,16 +938,16 @@ BOOL LLWindowWin32::setSizeImpl(const LLCoordScreen size)
 
 	if (!SetWindowPlacement(mWindowHandle[mCurRCIdx], &placement)) return FALSE;
 
-	moveWindow(position, size);
+	moveWindow(position, size, adjustPosition);
 	return TRUE;
 }
 
-BOOL LLWindowWin32::setSizeImpl(const LLCoordWindow size)
+BOOL LLWindowWin32::setSizeImpl(const LLCoordWindow size, BOOL adjustPosition)
 {
 	RECT window_rect = {0, 0, size.mX, size.mY };
 	AdjustWindowRectEx(&window_rect, mDwStyle[mCurRCIdx], FALSE, mDwExStyle[mCurRCIdx]);
 
-	return setSizeImpl(LLCoordScreen(window_rect.right - window_rect.left, window_rect.bottom - window_rect.top));
+	return setSizeImpl(LLCoordScreen(window_rect.right - window_rect.left, window_rect.bottom - window_rect.top), adjustPosition);
 }
 
 // changing fullscreen resolution
@@ -1621,8 +1621,9 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 	return TRUE;
 }
 
-void LLWindowWin32::moveWindow( const LLCoordScreen& position, const LLCoordScreen& size )
+void LLWindowWin32::moveWindow( const LLCoordScreen& position, const LLCoordScreen& size, BOOL adjustPosition )
 {
+    // why isn't this done AFTER the window is moved?!?
 	if( mIsMouseClipping )
 	{
 		RECT client_rect_in_screen_space;
@@ -1632,6 +1633,53 @@ void LLWindowWin32::moveWindow( const LLCoordScreen& position, const LLCoordScre
 		}
 	}
 
+    LLCoordScreen actualPosition(position);
+    LLCoordScreen actualSize(size);
+    if (adjustPosition)
+    {
+        RECT r1;
+        SetRect(&r1, position.mX, position.mY, position.mX + size.mX, position.mY + size.mY);
+        POINT p;
+        p.x = r1.left;  p.y = r1.top;
+        HMONITOR hm = MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST);
+        MONITORINFO infoMon;
+        infoMon.cbSize = infoMon.cbSize = sizeof(MONITORINFO);
+        if (::GetMonitorInfo(hm, &infoMon))
+        {
+            // check size first, then position
+            RECT r2;
+            memcpy(&r2, &(infoMon.rcWork), sizeof(RECT));
+            S32 requestedWidth = r1.right - r1.left;
+            S32 requestedHeight = r1.bottom - r1.top;
+            S32 availWidth = r2.right - r2.left;
+            S32 availHeight = r2.bottom - r2.top;
+            if (requestedWidth < availWidth)
+            {
+                actualSize.mX = availWidth;
+            }
+            if (requestedHeight < availHeight)
+            {
+                actualSize.mY = availHeight;
+            }
+            if (r1.left < r2.left)
+            {
+                actualPosition.mX = r2.left;
+            }
+            else if (r1.right > r2.right)
+            {
+                actualPosition.mX = r2.right - actualSize.mX;
+            }
+            if (r1.top < r2.top)
+            {
+                actualPosition.mY = r2.top;
+            }
+            else if (r1.bottom > r2.bottom)
+            {
+                actualPosition.mY = r2.bottom - actualSize.mY;
+            }
+        }
+    }
+
 	// if the window was already maximized, MoveWindow seems to still set the maximized flag even if
 	// the window is smaller than maximized.
 	// So we're going to do a restore first (which is a ShowWindow call) (SL-44655).
@@ -1639,7 +1687,7 @@ void LLWindowWin32::moveWindow( const LLCoordScreen& position, const LLCoordScre
 	// THIS CAUSES DEV-15484 and DEV-15949 
 	//ShowWindow(mWindowHandle[mCurRCIdx], SW_RESTORE);
 	// NOW we can call MoveWindow
-	MoveWindow(mWindowHandle[mCurRCIdx], position.mX, position.mY, size.mX, size.mY, TRUE);
+	MoveWindow(mWindowHandle[mCurRCIdx], actualPosition.mX, actualPosition.mY, actualSize.mX, actualSize.mY, TRUE);
 }
 
 BOOL LLWindowWin32::setCursorPosition(const LLCoordWindow position)
@@ -3913,8 +3961,10 @@ BOOL LLWindowWin32::testMainDisplayIsMirrored(S32 left, S32 top, S32 width, S32 
 
     MONITORINFOEX infoMain, infoHMD;
     infoMain.cbSize = infoHMD.cbSize = sizeof(MONITORINFOEX);
-    GetMonitorInfo(mainWindowMonitorHandle, &infoMain);
-    GetMonitorInfo(hmdWindowMonitorHandle, &infoHMD);
+    if (!::GetMonitorInfo(mainWindowMonitorHandle, &infoMain) || !::GetMonitorInfo(hmdWindowMonitorHandle, &infoHMD))
+    {
+        return FALSE;
+    }
     llutf16string devMain(infoMain.szDevice);
     llutf16string devHMD(infoHMD.szDevice);
     //LL_INFOS("HMD") << "Main Monitor = " << utf16str_to_utf8str(devMain) << LL_ENDL;

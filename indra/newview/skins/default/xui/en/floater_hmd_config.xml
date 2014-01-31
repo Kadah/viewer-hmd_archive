@@ -246,6 +246,18 @@ UI Surface Offset Depth
           height="25"
           width="90">
           <button
+            name="hmd_config_hmd_remove_preset"
+            label="Remove Preset"
+            follows="all">
+            <commit_callback function="HMDConfig.RemovePreset" />
+          </button>
+        </layout_panel>
+        <layout_panel
+          auto_resize="false"
+          text_color="white"
+          height="25"
+          width="90">
+          <button
             name="hmd_cancel_button"
             label="Cancel"
             follows="all">

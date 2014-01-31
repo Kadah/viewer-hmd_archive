@@ -184,17 +184,17 @@ void *LLWindow::getMediaWindow()
 	return getPlatformWindow();
 }
 
-BOOL LLWindow::setSize(LLCoordScreen size)
+BOOL LLWindow::setSize(LLCoordScreen size, BOOL adjustPosition)
 {
 	if (!getMaximized())
 	{
 		size.mX = llmax(size.mX, mMinWindowWidth);
 		size.mY = llmax(size.mY, mMinWindowHeight);
 	}
-	return setSizeImpl(size);
+	return setSizeImpl(size, adjustPosition);
 }
 
-BOOL LLWindow::setSize(LLCoordWindow size)
+BOOL LLWindow::setSize(LLCoordWindow size, BOOL adjustPosition)
 {
 	//HACK: we are inconsistently using minimum window dimensions
 	// in this case, we are constraining the inner "client" rect and other times
@@ -206,7 +206,7 @@ BOOL LLWindow::setSize(LLCoordWindow size)
 		size.mX = llmax(size.mX, mMinWindowWidth);
 		size.mY = llmax(size.mY, mMinWindowHeight);
 	}
-	return setSizeImpl(size);
+	return setSizeImpl(size, adjustPosition);
 }
 
 
@@ -223,7 +223,7 @@ void LLWindow::setMinSize(U32 min_width, U32 min_height, bool enforce_immediatel
 		{
 			if (cur_size.mX < mMinWindowWidth || cur_size.mY < mMinWindowHeight)
 			{
-				setSizeImpl(LLCoordScreen(llmin(cur_size.mX, mMinWindowWidth), llmin(cur_size.mY, mMinWindowHeight)));
+				setSizeImpl(LLCoordScreen(llmin(cur_size.mX, mMinWindowWidth), llmin(cur_size.mY, mMinWindowHeight)), FALSE);
 			}
 		}
 	}
