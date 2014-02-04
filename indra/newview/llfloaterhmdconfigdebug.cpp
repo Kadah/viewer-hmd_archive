@@ -52,6 +52,12 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     , mUISurfaceOffsetDepthSliderCtrl(NULL)
     , mUISurfaceOffsetDepthAmountCtrl(NULL)
     , mUISurfaceOffsetDepthOriginal(0.0f)
+    , mUISurfaceOffsetVerticalSliderCtrl(NULL)
+    , mUISurfaceOffsetVerticalAmountCtrl(NULL)
+    , mUISurfaceOffsetVerticalOriginal(0.0f)
+    , mUISurfaceOffsetHorizontalSliderCtrl(NULL)
+    , mUISurfaceOffsetHorizontalAmountCtrl(NULL)
+    , mUISurfaceOffsetHorizontalOriginal(0.0f)
     , mUISurfaceToroidRadiusWidthSliderCtrl(NULL)
     , mUISurfaceToroidRadiusWidthAmountCtrl(NULL)
     , mUISurfaceToroidRadiusWidthOriginal(0.3f)
@@ -88,6 +94,8 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
 
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetInterpupillaryOffset", boost::bind(&LLFloaterHMDConfigDebug::onSetInterpupillaryOffset, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetUISurfaceOffsetDepth", boost::bind(&LLFloaterHMDConfigDebug::onSetUISurfaceOffsetDepth, this));
+    mCommitCallbackRegistrar.add("HMDConfigDebug.SetUISurfaceOffsetVertical", boost::bind(&LLFloaterHMDConfigDebug::onSetUISurfaceOffsetVertical, this));
+    mCommitCallbackRegistrar.add("HMDConfigDebug.SetUISurfaceOffsetHorizontal", boost::bind(&LLFloaterHMDConfigDebug::onSetUISurfaceOffsetHorizontal, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetUIMagnification", boost::bind(&LLFloaterHMDConfigDebug::onSetUIMagnification, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetUIShapePreset", boost::bind(&LLFloaterHMDConfigDebug::onSetUIShapePreset, this));
 
@@ -127,6 +135,10 @@ BOOL LLFloaterHMDConfigDebug::postBuild()
     mUIMagnificationAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_ui_magnification_slider_amount");
     mUISurfaceOffsetDepthSliderCtrl = getChild<LLSlider>("hmd_config_debug_uisurface_offset_depth_slider");
     mUISurfaceOffsetDepthAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_uisurface_offset_depth_slider_amount");
+    mUISurfaceOffsetVerticalSliderCtrl = getChild<LLSlider>("hmd_config_debug_uisurface_offset_vertical_slider");
+    mUISurfaceOffsetVerticalAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_uisurface_offset_vertical_slider_amount");
+    mUISurfaceOffsetHorizontalSliderCtrl = getChild<LLSlider>("hmd_config_debug_uisurface_offset_horizontal_slider");
+    mUISurfaceOffsetHorizontalAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_uisurface_offset_horizontal_slider_amount");
     mUISurfaceShapePresetSliderCtrl = getChild<LLSlider>("hmd_config_debug_uisurface_shape_preset_slider");
     mUISurfaceShapePresetLabelCtrl = getChild<LLUICtrl>("hmd_config_debug_uisurface_shape_preset_value");
     mUISurfaceToroidRadiusWidthSliderCtrl = getChild<LLSlider>("hmd_config_debug_uisurface_toroid_radius_width_slider");
@@ -181,6 +193,18 @@ void LLFloaterHMDConfigDebug::onOpen(const LLSD& key)
         pPanel->mUISurfaceOffsetDepthOriginal = gHMD.getUISurfaceOffsetDepth();
         pPanel->mUISurfaceOffsetDepthSliderCtrl->setValue(pPanel->mUISurfaceOffsetDepthOriginal);
         pPanel->updateUISurfaceOffsetDepthLabel();
+    }
+    if (pPanel->mUISurfaceOffsetVerticalSliderCtrl)
+    {
+        pPanel->mUISurfaceOffsetVerticalOriginal = gHMD.getUISurfaceOffsetVertical();
+        pPanel->mUISurfaceOffsetVerticalSliderCtrl->setValue(pPanel->mUISurfaceOffsetVerticalOriginal);
+        pPanel->updateUISurfaceOffsetVerticalLabel();
+    }
+    if (pPanel->mUISurfaceOffsetHorizontalSliderCtrl)
+    {
+        pPanel->mUISurfaceOffsetHorizontalOriginal = gHMD.getUISurfaceOffsetHorizontal();
+        pPanel->mUISurfaceOffsetHorizontalSliderCtrl->setValue(pPanel->mUISurfaceOffsetHorizontalOriginal);
+        pPanel->updateUISurfaceOffsetHorizontalLabel();
     }
     if (pPanel->mUISurfaceToroidRadiusWidthSliderCtrl)
     {
@@ -297,6 +321,10 @@ void LLFloaterHMDConfigDebug::onClickCancel()
     onSetUIMagnification();
     mUISurfaceOffsetDepthSliderCtrl->setValue(mUISurfaceOffsetDepthOriginal);
     onSetUISurfaceOffsetDepth();
+    mUISurfaceOffsetVerticalSliderCtrl->setValue(mUISurfaceOffsetVerticalOriginal);
+    onSetUISurfaceOffsetVertical();
+    mUISurfaceOffsetHorizontalSliderCtrl->setValue(mUISurfaceOffsetHorizontalOriginal);
+    onSetUISurfaceOffsetHorizontal();
     mUISurfaceToroidRadiusWidthSliderCtrl->setValue(mUISurfaceToroidRadiusWidthOriginal);
     onSetUISurfaceToroidRadiusWidth();
     mUISurfaceToroidRadiusDepthSliderCtrl->setValue(mUISurfaceToroidRadiusDepthOriginal);
@@ -375,6 +403,36 @@ void LLFloaterHMDConfigDebug::updateUISurfaceOffsetDepthLabel()
     mUISurfaceOffsetDepthAmountCtrl->setValue(llformat("%.2f", gHMD.getUISurfaceOffsetDepth()));
 }
 
+void LLFloaterHMDConfigDebug::onSetUISurfaceOffsetVertical()
+{
+    F32 f = llround(mUISurfaceOffsetVerticalSliderCtrl->getValueF32(), mUISurfaceOffsetVerticalSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
+    gHMD.setUISurfaceOffsetVertical(f);
+    updateUISurfaceOffsetVerticalLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
+    updateDirty();
+}
+
+void LLFloaterHMDConfigDebug::updateUISurfaceOffsetVerticalLabel()
+{
+    mUISurfaceOffsetVerticalAmountCtrl->setValue(llformat("%.2f", gHMD.getUISurfaceOffsetVertical()));
+}
+
+void LLFloaterHMDConfigDebug::onSetUISurfaceOffsetHorizontal()
+{
+    F32 f = llround(mUISurfaceOffsetHorizontalSliderCtrl->getValueF32(), mUISurfaceOffsetHorizontalSliderCtrl->getIncrement());
+    U32 oldType = gHMD.getUIShapePresetType();
+    gHMD.setUISurfaceOffsetHorizontal(f);
+    updateUISurfaceOffsetHorizontalLabel();
+    updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
+    updateDirty();
+}
+
+void LLFloaterHMDConfigDebug::updateUISurfaceOffsetHorizontalLabel()
+{
+    mUISurfaceOffsetHorizontalAmountCtrl->setValue(llformat("%.2f", gHMD.getUISurfaceOffsetHorizontal()));
+}
+
 void LLFloaterHMDConfigDebug::onSetUIShapePreset()
 {
     S32 f = llround(mUISurfaceShapePresetSliderCtrl->getValueF32());
@@ -388,6 +446,10 @@ void LLFloaterHMDConfigDebug::onSetUIShapePreset()
 
     mUISurfaceOffsetDepthSliderCtrl->setValue(llround(gHMD.getUISurfaceOffsetDepth(), mUISurfaceOffsetDepthSliderCtrl->getIncrement()));
     updateUISurfaceOffsetDepthLabel();
+    mUISurfaceOffsetVerticalSliderCtrl->setValue(llround(gHMD.getUISurfaceOffsetVertical(), mUISurfaceOffsetVerticalSliderCtrl->getIncrement()));
+    updateUISurfaceOffsetVerticalLabel();
+    mUISurfaceOffsetHorizontalSliderCtrl->setValue(llround(gHMD.getUISurfaceOffsetHorizontal(), mUISurfaceOffsetHorizontalSliderCtrl->getIncrement()));
+    updateUISurfaceOffsetHorizontalLabel();
     mUIMagnificationSliderCtrl->setValue(llround(gHMD.getUIMagnification(), mUIMagnificationSliderCtrl->getIncrement()));
     updateUIMagnificationLabel();
     mUISurfaceToroidRadiusWidthSliderCtrl->setValue(llround(gHMD.getUISurfaceToroidRadiusWidth(), mUISurfaceToroidRadiusWidthSliderCtrl->getIncrement()));
@@ -576,6 +638,8 @@ void LLFloaterHMDConfigDebug::updateDirty()
     {
         LLVector2(mInterpupillaryOffsetSliderCtrl->getValueF32(), mInterpupillaryOffsetOriginal),
         LLVector2(mUISurfaceOffsetDepthSliderCtrl->getValueF32(), mUISurfaceOffsetDepthOriginal),
+        LLVector2(mUISurfaceOffsetVerticalSliderCtrl->getValueF32(), mUISurfaceOffsetVerticalOriginal),
+        LLVector2(mUISurfaceOffsetHorizontalSliderCtrl->getValueF32(), mUISurfaceOffsetHorizontalOriginal),
         LLVector2(mUIMagnificationSliderCtrl->getValueF32(), mUIMagnificationOriginal),
         LLVector2(mUISurfaceShapePresetSliderCtrl->getValueF32(), mUISurfaceShapePresetOriginal),
         LLVector2(mUISurfaceToroidRadiusWidthSliderCtrl->getValueF32(), mUISurfaceToroidRadiusWidthOriginal),

@@ -395,55 +395,6 @@ void LLHMD::onChangeUIShapePreset() { if (!gHMD.isSavingSettings()) { gHMD.setUI
 void LLHMD::onChangeWorldCursorSizeMult() { if (!gHMD.isSavingSettings()) { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); } }
 void LLHMD::onChangeMoveFollowsLookDir() { gHMD.moveFollowsLookDir(gSavedSettings.getBOOL("HMDMoveFollowsLookDir")); }
 
-void LLHMD::saveSettings()
-{
-    isSavingSettings(TRUE);
-    if (mUIShapePreset == 0)
-    {
-        // These SHOULD already be set to these values, but just in case..
-        mUIShape.mPresetType = (U32)LLHMD::kCustom;
-        mUIShape.mPresetTypeIndex = 1;
-
-        addPreset();
-    }
-    gSavedSettings.setF32("HMDInterpupillaryDistance", gHMD.getInterpupillaryOffset());
-    gSavedSettings.setF32("HMDUISurfaceArcHorizontal", gHMD.getUISurfaceArcHorizontal());
-    gSavedSettings.setF32("HMDUISurfaceArcVertical", gHMD.getUISurfaceArcVertical());
-    gSavedSettings.setF32("HMDUISurfaceToroidWidth", gHMD.getUISurfaceToroidRadiusWidth());
-    gSavedSettings.setF32("HMDUISurfaceToroidDepth", gHMD.getUISurfaceToroidRadiusDepth());
-    gSavedSettings.setF32("HMDUISurfaceToroidCSWidth", gHMD.getUISurfaceToroidCrossSectionRadiusWidth());
-    gSavedSettings.setF32("HMDUISurfaceToroidCSHeight", gHMD.getUISurfaceToroidCrossSectionRadiusHeight());
-    LLVector3 offsets(mUIShape.mOffsetX, mUIShape.mOffsetY, mUIShape.mOffsetZ);
-    gSavedSettings.setVector3("HMDUISurfaceOffsets", offsets);
-    gSavedSettings.setF32("HMDUIMagnification", gHMD.getUIMagnification());
-    gSavedSettings.setS32("HMDUIShapePreset", gHMD.getUIShapePresetIndex());
-    gSavedSettings.setF32("HMDEyeToScreenDistance", gHMD.getEyeToScreenDistance());
-    gSavedSettings.setF32("HMDEyeDepth", gHMD.getEyeDepth());
-    gSavedSettings.setBOOL("HMDUseMotionPrediction", gHMD.useMotionPrediction());
-    gSavedSettings.setF32("HMDWorldCursorSizeMult", gHMD.getWorldCursorSizeMult());
-    isSavingSettings(FALSE);
-
-    static const char* kPresetTypeStrings[] = { "Custom", "Default", "User" };
-    LLSDArray entries;
-    U32 numPresets = mUIPresetValues.size();
-    for (U32 i = 1; i < numPresets; ++i)
-    {
-        const UISurfaceShapeSettings& settings = mUIPresetValues[i];
-        LLSDMap entry;
-        entry("PresetType", kPresetTypeStrings[settings.mPresetType]);
-        entry("ToroidRadiusWidth", settings.mToroidRadiusWidth);
-        entry("ToroidRadiusDepth", settings.mToroidRadiusDepth);
-        entry("ToroidCSRadiusWidth", settings.mToroidCrossSectionRadiusWidth);
-        entry("ToroidCSRadiusHeight", settings.mToroidCrossSectionRadiusHeight);
-        entry("ArcHorizontal", settings.mArcHorizontal);
-        entry("ArcVertical", settings.mArcVertical);
-        entry("UIMagnification", settings.mUIMagnification);
-        entry("Offsets", LLSDArray(settings.mOffsetX)(settings.mOffsetY)(settings.mOffsetZ));
-        entries(entry);
-    }
-    gSavedSettings.setLLSD("HMDUIPresetValues", entries);
-}
-
 void LLHMD::onChangeUISurfaceShape()
 {
     gPipeline.mHMDUISurface = NULL;
@@ -896,9 +847,12 @@ void LLHMD::setUIMagnification(F32 f)
     if (f != mUIShape.mUIMagnification)
     {
         mUIShape.mUIMagnification = f;
-        mUIShapePreset = 0;
-        gHMD.mUIShape.mPresetType = (U32)LLHMD::kCustom;
-        gHMD.mUIShape.mPresetTypeIndex = 1;
+        if (gHMD.mUIShape.mPresetType != (U32)LLHMD::kUser)
+        {
+            mUIShapePreset = 0;
+            gHMD.mUIShape.mPresetType = (U32)LLHMD::kCustom;
+            gHMD.mUIShape.mPresetTypeIndex = 1;
+        }
         calculateUIEyeDepth();
     }
 }
@@ -912,9 +866,12 @@ void LLHMD::setUISurfaceParam(F32* p, F32 f)
     if (!is_approx_equal(f, *p))
     {
         *p = f;
-        mUIShapePreset = 0;
-        mUIShape.mPresetType = (U32)LLHMD::kCustom;
-        mUIShape.mPresetTypeIndex = 1;
+        if (gHMD.mUIShape.mPresetType != (U32)LLHMD::kUser)
+        {
+            mUIShapePreset = 0;
+            mUIShape.mPresetType = (U32)LLHMD::kCustom;
+            mUIShape.mPresetTypeIndex = 1;
+        }
         onChangeUISurfaceShape();
     }
 }
@@ -1063,6 +1020,20 @@ BOOL LLHMD::addPreset()
     return TRUE;
 }
 
+BOOL LLHMD::updatePreset()
+{
+    if (mUIShapePreset < 1 || mUIShapePreset >= (S32)mUIPresetValues.size())
+    {
+        return FALSE;
+    }
+    if (mUIPresetValues[mUIShapePreset].mPresetType != (U32)LLHMD::kUser)
+    {
+        return FALSE;
+    }
+    memcpy(&(mUIPresetValues[mUIShapePreset]), &mUIShape, sizeof(UISurfaceShapeSettings));
+    return TRUE;
+}
+
 BOOL LLHMD::removePreset(S32 idx)
 {
     if (idx < 1 || idx >= (S32)mUIPresetValues.size())
@@ -1081,6 +1052,59 @@ BOOL LLHMD::removePreset(S32 idx)
         mUIShape.mPresetTypeIndex = 1;
     }
     return TRUE;
+}
+
+void LLHMD::saveSettings()
+{
+    isSavingSettings(TRUE);
+    if (mUIShapePreset == 0)
+    {
+        // These SHOULD already be set to these values, but just in case..
+        mUIShape.mPresetType = (U32)LLHMD::kCustom;
+        mUIShape.mPresetTypeIndex = 1;
+
+        addPreset();
+    }
+    else if (mUIShape.mPresetType == (U32)LLHMD::kUser)
+    {
+        updatePreset();
+    }
+    gSavedSettings.setF32("HMDInterpupillaryDistance", gHMD.getInterpupillaryOffset());
+    gSavedSettings.setF32("HMDUISurfaceArcHorizontal", gHMD.getUISurfaceArcHorizontal());
+    gSavedSettings.setF32("HMDUISurfaceArcVertical", gHMD.getUISurfaceArcVertical());
+    gSavedSettings.setF32("HMDUISurfaceToroidWidth", gHMD.getUISurfaceToroidRadiusWidth());
+    gSavedSettings.setF32("HMDUISurfaceToroidDepth", gHMD.getUISurfaceToroidRadiusDepth());
+    gSavedSettings.setF32("HMDUISurfaceToroidCSWidth", gHMD.getUISurfaceToroidCrossSectionRadiusWidth());
+    gSavedSettings.setF32("HMDUISurfaceToroidCSHeight", gHMD.getUISurfaceToroidCrossSectionRadiusHeight());
+    LLVector3 offsets(mUIShape.mOffsetX, mUIShape.mOffsetY, mUIShape.mOffsetZ);
+    gSavedSettings.setVector3("HMDUISurfaceOffsets", offsets);
+    gSavedSettings.setF32("HMDUIMagnification", gHMD.getUIMagnification());
+    gSavedSettings.setS32("HMDUIShapePreset", gHMD.getUIShapePresetIndex());
+    gSavedSettings.setF32("HMDEyeToScreenDistance", gHMD.getEyeToScreenDistance());
+    gSavedSettings.setF32("HMDEyeDepth", gHMD.getEyeDepth());
+    gSavedSettings.setBOOL("HMDUseMotionPrediction", gHMD.useMotionPrediction());
+    gSavedSettings.setF32("HMDWorldCursorSizeMult", gHMD.getWorldCursorSizeMult());
+    isSavingSettings(FALSE);
+
+    static const char* kPresetTypeStrings[] = { "Custom", "Default", "User" };
+    LLSDArray entries;
+    U32 numPresets = mUIPresetValues.size();
+    for (U32 i = 1; i < numPresets; ++i)
+    {
+        const UISurfaceShapeSettings& settings = mUIPresetValues[i];
+        LLSDMap entry;
+        entry("PresetType", kPresetTypeStrings[settings.mPresetType]);
+        entry("ToroidRadiusWidth", settings.mToroidRadiusWidth);
+        entry("ToroidRadiusDepth", settings.mToroidRadiusDepth);
+        entry("ToroidCSRadiusWidth", settings.mToroidCrossSectionRadiusWidth);
+        entry("ToroidCSRadiusHeight", settings.mToroidCrossSectionRadiusHeight);
+        entry("ArcHorizontal", settings.mArcHorizontal);
+        entry("ArcVertical", settings.mArcVertical);
+        entry("UIMagnification", settings.mUIMagnification);
+        entry("Offsets", LLSDArray(settings.mOffsetX)(settings.mOffsetY)(settings.mOffsetZ));
+        entries(entry);
+    }
+    gSavedSettings.setLLSD("HMDUIPresetValues", entries);
 }
 
 const char* LLHMD::getLatencyTesterResults() { return mImpl ? mImpl->getLatencyTesterResults() : NULL; }

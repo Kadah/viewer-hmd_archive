@@ -44,9 +44,9 @@
 
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"
@@ -85,9 +85,9 @@ Interpupillary Distance
 
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"
@@ -126,9 +126,9 @@ UI Surface Shape Preset
 
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"
@@ -167,9 +167,9 @@ UI Magnification
 
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"
@@ -208,9 +208,91 @@ UI Surface Offset Depth
           
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+UI Surface Offset Vertical
+          </text>
+          <text
+            name="hmd_config_debug_uisurface_offset_vertical_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+0.0
+          </text>
+          <slider_bar
+            name="hmd_config_debug_uisurface_offset_vertical_slider"
+            tool_tip="Vertical Offset for UI Surface"
+            min_val="-1.0"
+            max_val="1.0"
+            increment="0.01"
+            initial_value="0.0"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceOffsetVertical" />
+          </slider_bar>
+        </layout_panel>
+
+        <layout_panel
+          follows="left|right"
+          height="40"
+          width="400"
+          min_height="40"
+          text_color="white">
+          <text
+            font.name="SansSerifSmall"
+            top="5"
+            height="10"
+            follows="left|right"
+            halign="center">
+UI Surface Offset Horizontal
+          </text>
+          <text
+            name="hmd_config_debug_uisurface_offset_horizontal_slider_amount"
+            font.name="SansSerifSmall"
+            top="5"
+            right="-15"
+            height="10"
+            width="70"
+            follows="right"
+            halign="right">
+0.0
+          </text>
+          <slider_bar
+            name="hmd_config_debug_uisurface_offset_horizontal_slider"
+            tool_tip="Horizontal Offset for UI Surface"
+            min_val="-1.0"
+            max_val="1.0"
+            increment="0.01"
+            initial_value="0.0"
+            top="18"
+            height="22"
+            left="15"
+            right="-5"
+            follows="left|right">
+            <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceOffsetHorizontal" />
+          </slider_bar>
+        </layout_panel>
+          
+        <layout_panel
+          follows="left|right"
+          height="40"
+          width="400"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"
@@ -249,9 +331,9 @@ Toroid Radius (Width)
 
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"
@@ -290,9 +372,9 @@ Toroid Radius (Depth)
 
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"
@@ -331,9 +413,9 @@ Toroid Cross-Section Radius (Width)
 
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"
@@ -372,9 +454,9 @@ Toroid Cross-Section Radius (Height)
 
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"
@@ -413,9 +495,9 @@ UI Surface Arc (Horizontal)
 
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"
@@ -454,9 +536,9 @@ UI Surface Arc (Vertical)
 
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"
@@ -495,9 +577,9 @@ Eye to Screen Distance (FOV)
 
         <layout_panel
           follows="left|right"
-          height="45"
+          height="40"
           width="400"
-          min_height="45"
+          min_height="40"
           text_color="white">
           <text
             font.name="SansSerifSmall"

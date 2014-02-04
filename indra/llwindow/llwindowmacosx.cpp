@@ -883,8 +883,8 @@ void LLWindowMacOSX::adjustWindowToFitScreen(LLCoordWindow& size)
     getWindowSize(mWindow[mCurRCIdx], winBounds);
     initialPos[0] = winBounds[0];
     initialPos[1] = winBounds[1];
-    winBounds[2] = (F32)actualSize.mX;
-    winBounds[3] = (F32)actualSize.mY;
+    winBounds[2] = (F32)size.mX;
+    winBounds[3] = (F32)size.mY;
     int screen_id = getScreenFromPoint(winBounds);
     if (screen_id >= 0)
     {
@@ -908,7 +908,7 @@ void LLWindowMacOSX::adjustWindowToFitScreen(LLCoordWindow& size)
         // now ensure that window position (with adjusted size) fits on the screen
         if (winBounds[1] < screenBounds[1])
         {
-            winBounds[1] = screnBounds[1];
+            winBounds[1] = screenBounds[1];
         }
         else if ((winBounds[1] + winBounds[3]) > (screenBounds[1] + screenBounds[3]))
         {

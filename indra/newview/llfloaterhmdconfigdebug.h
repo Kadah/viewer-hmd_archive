@@ -64,6 +64,10 @@ protected:
     void updateMotionPredictionDeltaLabel();
     void onSetUISurfaceOffsetDepth();
     void updateUISurfaceOffsetDepthLabel();
+    void onSetUISurfaceOffsetVertical();
+    void updateUISurfaceOffsetVerticalLabel();
+    void onSetUISurfaceOffsetHorizontal();
+    void updateUISurfaceOffsetHorizontalLabel();
     void onSetUISurfaceToroidRadiusWidth();
     void updateUISurfaceToroidRadiusWidthLabel();
     void onSetUISurfaceToroidRadiusDepth();
@@ -98,6 +102,12 @@ protected:
     LLSlider* mUISurfaceOffsetDepthSliderCtrl;
     LLUICtrl* mUISurfaceOffsetDepthAmountCtrl;
     F32 mUISurfaceOffsetDepthOriginal;
+    LLSlider* mUISurfaceOffsetVerticalSliderCtrl;
+    LLUICtrl* mUISurfaceOffsetVerticalAmountCtrl;
+    F32 mUISurfaceOffsetVerticalOriginal;
+    LLSlider* mUISurfaceOffsetHorizontalSliderCtrl;
+    LLUICtrl* mUISurfaceOffsetHorizontalAmountCtrl;
+    F32 mUISurfaceOffsetHorizontalOriginal;
     LLSlider* mUISurfaceToroidRadiusWidthSliderCtrl;
     LLUICtrl* mUISurfaceToroidRadiusWidthAmountCtrl;
     F32 mUISurfaceToroidRadiusWidthOriginal;

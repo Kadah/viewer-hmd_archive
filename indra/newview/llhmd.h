@@ -266,10 +266,10 @@ public:
     void setUISurfaceToroidCrossSectionRadiusWidth(F32 f) { setUISurfaceParam(&mUIShape.mToroidCrossSectionRadiusWidth, f); }
     F32 getUISurfaceToroidCrossSectionRadiusHeight() const { return mUIShape.mToroidCrossSectionRadiusHeight; }
     void setUISurfaceToroidCrossSectionRadiusHeight(F32 f) { setUISurfaceParam(&mUIShape.mToroidCrossSectionRadiusHeight, f); }
-    F32 getUISurfaceOffsetWidth() const { return mUIShape.mOffsetX; }
-    void setUISurfaceOffsetWidth(F32 f) { setUISurfaceParam(&mUIShape.mOffsetX, f); }
-    F32 getUISurfaceOffsetHeight() const { return mUIShape.mOffsetY; }
-    void setUISurfaceOffsetHeight(F32 f) { setUISurfaceParam(&mUIShape.mOffsetY, f); }
+    F32 getUISurfaceOffsetHorizontal() const { return mUIShape.mOffsetX; }
+    void setUISurfaceOffsetHorizontal(F32 f) { setUISurfaceParam(&mUIShape.mOffsetX, f); }
+    F32 getUISurfaceOffsetVertical() const { return mUIShape.mOffsetY; }
+    void setUISurfaceOffsetVertical(F32 f) { setUISurfaceParam(&mUIShape.mOffsetY, f); }
     F32 getUISurfaceOffsetDepth() const { return mUIShape.mOffsetZ; }
     void setUISurfaceOffsetDepth(F32 f) { setUISurfaceParam(&mUIShape.mOffsetZ, f); }
     U32 getUIShapePresetType() const { return mUIShape.mPresetType; }
@@ -280,6 +280,7 @@ public:
     LLHMD::UISurfaceShapeSettings getUIShapePreset(S32 idx);
     S32 getNumUIShapePresets() const { return (S32)mUIPresetValues.size(); }
     BOOL addPreset();
+    BOOL updatePreset();
     BOOL removePreset(S32 idx);
 
     const char* getLatencyTesterResults();
