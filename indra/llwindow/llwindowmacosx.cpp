@@ -201,6 +201,21 @@ LLWindowMacOSX::LLWindowMacOSX(LLWindowCallbacks* callbacks,
 	
 }
 
+void LLWindowMacOSX::adjustPosForHMDScaling(LLCoordGL& pt)
+{
+    if (mHMDMode)
+    {
+        if (mHMDScale[0] != 0.0f)
+        {
+            pt.mX = llround((F32)pt.mX / mHMDScale[0]);
+        }
+        if (mHMDScale[1] != 0.0f)
+        {
+            pt.mY = llround((F32)pt.mY / mHMDScale[1]);
+        }
+    }
+}
+
 // These functions are used as wrappers for our internal event handling callbacks.
 // It's a good idea to wrap these to avoid reworking more code than we need to within LLWindow.
 
@@ -247,6 +262,7 @@ void callRightMouseDown(float *pos, MASK mask)
 	LLCoordGL		outCoords;
 	outCoords.mX = llround(pos[0]);
 	outCoords.mY = llround(pos[1]);
+    gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleRightMouseDown(gWindowImplementation, outCoords, gKeyboard->currentMask(TRUE));
 }
 
@@ -260,6 +276,7 @@ void callRightMouseUp(float *pos, MASK mask)
 	LLCoordGL		outCoords;
 	outCoords.mX = llround(pos[0]);
 	outCoords.mY = llround(pos[1]);
+    gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleRightMouseUp(gWindowImplementation, outCoords, gKeyboard->currentMask(TRUE));
 }
 
@@ -273,6 +290,7 @@ void callLeftMouseDown(float *pos, MASK mask)
 	LLCoordGL		outCoords;
 	outCoords.mX = llround(pos[0]);
 	outCoords.mY = llround(pos[1]);
+    gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleMouseDown(gWindowImplementation, outCoords, gKeyboard->currentMask(TRUE));
 }
 
@@ -286,6 +304,7 @@ void callLeftMouseUp(float *pos, MASK mask)
 	LLCoordGL		outCoords;
 	outCoords.mX = llround(pos[0]);
 	outCoords.mY = llround(pos[1]);
+    gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleMouseUp(gWindowImplementation, outCoords, gKeyboard->currentMask(TRUE));
 	
 }
@@ -300,6 +319,7 @@ void callDoubleClick(float *pos, MASK mask)
 	LLCoordGL	outCoords;
 	outCoords.mX = llround(pos[0]);
 	outCoords.mY = llround(pos[1]);
+    gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleDoubleClick(gWindowImplementation, outCoords, gKeyboard->currentMask(TRUE));
 }
 
@@ -320,6 +340,7 @@ void callMouseMoved(float *pos, MASK mask)
 	gWindowImplementation->getMouseDeltas(deltas);
 	outCoords.mX += deltas[0];
 	outCoords.mY += deltas[1];
+    gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleMouseMove(gWindowImplementation, outCoords, gKeyboard->currentMask(TRUE));
 	//gWindowImplementation->getCallbacks()->handleScrollWheel(gWindowImplementation, 0);
 }
@@ -367,6 +388,7 @@ void callMiddleMouseDown(float *pos, MASK mask)
 	gWindowImplementation->getMouseDeltas(deltas);
 	outCoords.mX += deltas[0];
 	outCoords.mY += deltas[1];
+    gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleMiddleMouseDown(gWindowImplementation, outCoords, mask);
 }
 
@@ -379,6 +401,7 @@ void callMiddleMouseUp(float *pos, MASK mask)
 	gWindowImplementation->getMouseDeltas(deltas);
 	outCoords.mX += deltas[0];
 	outCoords.mY += deltas[1];
+    gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleMiddleMouseUp(gWindowImplementation, outCoords, mask);
 }
 
@@ -879,6 +902,7 @@ void LLWindowMacOSX::adjustWindowToFitScreen(LLCoordWindow& size)
     {
         return;
     }
+
     float winBounds[4], screenBounds[4], initialPos[2];
     getWindowSize(mWindow[mCurRCIdx], winBounds);
     initialPos[0] = winBounds[0];
@@ -889,9 +913,6 @@ void LLWindowMacOSX::adjustWindowToFitScreen(LLCoordWindow& size)
     if (screen_id >= 0)
     {
         getScreenSize(screen_id, screenBounds);
-
-        // adjust screenBounds height to account for $@!%#& "god"bar and task bar
-        screenBounds[3] -= (84 + 100);
 
         // check to see if window is too big for current screen
         winBounds[2] = llmin(winBounds[2], screenBounds[2]);
@@ -951,22 +972,6 @@ BOOL LLWindowMacOSX::setSizeImpl(const LLCoordWindow size, BOOL adjustPosition)
             adjustWindowToFitScreen(actualSize);
         }
         setWindowSize(mWindow[mCurRCIdx], actualSize.mX, actualSize.mY);
-        
-        mHMDScale[0] = mHMDScale[1] = 1.0f;
-        if (mHMDMode && mWindow[0])
-        {
-            float client[4];
-            float hmd[2] = { (float)mHMDSize[0], (float)mHMDSize[1] };
-            getContentViewBounds(mWindow[0], client);
-            if (client[2] > 0.0f && client[2] < hmd[0])
-            {
-                mHMDScale[0] = hmd[0] / client[2];
-            }
-            if (client[3] > 0.0f && client[3] < hmd[1])
-            {
-                mHMDScale[1] = hmd[1] / client[3];
-            }
-        }
         return TRUE;
 	}
     
@@ -1105,12 +1110,24 @@ void LLWindowMacOSX::setMouseClipping( BOOL b )
 BOOL LLWindowMacOSX::setCursorPosition(const LLCoordWindow position)
 {
     S32 oldIdx = mCurRCIdx;
-    if (mHMDMode && mCurRCIdx == 1)
+    LLCoordWindow pos2 = position;
+    if (mHMDMode)
     {
-        mCurRCIdx = 0;
+        if (mCurRCIdx == 1)
+        {
+            mCurRCIdx = 0;
+        }
+        if (mHMDScale[0] != 0.0f)
+        {
+            pos2.mX = (S32)((F32)pos2.mX * mHMDScale[0]);
+        }
+        if (mHMDScale[1] != 0.0f)
+        {
+            pos2.mY = (S32)((F32)pos2.mY * mHMDScale[1]);
+        }
     }
     LLCoordScreen screen_pos;
-    BOOL result = convertCoords(position, &screen_pos);
+    BOOL result = convertCoords(pos2, &screen_pos);
     mCurRCIdx = oldIdx;
 	if (!result)
 	{
@@ -1144,14 +1161,12 @@ BOOL LLWindowMacOSX::setCursorPosition(const LLCoordWindow position)
 
 BOOL LLWindowMacOSX::getCursorPosition(LLCoordWindow *position)
 {
-	float cursor_point[2];
-	LLCoordScreen screen_pos;
-
 	if (mWindow[0] == NULL)
     {
 		return FALSE;
     }
 	
+	float cursor_point[2];
 	getCursorPos(mWindow[0], cursor_point);
     
 	if(mCursorDecoupled)
@@ -1182,26 +1197,42 @@ BOOL LLWindowMacOSX::getCursorPosition(LLCoordWindow *position)
 
 void LLWindowMacOSX::keepMouseWithinBounds(float* cp, S32 winIdx, S32 w, S32 h)
 {
-    float cpt[2] =
+    F32 actualBounds[2] = { (F32)w, (F32)h };
+    if (mHMDMode)
     {
-        cp[0] * mHMDMode ? mHMDScale[0] : 1.0f,
-        cp[1] * mHMDMode ? mHMDScale[1] : 1.0f,
-    };
-    
-    BOOL outOfBounds = cpt[0] < 0.0f || cpt[0] > (float)w || cpt[1] < 0.0f || cpt[1] > (float)h;
+        for (S32 i = 0; i < 2; ++i)
+        {
+            if (mHMDScale[i] != 0.0f)
+            {
+                actualBounds[i] *= mHMDScale[i];
+            }
+        }
+    }
+    BOOL outOfBounds = cp[0] < 0.0f || cp[0] > actualBounds[0] || cp[1] < 0.0f || cp[1] > actualBounds[1];
     if (outOfBounds)
     {
-        cpt[0] = llmax(0.0f, llmin((float)w, cpt[0]));
-        cpt[1] = llmax(0.0f, llmin((float)h, cpt[1]));
         float scrPt[2];
-        scrPt[0] = cpt[0];
-        scrPt[1] = cpt[1];
+        for (S32 i = 0; i < 2; ++i)
+        {
+            cp[i] = scrPt[i] = llmax(0.0f, llmin(actualBounds[i], cp[i]));
+        }
         convertWindowToScreen(mWindow[winIdx], scrPt);
         CGPoint newPosition;
         newPosition.x = scrPt[0];
         newPosition.y = scrPt[1];
         CGSetLocalEventsSuppressionInterval(0.0);
         CGWarpMouseCursorPosition(newPosition);
+    }
+    if (mHMDMode)
+    {
+        // adjust position for HMD scaling
+        for (S32 i = 0; i < 2; ++i)
+        {
+            if (mHMDScale[i] != 0.0f)
+            {
+                cp[i] /= mHMDScale[i];
+            }
+        }
     }
 }
 
@@ -2120,6 +2151,7 @@ BOOL LLWindowMacOSX::setFocusWindow(S32 idx)
         // Incorrect parameter or no view -> error
         return FALSE;
     }
+    adjustHMDScale();
     return TRUE;
 }
 
@@ -2136,6 +2168,25 @@ void LLWindowMacOSX::setHMDMode(BOOL mode, U32 min_width, U32 min_height)
         showNSCursor();
     }
     setMinSize(min_width, min_height, false);
+}
+
+void LLWindowMacOSX::adjustHMDScale()
+{
+    mHMDScale[0] = mHMDScale[1] = 1.0f;
+    if (mHMDMode && mWindow[0])
+    {
+        float client[4];
+        float hmd[2] = { (float)mHMDSize[0], (float)mHMDSize[1] };
+        getContentViewBounds(mWindow[0], client);
+        if (hmd[0] > 0.0f && client[2] > 0.0f && client[2] < hmd[0])
+        {
+            mHMDScale[0] = client[2] / hmd[0];
+        }
+        if (hmd[1] > 0.0f && client[3] > 0.0f && client[3] < hmd[1])
+        {
+            mHMDScale[1] = client[3] / hmd[1];
+        }
+    }
 }
 
 /*virtual*/
