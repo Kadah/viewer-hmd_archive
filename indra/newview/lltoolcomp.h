@@ -230,6 +230,10 @@ public:
 	virtual void			handleDeselect();
 	virtual LLTool*			getOverrideTool(MASK mask) { return NULL; }
 
+            BOOL            isInGrabMode() const;
+            LLToolGun*      getToolGun() { return mGun; }
+            LLToolGrab*     getToolGrab() { return mGrab; }
+
 protected:
 	LLToolGun*			mGun;
 	LLToolGrab*			mGrab;

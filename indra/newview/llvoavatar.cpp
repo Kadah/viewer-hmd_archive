@@ -94,6 +94,7 @@
 #include "llanimstatelabels.h"
 #include "lltrans.h"
 #include "llappearancemgr.h"
+#include "llhmd.h"
 
 #include "llgesturemgr.h" //needed to trigger the voice gesticulations
 #include "llvoiceclient.h"
@@ -3356,7 +3357,7 @@ BOOL LLVOAvatar::updateCharacter(LLAgent &agent)
 				}
 			}
 			LLVector3 fwdDir = lerp(primDir, velDir, clamp_rescale(speed, 0.5f, 2.0f, 0.0f, 1.0f));
-			if (isSelf() && gAgentCamera.cameraMouselook())
+			if (isSelf() && gAgentCamera.cameraMouselook() && !gHMD.isHMDMode())
 			{
 				// make sure fwdDir stays in same general direction as primdir
 				if (gAgent.getFlying())

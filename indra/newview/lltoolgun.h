@@ -37,6 +37,7 @@ public:
 	LLToolGun( LLToolComposite* composite=NULL );
 
 	virtual void	draw();
+            void    drawCrosshairs(S32 x, S32 y);
 
 	virtual void	handleSelect();
 	virtual void	handleDeselect();

@@ -289,22 +289,9 @@ void LLFloaterCamera::onHMDChange()
 
 void LLFloaterCamera::handleHMDChange()
 {
-    // disable mouselook mode when in HMD mode
-    if (gHMD.isHMDMode())
+    if (!gHMD.isHMDMode() && gAgentCamera.cameraFirstPerson() && !gSavedSettings.getBOOL("FirstPersonModeInCycle"))
     {
-        if (gAgentCamera.cameraMouselook())
-        {
-            gAgentCamera.changeCameraToFirstPerson();
-        }
-        getChild<LLPanelCameraItem>("mouselook_view")->setEnabled(FALSE);
-    }
-    else
-    {
-        if (gAgentCamera.cameraFirstPerson() && !gSavedSettings.getBOOL("FirstPersonModeInCycle"))
-        {
-            gAgentCamera.changeCameraToMouselook();
-        }
-        getChild<LLPanelCameraItem>("mouselook_view")->setEnabled(TRUE);
+        gAgentCamera.changeCameraToMouselook();
     }
 }
 

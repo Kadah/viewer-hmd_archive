@@ -950,11 +950,11 @@ S32 LLViewerKeyboard::loadBindings(const std::string& filename)
 
 EKeyboardMode LLViewerKeyboard::getMode()
 {
-	if ( gAgentCamera.cameraMouselook() )
+	if (gAgentCamera.cameraMouselook() && !gHMD.isHMDMode())
 	{
 		return MODE_FIRST_PERSON;
 	}
-	else if ( gMorphView && gMorphView->getVisible())
+	else if (gMorphView && gMorphView->getVisible())
 	{
 		return MODE_EDIT_AVATAR;
 	}

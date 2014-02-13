@@ -51,6 +51,7 @@
 #include "llfloatertools.h"
 #include "llgroupactions.h"
 #include "llgroupmgr.h"
+#include "llhmd.h"
 #include "llhomelocationresponder.h"
 #include "llhudmanager.h"
 #include "lljoystickbutton.h"
@@ -510,8 +511,11 @@ void LLAgent::onAppFocusGained()
 {
 	if (CAMERA_MODE_MOUSELOOK == gAgentCamera.getCameraMode())
 	{
-		gAgentCamera.changeCameraToDefault();
-		LLToolMgr::getInstance()->clearSavedTool();
+        if (!gHMD.isChangingRenderContext())
+        {
+		    gAgentCamera.changeCameraToDefault();
+		    LLToolMgr::getInstance()->clearSavedTool();
+        }
 	}
 }
 
@@ -2992,7 +2996,7 @@ LLQuaternion LLAgent::getHeadRotation()
 		return LLQuaternion::DEFAULT;
 	}
 
-	if (!gAgentCamera.cameraMouselook())
+	if (!gAgentCamera.cameraMouselook() && !gAgentCamera.cameraFirstPerson())
 	{
 		return gAgentAvatarp->getRotation();
 	}

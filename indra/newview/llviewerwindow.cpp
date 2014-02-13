@@ -1461,7 +1461,7 @@ BOOL LLViewerWindow::handleActivate(LLWindow *window, BOOL activated)
 		}
 		
 		// SL-53351: Make sure we're not in mouselook when minimised, to prevent control issues
-		if (gAgentCamera.getCameraMode() == CAMERA_MODE_MOUSELOOK || gAgentCamera.getCameraMode() == CAMERA_MODE_FIRST_PERSON)
+		if (gAgentCamera.getCameraMode() == CAMERA_MODE_MOUSELOOK)
 		{
 			gAgentCamera.changeCameraToDefault();
 		}
@@ -2254,9 +2254,6 @@ void LLViewerWindow::reshape(S32 width, S32 height)
 		// update our window rectangle
 		mWindowRectRaw.mRight = mWindowRectRaw.mLeft + width;
 		mWindowRectRaw.mTop = mWindowRectRaw.mBottom + height;
-
-
-		//glViewport(0, 0, width, height );
 
 		if (height > 0)
 		{ 

@@ -39,6 +39,7 @@
 #include "llagent.h"
 #include "llagentcamera.h"
 #include "llfocusmgr.h"
+#include "llhmd.h"
 
 
 // ----------------------------------------------------------------------------
@@ -421,7 +422,7 @@ void LLViewerJoystick::agentPitch(F32 pitch_inc)
 void LLViewerJoystick::agentYaw(F32 yaw_inc)
 {	
 	// Cannot steer some vehicles in mouselook if the script grabs the controls
-	if (gAgentCamera.cameraMouselook() && !gSavedSettings.getBOOL("JoystickMouselookYaw"))
+	if (gAgentCamera.cameraMouselook() && !gHMD.isHMDMode() && !gSavedSettings.getBOOL("JoystickMouselookYaw"))
 	{
 		gAgent.rotate(-yaw_inc, gAgent.getReferenceUpVector());
 	}

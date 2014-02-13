@@ -4039,7 +4039,7 @@ class LLViewMouselook : public view_listener_t
         switch (mode)
         {
         case CAMERA_MODE_MOUSELOOK:
-            if (gHMD.isHMDMode() || gSavedSettings.getBOOL("FirstPersonModeInCycle"))
+            if (gSavedSettings.getBOOL("FirstPersonModeInCycle"))
             {
                 gAgentCamera.changeCameraToFirstPerson();
             }
@@ -4053,14 +4053,7 @@ class LLViewMouselook : public view_listener_t
             break;
         case CAMERA_MODE_FOLLOW:
         case CAMERA_MODE_THIRD_PERSON:
-            if (gHMD.isHMDMode())
-            {
-                gAgentCamera.changeCameraToFirstPerson();
-            }
-            else
-            {
-                gAgentCamera.changeCameraToMouselook();
-            }
+            gAgentCamera.changeCameraToMouselook();
             break;
         case CAMERA_MODE_CUSTOMIZE_AVATAR:
         default:

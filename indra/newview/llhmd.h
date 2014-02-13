@@ -33,7 +33,6 @@
     // We do not support the Oculus Rift on other platforms at the moment
     #define LL_HMD_SUPPORTED 0
 #endif
-#define LL_HMD_EXPERIMENTAL 0
 
 #include "llpointer.h"
 
@@ -312,10 +311,14 @@ public:
     const LLVector4a& getMouseWorldRaycastNormal() const { return mMouseWorldRaycastNormal; }
     const LLVector4a& getMouseWorldRaycastTangent() const { return mMouseWorldRaycastTangent; }
 
+    void setup2DRender();
+
     // returns TRUE if we're in HMD Mode, mh is valid and mh has a valid mouse intersect override (in either UI or global coordinate space)
     BOOL handleMouseIntersectOverride(LLMouseHandler* mh);
 
     F32 getWorldCursorSizeMult() const { return mMouseWorldSizeMult; }
+
+    void onViewChange();
 
     void saveSettings();
 
@@ -331,14 +334,9 @@ public:
     static void onChangePresetValues();
     static void onChangeMoveFollowsLookDir();
 
-#if LL_HMD_EXPERIMENTAL 
-    const LLVector2& getCamFrustumLocs() const { return mCamFrustumUILocs; }
-#endif
-
 private:
     void calculateUIEyeDepth();
     void setUISurfaceParam(F32* p, F32 f);
-    void calculateMouseWorld2(F32 nx, F32 ny, LLVector3& world);
 
 private:
     LLHMDImpl* mImpl;
@@ -375,9 +373,6 @@ private:
     std::vector<LLVector2> mCursorHotSpotOffsets;
     LLPointer<LLViewerTexture> mCalibrateBackgroundTexture;
     LLPointer<LLViewerTexture> mCalibrateForegroundTexture;
-#if LL_HMD_EXPERIMENTAL 
-    LLVector2 mCamFrustumUILocs;
-#endif
 };
 
 extern LLHMD gHMD;

@@ -426,7 +426,7 @@ public:
 	void hideObject( const LLUUID& id );
 	void restoreHiddenObject( const LLUUID& id );
 
-    void postRender(LLRenderTarget* pLeft = NULL, LLRenderTarget* pRight = NULL, BOOL writeAlpha = FALSE, S32 viewportWidth = 0);
+    void postRender(LLRenderTarget* pLeft = NULL, LLRenderTarget* pRight = NULL, BOOL writeAlpha = FALSE, BOOL doFlush = TRUE);
 
 private:
 	void unloadShaders();

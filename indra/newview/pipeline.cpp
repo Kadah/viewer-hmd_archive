@@ -11629,7 +11629,7 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 	LLGLState::checkClientArrays();
 }
 
-void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL writeAlpha, S32 viewportWidth)
+void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL writeAlpha, BOOL doFlush)
 {
     if (!(gPipeline.canUseVertexShaders() && sRenderGlow))
     {
@@ -11638,18 +11638,18 @@ void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL 
 
     if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
     {
-        if (pLeft)
+        if (pLeft && doFlush)
         {
             pLeft->flush();
         }
     }
     else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
     {
-        if (pRight)
+        if (pRight && doFlush)
         {
             pRight->flush();
         }
-        gViewerWindow->setup3DViewport(0, 0, viewportWidth);
+        gViewerWindow->setup3DViewport(0, 0);
 
         F32 w = 1.0f;
         F32 h = 1.0f;

@@ -45,6 +45,7 @@
 #include "lluiimage.h"
 // Linden library includes
 #include "llwindow.h"			// setMouseClipping()
+#include "llhmd.h"
 
 LLToolGun::LLToolGun( LLToolComposite* composite )
 :	LLTool( std::string("gun"), composite ),
@@ -78,7 +79,7 @@ BOOL LLToolGun::handleMouseDown(S32 x, S32 y, MASK mask)
 
 BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask) 
 {
-	if( gAgentCamera.cameraMouselook() && mIsSelected )
+	if( gAgentCamera.cameraMouselook() && mIsSelected && !gHMD.isHMDMode() )
 	{
 		const F32 NOMINAL_MOUSE_SENSITIVITY = 0.0025f;
 
@@ -131,11 +132,20 @@ BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask)
 
 void LLToolGun::draw()
 {
-	if( gSavedSettings.getBOOL("ShowCrosshairs") )
+    // crosshair rendering is a bit 'special' in HMD mode, so it's handled elsewhere
+	if(!gHMD.isHMDMode())
+	{
+        drawCrosshairs( gViewerWindow->getWorldViewRectScaled().getWidth() / 2,
+                        gViewerWindow->getWorldViewRectScaled().getHeight() / 2);
+	}
+}
+
+
+void LLToolGun::drawCrosshairs(S32 x, S32 y)
+{
+	if(gSavedSettings.getBOOL("ShowCrosshairs"))
 	{
 		LLUIImagePtr crosshair = LLUI::getUIImage("crosshairs.tga");
-		crosshair->draw(
-			( gViewerWindow->getWorldViewRectScaled().getWidth() - crosshair->getWidth() ) / 2,
-			( gViewerWindow->getWorldViewRectScaled().getHeight() - crosshair->getHeight() ) / 2);
+		crosshair->draw(x - (crosshair->getWidth() / 2), y - (crosshair->getHeight() / 2));
 	}
 }

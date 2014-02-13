@@ -79,6 +79,8 @@
 #include "llpostprocess.h"
 #include "llhmd.h"
 #include "llrootview.h"
+#include "lltoolcomp.h"
+#include "lltoolgun.h"
 
 extern LLPointer<LLViewerTexture> gStartTexture;
 extern bool gShiftFrame;
@@ -1317,7 +1319,7 @@ static LLFastTimer::DeclareTimer FTM_SWAP("Swap");
 
 void render_hmd_mouse_cursor_3d()
 {
-    if (gHMD.isHMDMode() && !gHMD.cursorIntersectsUI())
+    if (gHMD.isHMDMode() && !gHMD.cursorIntersectsUI() && (!gAgentCamera.cameraMouselook() || gAgent.leftButtonGrabbed()))
     {
         LLWindow* window = gViewerWindow->getWindow();
         if (!window || window->isCursorHidden())
@@ -1434,7 +1436,7 @@ void render_hmd_mouse_cursor_3d()
 
 void render_hmd_mouse_cursor_2d()
 {
-    if (gHMD.isHMDMode())
+    if (gHMD.isHMDMode() && (!gAgentCamera.cameraMouselook() || gAgent.leftButtonGrabbed()))
     {
         LLWindow* window = gViewerWindow->getWindow();
         if (!window || window->isCursorHidden())
@@ -1553,6 +1555,44 @@ void render_ui(F32 zoom_factor, int subfield)
                 {
                     llwarns << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
                     return;
+                }
+            }
+
+            if (gAgentCamera.cameraMouselook() && LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
+            {
+                LLTool* toolBase = LLToolMgr::getInstance()->getCurrentTool();
+                LLToolCompGun* tool =  LLToolCompGun::getInstance();
+                if (toolBase != NULL && toolBase != gToolNull && toolBase == tool && !tool->isInGrabMode())
+                {
+                    LLToolGun* gun = tool->getToolGun();
+	                LLGLSDefault gls_default;
+	                LLGLSUIDefault gls_ui;
+	                gPipeline.disableLights();
+                    gGL.setColorMask(true, false);
+                    gGL.color4f(1,1,1,1);
+
+	                if (LLGLSLShader::sNoFixedFunction)
+	                {
+		                gUIProgram.bind();
+	                }
+
+                    gGL.matrixMode(LLRender::MM_PROJECTION);
+                    gGL.pushMatrix();
+                    gGL.matrixMode(LLRender::MM_MODELVIEW);
+                    gGL.pushMatrix();
+
+                    gHMD.setup2DRender();
+                    gun->drawCrosshairs((gHMD.getHMDEyeWidth() / 2), gHMD.getHMDHeight() / 2);
+
+                    gGL.matrixMode(LLRender::MM_PROJECTION);
+                    gGL.popMatrix();
+                    gGL.matrixMode(LLRender::MM_MODELVIEW);
+                    gGL.popMatrix();
+
+    	            if (LLGLSLShader::sNoFixedFunction)
+	                {
+		                gUIProgram.unbind();
+	                }
                 }
             }
 

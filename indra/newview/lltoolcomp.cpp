@@ -784,3 +784,8 @@ BOOL LLToolCompGun::handleScrollWheel(S32 x, S32 y, S32 clicks)
 	}
 	return TRUE;
 }
+
+BOOL LLToolCompGun::isInGrabMode() const
+{
+    return mCur != mNull && mCur == mGrab;
+}
