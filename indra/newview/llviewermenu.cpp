@@ -1027,6 +1027,10 @@ U32 info_display_from_string(std::string info_display)
 	{
 		return LLPipeline::RENDER_DEBUG_AVATAR_VOLUME;
 	}
+	else if ("joints" == info_display)
+	{
+		return LLPipeline::RENDER_DEBUG_AVATAR_JOINTS;
+	}
 	else if ("raycast" == info_display)
 	{
 		return LLPipeline::RENDER_DEBUG_RAYCAST;
