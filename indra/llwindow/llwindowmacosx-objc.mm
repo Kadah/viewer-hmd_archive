@@ -543,7 +543,6 @@ int getScreenFromPoint(float* pos)
 	for (int i = 0; i < numScreens; ++i)
 	{
 		NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:i];
-		NSRect frame = [s frame];
 		if (NSPointInRect(point, [s frame]))
 		{
 			return i;

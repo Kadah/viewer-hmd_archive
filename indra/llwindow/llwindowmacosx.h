@@ -129,6 +129,8 @@ public:
     
     bool allowsLanguageInput() { return mLanguageTextInputAllowed; }
 
+    void adjustPosForHMDScaling(LLCoordGL& pt);
+    
     // HMD support
     /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror);
     /*virtual*/ BOOL destroyHMDWindow();
@@ -196,6 +198,7 @@ protected:
 	static MASK modifiersToMask(S16 modifiers);
 
     void adjustWindowToFitScreen(LLCoordWindow& size);
+    void adjustHMDScale();
 
 #if LL_OS_DRAGDROP_ENABLED
 	

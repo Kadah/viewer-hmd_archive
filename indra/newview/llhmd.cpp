@@ -553,7 +553,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         // to handle cursor positioning in HMD mode
                         if (!isMainFullScreen())
                         {
-                            windowp->setSize(getHMDClientSize());
+                            windowp->setSize(getHMDClientSize(), TRUE);
                         }
 #endif
                         if (!setRenderWindowHMD())

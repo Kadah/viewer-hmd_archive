@@ -3611,7 +3611,7 @@ void LLViewerWindow::renderSelections(BOOL for_hud, BOOL updateSilhouettes)
 		LLSelectMgr::getInstance()->updateSilhouettes();
 	}
 
-	if (for_hud && selection->getSelectType() == SELECT_TYPE_HUD || (!for_hud && selection->getSelectType() != SELECT_TYPE_HUD))
+	if ((for_hud && selection->getSelectType() == SELECT_TYPE_HUD) || (!for_hud && selection->getSelectType() != SELECT_TYPE_HUD))
 	{
 		LLSelectMgr::getInstance()->renderSilhouettes(for_hud);
 
