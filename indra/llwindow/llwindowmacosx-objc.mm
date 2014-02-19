@@ -564,15 +564,12 @@ void enterFullScreen(int screen_id, NSWindowRef window)
 
 void leaveFullScreen(int screen_id, NSWindowRef window, int x, int y, int width, int height)
 {
-    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_id];
-	NSRect screenRect = [s frame];
 	NSRect frame = NSMakeRect(x, y, width, height);
     [(LLNSWindow*)window setStyleMask:NSTitledWindowMask | NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTexturedBackgroundWindowMask];
     [(LLNSWindow*)window setFrame:frame display:YES];
     [(LLNSWindow*)window setLevel:NSNormalWindowLevel];
     [(LLNSWindow*)window setOpaque:YES];
     [(LLNSWindow*)window setHidesOnDeactivate:NO];
-	[(LLNSWindow*)window backing:NSBackingStoreBuffered];
 	[(LLNSWindow*)window makeKeyAndOrderFront:nil];
 	[(LLNSWindow*)window setAcceptsMouseMovedEvents:TRUE];
 }

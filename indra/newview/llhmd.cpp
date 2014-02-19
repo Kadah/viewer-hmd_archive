@@ -46,6 +46,9 @@
 #include "llviewertexture.h"
 #include "llviewerwindow.h"
 #include "llwindow.h"
+#if LL_DARWIN
+    #include "llwindowmacosx.h"
+#endif
 #include "pipeline.h"
 #include "raytrace.h"
 

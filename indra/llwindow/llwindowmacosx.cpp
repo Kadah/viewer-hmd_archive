@@ -2208,7 +2208,7 @@ void LLWindowMacOSX::enterFullScreen()
     float winBounds[4];
     getWindowSize(mWindow[mCurRCIdx], winBounds);
     int screen_id = getScreenFromPoint(winBounds);
-    enterFullScreen(screen_id, mWindow[mCurRCIdx]);
+    ::enterFullScreen(screen_id, mWindow[mCurRCIdx]);
 }
 
 void LLWindowMacOSX::exitFullScreen(LLCoordScreen pos, LLCoordWindow size)
@@ -2220,7 +2220,7 @@ void LLWindowMacOSX::exitFullScreen(LLCoordScreen pos, LLCoordWindow size)
     float winBounds[4];
     getWindowSize(mWindow[mCurRCIdx], winBounds);
     int screen_id = getScreenFromPoint(winBounds);
-    leaveFullScreen(screen_id, mWindow[mCurRCIdx], pos.mX, pos.mY, size.mX, size.mY);
+    leaveFullScreen(screen_id, mWindow[mCurRCIdx], pos.mX, pos.mY, size.mX, size.mY + 22);
 }
 
 /*virtual*/
