@@ -924,6 +924,11 @@ void LLWindowMacOSX::adjustWindowToFitScreen(LLCoordWindow& size)
         else if ((winBounds[0] + winBounds[2]) > (screenBounds[0] + screenBounds[2]))
         {
             winBounds[0] = (screenBounds[0] + screenBounds[2]) - winBounds[2];
+            if (winBounds[0] < screenBounds[0])
+            {
+                winBounds[0] = screenBounds[0];
+                winBounds[2] = screenBounds[2];
+            }
         }
 
         // now ensure that window position (with adjusted size) fits on the screen
@@ -934,6 +939,11 @@ void LLWindowMacOSX::adjustWindowToFitScreen(LLCoordWindow& size)
         else if ((winBounds[1] + winBounds[3]) > (screenBounds[1] + screenBounds[3]))
         {
             winBounds[1] = (screenBounds[1] + screenBounds[3]) - winBounds[3];
+            if (winBounds[1] < screenBounds[1])
+            {
+                winBounds[1] = screenBounds[1];
+                winBounds[3] = screenBounds[3];
+            }
         }
         if (!is_approx_equal(initialPos[0], winBounds[0]) || !is_approx_equal(initialPos[1], winBounds[1]))
         {
@@ -2187,6 +2197,30 @@ void LLWindowMacOSX::adjustHMDScale()
             mHMDScale[1] = client[3] / hmd[1];
         }
     }
+}
+
+void LLWindowMacOSX::enterFullScreen()
+{
+    if (mCurRCIdx < 0 || mCurRCIdx > 1 || !mWindow[mCurRCIdx])
+    {
+        return;
+    }
+    float winBounds[4];
+    getWindowSize(mWindow[mCurRCIdx], winBounds);
+    int screen_id = getScreenFromPoint(winBounds);
+    enterFullScreen(screen_id, mWindow[mCurRCIdx]);
+}
+
+void LLWindowMacOSX::exitFullScreen(LLCoordScreen pos, LLCoordWindow size)
+{
+    if (mCurRCIdx < 0 || mCurRCIdx > 1 || !mWindow[mCurRCIdx])
+    {
+        return;
+    }
+    float winBounds[4];
+    getWindowSize(mWindow[mCurRCIdx], winBounds);
+    int screen_id = getScreenFromPoint(winBounds);
+    leaveFullScreen(screen_id, mWindow[mCurRCIdx], pos.mX, pos.mY, size.mX, size.mY);
 }
 
 /*virtual*/

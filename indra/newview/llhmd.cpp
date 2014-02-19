@@ -502,11 +502,23 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         if (!isMainFullScreen())
                         {
 #if LL_DARWIN
-                            windowp->setSize(mMainClientSize);
+                            if (isHMDMirror())
+                            {
+                                LLWindowMacOSX* w = dynamic_cast<LLWindowMacOSX*>(windowp);
+                                if (w)
+                                {
+                                    w->exitFullScreen(mMainWindowPos, mMainClientSize);
+                                }
+                            }
+                            else
+                            {
+                                windowp->setSize(mMainClientSize);
+                                windowp->setPosition(mMainWindowPos);
+                            }
 #else
                             windowp->setSize(mMainWindowSize);
-#endif
                             windowp->setPosition(mMainWindowPos);
+#endif
                         }
                         if (oldMode == RenderMode_HMD)
                         {
@@ -559,7 +571,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         if (!setRenderWindowHMD())
                         {
                             // Somehow, we've lost the HMD window, so just recreate it
-                            setRenderWindowMain();
+                            setRenderWindowMain(); 
                             gHMD.isPostDetectionInitialized(FALSE);
                             if (!mImpl->postDetectionInit() || !setRenderWindowHMD())
                             {
@@ -577,16 +589,32 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 case RenderMode_ScreenStereo:
                     // switching from Normal to ScreenStereo
                     {
+#if LL_DARWIN
+                        if (isHMDMirror() && !isMainFullScreen())
+                        {
+                            LLWindowMacOSX* w = dynamic_cast<LLWindowMacOSX*>(windowp);
+                            if (w)
+                            {
+                                w->enterFullScreen();
+                                w->setRenderWindow(0, TRUE);
+                            }
+                        }
+#endif
                         windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
-                        if (isMainFullScreen())
+                        if (isMainFullScreen()
+#if LL_DARWIN
+                            || isHMDMirror()
+#endif
+                            )
                         {
                             onViewChange();
                         }
                         else
                         {
-                            windowp->setSize(getHMDClientSize());
+                            windowp->setSize(getHMDClientSize(), TRUE);
                             windowp->setPosition(mMainWindowPos);
+                            //onViewChange();
                         }
                     }
                     break;

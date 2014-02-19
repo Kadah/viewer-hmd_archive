@@ -101,6 +101,8 @@ void closeWindow(NSWindowRef window);
 void removeGLView(GLViewRef view);
 void makeFirstResponder(NSWindowRef window, GLViewRef view);
 void setupInputWindow(NSWindowRef window, GLViewRef view);
+void enterFullScreen(int screen_id, NSWindowRef window);
+void leaveFullScreen(int screen_id, NSWindowRef window, int x, int y, int width, int height);
 
 // These are all implemented in llwindowmacosx.cpp.
 // This is largely for easier interop between Obj-C and C++ (at least in the viewer's case due to the BOOL vs. BOOL conflict)

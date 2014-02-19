@@ -129,8 +129,6 @@ public:
     
     bool allowsLanguageInput() { return mLanguageTextInputAllowed; }
 
-    void adjustPosForHMDScaling(LLCoordGL& pt);
-    
     // HMD support
     /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror);
     /*virtual*/ BOOL destroyHMDWindow();
@@ -158,7 +156,10 @@ public:
     // returns the upper-left screen coordinates for the window frame (including the title bar and any borders)
     /*virtual*/ BOOL getFramePos(LLCoordScreen* pos);
 
-    
+    void adjustPosForHMDScaling(LLCoordGL& pt);
+    void enterFullScreen();
+    void exitFullScreen(LLCoordScreen pos, LLCoordWindow size);
+
 protected:
 	LLWindowMacOSX(LLWindowCallbacks* callbacks,
 		const std::string& title, const std::string& name, int x, int y, int width, int height, U32 flags,
