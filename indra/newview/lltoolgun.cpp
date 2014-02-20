@@ -57,7 +57,11 @@ void LLToolGun::handleSelect()
 {
 	gViewerWindow->hideCursor();
 	gViewerWindow->moveCursorToCenter();
-	gViewerWindow->getWindow()->setMouseClipping(TRUE);
+    if (!gHMD.isHMDMode())
+    {
+        // HMD mode already has mouse clipping turned on
+	    gViewerWindow->getWindow()->setMouseClipping(TRUE);
+    }
 	mIsSelected = TRUE;
 }
 
@@ -65,7 +69,12 @@ void LLToolGun::handleDeselect()
 {
 	gViewerWindow->moveCursorToCenter();
 	gViewerWindow->showCursor();
-	gViewerWindow->getWindow()->setMouseClipping(FALSE);
+    if (!gHMD.isHMDMode())
+    {
+        // HMD mode must keep mouse clipping turned on or it can inadvertently defocus the window and cause it
+        // to revert to normal rendering
+    	gViewerWindow->getWindow()->setMouseClipping(FALSE);
+    }
 	mIsSelected = FALSE;
 }
 
