@@ -8,6 +8,7 @@
     <binding key="E" mask="NONE" command="jump"/>
     <binding key="C" mask="NONE" command="push_down"/>
     <binding key="F" mask="NONE" command="toggle_fly"/>
+    <binding key="Q" mask="NONE" command="align_hips_to_eyes"/>
 
     <binding key="LEFT" mask="NONE" command="slide_left"/>
     <binding key="RIGHT" mask="NONE" command="slide_right"/>

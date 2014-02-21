@@ -105,9 +105,13 @@ public:
     F32 getPitch() const { return mEyePitch; }
     F32 getYaw() const { return mEyeYaw; }
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = mEyeRoll; pitch = mEyePitch; yaw = mEyeYaw; }
-    LLQuaternion getHeadRotationCorrection() const { return mHeadRotationCorrection; }
-    void addHeadRotationCorrection(LLQuaternion quat) { mHeadRotationCorrection *= quat; mHeadRotationCorrection.normalize(); }
-    void resetHeadRotationCorrection() { mHeadRotationCorrection = LLQuaternion::DEFAULT; }
+    virtual LLQuaternion getHeadRotationCorrection() const { return mHeadRotationCorrection; }
+    virtual void addHeadRotationCorrection(LLQuaternion quat) { mHeadRotationCorrection *= quat; mHeadRotationCorrection.normalize(); }
+    virtual void resetHeadRotationCorrection() { mHeadRotationCorrection = LLQuaternion::DEFAULT; }
+    virtual LLQuaternion getHeadPitchCorrection() const { return mHeadPitchCorrection; }
+    virtual void addHeadPitchCorrection(LLQuaternion quat) { mHeadPitchCorrection *= quat; mHeadPitchCorrection.normalize(); }
+    virtual void resetHeadPitchCorrection() { mHeadPitchCorrection = LLQuaternion::DEFAULT; }
+
     void resetOrientation() { if (gHMD.isPostDetectionInitialized()) { mSensorFusion->Reset(); } }
 
     F32 getOrthoPixelOffset() const { return gHMD.isPostDetectionInitialized() ? mCurrentEyeParams.OrthoProjection.M[0][3] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)OVR::Util::Render::StereoEye_Left ? 1.0f : -1.0f)); }
@@ -134,6 +138,7 @@ private:
     OVR::Ptr <OVR::SensorDevice> mSensorDevice;
     OVR::Util::Render::StereoConfig mStereoConfig;
     LLQuaternion mHeadRotationCorrection;
+    LLQuaternion mHeadPitchCorrection;
     OVR::Array<DeviceStatusNotificationDesc>* mpDeviceStatusNotificationsQueue;
 
     OVR::Util::LatencyTest mLatencyUtil;

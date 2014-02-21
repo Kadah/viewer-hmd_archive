@@ -172,9 +172,21 @@ void align_hips_to_eyes( EKeystate state )
 	{
         float r, p, y;
         gHMD.getHMDRollPitchYaw(r, p, y);
-        LLQuaternion current_head_yaw(y, gAgent.getUpAxis());
-        current_head_yaw *= gHMD.getHeadRotationCorrection();
-        gAgent.rotate(current_head_yaw);
+
+        LLQuaternion qp(p, gAgent.getLeftAxis());
+        qp *= gHMD.getHeadPitchCorrection();
+        qp.normalize();
+
+        LLQuaternion qy(y, gAgent.getReferenceUpVector());
+        qy *= gHMD.getHeadRotationCorrection();
+        qy.normalize();
+
+        qp *= qy;
+        qp.normalize();
+        gAgent.rotate(qp);
+
+        // get rid of roll that can creep in
+        gAgent.resetAxes(gAgent.getAtAxis());
 
         gHMD.resetOrientation();
         //gHMD.addHeadRotationCorrection(~current_head_yaw);
@@ -950,7 +962,7 @@ S32 LLViewerKeyboard::loadBindings(const std::string& filename)
 
 EKeyboardMode LLViewerKeyboard::getMode()
 {
-	if (gAgentCamera.cameraMouselook() && !gHMD.isHMDMode())
+	if (gAgentCamera.cameraMouselook())
 	{
 		return MODE_FIRST_PERSON;
 	}

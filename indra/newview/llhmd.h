@@ -35,6 +35,7 @@
 #endif
 
 #include "llpointer.h"
+#include "lltimer.h"
 
 class LLHMDImpl;
 class LLViewerTexture;
@@ -72,6 +73,7 @@ public:
         kFlag_LatencyTesterConnected    = 1 << 12,
         kFlag_HMDMirror                 = 1 << 13,
         kFlag_SavingSettings            = 1 << 14,
+        kFlag_YawRotateMode             = 1 << 15,
     };
 
     enum eUIPresetType
@@ -136,6 +138,8 @@ public:
     void isHMDMirror(BOOL b) { if (b) { mFlags |= kFlag_HMDMirror; } else { mFlags &= ~kFlag_HMDMirror; } }
     BOOL isSavingSettings() const { return ((mFlags & kFlag_SavingSettings) != 0) ? TRUE : FALSE; }
     void isSavingSettings(BOOL b) { if (b) { mFlags |= kFlag_SavingSettings; } else { mFlags &= ~kFlag_SavingSettings; } }
+    BOOL isYawRotateMode() const { return ((mFlags & kFlag_YawRotateMode) != 0) ? TRUE : FALSE; }
+    void isYawRotateMode(BOOL b) { if (b) { mFlags |= kFlag_YawRotateMode; } else { mFlags &= ~kFlag_YawRotateMode; } }
 
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
@@ -210,11 +214,15 @@ public:
     F32 getHMDRoll() const;
     F32 getHMDPitch() const;
     F32 getHMDYaw() const;
+    F32 getYawElapsedTime() const;
 
     // head correction (difference in rotation between head and body)
     LLQuaternion getHeadRotationCorrection() const;
     void addHeadRotationCorrection(LLQuaternion quat);
     void resetHeadRotationCorrection();
+    LLQuaternion getHeadPitchCorrection() const;
+    void addHeadPitchCorrection(LLQuaternion quat);
+    void resetHeadPitchCorrection();
     void resetOrientation();
 
     void setBaseModelView(F32* m);
@@ -333,6 +341,8 @@ public:
     static void onChangeWorldCursorSizeMult();
     static void onChangePresetValues();
     static void onChangeMoveFollowsLookDir();
+    static void onChangeMouselookRotThreshold();
+    static void onChangeMouselookTurnMult();
 
 private:
     void calculateUIEyeDepth();
@@ -371,8 +381,9 @@ private:
     std::vector<UISurfaceShapeSettings> mUIPresetValues;
     std::vector<LLPointer<LLViewerTexture> > mCursorTextures;
     std::vector<LLVector2> mCursorHotSpotOffsets;
-    LLPointer<LLViewerTexture> mCalibrateBackgroundTexture;
-    LLPointer<LLViewerTexture> mCalibrateForegroundTexture;
+    LLTimer mYawTimer;
+    F32 mMouselookRotThreshold;
+    F32 mMouselookTurnMult;
 };
 
 extern LLHMD gHMD;
@@ -457,6 +468,9 @@ public:
     virtual LLQuaternion getHeadRotationCorrection() const { return LLQuaternion::DEFAULT; }
     virtual void addHeadRotationCorrection(LLQuaternion quat) {}
     virtual void resetHeadRotationCorrection() {}
+    virtual LLQuaternion getHeadPitchCorrection() const { return LLQuaternion::DEFAULT; }
+    virtual void addHeadPitchCorrection(LLQuaternion quat) {}
+    virtual void resetHeadPitchCorrection() {}
 
     virtual F32 getOrthoPixelOffset() const { return kDefaultOrthoPixelOffset; }
 

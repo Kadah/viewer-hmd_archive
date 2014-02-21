@@ -4512,6 +4512,28 @@
       <key>Value</key>
       <real>0.064</real>
     </map>
+    <key>HMDMouselookRotThreshold</key>
+    <map>
+        <key>Comment</key>
+        <string>In HMD mouselook mode, this value is the number of degrees from center that you can turn your head before it also begins to rotate you.</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>F32</string>
+        <key>Value</key>
+        <real>45.0</real>
+    </map>
+    <key>HMDMouselookTurnSpeedMult</key>
+    <map>
+        <key>Comment</key>
+        <string>Multiplier for rotation speed in HMD Mouselook mode.  Valid values are (0,1].</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>F32</string>
+        <key>Value</key>
+        <real>0.5</real>
+    </map>
     <key>HMDUIMagnification</key>
     <map>
       <key>Comment</key>
