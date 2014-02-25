@@ -154,6 +154,8 @@ BOOL LLHMD::init()
     onChangeMouselookRotThreshold();
     gSavedSettings.getControl("HMDMouselookTurnSpeedMult")->getSignal()->connect(boost::bind(&onChangeMouselookTurnMult));
     onChangeMouselookTurnMult();
+    gSavedSettings.getControl("HMDUseActualMouselook")->getSignal()->connect(boost::bind(&onChangeUseActualMouselook));
+    onChangeUseActualMouselook();
 
     preInitResult = mImpl->preInit();
     if (preInitResult)
@@ -421,6 +423,9 @@ void LLHMD::onChangeUISurfaceShape()
 {
     gPipeline.mHMDUISurface = NULL;
 }
+
+void LLHMD::onChangeUseActualMouselook() { gHMD.isActualMouselook(gSavedSettings.getBOOL("HMDUseActualMouselook")); }
+
 
 void LLHMD::shutdown()
 {

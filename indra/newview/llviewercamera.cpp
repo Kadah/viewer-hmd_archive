@@ -185,7 +185,7 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3 &center,
         qr *= qp;
         qr *= qy;
 
-        if (gHMD.moveFollowsLookDir() || gAgentCamera.cameraMouselook())
+        if ((gHMD.moveFollowsLookDir() || gAgentCamera.cameraMouselook()) && !gHMD.isActualMouselook())
         {
             // in HMD mouselook mode, the forward direction follows your head direction
             // so we rotate the agent accordingly.
@@ -217,6 +217,11 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3 &center,
         qr.normalize();
 
         rotate(qr);
+
+        if ((gHMD.moveFollowsLookDir() || gAgentCamera.cameraMouselook()) && gHMD.isActualMouselook())
+        {
+            gAgent.resetAxes(getAtAxis());
+        }
     }
 
 	mVelocityDir = center - last_position;

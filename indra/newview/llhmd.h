@@ -74,6 +74,7 @@ public:
         kFlag_HMDMirror                 = 1 << 13,
         kFlag_SavingSettings            = 1 << 14,
         kFlag_YawRotateMode             = 1 << 15,
+        kFlag_UseActualMouselook        = 1 << 16,
     };
 
     enum eUIPresetType
@@ -140,7 +141,9 @@ public:
     void isSavingSettings(BOOL b) { if (b) { mFlags |= kFlag_SavingSettings; } else { mFlags &= ~kFlag_SavingSettings; } }
     BOOL isYawRotateMode() const { return ((mFlags & kFlag_YawRotateMode) != 0) ? TRUE : FALSE; }
     void isYawRotateMode(BOOL b) { if (b) { mFlags |= kFlag_YawRotateMode; } else { mFlags &= ~kFlag_YawRotateMode; } }
-
+    BOOL isActualMouselook() const { return ((mFlags & kFlag_UseActualMouselook) != 0) ? TRUE : FALSE; }
+    void isActualMouselook(BOOL b) { if (b) { mFlags |= kFlag_UseActualMouselook; } else { mFlags &= ~kFlag_UseActualMouselook; } }
+    
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
 
@@ -343,6 +346,7 @@ public:
     static void onChangeMoveFollowsLookDir();
     static void onChangeMouselookRotThreshold();
     static void onChangeMouselookTurnMult();
+    static void onChangeUseActualMouselook();
 
 private:
     void calculateUIEyeDepth();

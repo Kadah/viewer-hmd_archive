@@ -4745,6 +4745,17 @@
       <key>Value</key>
       <real>1.0</real>
     </map>
+    <key>HMDUseActualMouselook</key>
+    <map>
+      <key>Comment</key>
+      <string>Experimental: turns on actual mouselook steering behavior (still using head) in HMD mouselook</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
     <key>HMDUseMotionPrediction</key>
     <map>
       <key>Comment</key>
