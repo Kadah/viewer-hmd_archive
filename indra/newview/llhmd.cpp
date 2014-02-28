@@ -86,7 +86,8 @@ LLHMD::LLHMD()
     , mMouseWorldSizeMult(5.0f)
     , mPresetUIAspect(1.6f)
     , mMouselookRotThreshold(45.0f * DEG_TO_RAD)
-    , mMouselookTurnMult(0.5f)
+    , mMouselookRotMax(30.0f * DEG_TO_RAD)
+    , mMouselookTurnSpeedMax(0.1f)
 {
     memset(&mUIShape, 0, sizeof(UISurfaceShapeSettings));
     mUIShape.mPresetType = (U32)LLHMD::kCustom;
@@ -148,14 +149,10 @@ BOOL LLHMD::init()
     onChangeUIShapePreset();
     gSavedSettings.getControl("HMDWorldCursorSizeMult")->getSignal()->connect(boost::bind(&onChangeWorldCursorSizeMult));
     onChangeWorldCursorSizeMult();
-    gSavedSettings.getControl("HMDMoveFollowsLookDir")->getSignal()->connect(boost::bind(&onChangeMoveFollowsLookDir));
-    onChangeMoveFollowsLookDir();
-    gSavedSettings.getControl("HMDMouselookRotThreshold")->getSignal()->connect(boost::bind(&onChangeMouselookRotThreshold));
-    onChangeMouselookRotThreshold();
-    gSavedSettings.getControl("HMDMouselookTurnSpeedMult")->getSignal()->connect(boost::bind(&onChangeMouselookTurnMult));
-    onChangeMouselookTurnMult();
-    gSavedSettings.getControl("HMDUseActualMouselook")->getSignal()->connect(boost::bind(&onChangeUseActualMouselook));
-    onChangeUseActualMouselook();
+    gSavedSettings.getControl("HMDMouselookRotThreshold")->getSignal()->connect(boost::bind(&onChangeMouselookSettings));
+    gSavedSettings.getControl("HMDMouselookRotMax")->getSignal()->connect(boost::bind(&onChangeMouselookSettings));
+    gSavedSettings.getControl("HMDMouselookTurnSpeedMax")->getSignal()->connect(boost::bind(&onChangeMouselookSettings));
+    onChangeMouselookSettings();
 
     preInitResult = mImpl->preInit();
     if (preInitResult)
@@ -405,27 +402,18 @@ void LLHMD::onChangePresetValues()
 
 void LLHMD::onChangeUIShapePreset() { if (!gHMD.isSavingSettings()) { gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset")); } }
 void LLHMD::onChangeWorldCursorSizeMult() { if (!gHMD.isSavingSettings()) { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); } }
-void LLHMD::onChangeMoveFollowsLookDir() { gHMD.moveFollowsLookDir(gSavedSettings.getBOOL("HMDMoveFollowsLookDir")); }
-void LLHMD::onChangeMouselookRotThreshold()
+
+void LLHMD::onChangeMouselookSettings()
 {
-    const float kMin = 10.0f * DEG_TO_RAD;
-    const float kMax = 80.0f * DEG_TO_RAD;
-    float f = gSavedSettings.getF32("HMDMouselookRotThreshold") * DEG_TO_RAD;
-    gHMD.mMouselookRotThreshold = llclamp(f, kMin, kMax);
-}
-void LLHMD::onChangeMouselookTurnMult()
-{
-    float f = gSavedSettings.getF32("HMDMouselookTurnSpeedMult");
-    gHMD.mMouselookTurnMult = llclamp(f, 0.001f, 1.0f);
+    gHMD.mMouselookRotThreshold = llclamp(gSavedSettings.getF32("HMDMouselookRotThreshold") * DEG_TO_RAD, (10.0f * DEG_TO_RAD), (80.0f * DEG_TO_RAD));
+    gHMD.mMouselookRotMax = llclamp(gSavedSettings.getF32("HMDMouselookRotMax") * DEG_TO_RAD, (1.0f * DEG_TO_RAD), (90.0f * DEG_TO_RAD));
+    gHMD.mMouselookTurnSpeedMax = llclamp(gSavedSettings.getF32("HMDMouselookTurnSpeedMax"), 0.01f, 0.5f);
 }
 
 void LLHMD::onChangeUISurfaceShape()
 {
     gPipeline.mHMDUISurface = NULL;
 }
-
-void LLHMD::onChangeUseActualMouselook() { gHMD.isActualMouselook(gSavedSettings.getBOOL("HMDUseActualMouselook")); }
-
 
 void LLHMD::shutdown()
 {
@@ -444,30 +432,34 @@ void LLHMD::onIdle()
 {
     if (mImpl)
     {
+        mLastRollPitchYaw.setVec(mImpl->getRoll(), mImpl->getPitch(), mImpl->getYaw());
         mImpl->onIdle();
-    }
-
-    BOOL largeYaw = FALSE;
-    if (isHMDMode() && gAgentCamera.cameraMouselook())
-    {
-        BOOL negYaw = getHMDYaw() < -mMouselookRotThreshold;
-        BOOL posYaw = getHMDYaw() > mMouselookRotThreshold;
-        largeYaw = negYaw || posYaw;
-        if (largeYaw)
+        if (isHMDMode() && gAgentCamera.cameraMouselook())
         {
-            if (isYawRotateMode())
+            LLVector3 atLeveled = gAgent.getAtAxis();
+            atLeveled[VZ] = 0.0f;
+            atLeveled.normalize();
+            gAgent.resetAxes(atLeveled);
+
+            gAgent.pitch(mImpl->getPitch());
+
+            LLVector3 skyward = gAgent.getReferenceUpVector();
+            F32 yaw = mImpl->getYaw();
+            F32 dy = yaw - mLastRollPitchYaw[VZ];
+            if (yaw < -mMouselookRotThreshold || yaw > mMouselookRotThreshold)
             {
+                F32 yt = llclamp(llabs(yaw) - mMouselookRotThreshold, 0.0f, mMouselookRotMax) * ((yaw >= 0.0f) ? 1.0f : -1.0f);
                 F32 v = llclamp(gAgent.getVelocity().lengthSquared(), 0.0f, 16.0f);
-                F32 mult = llclamp(mMouselookTurnMult + (mMouselookTurnMult * (v * 0.0625f)), 0.001f, 1.0f);
-                gAgent.moveYaw(LLFloaterMove::getYawRate(getYawElapsedTime()) * negYaw ? (-1.0f * mult) : (1.0f * mult));
+                if (v <= 1.0f)
+                {
+                    // rotate faster when stopped or moving very slowly.
+                    yt *= 2.0f;
+                }
+                dy += (mMouselookTurnSpeedMax * ((1.0f / mMouselookRotMax) * yt));
             }
-            else
-            {
-                mYawTimer.reset();
-            }
+            gAgent.rotate(dy, skyward[VX], skyward[VY], skyward[VZ]);
         }
     }
-    isYawRotateMode(largeYaw);
 }
 
 void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
@@ -692,8 +684,8 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
         if (mImpl && isPostDetectionInitialized() && isHMDConnected() && isHMDSensorConnected() && isHMDMode())
         {
             mImpl->resetOrientation();
-            mImpl->resetHeadRotationCorrection();
-            mImpl->resetHeadPitchCorrection();
+            //mImpl->resetHeadRotationCorrection();
+            //mImpl->resetHeadPitchCorrection();
         }
     }
 #else
@@ -965,18 +957,37 @@ F32 LLHMD::getXCenterOffset() const { return mImpl ? mImpl->getXCenterOffset() :
 F32 LLHMD::getYCenterOffset() const { return mImpl ? mImpl->getYCenterOffset() : 0.0f; }
 F32 LLHMD::getDistortionScale() const { return mImpl ? mImpl->getDistortionScale() : 0.0f; }
 LLQuaternion LLHMD::getHMDOrient() const { return mImpl ? mImpl->getHMDOrient() : LLQuaternion::DEFAULT; }
-LLQuaternion LLHMD::getHeadRotationCorrection() const { return mImpl ? mImpl->getHeadRotationCorrection() : LLQuaternion::DEFAULT; }
-void LLHMD::addHeadRotationCorrection(LLQuaternion quat) { if (mImpl) { mImpl->addHeadRotationCorrection(quat); } }
-void LLHMD::resetHeadRotationCorrection() { if (mImpl) { mImpl->resetHeadRotationCorrection(); } }
-LLQuaternion LLHMD::getHeadPitchCorrection() const { return mImpl ? mImpl->getHeadPitchCorrection() : LLQuaternion::DEFAULT; }
-void LLHMD::addHeadPitchCorrection(LLQuaternion quat) { if (mImpl) { mImpl->addHeadPitchCorrection(quat); } }
-void LLHMD::resetHeadPitchCorrection() { if (mImpl) { mImpl->resetHeadPitchCorrection(); } }
+//LLQuaternion LLHMD::getHeadRotationCorrection() const { return mImpl ? mImpl->getHeadRotationCorrection() : LLQuaternion::DEFAULT; }
+//void LLHMD::addHeadRotationCorrection(LLQuaternion quat) { if (mImpl) { mImpl->addHeadRotationCorrection(quat); } }
+//void LLHMD::resetHeadRotationCorrection() { if (mImpl) { mImpl->resetHeadRotationCorrection(); } }
+//LLQuaternion LLHMD::getHeadPitchCorrection() const { return mImpl ? mImpl->getHeadPitchCorrection() : LLQuaternion::DEFAULT; }
+//void LLHMD::addHeadPitchCorrection(LLQuaternion quat) { if (mImpl) { mImpl->addHeadPitchCorrection(quat); } }
+//void LLHMD::resetHeadPitchCorrection() { if (mImpl) { mImpl->resetHeadPitchCorrection(); } }
 void LLHMD::resetOrientation() { if (mImpl) { mImpl->resetOrientation(); } }
 void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { if (mImpl) { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); } else { roll = pitch = yaw = 0.0f; } }
+void LLHMD::getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = mLastRollPitchYaw[VX]; pitch = mLastRollPitchYaw[VY], yaw = mLastRollPitchYaw[VZ]; }
+void LLHMD::getHMDDeltaRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
+{
+    if (mImpl)
+    {
+        roll = mImpl->getRoll() - mLastRollPitchYaw[VX];
+        pitch = mImpl->getPitch() - mLastRollPitchYaw[VY];
+        yaw = mImpl->getYaw() - mLastRollPitchYaw[VZ];
+    }
+    else
+    {
+        roll = pitch = yaw = 0.0f;
+    }
+}
 F32 LLHMD::getHMDRoll() const { return mImpl ? mImpl->getRoll() : 0.0f; }
+F32 LLHMD::getHMDLastRoll() const { return mLastRollPitchYaw[VX]; }
+F32 LLHMD::getHMDDeltaRoll() const { if (mImpl) { return mImpl->getRoll() - mLastRollPitchYaw[VX]; } else { return 0.0f; } }
 F32 LLHMD::getHMDPitch() const { return mImpl ? mImpl->getPitch() : 0.0f; }
+F32 LLHMD::getHMDLastPitch() const { return mLastRollPitchYaw[VY]; }
+F32 LLHMD::getHMDDeltaPitch() const { if (mImpl) { return mImpl->getPitch() - mLastRollPitchYaw[VY]; } else { return 0.0f; } }
 F32 LLHMD::getHMDYaw() const { return mImpl ? mImpl->getYaw() : 0.0f; }
-F32 LLHMD::getYawElapsedTime() const { return mYawTimer.getElapsedTimeF32(); }
+F32 LLHMD::getHMDLastYaw() const { return mLastRollPitchYaw[VZ]; }
+F32 LLHMD::getHMDDeltaYaw() const { if (mImpl) { return mImpl->getYaw() - mLastRollPitchYaw[VZ]; } else { return 0.0f; } }
 F32 LLHMD::getVerticalFOV() const { return mImpl ? mImpl->getVerticalFOV() : 0.0f; }
 F32 LLHMD::getAspect() { return mImpl ? mImpl->getAspect() : 0.0f; }
 BOOL LLHMD::useMotionPrediction() const { return mImpl ? mImpl->useMotionPrediction() : FALSE; }

@@ -177,50 +177,20 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3 &center,
     if (gHMD.isHMDMode() && gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected())
     {
         gHMD.setBaseLookAt((F32*)getModelview().mMatrix);
-        float r, p, y;
-        gHMD.getHMDRollPitchYaw(r, p, y);
-        LLQuaternion qr(r, mXAxis);
-        LLQuaternion qp(p, mYAxis);
-        LLQuaternion qy(y, mZAxis);
-        qr *= qp;
-        qr *= qy;
-
-        if ((gHMD.moveFollowsLookDir() || gAgentCamera.cameraMouselook()) && !gHMD.isActualMouselook())
+        if (!gAgentCamera.cameraMouselook())
         {
-            // in HMD mouselook mode, the forward direction follows your head direction
-            // so we rotate the agent accordingly.
-            LLQuaternion agent_head_pitch(p, gAgent.getLeftAxis());
-            agent_head_pitch *= gHMD.getHeadPitchCorrection();
-            agent_head_pitch.normalize();
-            gHMD.addHeadPitchCorrection(~agent_head_pitch);
+            float r, p, y;
+            gHMD.getHMDRollPitchYaw(r, p, y);
+            LLQuaternion qr(r, mXAxis);
+            LLQuaternion qp(p, mYAxis);
+            LLQuaternion qy(y, mZAxis);
+            qr *= qp;
+            qr *= qy;
+            qr.normalize();
+            //qr *= gHMD.getHeadRotationCorrection();
+            //qr.normalize();
 
-            LLQuaternion agent_head_yaw(y, gAgent.getReferenceUpVector());
-            agent_head_yaw *= gHMD.getHeadRotationCorrection();
-            agent_head_yaw.normalize();
-            gHMD.addHeadRotationCorrection(~agent_head_yaw);
-
-            agent_head_pitch *= agent_head_yaw;
-            agent_head_pitch.normalize();
-            gAgent.rotate(agent_head_pitch);
-
-            // this is necessary to get rid of the inadvertent "roll" that somehow gets introduced when
-            // rotating and moving forward at the same time.  Everything SEEMS like it should prevent this
-            // roll from creeping in, but creep in it does.  The only way I've found to reliably get rid of it
-            // is to renormalize the agent's axes here.  Annoying.
-            gAgent.resetAxes(gAgent.getAtAxis());
-        }
-        qr.normalize();
-        // yes, I'm intentionally not adding headPitchCorrection here as it is unnecessary
-        // (we don't need to accumulate pitch like we do yaw since we always want 0 pitch to be an absolute)
-        // In addition, when I do add it, it seems to make the gimbal lock a lot worse.
-        qr *= gHMD.getHeadRotationCorrection();
-        qr.normalize();
-
-        rotate(qr);
-
-        if ((gHMD.moveFollowsLookDir() || gAgentCamera.cameraMouselook()) && gHMD.isActualMouselook())
-        {
-            gAgent.resetAxes(getAtAxis());
+            rotate(qr);
         }
     }
 

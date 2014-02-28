@@ -35,7 +35,6 @@
 #endif
 
 #include "llpointer.h"
-#include "lltimer.h"
 
 class LLHMDImpl;
 class LLViewerTexture;
@@ -68,13 +67,10 @@ public:
         kFlag_AdvancedMode              = 1 << 7,
         kFlag_ChangingRenderContext     = 1 << 8,
         kFlag_HMDAllowed                = 1 << 9,
-        kFlag_MoveFollowsLookDir        = 1 << 10,
-        kFlag_HMDSensorConnected        = 1 << 11,
-        kFlag_LatencyTesterConnected    = 1 << 12,
-        kFlag_HMDMirror                 = 1 << 13,
-        kFlag_SavingSettings            = 1 << 14,
-        kFlag_YawRotateMode             = 1 << 15,
-        kFlag_UseActualMouselook        = 1 << 16,
+        kFlag_HMDSensorConnected        = 1 << 10,
+        kFlag_LatencyTesterConnected    = 1 << 11,
+        kFlag_HMDMirror                 = 1 << 12,
+        kFlag_SavingSettings            = 1 << 13,
     };
 
     enum eUIPresetType
@@ -129,8 +125,6 @@ public:
     void isChangingRenderContext(BOOL b) { if (b) { mFlags |= kFlag_ChangingRenderContext; } else { mFlags &= ~kFlag_ChangingRenderContext; } }
     BOOL isHMDAllowed() const { return ((mFlags & kFlag_HMDAllowed) != 0) ? TRUE : FALSE; }
     void isHMDAllowed(BOOL b) { if (b) { mFlags |= kFlag_HMDAllowed; } else { mFlags &= ~kFlag_HMDAllowed; } }
-    BOOL moveFollowsLookDir() const { return ((mFlags & kFlag_MoveFollowsLookDir) != 0) ? TRUE : FALSE; }
-    void moveFollowsLookDir(BOOL b) { if (b) { mFlags |= kFlag_MoveFollowsLookDir; } else { mFlags &= ~kFlag_MoveFollowsLookDir; } }
     BOOL isHMDSensorConnected() const { return ((mFlags & kFlag_HMDSensorConnected) != 0) ? TRUE : FALSE; }
     void isHMDSensorConnected(BOOL b) { if (b) { mFlags |= kFlag_HMDSensorConnected; } else { mFlags &= ~kFlag_HMDSensorConnected; } }
     BOOL isLatencyTesterConnected() const { return ((mFlags & kFlag_LatencyTesterConnected) != 0) ? TRUE : FALSE; }
@@ -139,10 +133,6 @@ public:
     void isHMDMirror(BOOL b) { if (b) { mFlags |= kFlag_HMDMirror; } else { mFlags &= ~kFlag_HMDMirror; } }
     BOOL isSavingSettings() const { return ((mFlags & kFlag_SavingSettings) != 0) ? TRUE : FALSE; }
     void isSavingSettings(BOOL b) { if (b) { mFlags |= kFlag_SavingSettings; } else { mFlags &= ~kFlag_SavingSettings; } }
-    BOOL isYawRotateMode() const { return ((mFlags & kFlag_YawRotateMode) != 0) ? TRUE : FALSE; }
-    void isYawRotateMode(BOOL b) { if (b) { mFlags |= kFlag_YawRotateMode; } else { mFlags &= ~kFlag_YawRotateMode; } }
-    BOOL isActualMouselook() const { return ((mFlags & kFlag_UseActualMouselook) != 0) ? TRUE : FALSE; }
-    void isActualMouselook(BOOL b) { if (b) { mFlags |= kFlag_UseActualMouselook; } else { mFlags &= ~kFlag_UseActualMouselook; } }
     
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
@@ -214,18 +204,25 @@ public:
     // Get the current HMD orientation
     LLQuaternion getHMDOrient() const;
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
+    void getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
+    void getHMDDeltaRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     F32 getHMDRoll() const;
+    F32 getHMDLastRoll() const;
+    F32 getHMDDeltaRoll() const;
     F32 getHMDPitch() const;
+    F32 getHMDLastPitch() const;
+    F32 getHMDDeltaPitch() const;
     F32 getHMDYaw() const;
-    F32 getYawElapsedTime() const;
+    F32 getHMDLastYaw() const;
+    F32 getHMDDeltaYaw() const;
 
     // head correction (difference in rotation between head and body)
-    LLQuaternion getHeadRotationCorrection() const;
-    void addHeadRotationCorrection(LLQuaternion quat);
-    void resetHeadRotationCorrection();
-    LLQuaternion getHeadPitchCorrection() const;
-    void addHeadPitchCorrection(LLQuaternion quat);
-    void resetHeadPitchCorrection();
+    //LLQuaternion getHeadRotationCorrection() const;
+    //void addHeadRotationCorrection(LLQuaternion quat);
+    //void resetHeadRotationCorrection();
+    //LLQuaternion getHeadPitchCorrection() const;
+    //void addHeadPitchCorrection(LLQuaternion quat);
+    //void resetHeadPitchCorrection();
     void resetOrientation();
 
     void setBaseModelView(F32* m);
@@ -343,10 +340,7 @@ public:
     static void onChangeUIShapePreset();
     static void onChangeWorldCursorSizeMult();
     static void onChangePresetValues();
-    static void onChangeMoveFollowsLookDir();
-    static void onChangeMouselookRotThreshold();
-    static void onChangeMouselookTurnMult();
-    static void onChangeUseActualMouselook();
+    static void onChangeMouselookSettings();
 
 private:
     void calculateUIEyeDepth();
@@ -385,9 +379,10 @@ private:
     std::vector<UISurfaceShapeSettings> mUIPresetValues;
     std::vector<LLPointer<LLViewerTexture> > mCursorTextures;
     std::vector<LLVector2> mCursorHotSpotOffsets;
-    LLTimer mYawTimer;
     F32 mMouselookRotThreshold;
-    F32 mMouselookTurnMult;
+    F32 mMouselookRotMax;
+    F32 mMouselookTurnSpeedMax;
+    LLVector3 mLastRollPitchYaw;
 };
 
 extern LLHMD gHMD;
@@ -469,12 +464,12 @@ public:
     virtual F32 getYaw() const { return 0.0f; }
     virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = pitch = yaw = 0.0f; }
 
-    virtual LLQuaternion getHeadRotationCorrection() const { return LLQuaternion::DEFAULT; }
-    virtual void addHeadRotationCorrection(LLQuaternion quat) {}
-    virtual void resetHeadRotationCorrection() {}
-    virtual LLQuaternion getHeadPitchCorrection() const { return LLQuaternion::DEFAULT; }
-    virtual void addHeadPitchCorrection(LLQuaternion quat) {}
-    virtual void resetHeadPitchCorrection() {}
+    //virtual LLQuaternion getHeadRotationCorrection() const { return LLQuaternion::DEFAULT; }
+    //virtual void addHeadRotationCorrection(LLQuaternion quat) {}
+    //virtual void resetHeadRotationCorrection() {}
+    //virtual LLQuaternion getHeadPitchCorrection() const { return LLQuaternion::DEFAULT; }
+    //virtual void addHeadPitchCorrection(LLQuaternion quat) {}
+    //virtual void resetHeadPitchCorrection() {}
 
     virtual F32 getOrthoPixelOffset() const { return kDefaultOrthoPixelOffset; }
 

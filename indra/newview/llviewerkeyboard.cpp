@@ -170,26 +170,17 @@ void align_hips_to_eyes( EKeystate state )
 {
 	if (KEYSTATE_DOWN == state && gHMD.isHMDMode())
 	{
-        float r, p, y;
-        gHMD.getHMDRollPitchYaw(r, p, y);
-
-        LLQuaternion qp(p, gAgent.getLeftAxis());
-        qp *= gHMD.getHeadPitchCorrection();
-        qp.normalize();
-
-        LLQuaternion qy(y, gAgent.getReferenceUpVector());
-        qy *= gHMD.getHeadRotationCorrection();
-        qy.normalize();
-
-        qp *= qy;
-        qp.normalize();
-        gAgent.rotate(qp);
-
-        // get rid of roll that can creep in
-        gAgent.resetAxes(gAgent.getAtAxis());
-
+        if (!gAgentCamera.cameraMouselook())
+        {
+            float r, p, y;
+            gHMD.getHMDRollPitchYaw(r, p, y);
+            LLVector3 atl = gAgent.getAtAxis();
+            atl[VZ] = 0.0f;
+            gAgent.resetAxes(atl);
+            //gAgent.pitch(p);
+            gAgent.yaw(y);
+        }
         gHMD.resetOrientation();
-        //gHMD.addHeadRotationCorrection(~current_head_yaw);
 	}
 }
 

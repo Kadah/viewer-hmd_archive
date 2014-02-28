@@ -4523,16 +4523,27 @@
         <key>Value</key>
         <real>45.0</real>
     </map>
-    <key>HMDMouselookTurnSpeedMult</key>
+    <key>HMDMouselookRotMax</key>
     <map>
         <key>Comment</key>
-        <string>Multiplier for rotation speed in HMD Mouselook mode.  Valid values are (0,1].</string>
+        <string>In HMD mouselook mode, this value is the number of degrees after the Rot Threshold is reached before turn rate is at full speed</string>
         <key>Persist</key>
         <integer>1</integer>
         <key>Type</key>
         <string>F32</string>
         <key>Value</key>
-        <real>0.5</real>
+        <real>30.0</real>
+    </map>
+    <key>HMDMouselookTurnSpeedMax</key>
+    <map>
+        <key>Comment</key>
+        <string>In HMD mouselook mode, this value is the max rate of turning (yaw)</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>F32</string>
+        <key>Value</key>
+        <real>0.1</real>
     </map>
     <key>HMDUIMagnification</key>
     <map>
@@ -4745,17 +4756,6 @@
       <key>Value</key>
       <real>1.0</real>
     </map>
-    <key>HMDUseActualMouselook</key>
-    <map>
-      <key>Comment</key>
-      <string>Experimental: turns on actual mouselook steering behavior (still using head) in HMD mouselook</string>
-      <key>Persist</key>
-      <integer>0</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-    </map>
     <key>HMDUseMotionPrediction</key>
     <map>
       <key>Comment</key>
@@ -4766,17 +4766,6 @@
       <string>Boolean</string>
       <key>Value</key>
       <integer>1</integer>
-    </map>
-    <key>HMDMoveFollowsLookDir</key>
-    <map>
-        <key>Comment</key>
-        <string>(Experimental) If this is true, then horizontal movement in HMD mode will follow the direction that you're looking in</string>
-        <key>Persist</key>
-        <integer>1</integer>
-        <key>Type</key>
-        <string>Boolean</string>
-        <key>Value</key>
-        <real>0</real>
     </map>
     <key>HMDWorldCursorSizeMult</key>
     <map>
