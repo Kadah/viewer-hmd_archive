@@ -2097,8 +2097,6 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 			gAgent.setFlagsDirty();
 		}
 
-        //gHMD.onViewChange();
-
 		if (animate)
 		{
 			startCameraAnimation();
@@ -2145,11 +2143,6 @@ void LLAgentCamera::changeCameraToFirstPerson(BOOL animate)
         updateLastCamera();
         mCameraMode = CAMERA_MODE_FIRST_PERSON;
         gAgent.clearControlFlags(AGENT_CONTROL_MOUSELOOK);
-
-        //if (mLastCameraMode == CAMERA_MODE_MOUSELOOK)
-        //{
-        //    gHMD.onViewChange();
-        //}
     }
 
     if (animate)
@@ -2173,11 +2166,6 @@ void LLAgentCamera::changeCameraToDefault()
 	{
 		return;
 	}
-
-    //if (mCameraMode == CAMERA_MODE_MOUSELOOK)
-    //{
-    //    gHMD.onViewChange();
-    //}
 
 	if (LLFollowCamMgr::getActiveFollowCamParams())
 	{
