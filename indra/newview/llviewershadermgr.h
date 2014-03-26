@@ -185,6 +185,7 @@ extern LLGLSLShader			gDownsampleDepthProgram;
 extern LLGLSLShader			gDownsampleDepthRectProgram;
 extern LLGLSLShader			gBarrelDistortProgram;
 extern LLGLSLShader			gBarrelDistortRectProgram;
+extern LLGLSLShader			gBenchmarkProgram;
 
 //output tex0[tc0] + tex1[tc1]
 extern LLGLSLShader			gTwoTextureAddProgram;
