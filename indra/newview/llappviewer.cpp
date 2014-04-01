@@ -3276,10 +3276,10 @@ LLSD LLAppViewer::getViewerInfo() const
 	// LLFloaterAbout.
 	LLSD info;
 	LLSD version;
-	version.append(LLVersionInfo::getMajor());
-	version.append(LLVersionInfo::getMinor());
-	version.append(LLVersionInfo::getPatch());
-	version.append(LLVersionInfo::getBuild());
+	version.append((S32)LLVersionInfo::getMajor());
+	version.append((S32)LLVersionInfo::getMinor());
+	version.append((S32)LLVersionInfo::getPatch());
+	version.append((S32)LLVersionInfo::getBuild());
 	info["VIEWER_VERSION"] = version;
 	info["VIEWER_VERSION_STR"] = LLVersionInfo::getVersion();
 	info["BUILD_DATE"] = __DATE__;

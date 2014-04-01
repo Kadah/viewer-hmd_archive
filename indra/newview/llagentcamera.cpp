@@ -304,7 +304,14 @@ void LLAgentCamera::resetView(BOOL reset_camera, BOOL change_camera)
 
 	if (change_camera && !gSavedSettings.getBOOL("FreezeTime"))
 	{
-		changeCameraToDefault();
+        if (gAgentCamera.getCameraMode() == CAMERA_MODE_FIRST_PERSON)
+        {
+            changeCameraToFirstPerson();
+        }
+        else
+        {
+		    changeCameraToDefault();
+        }
 		
 		if (LLViewerJoystick::getInstance()->getOverrideCamera())
 		{
@@ -1148,11 +1155,9 @@ void LLAgentCamera::updateCamera()
 	static LLFastTimer::DeclareTimer ftm("Camera");
 	LLFastTimer t(ftm);
 
-	// - changed camera_skyward to the new global "mCameraUpVector"
 	mCameraUpVector = LLVector3::z_axis;
-	//LLVector3	camera_skyward(0.f, 0.f, 1.f);
 
-	U32 camera_mode = mCameraAnimating ? mLastCameraMode : mCameraMode;
+    U32 camera_mode = mCameraAnimating ? mLastCameraMode : mCameraMode;
 
 	validateFocusObject();
 
@@ -1160,7 +1165,6 @@ void LLAgentCamera::updateCamera()
 		gAgentAvatarp->isSitting() &&
 		(camera_mode == CAMERA_MODE_MOUSELOOK || camera_mode == CAMERA_MODE_FIRST_PERSON))
 	{
-		//changed camera_skyward to the new global "mCameraUpVector"
 		mCameraUpVector = mCameraUpVector * gAgentAvatarp->getRenderRotation();
 	}
 
@@ -1406,8 +1410,37 @@ void LLAgentCamera::updateCamera()
 
 	// Move the camera
 
-	LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent);
-	//LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, camera_skyward, focus_agent);
+    if (gHMD.isHMDMode() && (!cameraMouselook() || gHMD.getMouselookControlMode() != (S32)LLHMD::kMouselookControl_Linked))
+    {
+        LLQuaternion focusRotation;
+		focusRotation.shortestArc(LLVector3::x_axis, LLVector3(mFocusGlobal - camera_pos_global));
+		F32 focusRoll, focusPitch, focusYaw;
+		focusRotation.getEulerAngles(&focusRoll, &focusPitch, &focusYaw);
+        LLQuaternion focusPitchAndYaw;
+        if (cameraThirdPerson() || cameraFollow())
+        {
+            // only want yaw in 3rd person camera mode
+            focusPitchAndYaw = LLQuaternion(focusYaw, LLVector3::z_axis);
+        }
+        else
+        {
+            focusPitchAndYaw = LLQuaternion(focusPitch, LLVector3::y_axis) * LLQuaternion(focusYaw, LLVector3::z_axis);
+        }
+
+        LLQuaternion y = LLQuaternion(gHMD.getHMDYaw(), LLVector3::z_axis);
+	    LLQuaternion p = LLQuaternion(gHMD.getHMDPitch(), LLVector3::y_axis);
+	    LLQuaternion r = LLQuaternion(gHMD.getHMDRoll(), LLVector3::x_axis);
+
+        LLVector3 original_camera_up_vector = mCameraUpVector;
+		mCameraUpVector = LLVector3::z_axis * r * y * focusPitchAndYaw;
+
+		LLVector3 hmd_focus_agent = mCameraPositionAgent + LLVector3::x_axis * p * y * focusPitchAndYaw;
+        LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, hmd_focus_agent, original_camera_up_vector, focus_agent);
+    }
+    else
+    {
+	    LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent, mCameraUpVector, focus_agent);
+    }
 	
 	// Change FOV
 	LLViewerCamera::getInstance()->setView(LLViewerCamera::getInstance()->getDefaultFOV() / (1.f + mCameraCurrentFOVZoomFactor));

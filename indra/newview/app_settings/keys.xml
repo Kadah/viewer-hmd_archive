@@ -9,6 +9,7 @@
     <binding key="C" mask="NONE" command="push_down"/>
     <binding key="F" mask="NONE" command="toggle_fly"/>
     <binding key="Q" mask="NONE" command="align_hips_to_eyes"/>
+    <binding key="X" mask="NONE" command="touch"/>
 
     <binding key="LEFT" mask="NONE" command="slide_left"/>
     <binding key="RIGHT" mask="NONE" command="slide_right"/>
@@ -73,7 +74,8 @@
     <binding key="C" mask="SHIFT" command="push_down"/>
 
     <binding key="Q" mask="NONE" command="align_hips_to_eyes"/>
-    <binding key="`" mask="NONE" command="center_cursor"/>
+    <binding key="Z" mask="NONE" command="center_cursor"/>
+    <binding key="X" mask="NONE" command="mouselook_fire"/>
 
     <binding key="F" mask="NONE" command="toggle_fly"/>
     <binding key="F" mask="SHIFT" command="toggle_fly"/>

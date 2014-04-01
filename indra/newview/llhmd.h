@@ -71,6 +71,7 @@ public:
         kFlag_LatencyTesterConnected    = 1 << 11,
         kFlag_HMDMirror                 = 1 << 12,
         kFlag_SavingSettings            = 1 << 13,
+        kFlag_UseSavedHMDPreferences    = 1 << 14,
     };
 
     enum eUIPresetType
@@ -96,6 +97,23 @@ public:
         F32 mUIMagnification;
     };
 
+    enum eMouselookControlMode
+    {
+        kMouselookControl_BEGIN = 0,
+
+        // Move Direction = mouse
+        // Look Direction = HMD
+        // Fire Direction = mouse (Move Direction)
+        kMouselookControl_Independent = kMouselookControl_BEGIN,
+
+        // Move Direction = HMD (extra yaw rotation added after threshold)
+        // Look Direction = HMD (Move Direction)
+        // Fire Direction = HMD (Move Direction)
+        kMouselookControl_Linked,
+
+        kMouselookControl_END,
+        kMouselookControl_Default = kMouselookControl_Independent,
+    };
 
 public:
     LLHMD();
@@ -133,6 +151,8 @@ public:
     void isHMDMirror(BOOL b) { if (b) { mFlags |= kFlag_HMDMirror; } else { mFlags &= ~kFlag_HMDMirror; } }
     BOOL isSavingSettings() const { return ((mFlags & kFlag_SavingSettings) != 0) ? TRUE : FALSE; }
     void isSavingSettings(BOOL b) { if (b) { mFlags |= kFlag_SavingSettings; } else { mFlags &= ~kFlag_SavingSettings; } }
+    BOOL useSavedHMDPreferences() const { return ((mFlags & kFlag_UseSavedHMDPreferences) != 0) ? TRUE : FALSE; }
+    void useSavedHMDPreferences(BOOL b) { if (b) { mFlags |= kFlag_UseSavedHMDPreferences; } else { mFlags &= ~kFlag_UseSavedHMDPreferences; } }
     
     // True if the HMD is initialized and currently in a render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
@@ -319,6 +339,9 @@ public:
     const LLVector4a& getMouseWorldRaycastNormal() const { return mMouseWorldRaycastNormal; }
     const LLVector4a& getMouseWorldRaycastTangent() const { return mMouseWorldRaycastTangent; }
 
+    S32 getMouselookControlMode() const { return mMouselookControlMode; }
+    void setMouselookControlMode(S32 newMode) { mMouselookControlMode = llclamp(newMode, (S32)kMouselookControl_BEGIN, (S32)(kMouselookControl_END - 1)); }
+
     void setup2DRender();
 
     // returns TRUE if we're in HMD Mode, mh is valid and mh has a valid mouse intersect override (in either UI or global coordinate space)
@@ -341,6 +364,8 @@ public:
     static void onChangeWorldCursorSizeMult();
     static void onChangePresetValues();
     static void onChangeMouselookSettings();
+    static void onChangeUseSavedHMDPreferences();
+    static void onChangeMouselookControlMode();
 
 private:
     void calculateUIEyeDepth();
@@ -365,6 +390,7 @@ private:
     LLCoordScreen mMainWindowPos;
     LLCoordScreen mMainWindowSize;
     LLCoordWindow mMainClientSize;
+    F32 mMainWindowFOV;
     // in-world coordinates of mouse pointer on the UI surface
     LLVector3 mMouseWorld;
     // in-world coordinates of raycast from viewpoint into world, assuming no collisions.
@@ -379,6 +405,7 @@ private:
     std::vector<UISurfaceShapeSettings> mUIPresetValues;
     std::vector<LLPointer<LLViewerTexture> > mCursorTextures;
     std::vector<LLVector2> mCursorHotSpotOffsets;
+    S32 mMouselookControlMode;
     F32 mMouselookRotThreshold;
     F32 mMouselookRotMax;
     F32 mMouselookTurnSpeedMax;
@@ -463,13 +490,6 @@ public:
     virtual F32 getPitch() const { return 0.0f; }
     virtual F32 getYaw() const { return 0.0f; }
     virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = pitch = yaw = 0.0f; }
-
-    //virtual LLQuaternion getHeadRotationCorrection() const { return LLQuaternion::DEFAULT; }
-    //virtual void addHeadRotationCorrection(LLQuaternion quat) {}
-    //virtual void resetHeadRotationCorrection() {}
-    //virtual LLQuaternion getHeadPitchCorrection() const { return LLQuaternion::DEFAULT; }
-    //virtual void addHeadPitchCorrection(LLQuaternion quat) {}
-    //virtual void resetHeadPitchCorrection() {}
 
     virtual F32 getOrthoPixelOffset() const { return kDefaultOrthoPixelOffset; }
 

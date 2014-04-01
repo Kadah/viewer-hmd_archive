@@ -11429,7 +11429,7 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 		F32 distance = (pos-camera.getOrigin()).length();
 		F32 fov = atanf(tdim.mV[1]/distance)*2.f*RAD_TO_DEG;
 		F32 aspect = tdim.mV[0]/tdim.mV[1];
-		glh::matrix4f persp = gl_perspective(fov, aspect, 1.f, 256.f);
+		glh::matrix4f persp = gl_perspective(fov, aspect, 1.f, 256.f, TRUE);
 		glh_set_current_projection(persp);
 		gGL.loadMatrix(persp.m);
 
@@ -11651,48 +11651,48 @@ void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL 
         }
         gViewerWindow->setup3DViewport(0, 0);
 
-        F32 w = 1.0f;
-        F32 h = 1.0f;
-        F32 as = (F32)gHMD.getHMDEyeWidth() / (F32)gHMD.getHMDHeight();
-        F32 scaleFactor = 1.0f / gHMD.getDistortionScale();
-        LLVector4 hmd_param = gHMD.getDistortionConstants();
-
-        gBarrelDistortProgram.bind();
-        gBarrelDistortProgram.uniform2f(LLStaticHashedString("Scale"), w * 0.5f * scaleFactor, h * 0.5f * scaleFactor * as);
-        gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScaleIn"), (2.0f / w), (2.0f / h) / as);
-        // We are using 1/4 of DistortionCenter offset value here, since it is relative to [-1,1] range that gets mapped to [0, 0.5].
-        gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w + gHMD.getXCenterOffset()) * 0.5f, (h * 0.5f));
-        gBarrelDistortProgram.uniform2f(LLStaticHashedString("ScreenCenter"), w * 0.5f, h * 0.5f);
-        gBarrelDistortProgram.uniform4fv(LLStaticHashedString("HmdWarpParam"), 1, hmd_param.mV);
-        gGL.setColorMask(true, writeAlpha);
-        gGL.color4f(1,1,1,1);
-        if (pLeft)
+        LLGLSLShader* distortProgram = &gBarrelDistortProgram;
+        if (distortProgram)
         {
-            gGL.getTexUnit(0)->bind(pLeft);
-            gGL.begin(LLRender::TRIANGLE_STRIP);
-            //bottom left, bottom right, top left, top right
-            gGL.texCoord2f(0, 0);       gGL.vertex2f(-1, -1);
-            gGL.texCoord2f(1, 0);       gGL.vertex2f(0, -1);
-            gGL.texCoord2f(0, 1);       gGL.vertex2f(-1,1);
-            gGL.texCoord2f(1, 1);       gGL.vertex2f(0,1);
-            gGL.end();
-        }
+            F32 as = (F32)gHMD.getHMDEyeWidth() / (F32)gHMD.getHMDHeight();
+            F32 scaleFactor = 1.0f / gHMD.getDistortionScale();
 
-        gBarrelDistortProgram.uniform2f(LLStaticHashedString("LensCenter"), (w - gHMD.getXCenterOffset()) * 0.5f, h * 0.5f);
-        if (pRight)
-        {
-            gGL.getTexUnit(0)->bind(pRight);
-            gGL.begin(LLRender::TRIANGLE_STRIP);
-            //bottom left, bottom right, top left, top right
-            gGL.texCoord2f(0, 0);       gGL.vertex2f(0, -1);
-            gGL.texCoord2f(1, 0);       gGL.vertex2f(1, -1);
-            gGL.texCoord2f(0, 1);       gGL.vertex2f(0,1);
-            gGL.texCoord2f(1, 1);       gGL.vertex2f(1,1);
-            gGL.end();
-        }
+            distortProgram->bind();
+            distortProgram->uniform2f(LLStaticHashedString("ScreenCenter"), 0.5f, 0.5f);
+            distortProgram->uniform2f(LLStaticHashedString("ScaleIn"), 2.0f, 2.0f / as);
+            distortProgram->uniform2f(LLStaticHashedString("ScaleOut"), 0.5f * scaleFactor, 0.5f * scaleFactor * as);
+            // We are using 1/4 of DistortionCenter offset value here, since it is relative to [-1,1] range that gets mapped to [0, 0.5].
+            distortProgram->uniform2f(LLStaticHashedString("LensCenter"), (1.0f + gHMD.getXCenterOffset()) * 0.5f, 0.5f);
+            distortProgram->uniform4fv(LLStaticHashedString("HmdWarpParam"), 1, gHMD.getDistortionConstants().mV);
+            gGL.setColorMask(true, writeAlpha);
+            gGL.color4f(1,1,1,1);
+            if (pLeft)
+            {
+                gGL.getTexUnit(0)->bind(pLeft);
+                gGL.begin(LLRender::TRIANGLE_STRIP);
+                //bottom left, bottom right, top left, top right
+                gGL.texCoord2f(0, 0);       gGL.vertex2f(-1, -1);
+                gGL.texCoord2f(1, 0);       gGL.vertex2f(0, -1);
+                gGL.texCoord2f(0, 1);       gGL.vertex2f(-1,1);
+                gGL.texCoord2f(1, 1);       gGL.vertex2f(0,1);
+                gGL.end();
+            }
 
-        gGL.flush();
-        gBarrelDistortProgram.unbind();
+            distortProgram->uniform2f(LLStaticHashedString("LensCenter"), (1.0f - gHMD.getXCenterOffset()) * 0.5f, 0.5f);
+            if (pRight)
+            {
+                gGL.getTexUnit(0)->bind(pRight);
+                gGL.begin(LLRender::TRIANGLE_STRIP);
+                //bottom left, bottom right, top left, top right
+                gGL.texCoord2f(0, 0);       gGL.vertex2f(0, -1);
+                gGL.texCoord2f(1, 0);       gGL.vertex2f(1, -1);
+                gGL.texCoord2f(0, 1);       gGL.vertex2f(0,1);
+                gGL.texCoord2f(1, 1);       gGL.vertex2f(1,1);
+                gGL.end();
+            }
+            gGL.flush();
+            distortProgram->unbind();
+        }
     }
 
     if (LLRenderTarget::sUseFBO && (!gHMD.isHMDMode() || LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE))

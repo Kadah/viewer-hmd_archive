@@ -94,9 +94,11 @@ public:
 
     F32 getUIAspect() const;
 
-	void updateCameraLocation(const LLVector3 &center,
-								const LLVector3 &up_direction,
-								const LLVector3 &point_of_interest);
+	void updateCameraLocation(const LLVector3& center,
+							  const LLVector3& up_direction,
+							  const LLVector3& point_of_interest,
+                              const LLVector3& original_up_direction,
+                              const LLVector3& original_point_of_interest);
 
 	static void updateFrustumPlanes(LLCamera& camera, BOOL ortho = FALSE, BOOL zflip = FALSE, BOOL no_hacks = FALSE);
 	static void updateCameraAngle(void* user_data, const LLSD& value);

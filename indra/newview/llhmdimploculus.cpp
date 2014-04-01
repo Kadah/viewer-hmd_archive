@@ -113,17 +113,71 @@ void LLHMDImplOculus::initHMDDevice(BOOL initSensor)
         bool validInfo = !mHMD->IsDisconnected() && mHMD->GetDeviceInfo(&info) && info.HResolution > 0;
         if (validInfo)
         {
-            // Retrieve relevant profile settings if available, otherwise use saved settings
-            OVR::Profile* pUserProfile = mHMD->GetProfile();
-            if (pUserProfile)
+            BOOL useSavedSettings = gHMD.useSavedHMDPreferences();
+
+            if (!useSavedSettings)
             {
-                info.InterpupillaryDistance = pUserProfile->GetIPD();
+                // Retrieve relevant profile settings if available, otherwise use saved settings
+                OVR::Profile* pUserProfile = mHMD->GetProfile();
+                if (pUserProfile)
+                {
+                    // Rift-46: Vertical distortion is incorrect
+                    // The following block of code is somewhat of a hack to overcome the issue that the Rift returns an
+                    // incorrect value for the eye-to-screen distance and needs to be based on the lens type.  No idea why
+                    // the rift returns 0.41 (always) because that's only close with lens type C, which not many people use.
+                    // When the rift starts returning a correct value for eye-to-screen distance, this code can probably
+                    // be removed.
+                    OVR::EyeCupType lensType = OVR::EyeCup_A;
+
+                    info.InterpupillaryDistance = pUserProfile->GetIPD();
+                    switch (pUserProfile->Type)
+                    {
+                    case OVR::Profile_RiftDK1:
+                        {
+                            OVR::RiftDK1Profile* pUserProfileDK1 = static_cast<OVR::RiftDK1Profile*>(pUserProfile);
+                            lensType = pUserProfileDK1->GetEyeCup();
+                        }
+                        break;
+                    case OVR::Profile_RiftDKHD:
+                        {
+                            OVR::RiftDKHDProfile* pUserProfileDKHD = static_cast<OVR::RiftDKHDProfile*>(pUserProfile);
+                            lensType = pUserProfileDKHD->GetEyeCup();
+                        }
+                        break;
+                    case OVR::Profile_GenericHMD:
+                    case OVR::Profile_Unknown:
+                    default:
+                        break;
+                    }
+
+                    switch (lensType)
+                    {
+                    case OVR::EyeCup_A:
+                        info.EyeToScreenDistance = 0.047f;
+                        break;
+                    case OVR::EyeCup_B:
+                        info.EyeToScreenDistance = 0.044f;
+                        break;
+                    case OVR::EyeCup_C:
+                        info.EyeToScreenDistance = 0.041f;
+                        break;
+                    default:
+                        info.EyeToScreenDistance = 0.047f;
+                        break;
+                    }
+                }
+                else
+                {
+                    useSavedSettings = TRUE;
+                }
             }
-            else
+
+            if (useSavedSettings)
             {
                 info.InterpupillaryDistance = gSavedSettings.getF32("HMDInterpupillaryDistance");
+                info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
             }
-            info.EyeToScreenDistance = gSavedSettings.getF32("HMDEyeToScreenDistance");
+
             mStereoConfig.SetHMDInfo(info);
             gHMD.isHMDConnected(TRUE);
 

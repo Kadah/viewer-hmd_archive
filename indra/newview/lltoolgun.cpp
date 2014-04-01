@@ -88,7 +88,7 @@ BOOL LLToolGun::handleMouseDown(S32 x, S32 y, MASK mask)
 
 BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask) 
 {
-	if( gAgentCamera.cameraMouselook() && mIsSelected && !gHMD.isHMDMode() )
+	if( gAgentCamera.cameraMouselook() && mIsSelected && (!gHMD.isHMDMode() || gHMD.getMouselookControlMode() == (S32)LLHMD::kMouselookControl_Independent))
 	{
 		const F32 NOMINAL_MOUSE_SENSITIVITY = 0.0025f;
 

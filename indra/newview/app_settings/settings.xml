@@ -4512,6 +4512,17 @@
       <key>Value</key>
       <real>0.064</real>
     </map>
+    <key>HMDMouselookControlMode</key>
+    <map>
+        <key>Comment</key>
+        <string>0 (default): move with mouse, fire direction = move direction, head motion independent of move.  1: head direction = move direction = fire direction. Use HMDMouselookRotThreshold, etc for rotation</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>S32</string>
+        <key>Value</key>
+        <real>0</real>
+    </map>
     <key>HMDMouselookRotThreshold</key>
     <map>
         <key>Comment</key>
@@ -4544,6 +4555,17 @@
         <string>F32</string>
         <key>Value</key>
         <real>0.1</real>
+    </map>
+    <key>HMDUseSavedHMDPreferences</key>
+    <map>
+        <key>Comment</key>
+        <string>Normally, the values for user-configurable hardware parameters such as Interpupillary Distance and Eye-To-Screen Distance are set using the Oculus Configuration Tool and read by the viewer at run time.  These can be temporarily overridden, but will revert back to the hardware values the next time the viewer is run.  To override this behavior and use saved settings regardless of what is read from the hardware, you can enable this setting.</string>
+        <key>Persist</key>
+        <integer>0</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
     </map>
     <key>HMDUIMagnification</key>
     <map>

@@ -58,7 +58,7 @@ const F32 LLHMDImpl::kDefaultHScreenSize = 0.14976f;
 const F32 LLHMDImpl::kDefaultVScreenSize = 0.0936f;
 const F32 LLHMDImpl::kDefaultInterpupillaryOffset = 0.064f;
 const F32 LLHMDImpl::kDefaultLenSeparationDistance = 0.0635f;
-const F32 LLHMDImpl::kDefaultEyeToScreenDistance = 0.041f;
+const F32 LLHMDImpl::kDefaultEyeToScreenDistance = 0.047f;  // A lens = 0.047f, B lens = 0.044f, C lens = 0.040f.   Default of 0.041f from the SDK is just WRONG and will cause visual distortion (Rift-46)
 const F32 LLHMDImpl::kDefaultDistortionConstant0 = 1.0f;
 const F32 LLHMDImpl::kDefaultDistortionConstant1 = 0.22f;
 const F32 LLHMDImpl::kDefaultDistortionConstant2 = 0.24f;
@@ -67,7 +67,7 @@ const F32 LLHMDImpl::kDefaultXCenterOffset = 0.152f;
 const F32 LLHMDImpl::kDefaultYCenterOffset = 0.0f;
 const F32 LLHMDImpl::kDefaultDistortionScale = 1.7146f;
 const F32 LLHMDImpl::kDefaultOrthoPixelOffset = 0.1775f; // -0.1775f Right Eye
-const F32 LLHMDImpl::kDefaultVerticalFOVRadians = 1.5707963f;
+const F32 LLHMDImpl::kDefaultVerticalFOVRadians = 2.196863;
 const F32 LLHMDImpl::kDefaultAspect = 0.8f;
 const F32 LLHMDImpl::kDefaultAspectMult = 1.0f;
 
@@ -83,6 +83,7 @@ LLHMD::LLHMD()
     , mUIEyeDepth(0.65f)
     , mUIShapePreset(0)
     , mNextUserPresetIndex(1)
+    , mMainWindowFOV(DEFAULT_FIELD_OF_VIEW)
     , mMouseWorldSizeMult(5.0f)
     , mPresetUIAspect(1.6f)
     , mMouselookRotThreshold(45.0f * DEG_TO_RAD)
@@ -153,6 +154,10 @@ BOOL LLHMD::init()
     gSavedSettings.getControl("HMDMouselookRotMax")->getSignal()->connect(boost::bind(&onChangeMouselookSettings));
     gSavedSettings.getControl("HMDMouselookTurnSpeedMax")->getSignal()->connect(boost::bind(&onChangeMouselookSettings));
     onChangeMouselookSettings();
+    gSavedSettings.getControl("HMDUseSavedHMDPreferences")->getSignal()->connect(boost::bind(&onChangeUseSavedHMDPreferences));
+    onChangeUseSavedHMDPreferences();
+    gSavedSettings.getControl("HMDMouselookControlMode")->getSignal()->connect(boost::bind(&onChangeMouselookControlMode));
+    onChangeMouselookControlMode();
 
     preInitResult = mImpl->preInit();
     if (preInitResult)
@@ -402,12 +407,17 @@ void LLHMD::onChangePresetValues()
 
 void LLHMD::onChangeUIShapePreset() { if (!gHMD.isSavingSettings()) { gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset")); } }
 void LLHMD::onChangeWorldCursorSizeMult() { if (!gHMD.isSavingSettings()) { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); } }
+void LLHMD::onChangeUseSavedHMDPreferences() { if (!gHMD.isSavingSettings()) { gHMD.useSavedHMDPreferences(gSavedSettings.getBOOL("HMDUseSavedHMDPreferences")); } }
+void LLHMD::onChangeMouselookControlMode() { if (!gHMD.isSavingSettings()) { gHMD.setMouselookControlMode(gSavedSettings.getS32("HMDMouselookControlMode")); } }
 
 void LLHMD::onChangeMouselookSettings()
 {
-    gHMD.mMouselookRotThreshold = llclamp(gSavedSettings.getF32("HMDMouselookRotThreshold") * DEG_TO_RAD, (10.0f * DEG_TO_RAD), (80.0f * DEG_TO_RAD));
-    gHMD.mMouselookRotMax = llclamp(gSavedSettings.getF32("HMDMouselookRotMax") * DEG_TO_RAD, (1.0f * DEG_TO_RAD), (90.0f * DEG_TO_RAD));
-    gHMD.mMouselookTurnSpeedMax = llclamp(gSavedSettings.getF32("HMDMouselookTurnSpeedMax"), 0.01f, 0.5f);
+    if (!gHMD.isSavingSettings())
+    { 
+        gHMD.mMouselookRotThreshold = llclamp(gSavedSettings.getF32("HMDMouselookRotThreshold") * DEG_TO_RAD, (10.0f * DEG_TO_RAD), (80.0f * DEG_TO_RAD));
+        gHMD.mMouselookRotMax = llclamp(gSavedSettings.getF32("HMDMouselookRotMax") * DEG_TO_RAD, (1.0f * DEG_TO_RAD), (90.0f * DEG_TO_RAD));
+        gHMD.mMouselookTurnSpeedMax = llclamp(gSavedSettings.getF32("HMDMouselookTurnSpeedMax"), 0.01f, 0.5f);
+    }
 }
 
 void LLHMD::onChangeUISurfaceShape()
@@ -434,7 +444,7 @@ void LLHMD::onIdle()
     {
         mLastRollPitchYaw.setVec(mImpl->getRoll(), mImpl->getPitch(), mImpl->getYaw());
         mImpl->onIdle();
-        if (isHMDMode() && gAgentCamera.cameraMouselook())
+        if (isHMDMode() && gAgentCamera.cameraMouselook() && getMouselookControlMode() == (S32)kMouselookControl_Linked)
         {
             LLVector3 atLeveled = gAgent.getAtAxis();
             atLeveled[VZ] = 0.0f;
@@ -573,6 +583,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         }
                         LLFloaterCamera::onHMDChange();
                         LLFloaterReg::setBlockInstance(false, "snapshot");
+                        gSavedSettings.setF32("CameraAngle", mMainWindowFOV);
                         LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("CameraAngle"));
                         gViewerWindow->reshape(mMainClientSize.mX, mMainClientSize.mY);
                     }
@@ -587,6 +598,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 windowp->getFramePos(&mMainWindowPos);
                 windowp->getSize(&mMainWindowSize);
                 windowp->getSize(&mMainClientSize);
+                mMainWindowFOV = gSavedSettings.getF32("CameraAngle");
                 renderUnusedMainWindow();
                 mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
                 // snapshots are disabled in HMD mode due to problems with always rendering UI and sometimes
@@ -630,6 +642,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         windowp->enableVSync(TRUE);
                         windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
+                        gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
                         onViewChange();
                     }
                     break;
@@ -914,8 +927,13 @@ void LLHMD::setEyeToScreenDistance(F32 f)
     {
         mImpl->setEyeToScreenDistance(f);
         calculateUIEyeDepth();
+        if (gHMD.isHMDMode())
+        {
+            LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
+            gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
+        }
+        gPipeline.mHMDUISurface = NULL;
     }
-    gPipeline.mHMDUISurface = NULL;
 }
 
 void LLHMD::setUIMagnification(F32 f)
@@ -957,12 +975,6 @@ F32 LLHMD::getXCenterOffset() const { return mImpl ? mImpl->getXCenterOffset() :
 F32 LLHMD::getYCenterOffset() const { return mImpl ? mImpl->getYCenterOffset() : 0.0f; }
 F32 LLHMD::getDistortionScale() const { return mImpl ? mImpl->getDistortionScale() : 0.0f; }
 LLQuaternion LLHMD::getHMDOrient() const { return mImpl ? mImpl->getHMDOrient() : LLQuaternion::DEFAULT; }
-//LLQuaternion LLHMD::getHeadRotationCorrection() const { return mImpl ? mImpl->getHeadRotationCorrection() : LLQuaternion::DEFAULT; }
-//void LLHMD::addHeadRotationCorrection(LLQuaternion quat) { if (mImpl) { mImpl->addHeadRotationCorrection(quat); } }
-//void LLHMD::resetHeadRotationCorrection() { if (mImpl) { mImpl->resetHeadRotationCorrection(); } }
-//LLQuaternion LLHMD::getHeadPitchCorrection() const { return mImpl ? mImpl->getHeadPitchCorrection() : LLQuaternion::DEFAULT; }
-//void LLHMD::addHeadPitchCorrection(LLQuaternion quat) { if (mImpl) { mImpl->addHeadPitchCorrection(quat); } }
-//void LLHMD::resetHeadPitchCorrection() { if (mImpl) { mImpl->resetHeadPitchCorrection(); } }
 void LLHMD::resetOrientation() { if (mImpl) { mImpl->resetOrientation(); } }
 void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { if (mImpl) { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); } else { roll = pitch = yaw = 0.0f; } }
 void LLHMD::getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = mLastRollPitchYaw[VX]; pitch = mLastRollPitchYaw[VY], yaw = mLastRollPitchYaw[VZ]; }
@@ -1183,6 +1195,11 @@ void LLHMD::saveSettings()
     gSavedSettings.setF32("HMDEyeDepth", gHMD.getEyeDepth());
     gSavedSettings.setBOOL("HMDUseMotionPrediction", gHMD.useMotionPrediction());
     gSavedSettings.setF32("HMDWorldCursorSizeMult", gHMD.getWorldCursorSizeMult());
+    gSavedSettings.setS32("HMDMouselookControlMode", gHMD.getMouselookControlMode());
+    gSavedSettings.setF32("HMDMouselookRotThreshold", mMouselookRotThreshold);
+    gSavedSettings.setF32("HMDMouselookRotMax", mMouselookRotMax);
+    gSavedSettings.setF32("HMDMouselookTurnSpeedMax", mMouselookTurnSpeedMax);
+    gSavedSettings.setBOOL("HMDUseSavedHMDPreferences", gHMD.useSavedHMDPreferences());
     isSavingSettings(FALSE);
 
     static const char* kPresetTypeStrings[] = { "Custom", "Default", "User" };

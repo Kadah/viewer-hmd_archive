@@ -80,11 +80,17 @@ glh::matrix4f gl_pick_matrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height
 	return glh::matrix4f(m);
 }
 
-glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar)
+glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar, BOOL display)
 {
 	GLfloat f = 1.f/tanf(DEG_TO_RAD*fovy/2.f);
 
-	return glh::matrix4f(f/aspect, 0, 0, 0,
+	GLfloat proj_offset = 0.0f;
+	if (display && gHMD.isHMDMode())
+	{
+		proj_offset = (1.0f - (2.0f * gHMD.getLensSeparationDistance() / gHMD.getPhysicalScreenWidth())) * (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? -1.0f : 1.0f);
+	}
+
+	return glh::matrix4f(f/aspect, 0, proj_offset, 0,
 						 0, f, 0, 0,
 						 0, 0, (zFar+zNear)/(zNear-zFar), (2.f*zFar*zNear)/(zNear-zFar),
 						 0, 0, -1.f, 0);
@@ -128,9 +134,11 @@ F32 LLViewerCamera::getUIAspect() const
     return gHMD.isHMDMode() ? gHMD.getUIAspect() : mAspect;
 }
 
-void LLViewerCamera::updateCameraLocation(  const LLVector3 &center,
-											const LLVector3 &up_direction,
-											const LLVector3 &point_of_interest)
+void LLViewerCamera::updateCameraLocation(  const LLVector3& center,
+											const LLVector3& up_direction,
+											const LLVector3& point_of_interest,
+                                            const LLVector3& original_up_direction,
+                                            const LLVector3& original_point_of_interest)
 {
 	// do not update if avatar didn't move
 	if (!LLViewerJoystick::getInstance()->getCameraNeedsUpdate() && (!gHMD.isPreDetectionInitialized() || !gHMD.isHMDMode()))
@@ -160,38 +168,21 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3 &center,
 
     if (gHMD.isHMDMode())
     {
-        LLVector3 up = up_direction;
-        U32 camera_mode = gAgentCamera.getCameraAnimating() ? gAgentCamera.getLastCameraMode() : gAgentCamera.getCameraMode();
-        if (camera_mode == CAMERA_MODE_FOLLOW && gAgentCamera.getFocusOnAvatar())
-        {
-            // in follow mode, we don't want the UI to be slanted downward toward the avatar.
-            // The UI (as opposed to the camera view) should have a normal "up" rotation.
-            up = LLVector3::z_axis;
-        }
+        LLVector3 up = LLVector3::z_axis;
         // make z same as origin so that we guarantee no pitch in the forward axis.  This ensures that the UI surface is not slanted in relation to the viewpoint.
-        LLVector3 poi(point_of_interest[VX], point_of_interest[VY], origin[VZ]);
+        LLVector3 poi(original_point_of_interest[VX], original_point_of_interest[VY], origin[VZ]);
         setOriginAndLookAt(origin, up, poi);
         gHMD.setUIModelView((F32*)getModelview().mMatrix);
+
+        setOriginAndLookAt(origin, original_up_direction, original_point_of_interest);
+        gHMD.setBaseLookAt((F32*)getModelview().mMatrix);
     }
     setOriginAndLookAt(origin, up_direction, point_of_interest);
-    if (gHMD.isHMDMode() && gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected())
+    if (gHMD.isHMDMode() && gAgentCamera.cameraMouselook() && gHMD.getMouselookControlMode() == (S32)LLHMD::kMouselookControl_Linked)
     {
-        gHMD.setBaseLookAt((F32*)getModelview().mMatrix);
-        if (!gAgentCamera.cameraMouselook())
-        {
-            float r, p, y;
-            gHMD.getHMDRollPitchYaw(r, p, y);
-            LLQuaternion qr(r, mXAxis);
-            LLQuaternion qp(p, mYAxis);
-            LLQuaternion qy(y, mZAxis);
-            qr *= qp;
-            qr *= qy;
-            qr.normalize();
-            //qr *= gHMD.getHeadRotationCorrection();
-            //qr.normalize();
-
-            rotate(qr);
-        }
+        LLQuaternion qr(gHMD.getHMDRoll(), mXAxis);
+        qr.normalize();
+        rotate(qr);
     }
 
 	mVelocityDir = center - last_position;
@@ -430,20 +421,13 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 		proj_mat = translate*proj_mat;
 	}
 
-	calcProjection(z_far); // Update the projection matrix cache
-
-	proj_mat *= gl_perspective(fov_y,aspect,z_near,z_far);
-
     if (gHMD.isHMDMode())
     {
-        gHMD.setBaseProjection(proj_mat.m);
-        F32 viewCenter = gHMD.getPhysicalScreenWidth() * 0.25f;
-        F32 eyeProjShift = viewCenter - (gHMD.getLensSeparationDistance() * 0.5f);
-        F32 projCtrOffset = ((4.0f * eyeProjShift) / gHMD.getPhysicalScreenWidth()) * (sCurrentEye == LEFT_EYE ? 1.0f : -1.0f);
-        glh::matrix4f translate;
-        translate.set_translate(glh::vec3f(projCtrOffset, 0.0f, 0.0f));
-        proj_mat = translate * proj_mat;
+        glh::matrix4f proj_mat_base = proj_mat;
+	    proj_mat_base *= gl_perspective(fov_y, aspect, z_near, z_far, FALSE);
+        gHMD.setBaseProjection(proj_mat_base.m);
     }
+	proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far, !for_selection);
 
 	gGL.loadMatrix(proj_mat.m);
 

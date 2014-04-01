@@ -38,6 +38,10 @@
 #include "llmorphview.h"
 #include "llmoveview.h"
 #include "lltoolfocus.h"
+#include "lltoolmgr.h"
+#include "llselectmgr.h"
+#include "lltoolpie.h"
+#include "lltoolgrab.h"
 #include "llviewerwindow.h"
 #include "llvoavatarself.h"
 #include "llfloatercamera.h"
@@ -591,6 +595,65 @@ void start_gesture( EKeystate s )
 	}
 }
 
+void emulate_left_mouse_button( EKeystate s )
+{
+    switch (gAgentCamera.getCameraMode())
+    {
+    case CAMERA_MODE_MOUSELOOK:
+        // call "touch" on object that the reticle is pointing at (if any)
+        if (gBasicToolset && s == KEYSTATE_DOWN)
+        {
+		    const U32 old_flags = gAgent.getControlFlags();
+		    gAgent.setControlFlags(AGENT_CONTROL_MOUSELOOK);
+            bool dirtyFlags = (old_flags != gAgent.getControlFlags());
+            if (dirtyFlags)
+		    {
+			    gAgent.setFlagsDirty();
+		    }
+            LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
+            gViewerWindow->handleMouseDown(gViewerWindow->getWindow(), gViewerWindow->getCurrentMouse(), gKeyboard->currentMask(TRUE));
+            gAgentCamera.changeCameraToMouselook(FALSE);
+		    gFocusMgr.setKeyboardFocus(NULL);
+            gAgent.setControlFlags(old_flags);
+            if (dirtyFlags)
+            {
+                gAgent.setFlagsDirty();
+            }
+        }
+        break;
+    case CAMERA_MODE_FIRST_PERSON:
+        {
+            // fire "gun"
+            gViewerWindow->moveCursorToCenter();
+	        LLToolMgr::getInstance()->setCurrentToolset(gMouselookToolset);
+		    gFocusMgr.setKeyboardFocus(NULL);
+		    const U32 old_flags = gAgent.getControlFlags();
+		    gAgent.setControlFlags(AGENT_CONTROL_MOUSELOOK);
+		    if (old_flags != gAgent.getControlFlags())
+		    {
+			    gAgent.setFlagsDirty();
+		    }
+            if (s == KEYSTATE_DOWN || s == KEYSTATE_LEVEL)
+            {
+                gViewerWindow->handleMouseDown(gViewerWindow->getWindow(), gViewerWindow->getCurrentMouse(), gKeyboard->currentMask(TRUE));
+            }
+            else if (s == KEYSTATE_UP)
+            {
+                gViewerWindow->handleMouseUp(gViewerWindow->getWindow(), gViewerWindow->getCurrentMouse(), gKeyboard->currentMask(TRUE));
+            }
+            if (gBasicToolset)
+            {
+                LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
+            }
+            gAgent.clearControlFlags(AGENT_CONTROL_MOUSELOOK);
+            gAgent.setControlFlags(old_flags);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 #define REGISTER_KEYBOARD_ACTION(KEY, ACTION) LLREGISTER_STATIC(LLKeyboardActionRegistry, KEY, ACTION);
 REGISTER_KEYBOARD_ACTION("jump", agent_jump);
 REGISTER_KEYBOARD_ACTION("push_down", agent_push_down);
@@ -634,6 +697,8 @@ REGISTER_KEYBOARD_ACTION("start_chat", start_chat);
 REGISTER_KEYBOARD_ACTION("start_gesture", start_gesture);
 REGISTER_KEYBOARD_ACTION("align_hips_to_eyes", align_hips_to_eyes);
 REGISTER_KEYBOARD_ACTION("center_cursor", center_cursor);
+REGISTER_KEYBOARD_ACTION("mouselook_fire", emulate_left_mouse_button);
+REGISTER_KEYBOARD_ACTION("touch", emulate_left_mouse_button);
 
 #undef REGISTER_KEYBOARD_ACTION
 

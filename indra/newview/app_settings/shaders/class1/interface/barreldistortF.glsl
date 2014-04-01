@@ -3,7 +3,7 @@
  *
  * $LicenseInfo:firstyear=2007&license=viewerlgpl$
  * Second Life Viewer Source Code
- * Copyright (C) 2011, Linden Research, Inc.
+ * Copyright (C) 2014, Linden Research, Inc.
  * 
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,10 +35,10 @@ uniform sampler2D screenMap;
 
 VARYING vec2 vary_texcoord0;
 
-uniform vec2 LensCenter;
 uniform vec2 ScreenCenter;
-uniform vec2 Scale;
 uniform vec2 ScaleIn;
+uniform vec2 ScaleOut;
+uniform vec2 LensCenter;
 uniform vec4 HmdWarpParam;
 
 // Scales input texture coordinates for distortion.
@@ -52,7 +52,7 @@ vec2 HmdWarp(vec2 in01)
 					HmdWarpParam.z * rSq * rSq +
 					HmdWarpParam.w * rSq * rSq * rSq);
 
-	return LensCenter + Scale * rvector;
+	return LensCenter + ScaleOut * rvector;
 }
 
 void main() 
