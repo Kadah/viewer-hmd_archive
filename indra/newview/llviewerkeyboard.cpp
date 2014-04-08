@@ -68,6 +68,11 @@ struct LLKeyboardActionRegistry
 
 LLViewerKeyboard gViewerKeyboard;
 
+// forward decl
+void emulate_left_mouse_button( EKeystate s );
+// handle command-key swap
+static BOOL gInKeySwap = FALSE;
+
 void agent_jump( EKeystate s )
 {
 	if( KEYSTATE_UP == s  ) return;
@@ -174,7 +179,7 @@ void align_hips_to_eyes( EKeystate state )
 {
 	if (KEYSTATE_DOWN == state && gHMD.isHMDMode())
 	{
-        if (!gAgentCamera.cameraMouselook())
+        if (!gAgentCamera.cameraMouselook() || gHMD.getMouselookControlMode() == (S32)LLHMD::kMouselookControl_Independent)
         {
             float r, p, y;
             gHMD.getHMDRollPitchYaw(r, p, y);
@@ -557,7 +562,15 @@ void edit_avatar_move_backward( EKeystate s )
 
 void stop_moving( EKeystate s )
 {
-	if( KEYSTATE_UP == s  ) return;
+    if (!gInKeySwap && gSavedSettings.getBOOL("SwapStopMoveAndAction"))
+    {
+        gInKeySwap = TRUE;
+        emulate_left_mouse_button(s);
+        gInKeySwap = FALSE;
+        return;
+    }
+
+	if( KEYSTATE_UP == s ) return;
 	// stop agent
 	gAgent.setControlFlags(AGENT_CONTROL_STOP);
 
@@ -597,6 +610,14 @@ void start_gesture( EKeystate s )
 
 void emulate_left_mouse_button( EKeystate s )
 {
+    if (!gInKeySwap && gSavedSettings.getBOOL("SwapStopMoveAndAction"))
+    {
+        gInKeySwap = TRUE;
+        stop_moving(s);
+        gInKeySwap = FALSE;
+        return;
+    }
+
     switch (gAgentCamera.getCameraMode())
     {
     case CAMERA_MODE_MOUSELOOK:
@@ -604,7 +625,7 @@ void emulate_left_mouse_button( EKeystate s )
         if (gBasicToolset && s == KEYSTATE_DOWN)
         {
 		    const U32 old_flags = gAgent.getControlFlags();
-		    gAgent.setControlFlags(AGENT_CONTROL_MOUSELOOK);
+		    gAgent.clearControlFlags(AGENT_CONTROL_MOUSELOOK);
             bool dirtyFlags = (old_flags != gAgent.getControlFlags());
             if (dirtyFlags)
 		    {
@@ -612,41 +633,22 @@ void emulate_left_mouse_button( EKeystate s )
 		    }
             LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
             gViewerWindow->handleMouseDown(gViewerWindow->getWindow(), gViewerWindow->getCurrentMouse(), gKeyboard->currentMask(TRUE));
-            gAgentCamera.changeCameraToMouselook(FALSE);
-		    gFocusMgr.setKeyboardFocus(NULL);
-            gAgent.setControlFlags(old_flags);
-            if (dirtyFlags)
-            {
-                gAgent.setFlagsDirty();
-            }
-        }
-        break;
-    case CAMERA_MODE_FIRST_PERSON:
-        {
-            // fire "gun"
-            gViewerWindow->moveCursorToCenter();
-	        LLToolMgr::getInstance()->setCurrentToolset(gMouselookToolset);
-		    gFocusMgr.setKeyboardFocus(NULL);
-		    const U32 old_flags = gAgent.getControlFlags();
-		    gAgent.setControlFlags(AGENT_CONTROL_MOUSELOOK);
+            gViewerWindow->handleMouseUp(gViewerWindow->getWindow(), gViewerWindow->getCurrentMouse(), gKeyboard->currentMask(TRUE));
+    	    LLToolMgr::getInstance()->setCurrentToolset(gMouselookToolset);
+	        gViewerWindow->moveCursorToCenter();
+	        gFocusMgr.setKeyboardFocus(NULL);
+		    gAgent.setControlFlags(old_flags);
 		    if (old_flags != gAgent.getControlFlags())
 		    {
 			    gAgent.setFlagsDirty();
 		    }
-            if (s == KEYSTATE_DOWN || s == KEYSTATE_LEVEL)
-            {
-                gViewerWindow->handleMouseDown(gViewerWindow->getWindow(), gViewerWindow->getCurrentMouse(), gKeyboard->currentMask(TRUE));
-            }
-            else if (s == KEYSTATE_UP)
-            {
-                gViewerWindow->handleMouseUp(gViewerWindow->getWindow(), gViewerWindow->getCurrentMouse(), gKeyboard->currentMask(TRUE));
-            }
-            if (gBasicToolset)
-            {
-                LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
-            }
-            gAgent.clearControlFlags(AGENT_CONTROL_MOUSELOOK);
-            gAgent.setControlFlags(old_flags);
+        }
+        break;
+    case CAMERA_MODE_FIRST_PERSON:
+        // fire "gun"
+        if (s == KEYSTATE_DOWN || s == KEYSTATE_LEVEL)
+        {
+            gAgent.setControlFlags(AGENT_CONTROL_ML_LBUTTON_DOWN);
         }
         break;
     default:

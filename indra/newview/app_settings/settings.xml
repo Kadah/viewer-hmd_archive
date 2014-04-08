@@ -4459,25 +4459,25 @@
     </map>
     <key>HMDDebugShowLatency</key>
     <map>
-        <key>Comment</key>
-        <string>Display HMD Latency Info (requires Latency Test tool)</string>
-        <key>Persist</key>
-        <integer>0</integer>
-        <key>Type</key>
-        <string>Boolean</string>
-        <key>Value</key>
-        <integer>0</integer>
+      <key>Comment</key>
+      <string>Display HMD Latency Info (requires Latency Test tool)</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
     <key>HMDDebugShowOrientation</key>
     <map>
-        <key>Comment</key>
-        <string>Display HMD Orientation Info</string>
-        <key>Persist</key>
-        <integer>0</integer>
-        <key>Type</key>
-        <string>Boolean</string>
-        <key>Value</key>
-        <integer>0</integer>
+      <key>Comment</key>
+      <string>Display HMD Orientation Info</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
     <key>HMDEyeDepth</key>
     <map>
@@ -4561,7 +4561,7 @@
         <key>Comment</key>
         <string>Normally, the values for user-configurable hardware parameters such as Interpupillary Distance and Eye-To-Screen Distance are set using the Oculus Configuration Tool and read by the viewer at run time.  These can be temporarily overridden, but will revert back to the hardware values the next time the viewer is run.  To override this behavior and use saved settings regardless of what is read from the hardware, you can enable this setting.</string>
         <key>Persist</key>
-        <integer>0</integer>
+        <integer>1</integer>
         <key>Type</key>
         <string>Boolean</string>
         <key>Value</key>
@@ -4783,7 +4783,7 @@
       <key>Comment</key>
       <string>Saved Value of whether to use Motion Prediction for HMD.</string>
       <key>Persist</key>
-      <integer>0</integer>
+      <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
@@ -4798,7 +4798,7 @@
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>5.0</real>
+      <real>3.0</real>
     </map>
     <key>HostID</key>
     <map>
@@ -11818,6 +11818,17 @@
       <string>String</string>
       <key>Value</key>
       <string>fss.txt</string>
+    </map>
+    <key>SwapStopMoveAndAction</key>
+    <map>
+      <key>Comment</key>
+      <string>Swap the Action (X) and Stop-Movement (space-bar) key functionality</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
     <key>SystemLanguage</key>
     <map>

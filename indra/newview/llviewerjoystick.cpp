@@ -976,7 +976,19 @@ void LLViewerJoystick::moveFlycam(bool reset)
 		sFlycamZoom += sDelta[6];
 	}
 
-	LLMatrix3 mat(sFlycamRotation);
+	LLMatrix3 mat;
+	if (gHMD.isHMDMode())
+	{
+	    LLQuaternion r(gHMD.getHMDRoll(), LLVector3::x_axis);
+        LLQuaternion y(gHMD.getHMDYaw(), LLVector3::z_axis);
+	    LLQuaternion p(gHMD.getHMDPitch(), LLVector3::y_axis);
+		LLQuaternion mat2 = p * r * y * sFlycamRotation;
+		mat = LLMatrix3(mat2);
+	}
+	else
+	{
+		mat = LLMatrix3(sFlycamRotation);
+	}
 
 	LLViewerCamera::getInstance()->setView(sFlycamZoom);
 	LLViewerCamera::getInstance()->setOrigin(sFlycamPosition);

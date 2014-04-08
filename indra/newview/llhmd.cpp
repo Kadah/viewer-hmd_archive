@@ -38,21 +38,27 @@
 #include "llmoveview.h"
 #include "llfocusmgr.h"
 #include "llnotificationsutil.h"
-#include "lltool.h"
+#include "lltoolgun.h"
+#include "lltoolcomp.h"
+#include "lltoolmgr.h"
 #include "lltrans.h"
 #include "llui.h"
 #include "llview.h"
 #include "llviewercamera.h"
 #include "llviewercontrol.h"
 #include "llviewertexture.h"
+#include "llviewershadermgr.h"
 #include "llviewerwindow.h"
 #include "llwindow.h"
 #if LL_DARWIN
     #include "llwindowmacosx.h"
 #endif
+#include "llviewerdisplay.h"
 #include "pipeline.h"
 #include "raytrace.h"
 
+// external methods
+void drawBox(const LLVector3& c, const LLVector3& r);
 
 const F32 LLHMDImpl::kDefaultHScreenSize = 0.14976f;
 const F32 LLHMDImpl::kDefaultVScreenSize = 0.0936f;
@@ -86,9 +92,15 @@ LLHMD::LLHMD()
     , mMainWindowFOV(DEFAULT_FIELD_OF_VIEW)
     , mMouseWorldSizeMult(5.0f)
     , mPresetUIAspect(1.6f)
+    , mMouselookControlMode(0)
     , mMouselookRotThreshold(45.0f * DEG_TO_RAD)
     , mMouselookRotMax(30.0f * DEG_TO_RAD)
     , mMouselookTurnSpeedMax(0.1f)
+    , mStereoCameraFOV(DEFAULT_FIELD_OF_VIEW)
+    , mCameraOffset(0.0f)
+    , mProjectionOffset(0.0f)
+    , mStereoCullCameraFOV(0.0f)
+	, mStereoCullCameraAspect(0.0f)
 {
     memset(&mUIShape, 0, sizeof(UISurfaceShapeSettings));
     mUIShape.mPresetType = (U32)LLHMD::kCustom;
@@ -905,7 +917,19 @@ void LLHMD::resumeHMDMode(U32 prevRenderMode)
 }
 
 U32 LLHMD::getCurrentEye() const { return mImpl ? mImpl->getCurrentEye() : 0; }
-void LLHMD::setCurrentEye(U32 eye) { if (mImpl) { mImpl->setCurrentEye(eye); } }
+
+void LLHMD::setCurrentEye(U32 eye)
+{
+    if (mImpl)
+    {
+        mImpl->setCurrentEye(eye);
+    }
+    if (eye == CENTER_EYE)
+    {
+        mCameraOffset = 0.0f;
+    }
+}
+
 void LLHMD::getViewportInfo(S32& x, S32& y, S32& w, S32& h) { if (mImpl) { mImpl->getViewportInfo(x, y, w, h); } }
 S32 LLHMD::getHMDWidth() const { return mImpl ? mImpl->getHMDWidth() : 0; }
 S32 LLHMD::getHMDEyeWidth() const { return mImpl ? mImpl->getHMDEyeWidth() : 0; }
@@ -1421,9 +1445,358 @@ BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
     return FALSE;
 }
 
+
+void LLHMD::setupStereoValues()
+{
+	// Remember default mono camera details.
+    LLViewerCamera* cam = LLViewerCamera::getInstance();
+	mStereoCameraFOV = cam->getView();
+	mStereoCameraPosition = cam->getOrigin();
+
+	// Stereo culling frustum camera parameters.
+    // Use lens rather than eye separation because it's collimated light.
+	F32 deltaZ = mImpl->getEyeToScreenDistance() * mImpl->getLensSeparationDistance() / (mImpl->getPhysicalScreenWidth() - mImpl->getLensSeparationDistance());
+	mStereoCullCameraDeltaForwards = -deltaZ * cam->getXAxis();
+	mStereoCullCameraFOV = mStereoCameraFOV;
+	mStereoCullCameraAspect = mImpl->getPhysicalScreenHeight() / (mImpl->getPhysicalScreenWidth() - mImpl->getLensSeparationDistance());
+
+	// Delta position for left camera.
+	mStereoCameraDeltaLeft = (mImpl->getInterpupillaryOffset() / 2.0f) * cam->getYAxis();
+}
+
+
+void LLHMD::setupStereoCullFrustum()
+{
+	mCameraOffset = 0.f;
+	mProjectionOffset = 0.f;
+    LLViewerCamera* cam = LLViewerCamera::getInstance();
+	cam->setView(mStereoCullCameraFOV, TRUE);
+	cam->setAspect(mStereoCullCameraAspect);
+	LLVector3 new_position = mStereoCameraPosition + mStereoCullCameraDeltaForwards;
+	cam->setOrigin(new_position);
+}
+
+
+void LLHMD::setupEye()
+{
+    LLViewerCamera* cam = LLViewerCamera::getInstance();
+    F32 mul = 0.0f;
+    switch (getCurrentEye())
+    {
+    case LLHMD::LEFT_EYE:
+        mul = -1.0f;
+        break;
+    case LLHMD::RIGHT_EYE:
+        mul = 1.0f;
+        break;
+    case LLHMD::CENTER_EYE:
+    default:
+        mul = 0.0f;
+        break;
+    }
+
+    mCameraOffset = mul * (mImpl->getInterpupillaryOffset() * 0.5f);
+    mProjectionOffset = mul * (1.0f - (2.0f * mImpl->getLensSeparationDistance() / mImpl->getPhysicalScreenWidth()));
+	cam->setView(mStereoCameraFOV, getCurrentEye() == LLHMD::CENTER_EYE ? TRUE : FALSE);
+	cam->setAspect(mImpl->getAspect());
+    LLVector3 new_position = mStereoCameraPosition - (mul * mStereoCameraDeltaLeft);
+	cam->setOrigin(new_position);
+}
+
+
 void LLHMD::setup2DRender()
 {
 	gl_state_for_2d(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), 0, gHMD.getOrthoPixelOffset());
     gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDEyeWidth(), gHMD.getHMDHeight());
     glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+}
+
+
+void LLHMD::renderCursor2D()
+{
+    if (isHMDMode() && (!gAgentCamera.cameraMouselook() || gAgent.leftButtonGrabbed()))
+    {
+        LLWindow* window = gViewerWindow->getWindow();
+        if (!window || window->isCursorHidden())
+        {
+            return;
+        }
+
+        if (cursorIntersectsUI())
+        {
+            gGL.pushMatrix();
+            gGL.pushUIMatrix();
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gUIProgram.bind();
+            }
+            S32 mx = gViewerWindow->getCurrentMouseX();
+            S32 my = gViewerWindow->getCurrentMouseY();
+            U32 cursorType = (U32)gViewerWindow->getWindow()->getCursor();
+            LLViewerTexture* pCursorTexture = getCursorImage(cursorType);
+            if (pCursorTexture)
+            {
+                const LLVector2& curoff = getCursorHotspotOffset(cursorType);
+                S32 offx = llround(-32.0f * curoff[VX]);
+                S32 offy = -32 + llround(32.0f * curoff[VY]);
+                gl_draw_scaled_image(mx + offx, my + offy, 32, 32, pCursorTexture);
+            }
+            else
+            {
+                gl_line_2d(mx - 10, my, mx + 10, my, LLColor4(1.0f, 0.0f, 0.0f));
+                gl_line_2d(mx, my - 10, mx, my + 10, LLColor4(0.0f, 1.0f, 0.0f));
+            }
+            gGL.popUIMatrix();
+            gGL.popMatrix();
+            gGL.flush();
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gUIProgram.unbind();
+            }
+        }
+    }
+}
+
+
+void LLHMD::renderCursor3D()
+{
+    if (isHMDMode() && !cursorIntersectsUI() && (!gAgentCamera.cameraMouselook() || gAgent.leftButtonGrabbed()))
+    {
+        LLWindow* window = gViewerWindow->getWindow();
+        if (!window || window->isCursorHidden())
+        {
+            return;
+        }
+
+        LLViewerCamera* camera = LLViewerCamera::getInstance();
+        LLVector3 origin = camera->getOrigin();
+        LLVector3 pt;
+        if (cursorIntersectsWorld())
+        {
+            pt.set(mMouseWorldRaycastIntersection.getF32ptr());
+        }
+        else
+        {
+            pt.set(mMouseWorldEnd.getF32ptr());
+        }
+        LLVector3 delta = pt - origin;
+        F32 dist = delta.magVec();
+        F32 tanA = tanf(DEG_TO_RAD * mMouseWorldSizeMult);
+        F32 scalingFactor = dist * tanA;
+
+        gGL.matrixMode(LLRender::MM_MODELVIEW);
+        gGL.pushMatrix();
+        gGL.loadMatrix(gGLModelView);
+
+        LLVertexBuffer::unbind();
+        LLGLSUIDefault s1;
+        LLGLDisable fog(GL_FOG);
+        gPipeline.disableLights();
+        U32 cursorType = (U32)gViewerWindow->getWindow()->getCursor();
+
+        LLViewerTexture* pCursorTexture = getCursorImage(cursorType);
+        if (pCursorTexture)
+        {
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gOneTextureNoColorProgram.bind();
+            }
+            gGL.setColorMask(true, false);
+            gGL.color4f(1.0f,1.0f,1.0f,1.0f);
+            gGL.getTexUnit(0)->bind(pCursorTexture);
+
+            const LLVector2& curoff = getCursorHotspotOffset(cursorType);
+            LLVector3 l	= camera->getLeftAxis() * scalingFactor;
+            LLVector3 u	= camera->getUpAxis()   * scalingFactor;
+            LLVector3 co = (curoff[VX] * l) + (curoff[VY] * u);
+            // mouse-pointer hotspot is at the intersection point
+            LLVector3 bottomLeft	= pt - u + co;
+            LLVector3 bottomRight	= pt - l - u + co;
+            LLVector3 topLeft		= pt + co;
+            LLVector3 topRight		= pt - l + co;
+            // only go to 0.98 of the texture width so that annoying lines on right side and annoying dot in lower left
+            // are not drawn.  Even though the textures are blank in these areas, we still render some weird artifacts
+            // for no apparent reason.  Only going to 0.98 of the texture width seems to solve this problem and since
+            // no mouse cursor textures go all the way to the right or bottom sides anyway, there's no loss of quality.
+            const F32 kMinTC = 0.02f;
+            const F32 kMaxTC = 0.98f;
+            gGL.begin( LLRender::TRIANGLE_STRIP );
+                gGL.texCoord2f( 0.0f,   kMinTC ); gGL.vertex3fv( bottomLeft.mV );
+                gGL.texCoord2f( kMaxTC, kMinTC ); gGL.vertex3fv( bottomRight.mV );
+                gGL.texCoord2f( 0.0f,   1.0f   ); gGL.vertex3fv( topLeft.mV );
+            gGL.end();
+            gGL.begin( LLRender::TRIANGLE_STRIP );
+                gGL.texCoord2f( kMaxTC, kMinTC ); gGL.vertex3fv( bottomRight.mV );
+                gGL.texCoord2f( kMaxTC, 1.0f   ); gGL.vertex3fv( topRight.mV );
+                gGL.texCoord2f( 0.0f,   1.0f   ); gGL.vertex3fv( topLeft.mV );
+            gGL.end();
+            gGL.flush();
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gOneTextureNoColorProgram.unbind();
+            }
+        }
+        else
+        {
+            gGL.translatef( mMouseWorldRaycastIntersection.getScalarAt<0>().getF32(),
+                            mMouseWorldRaycastIntersection.getScalarAt<1>().getF32(),
+                            mMouseWorldRaycastIntersection.getScalarAt<2>().getF32());
+            LLVector4a debug_binormal;
+            debug_binormal.setCross3(mMouseWorldRaycastNormal, mMouseWorldRaycastTangent);
+            debug_binormal.mul(mMouseWorldRaycastTangent.getScalarAt<3>().getF32());
+            LLVector3 normal(mMouseWorldRaycastNormal.getF32ptr());
+            LLVector3 binormal(debug_binormal.getF32ptr());
+
+            LLCoordFrame orient;
+            orient.lookDir(normal, binormal);
+            LLMatrix4 rotation;
+            orient.getRotMatrixToParent(rotation);
+            gGL.multMatrix((float*)rotation.mMatrix);
+
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+		        gDebugProgram.bind();
+            }
+	        gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
+
+            gGL.diffuseColor4f(1,0,0,0.5f);
+            drawBox(LLVector3::zero, LLVector3(0.1f * scalingFactor, 0.022f * scalingFactor, 0.022f * scalingFactor));
+            gGL.diffuseColor4f(0,1,0,0.5f);
+            drawBox(LLVector3::zero, LLVector3(0.021f * scalingFactor, 0.1f * scalingFactor, 0.021f * scalingFactor));
+            gGL.diffuseColor4f(0,0,1,0.5f);
+            drawBox(LLVector3::zero, LLVector3(0.02f * scalingFactor, 0.02f * scalingFactor, 0.1f * scalingFactor));
+
+            gGL.flush();
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+		        gDebugProgram.unbind();
+            }
+        }
+        gGL.matrixMode(LLRender::MM_MODELVIEW);
+        gGL.popMatrix();
+    }
+}
+
+
+void LLHMD::render3DUI()
+{
+    LLViewerDisplay::pop_state_gl();
+
+    render_hud_elements();  // in-world text, labels, nametags
+    if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
+    {
+        //LLFastTimer t(FTM_RENDER_UI);
+        LLViewerDisplay::render_ui_3d(FALSE);
+		LLGLState::checkStates();
+    }
+
+    renderCursor3D();
+
+    if (gPipeline.mUIScreen.isComplete())
+    {
+        if (gPipeline.mHMDUISurface.isNull())
+        {
+            gPipeline.mHMDUISurface = createUISurface();
+        }
+        gGL.matrixMode(LLRender::MM_MODELVIEW);
+        gGL.pushMatrix();
+        LLMatrix4 m1(mUIModelViewInv);
+        LLMatrix4 m2(mBaseModelView);
+        LLMatrix4 mt(0.0f, 0.0f, 0.0f, LLVector4(0.0f, 0.0f, gHMD.getUIEyeDepth(), 1.0f));
+        m2 *= mt;
+        m1 *= m2;
+        gGL.loadMatrix((GLfloat*)m1.mMatrix);
+        gOneTextureNoColorProgram.bind();
+        gGL.setColorMask(true, true);
+        gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+        LLVertexBuffer* buff = gPipeline.mHMDUISurface;
+        {
+            LLGLDisable cull(GL_CULL_FACE);
+            LLGLEnable blend(GL_BLEND);
+            buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
+            buff->drawRange(LLRender::TRIANGLES, 0, buff->getNumVerts()-1, buff->getNumIndices(), 0);
+        }
+        gOneTextureNoColorProgram.unbind();
+        gGL.matrixMode(LLRender::MM_MODELVIEW);
+        gGL.popMatrix();
+    }
+    else if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
+    {
+        if (!gPipeline.mUIScreen.allocate(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
+        {
+            llwarns << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
+            return;
+        }
+    }
+
+    if (gAgentCamera.cameraMouselook() && gHMD.getCurrentEye() != LLHMD::CENTER_EYE)
+    {
+        LLTool* toolBase = LLToolMgr::getInstance()->getCurrentTool();
+        LLToolCompGun* tool =  LLToolCompGun::getInstance();
+        if (toolBase != NULL && toolBase != gToolNull && toolBase == tool && !tool->isInGrabMode())
+        {
+            LLToolGun* gun = tool->getToolGun();
+	        LLGLSDefault gls_default;
+	        LLGLSUIDefault gls_ui;
+	        gPipeline.disableLights();
+            gGL.setColorMask(true, false);
+            gGL.color4f(1,1,1,1);
+
+	        if (LLGLSLShader::sNoFixedFunction)
+	        {
+		        gUIProgram.bind();
+	        }
+            LLViewerDisplay::push_state_gl();
+            gHMD.setup2DRender();
+            gun->drawCrosshairs((gHMD.getHMDEyeWidth() / 2), gHMD.getHMDHeight() / 2);
+            LLViewerDisplay::pop_state_gl();
+    	    if (LLGLSLShader::sNoFixedFunction)
+	        {
+		        gUIProgram.unbind();
+	        }
+        }
+    }
+
+    LLViewerDisplay::push_state_gl_identity();
+
+    // handle HMD distortion and copying mScreen to framebuffer
+    gPipeline.postRender(&gPipeline.mLeftEye, &gPipeline.mRightEye);
+}
+
+
+void LLHMD::prerender2DUI()
+{
+    if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
+    {
+        gPipeline.mUIScreen.bindTarget();
+        gGL.setColorMask(true, true);
+        glClearColor(0.0f,0.0f,0.0f,0.0f);
+        gPipeline.mUIScreen.clear();
+        gGL.color4f(1,1,1,1);
+        LLUI::setDestIsRenderTarget(TRUE);
+        // this is necessary even though it theoretically already is using that blend type due to
+        // setting the DestIsRenderTarget flag
+        gGL.setSceneBlendType(LLRender::BT_ALPHA);
+    }
+}
+
+
+void LLHMD::postRender2DUI()
+{
+	if (getCurrentEye() == LLHMD::LEFT_EYE && LLViewerDisplay::gDisplaySwapBuffers)
+    {
+        LLViewerDisplay::gDisplaySwapBuffers = FALSE;
+    }
+    else if (getCurrentEye() == LLHMD::RIGHT_EYE)
+    {
+        gHMD.renderCursor2D();
+        gPipeline.mUIScreen.flush();
+        if (LLRenderTarget::sUseFBO)
+        {
+            //copy depth buffer from mScreen to framebuffer
+            LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
+                0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+        }
+        LLUI::setDestIsRenderTarget(FALSE);
+    }
 }

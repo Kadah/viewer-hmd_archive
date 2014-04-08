@@ -54,6 +54,13 @@ public:
         RenderMode_Last = RenderMode_ScreenStereo,
     };
 
+    enum eCameraEye
+	{
+        CENTER_EYE  = 0,
+		LEFT_EYE    = 1,
+		RIGHT_EYE   = 2,
+	};
+
     enum eFlags
     {
         kFlag_None                      = 0,
@@ -154,7 +161,7 @@ public:
     BOOL useSavedHMDPreferences() const { return ((mFlags & kFlag_UseSavedHMDPreferences) != 0) ? TRUE : FALSE; }
     void useSavedHMDPreferences(BOOL b) { if (b) { mFlags |= kFlag_UseSavedHMDPreferences; } else { mFlags &= ~kFlag_UseSavedHMDPreferences; } }
     
-    // True if the HMD is initialized and currently in a render mode != RenderMode_None
+    // True if render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
 
     // get/set current HMD rendering mode
@@ -189,9 +196,7 @@ public:
     F32 getInterpupillaryOffset() const;
     F32 getInterpupillaryOffsetDefault() const;
     void setInterpupillaryOffset(F32 f);
-
     F32 getLensSeparationDistance() const;
-
     F32 getEyeToScreenDistance() const;
     void setEyeToScreenDistance(F32 f);
     F32 getEyeToScreenDistanceDefault() const;
@@ -280,6 +285,10 @@ public:
     LLCoordWindow getMainClientSize() const { return mMainClientSize; }
     LLCoordWindow getHMDClientSize() const { return LLCoordWindow(getHMDWidth(), getHMDHeight()); }
 
+    const char* getLatencyTesterResults();
+
+    void onViewChange();
+
     std::string getUIShapeName() const;
     F32 getUISurfaceArcHorizontal() const { return mUIShape.mArcHorizontal; }
     void setUISurfaceArcHorizontal(F32 f) { setUISurfaceParam(&mUIShape.mArcHorizontal, f); }
@@ -309,8 +318,7 @@ public:
     BOOL addPreset();
     BOOL updatePreset();
     BOOL removePreset(S32 idx);
-
-    const char* getLatencyTesterResults();
+    void saveSettings();
 
     LLViewerTexture* getCursorImage(U32 cursorType) { return (cursorType < mCursorTextures.size()) ? mCursorTextures[cursorType].get() : NULL; }
     const LLVector2& getCursorHotspotOffset(U32 cursorType) { return (cursorType < mCursorHotSpotOffsets.size()) ? mCursorHotSpotOffsets[cursorType] : LLVector2::zero; }
@@ -342,16 +350,22 @@ public:
     S32 getMouselookControlMode() const { return mMouselookControlMode; }
     void setMouselookControlMode(S32 newMode) { mMouselookControlMode = llclamp(newMode, (S32)kMouselookControl_BEGIN, (S32)(kMouselookControl_END - 1)); }
 
-    void setup2DRender();
-
     // returns TRUE if we're in HMD Mode, mh is valid and mh has a valid mouse intersect override (in either UI or global coordinate space)
     BOOL handleMouseIntersectOverride(LLMouseHandler* mh);
 
     F32 getWorldCursorSizeMult() const { return mMouseWorldSizeMult; }
 
-    void onViewChange();
+    void setupStereoValues();
+    void setupStereoCullFrustum();
+    void setupEye();
+    F32 getProjectionOffset() const { return mProjectionOffset; }
+    F32 getCameraOffset() const { return mCameraOffset; }
 
-    void saveSettings();
+    void setup2DRender();
+    void render3DUI();
+    void prerender2DUI();
+    void postRender2DUI();
+
 
     static void onChangeHMDAdvancedMode();
     static void onChangeInterpupillaryDistance();
@@ -370,6 +384,8 @@ public:
 private:
     void calculateUIEyeDepth();
     void setUISurfaceParam(F32* p, F32 f);
+    void renderCursor2D();
+    void renderCursor3D();
 
 private:
     LLHMDImpl* mImpl;
@@ -410,6 +426,14 @@ private:
     F32 mMouselookRotMax;
     F32 mMouselookTurnSpeedMax;
     LLVector3 mLastRollPitchYaw;
+	F32 mStereoCameraFOV;
+	LLVector3 mStereoCameraPosition;
+    F32 mCameraOffset;
+    F32 mProjectionOffset;
+    LLVector3 mStereoCullCameraDeltaForwards;
+    F32 mStereoCullCameraFOV;
+	F32 mStereoCullCameraAspect;
+    LLVector3 mStereoCameraDeltaLeft;
 };
 
 extern LLHMD gHMD;

@@ -52,6 +52,7 @@
 #include "llworld.h"
 #include "llappviewer.h"
 #include "llparcel.h"
+#include "llhmd.h"
 
 #include "llglheaders.h"
 
@@ -479,7 +480,7 @@ void LLToolBrushLand::render()
 							  pos_world);
 			}
 		}
-        if (LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE)
+        if (gHMD.getCurrentEye() != LLHMD::LEFT_EYE)
         {
 		    mGotHover = FALSE;
         }

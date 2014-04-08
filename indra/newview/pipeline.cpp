@@ -216,8 +216,6 @@ const U32 DEFERRED_VB_MASK = LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TE
 const S32 MAX_OCCLUDER_COUNT = 2;
 
 extern S32 gBoxFrame;
-//extern BOOL gHideSelectedObjects;
-extern BOOL gDisplaySwapBuffers;
 extern BOOL gDebugGL;
 
 BOOL	gAvatarBacklight = FALSE;
@@ -358,7 +356,6 @@ glh::matrix4f gl_ortho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top,
 	return ret;
 }
 
-void display_update_camera();
 //----------------------------------------
 
 S32		LLPipeline::sCompiles = 0;
@@ -3215,7 +3212,7 @@ void LLPipeline::shiftObjects(const LLVector3 &offset)
 	assertInitialized();
 
 	glClear(GL_DEPTH_BUFFER_BIT);
-	gDepthDirty = TRUE;
+	LLViewerDisplay::gDepthDirty = TRUE;
 		
 	LLVector4a offseta;
 	offseta.load3(offset.mV);
@@ -3260,7 +3257,7 @@ void LLPipeline::shiftObjects(const LLVector3 &offset)
 		LLHUDText::shiftAll(offset);
 		LLHUDNameTag::shiftAll(offset);
 	}
-	display_update_camera();
+	LLViewerDisplay::update_camera();
 }
 
 void LLPipeline::markTextured(LLDrawable *drawablep)
@@ -4100,7 +4097,7 @@ void render_hud_elements()
 		// Render name tags.
 		LLHUDObject::renderAll();
 	}
-	else if (gForceRenderLandFence)
+	else if (LLViewerDisplay::gForceRenderLandFence)
 	{
 		// This is only set when not rendering the UI, for parcel snapshots
 		LLViewerParcelMgr::getInstance()->render();
@@ -7511,9 +7508,9 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 
-    if (LLViewerCamera::sCurrentEye != LLViewerCamera::CENTER_EYE)
+    if (gHMD.getCurrentEye() != LLHMD::CENTER_EYE)
 	{
-        if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
+        if (gHMD.getCurrentEye() == LLHMD::LEFT_EYE)
         {
             if (!mLeftEye.isComplete())
             {
@@ -7525,7 +7522,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
             }
             mLeftEye.bindTarget();
         }
-        else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+        else if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
         {
             if (!mRightEye.isComplete())
             {
@@ -11636,14 +11633,14 @@ void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL 
         return;
     }
 
-    if (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE)
+    if (gHMD.getCurrentEye() == LLHMD::LEFT_EYE)
     {
         if (pLeft && doFlush)
         {
             pLeft->flush();
         }
     }
-    else if (LLViewerCamera::sCurrentEye == LLViewerCamera::RIGHT_EYE)
+    else if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
     {
         if (pRight && doFlush)
         {
@@ -11695,7 +11692,7 @@ void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL 
         }
     }
 
-    if (LLRenderTarget::sUseFBO && (!gHMD.isHMDMode() || LLViewerCamera::sCurrentEye != LLViewerCamera::LEFT_EYE))
+    if (LLRenderTarget::sUseFBO && (!gHMD.isHMDMode() || gHMD.getCurrentEye() != LLHMD::LEFT_EYE))
 	{
         //copy depth buffer from mScreen to framebuffer
 		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 

@@ -1433,7 +1433,7 @@ bool LLAppViewer::mainLoop()
 				{
 					pingMainloopTimeout("Main:Display");
 					gGLActive = TRUE;
-					display();
+					LLViewerDisplay::display();
 					pingMainloopTimeout("Main:Snapshot");
 					LLFloaterSnapshot::update(); // take snapshots
 					gGLActive = FALSE;
@@ -1702,7 +1702,7 @@ bool LLAppViewer::cleanup()
 
 	llinfos << "Viewer disconnected" << llendflush;
 
-	display_cleanup();
+	LLViewerDisplay::display_cleanup();
 
 	release_start_screen(); // just in case
 
@@ -4884,7 +4884,7 @@ void LLAppViewer::idle()
     {
 		return;
     }
-	if (gTeleportDisplay)
+	if (LLViewerDisplay::gTeleportDisplay)
     {
 		return;
     }

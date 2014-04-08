@@ -101,7 +101,7 @@
 #include "lltoolpie.h"
 #include "lltoolselectland.h"
 #include "lltrans.h"
-#include "llviewerdisplay.h" //for gWindowResized
+#include "llviewerdisplay.h" //for LLViewerDisplay::gWindowResized
 #include "llviewergenericmessage.h"
 #include "llviewerhelp.h"
 #include "llviewermenufile.h"	// init_menu_file()
@@ -151,7 +151,6 @@ void handle_test_load_url(void*);
 //extern BOOL gDebugAvatarRotation;
 extern BOOL gDebugClicks;
 extern BOOL gDebugWindowProc;
-extern BOOL gShaderProfileFrame;
 
 //extern BOOL gDebugTextEditorTips;
 //extern BOOL gDebugSelectMgr;
@@ -1187,7 +1186,7 @@ class LLAdvancedToggleWireframe : public view_listener_t
 	bool handleEvent(const LLSD& userdata)
 	{
 		gUseWireframe = !(gUseWireframe);
-		gWindowResized = TRUE;
+		LLViewerDisplay::gWindowResized = TRUE;
 		LLPipeline::updateRenderDeferred();
 		gPipeline.resetVertexBuffers();
 		return true;
@@ -7295,7 +7294,7 @@ class LLAdvancedClickRenderProfile: public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		gShaderProfileFrame = TRUE;
+		LLViewerDisplay::gShaderProfileFrame = TRUE;
 		return true;
 	}
 };

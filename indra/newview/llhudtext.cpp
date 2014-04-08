@@ -46,6 +46,7 @@
 #include "llstatusbar.h"
 #include "llmenugl.h"
 #include "pipeline.h"
+#include "llhmd.h"
 #include <boost/tokenizer.hpp>
 
 
@@ -385,15 +386,19 @@ void LLHUDText::updateVisibility()
 		mVisible = FALSE;
 		return;
 	}
-		
-	if (vec_from_camera * LLViewerCamera::getInstance()->getAtAxis() <= LLViewerCamera::getInstance()->getNear() + 0.1f + mSourceObject->getVObjRadius())
-	{
-		mPositionAgent = LLViewerCamera::getInstance()->getOrigin() + vec_from_camera * ((LLViewerCamera::getInstance()->getNear() + 0.1f) / (vec_from_camera * LLViewerCamera::getInstance()->getAtAxis()));
-	}
-	else
-	{
-		mPositionAgent -= dir_from_camera * mSourceObject->getVObjRadius();
-	}
+
+    if (!gHMD.isHMDMode())
+    {
+        // keep text at original position when in HMD mode
+	    if (vec_from_camera * LLViewerCamera::getInstance()->getAtAxis() <= LLViewerCamera::getInstance()->getNear() + 0.1f + mSourceObject->getVObjRadius())
+	    {
+		    mPositionAgent = LLViewerCamera::getInstance()->getOrigin() + vec_from_camera * ((LLViewerCamera::getInstance()->getNear() + 0.1f) / (vec_from_camera * LLViewerCamera::getInstance()->getAtAxis()));
+	    }
+	    else
+	    {
+		    mPositionAgent -= dir_from_camera * mSourceObject->getVObjRadius();
+	    }
+    }
 
 	mLastDistance = (mPositionAgent - LLViewerCamera::getInstance()->getOrigin()).magVec();
 

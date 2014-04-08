@@ -75,6 +75,7 @@
 #include "llslurl.h"
 #include "llstartup.h"
 #include "llupdaterservice.h"
+#include "llviewerdisplay.h"
 
 // Third party library includes
 #include <boost/algorithm/string.hpp>
@@ -93,7 +94,6 @@ LLControlGroup gWarningSettings("Warnings"); // persists ignored dialogs/warning
 
 std::string gLastRunVersion;
 
-extern BOOL gResizeScreenTexture;
 extern BOOL gDebugGL;
 ////////////////////////////////////////////////////////////////////////////
 // Listeners
@@ -443,7 +443,7 @@ static bool handleRenderDebugPipelineChanged(const LLSD& newvalue)
 
 static bool handleRenderResolutionDivisorChanged(const LLSD&)
 {
-	gResizeScreenTexture = TRUE;
+	LLViewerDisplay::gResizeScreenTexture = TRUE;
 	return true;
 }
 

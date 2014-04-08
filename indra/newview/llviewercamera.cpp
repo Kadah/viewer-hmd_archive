@@ -56,7 +56,6 @@
 #include <iomanip> // for setprecision
 
 U32 LLViewerCamera::sCurCameraID = LLViewerCamera::CAMERA_WORLD;
-U32 LLViewerCamera::sCurrentEye = LLViewerCamera::CENTER_EYE;
 
 //glu pick matrix implementation borrowed from Mesa3D
 glh::matrix4f gl_pick_matrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height, GLint* viewport)
@@ -87,7 +86,7 @@ glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloa
 	GLfloat proj_offset = 0.0f;
 	if (display && gHMD.isHMDMode())
 	{
-		proj_offset = (1.0f - (2.0f * gHMD.getLensSeparationDistance() / gHMD.getPhysicalScreenWidth())) * (LLViewerCamera::sCurrentEye == LLViewerCamera::LEFT_EYE ? -1.0f : 1.0f);
+	    proj_offset = gHMD.getProjectionOffset();
 	}
 
 	return glh::matrix4f(f/aspect, 0, proj_offset, 0,
@@ -254,16 +253,8 @@ void LLViewerCamera::updateFrustumPlanes(LLCamera& camera, BOOL ortho, BOOL zfli
 
 	for (U32 i = 0; i < 16; i++)
 	{
-        if (gHMD.isHMDMode() && !ortho)
-        {
-            model[i] = (F64)gHMD.getBaseModelView()[i];
-            proj[i] = (F64)gHMD.getBaseProjection()[i];
-        }
-        else
-        {
-		    model[i] = (F64) gGLModelView[i];
-		    proj[i] = (F64) gGLProjection[i];
-        }
+        model[i] = (F64)gGLModelView[i];
+        proj[i] = (F64)gGLProjection[i];
 	}
 
 	GLdouble objX,objY,objZ;
@@ -423,9 +414,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 
     if (gHMD.isHMDMode())
     {
-        glh::matrix4f proj_mat_base = proj_mat;
-	    proj_mat_base *= gl_perspective(fov_y, aspect, z_near, z_far, FALSE);
-        gHMD.setBaseProjection(proj_mat_base.m);
+        gHMD.setBaseProjection(proj_mat.m);
     }
 	proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far, !for_selection);
 
@@ -450,10 +439,6 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
     if (gHMD.isHMDMode())
     {
         gHMD.setBaseModelView(modelview.m);
-        glh::matrix4f translate;
-        F32 viewOffset = gHMD.getInterpupillaryOffset();
-        translate.set_translate(glh::vec3f(sCurrentEye == LEFT_EYE ? viewOffset : -viewOffset, 0.0f, gHMD.getEyeDepth()));
-        modelview = translate * modelview;
     }
 	
 	gGL.loadMatrix(modelview.m);
@@ -481,7 +466,10 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 		}
 	}
 
-	updateFrustumPlanes(*this);
+    if (!gHMD.isHMDMode() || for_selection || gHMD.getCameraOffset() == 0.0f)
+    {
+        updateFrustumPlanes(*this);
+    }
 }
 
 
@@ -872,26 +860,38 @@ BOOL LLViewerCamera::areVertsVisible(LLViewerObject* volumep, BOOL all_verts)
 // changes local camera and broadcasts change
 /* virtual */ void LLViewerCamera::setView(F32 vertical_fov_rads)
 {
-	F32 old_fov = LLViewerCamera::getInstance()->getView();
+    setView(vertical_fov_rads, FALSE);
+}
 
+void LLViewerCamera::setView(F32 vertical_fov_rads, BOOL stereo_update_simulator)
+{
 	// cap the FoV
 	vertical_fov_rads = llclamp(vertical_fov_rads, getMinView(), getMaxView());
 
-	if (vertical_fov_rads == old_fov) return;
+    static F32 simulatorFOV = 0.0f;
+    if (vertical_fov_rads == simulatorFOV)
+    {
+        return;
+    }
 
-	// send the new value to the simulator
-	LLMessageSystem* msg = gMessageSystem;
-	msg->newMessageFast(_PREHASH_AgentFOV);
-	msg->nextBlockFast(_PREHASH_AgentData);
-	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-	msg->addU32Fast(_PREHASH_CircuitCode, gMessageSystem->mOurCircuitCode);
+    if (stereo_update_simulator || !gHMD.isHMDMode())
+    {
+        simulatorFOV = vertical_fov_rads;
 
-	msg->nextBlockFast(_PREHASH_FOVBlock);
-	msg->addU32Fast(_PREHASH_GenCounter, 0);
-	msg->addF32Fast(_PREHASH_VerticalAngle, vertical_fov_rads);
+	    // send the new value to the simulator
+	    LLMessageSystem* msg = gMessageSystem;
+	    msg->newMessageFast(_PREHASH_AgentFOV);
+	    msg->nextBlockFast(_PREHASH_AgentData);
+	    msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+	    msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+	    msg->addU32Fast(_PREHASH_CircuitCode, gMessageSystem->mOurCircuitCode);
 
-	gAgent.sendReliableMessage();
+	    msg->nextBlockFast(_PREHASH_FOVBlock);
+	    msg->addU32Fast(_PREHASH_GenCounter, 0);
+	    msg->addF32Fast(_PREHASH_VerticalAngle, vertical_fov_rads);
+
+	    gAgent.sendReliableMessage();
+    }
 
 	// sync the camera with the new value
 	LLCamera::setView(vertical_fov_rads); // call base implementation

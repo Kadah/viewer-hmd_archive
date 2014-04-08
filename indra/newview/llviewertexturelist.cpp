@@ -680,7 +680,7 @@ static LLFastTimer::DeclareTimer FTM_IMAGE_STATS("Stats");
 void LLViewerTextureList::updateImages(F32 max_time)
 {
 	static BOOL cleared = FALSE;
-	if(gTeleportDisplay)
+	if(LLViewerDisplay::gTeleportDisplay)
 	{
 		if(!cleared)
 		{

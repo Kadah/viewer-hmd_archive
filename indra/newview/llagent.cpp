@@ -3891,7 +3891,7 @@ bool LLAgent::teleportCore(bool is_local)
 	}
 	else
 	{
-		gTeleportDisplay = TRUE;
+		LLViewerDisplay::gTeleportDisplay = TRUE;
 		gAgent.setTeleportState( LLAgent::TELEPORT_START );
 
 		//release geometry from old location
@@ -3945,7 +3945,7 @@ void LLAgent::startTeleportRequest()
 	{
 		if  (!isMaturityPreferenceSyncedWithServer())
 		{
-			gTeleportDisplay = TRUE;
+			LLViewerDisplay::gTeleportDisplay = TRUE;
 			setTeleportState(TELEPORT_PENDING);
 		}
 		else

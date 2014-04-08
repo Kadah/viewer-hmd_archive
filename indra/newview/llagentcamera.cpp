@@ -1427,9 +1427,9 @@ void LLAgentCamera::updateCamera()
             focusPitchAndYaw = LLQuaternion(focusPitch, LLVector3::y_axis) * LLQuaternion(focusYaw, LLVector3::z_axis);
         }
 
-        LLQuaternion y = LLQuaternion(gHMD.getHMDYaw(), LLVector3::z_axis);
-	    LLQuaternion p = LLQuaternion(gHMD.getHMDPitch(), LLVector3::y_axis);
-	    LLQuaternion r = LLQuaternion(gHMD.getHMDRoll(), LLVector3::x_axis);
+        LLQuaternion y(gHMD.getHMDYaw(), LLVector3::z_axis);
+	    LLQuaternion p(gHMD.getHMDPitch(), LLVector3::y_axis);
+	    LLQuaternion r(gHMD.getHMDRoll(), LLVector3::x_axis);
 
         LLVector3 original_camera_up_vector = mCameraUpVector;
 		mCameraUpVector = LLVector3::z_axis * r * y * focusPitchAndYaw;
@@ -1476,7 +1476,7 @@ void LLAgentCamera::updateCamera()
 		LLVector3 chest_scale = chest_joint->getScale();
 
 		// shorten avatar skeleton to avoid foot interpenetration
-		if (!gAgentAvatarp->mInAir)
+		if (!gAgentAvatarp->mInAir && !gHMD.isHMDMode())
 		{
 			LLVector3 chest_offset = LLVector3(0.f, 0.f, chest_joint->getPosition().mV[VZ]) * torso_joint->getWorldRotation();
 			F32 z_compensate = llclamp(-diff.mV[VZ], -0.2f, 1.f);

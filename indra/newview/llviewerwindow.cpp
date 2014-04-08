@@ -219,12 +219,8 @@
 //
 // Globals
 //
-void render_ui(F32 zoom_factor = 1.f, int subfield = 0);
 
 extern BOOL gDebugClicks;
-extern BOOL gDisplaySwapBuffers;
-extern BOOL gDepthDirty;
-extern BOOL gResizeScreenTexture;
 
 LLViewerWindow	*gViewerWindow = NULL;
 
@@ -2257,7 +2253,7 @@ void LLViewerWindow::reshape(S32 width, S32 height)
 	// may have been destructed.
 	if (!LLApp::isExiting())
 	{
-		gWindowResized = TRUE;
+		LLViewerDisplay::gWindowResized = TRUE;
 
 		// update our window rectangle
 		mWindowRectRaw.mRight = mWindowRectRaw.mLeft + width;
@@ -3554,7 +3550,7 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 	if (mWorldViewRectRaw != new_world_rect)
 	{
 		mWorldViewRectRaw = new_world_rect;
-		gResizeScreenTexture = TRUE;
+		LLViewerDisplay::gResizeScreenTexture = TRUE;
         LLViewerCamera* camera = LLViewerCamera::getInstance();
 		camera->setViewHeightInPixels( mWorldViewRectRaw.getHeight() );
 		camera->setAspect( gHMD.isHMDMode() ? gHMD.getAspect() : getWorldViewAspectRatio() );
@@ -4408,7 +4404,7 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 	}
 
 	// PRE SNAPSHOT
-	gDisplaySwapBuffers = FALSE;
+	LLViewerDisplay::gDisplaySwapBuffers = FALSE;
 	
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	setCursor(UI_CURSOR_WAIT);
@@ -4557,8 +4553,8 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 		S32 output_buffer_offset_x = 0;
 		for (int subimage_x = 0; subimage_x < scale_factor; ++subimage_x)
 		{
-			gDisplaySwapBuffers = FALSE;
-			gDepthDirty = TRUE;
+			LLViewerDisplay::gDisplaySwapBuffers = FALSE;
+			LLViewerDisplay::gDepthDirty = TRUE;
 
 			S32 subimage_x_offset = llclamp(buffer_x_offset - (subimage_x * window_width), 0, window_width);
 			// handle fractional rows
@@ -4569,13 +4565,13 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 			if (read_width && read_height)
 			{
 				const U32 subfield = subimage_x+(subimage_y*llceil(scale_factor));
-				display(do_rebuild, scale_factor, subfield, TRUE);
+				LLViewerDisplay::display(do_rebuild, scale_factor, subfield, TRUE);
 				
 				if (!LLPipeline::sRenderDeferred)
 				{
 					// Required for showing the GUI in snapshots and performing bloom composite overlay
 					// Call even if show_ui is FALSE
-					render_ui(scale_factor, subfield);
+					LLViewerDisplay::render_ui(scale_factor, subfield);
 				}
 				
 				for (U32 out_y = 0; out_y < read_height ; out_y++)
@@ -4634,8 +4630,8 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 		output_buffer_offset_y += subimage_y_offset;
 	}
 
-	gDisplaySwapBuffers = FALSE;
-	gDepthDirty = TRUE;
+	LLViewerDisplay::gDisplaySwapBuffers = FALSE;
+	LLViewerDisplay::gDepthDirty = TRUE;
 
 	// POST SNAPSHOT
 	if (!gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
@@ -4974,8 +4970,8 @@ void LLViewerWindow::restoreGL(const std::string& progress_message)
 		LLVOAvatar::restoreGL();
 		LLVOPartGroup::restoreGL();
 		
-		gResizeScreenTexture = TRUE;
-		gWindowResized = TRUE;
+		LLViewerDisplay::gResizeScreenTexture = TRUE;
+		LLViewerDisplay::gWindowResized = TRUE;
 
 		if (isAgentAvatarValid() && gAgentAvatarp->isEditingAppearance())
 		{
@@ -5055,9 +5051,6 @@ void LLViewerWindow::restartDisplay(BOOL show_progress_bar)
 BOOL LLViewerWindow::changeDisplaySettings(LLCoordScreen size, BOOL disable_vsync, BOOL show_progress_bar)
 {
 	//BOOL was_maximized = gSavedSettings.getBOOL("WindowMaximized");
-
-	//gResizeScreenTexture = TRUE;
-
 
 	//U32 fsaa = gSavedSettings.getU32("RenderFSAASamples");
 	//U32 old_fsaa = mWindow->getFSAASamples();
@@ -5256,7 +5249,14 @@ void LLViewerWindow::setUIVisibility(bool visible)
 
 	if (!visible)
 	{
-		gAgentCamera.changeCameraToThirdPerson(FALSE);
+        if (gAgentCamera.getCameraMode() != CAMERA_MODE_FIRST_PERSON)
+        {
+		    gAgentCamera.changeCameraToThirdPerson(FALSE);
+        }
+        else
+        {
+		    gAgentCamera.changeCameraToFirstPerson(FALSE);
+        }
 		gFloaterView->hideAllFloaters();
 	}
 	else
