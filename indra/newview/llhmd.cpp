@@ -595,9 +595,9 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         }
                         LLFloaterCamera::onHMDChange();
                         LLFloaterReg::setBlockInstance(false, "snapshot");
+                        gViewerWindow->reshape(mMainClientSize.mX, mMainClientSize.mY);
                         gSavedSettings.setF32("CameraAngle", mMainWindowFOV);
                         LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("CameraAngle"));
-                        gViewerWindow->reshape(mMainClientSize.mX, mMainClientSize.mY);
                     }
                     break;
                 }
@@ -653,9 +653,10 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         }
                         windowp->enableVSync(TRUE);
                         windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        onViewChange();
+                        LLViewerCamera::getInstance()->setAspect(gHMD.getAspect());
                         LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
-                        onViewChange();
                     }
                     break;
                 case RenderMode_ScreenStereo:
@@ -673,7 +674,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         }
 #endif
                         windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-                        LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
                         if (isMainFullScreen()
 #if LL_DARWIN
                             || isHMDMirror()
@@ -686,8 +686,10 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         {
                             windowp->setSize(getHMDClientSize(), TRUE);
                             windowp->setPosition(mMainWindowPos);
-                            //onViewChange();
                         }
+                        LLViewerCamera::getInstance()->setAspect(gHMD.getAspect());
+                        LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
+                        gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
                     }
                     break;
                 }
@@ -709,8 +711,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
         if (mImpl && isPostDetectionInitialized() && isHMDConnected() && isHMDSensorConnected() && isHMDMode())
         {
             mImpl->resetOrientation();
-            //mImpl->resetHeadRotationCorrection();
-            //mImpl->resetHeadPitchCorrection();
         }
     }
 #else
