@@ -630,26 +630,25 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
 
     gPipeline.resetFrameStats();	// Reset per-frame statistics.
 
-    U32 render_mode = gHMD.getRenderMode();
-    BOOL hmd_lib_initialized = gHMD.isPostDetectionInitialized();
-    BOOL hmd_ready = hmd_lib_initialized && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected();
-    BOOL render_ok = TRUE;
-
-    if (((S32)LLFrameTimer::getFrameCount() % 30) == 0)
-    {
-        // every 30 frames, render black background to unused window
-        if (hmd_ready && !for_snapshot_original && (render_mode == LLHMD::RenderMode_None || render_mode == LLHMD::RenderMode_ScreenStereo))
-        {
-            gHMD.renderUnusedHMDWindow();
-        }
-        else if (render_mode == LLHMD::RenderMode_HMD)
-        {
-            gHMD.renderUnusedMainWindow();
-        }
-    }
-
     if (!gDisconnected)
     {
+        U32 render_mode = gHMD.getRenderMode();
+        BOOL hmd_ready = gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected();
+        BOOL render_ok = TRUE;
+
+        if (((S32)LLFrameTimer::getFrameCount() % 30) == 0)
+        {
+            // every 30 frames, render black background to unused window
+            if (hmd_ready && !for_snapshot_original && (render_mode == LLHMD::RenderMode_None || render_mode == LLHMD::RenderMode_ScreenStereo))
+            {
+                gHMD.renderUnusedHMDWindow();
+            }
+            else if (render_mode == LLHMD::RenderMode_HMD)
+            {
+                gHMD.renderUnusedMainWindow();
+            }
+        }
+
         if (render_mode == LLHMD::RenderMode_None || for_snapshot_original)
         {
             render_ok = (!hmd_ready || gHMD.setRenderWindowMain());
