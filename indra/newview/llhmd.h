@@ -407,6 +407,7 @@ private:
     LLCoordScreen mMainWindowSize;
     LLCoordWindow mMainClientSize;
     F32 mMainWindowFOV;
+    F32 mMainWindowAspect;
     // in-world coordinates of mouse pointer on the UI surface
     LLVector3 mMouseWorld;
     // in-world coordinates of raycast from viewpoint into world, assuming no collisions.
