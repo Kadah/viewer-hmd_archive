@@ -540,7 +540,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             }
                         }
                         windowp->enableVSync(TRUE);
-                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        windowp->setHMDMode(TRUE, FALSE, isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         onViewChange();
                     }
                     break;
@@ -549,7 +549,16 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     // not much to do here except resize the main window
                     {
                         setRenderWindowMain();
-                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        windowp->setHMDMode(TRUE, isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+//                        if (!isMainFullScreen() && !isHMDMirror())
+//                        {
+//#if LL_DARWIN
+//                            windowp->setSize(mMainClientSize);
+//#else
+//                            windowp->setSize(mMainWindowSize);
+//#endif
+//                            windowp->setPosition(mMainWindowPos);
+//                        }
                         if (isMainFullScreen())
                         {
                             onViewChange();
@@ -571,27 +580,32 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         {
                             setRenderWindowMain();
                         }
-                        windowp->setHMDMode(FALSE, gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
+                        windowp->setHMDMode(FALSE, isHMDMirror(), isMainFullScreen(), gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
                         if (!isMainFullScreen())
                         {
 #if LL_DARWIN
-                            if (isHMDMirror())
-                            {
-                                LLWindowMacOSX* w = dynamic_cast<LLWindowMacOSX*>(windowp);
-                                if (w)
-                                {
-                                    w->exitFullScreen(mMainWindowPos, mMainClientSize);
-                                }
-                            }
-                            else
-                            {
-                                windowp->setSize(mMainClientSize);
-                                windowp->setPosition(mMainWindowPos);
-                            }
+                            windowp->setSize(mMainClientSize);
 #else
                             windowp->setSize(mMainWindowSize);
-                            windowp->setPosition(mMainWindowPos);
 #endif
+                            windowp->setPosition(mMainWindowPos);
+//                            if (isHMDMirror())
+//                            {
+//                                LLWindowMacOSX* w = dynamic_cast<LLWindowMacOSX*>(windowp);
+//                                if (w)
+//                                {
+//                                    w->exitFullScreen(mMainWindowPos, mMainClientSize);
+//                                }
+//                            }
+//                            else
+//                            {
+//                                windowp->setSize(mMainClientSize);
+//                                windowp->setPosition(mMainWindowPos);
+//                            }
+//#else
+//                            windowp->setSize(mMainWindowSize);
+//                            windowp->setPosition(mMainWindowPos);
+//#endif
                         }
                         if (oldMode == RenderMode_HMD)
                         {
@@ -618,8 +632,10 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 windowp->getSize(&mMainClientSize);
                 mMainWindowFOV = gSavedSettings.getF32("CameraAngle");
                 mMainWindowAspect = pCamera->getAspect();
+                isMainFullScreen(windowp->getFullscreen());
                 renderUnusedMainWindow();
                 mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
+
                 // snapshots are disabled in HMD mode due to problems with always rendering UI and sometimes
                 // rendering black screen before saving.  This is probably a solvable issue, but not in the 
                 // time constraints given right now, so disabling them until someone has a chance to fix
@@ -659,7 +675,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             }
                         }
                         windowp->enableVSync(TRUE);
-                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        windowp->setHMDMode(TRUE, FALSE, isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         pCamera->setAspect(gHMD.getAspect());
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
@@ -670,25 +686,30 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 case RenderMode_ScreenStereo:
                     // switching from Normal to ScreenStereo
                     {
-#if LL_DARWIN
-                        if (isHMDMirror() && !isMainFullScreen())
-                        {
-                            LLWindowMacOSX* w = dynamic_cast<LLWindowMacOSX*>(windowp);
-                            if (w)
-                            {
-                                w->enterFullScreen();
-                                w->setRenderWindow(0, TRUE);
-                            }
-                        }
-#endif
-                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        //if (isHMDMirror())
+                        //{
+                        //    windowp->enterFullScreen();
+                        //    windowp->setRenderWindow(0, TRUE);
+                        //}
+//#if LL_DARWIN
+//                        if (isHMDMirror() && !isMainFullScreen())
+//                        {
+//                            LLWindowMacOSX* w = dynamic_cast<LLWindowMacOSX*>(windowp);
+//                            if (w)
+//                            {
+//                                w->enterFullScreen();
+//                                w->setRenderWindow(0, TRUE);
+//                            }
+//                        }
+//#endif
+                        windowp->setHMDMode(TRUE, isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         pCamera->setAspect(gHMD.getAspect());
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
                         if (isMainFullScreen()
-#if LL_DARWIN
+//#if LL_DARWIN
                             || isHMDMirror()
-#endif
+//#endif
                             )
                         {
                             onViewChange();
@@ -1802,6 +1823,22 @@ void LLHMD::postRender2DUI()
         gPipeline.mUIScreen.flush();
         if (LLRenderTarget::sUseFBO)
         {
+            ////copy depth buffer from mScreen to framebuffer
+            //S32 d[2] = { gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight() };
+            //if (gHMD.getRenderMode() == LLHMD::RenderMode_ScreenStereo)
+            //{
+            //    d[0] = llmax(0, mMainClientSize.mX - 25);
+            //    d[1] = llmax(0, mMainClientSize.mY - 75);
+            //    static S32 foo = 0;
+            //    if ((foo % 30) == 0)
+            //    {
+            //        LL_INFOS("HMD") << "screenstereo: mScreen = {" << gPipeline.mScreen.getWidth() << "," << gPipeline.mScreen.getHeight() << "},  d = {" << d[0] << "," << d[1] << "}" << LL_ENDL;
+            //    }
+            //    foo++;
+            //}
+            //LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
+            //    0, 0, d[0], d[1], GL_DEPTH_BUFFER_BIT, GL_NEAREST); // GL_LINEAR);
+
             //copy depth buffer from mScreen to framebuffer
             LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
                 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);

@@ -4142,16 +4142,27 @@ BOOL LLWindowWin32::setFocusWindow(S32 idx)
 }
 
 
-void LLWindowWin32::setHMDMode(BOOL mode, U32 min_width, U32 min_height)
+void LLWindowWin32::setHMDMode(BOOL mode, BOOL mirrored, BOOL mainFullScreen, U32 min_width, U32 min_height)
 {
     mHMDMode = mode;
     if (mHMDMode)
     {
+        if (mirrored && mCurRCIdx == 0 && !mainFullScreen && !getMaximized())
+        {
+            maximize();
+        }
         while (ShowCursor(FALSE) >= 0) {}
     }
-    else if (!isCursorHidden())
+    else
     {
-        showCursor();
+        if (mirrored && mCurRCIdx == 0 && !mainFullScreen && getMaximized())
+        {
+            restore();
+        }
+        if (!isCursorHidden())
+        {
+            showCursor();
+        }
     }
     setMinSize(min_width, min_height, false);
 }

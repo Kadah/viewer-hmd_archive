@@ -2165,17 +2165,40 @@ BOOL LLWindowMacOSX::setFocusWindow(S32 idx)
     return TRUE;
 }
 
-void LLWindowMacOSX::setHMDMode(BOOL mode, U32 min_width, U32 min_height)
+void LLWindowMacOSX::setHMDMode(BOOL mode, BOOL mirrored, BOOL mainFullScreen, U32 min_width, U32 min_height)
 {
     BOOL oldHMDMode = mHMDMode;
     mHMDMode = mode;
-    if (mHMDMode && !oldHMDMode && !mCursorHidden)
+    if (mHMDMode && !oldHMDMode)
     {
-        hideNSCursor();
+        if (mirrored && mCurRCIdx == 0 && mContext)
+        {
+            if (!mainFullScreen)
+            {
+                enterFullScreen();
+            }
+            CGLSetParameter(mContext, kCGLCPSurfaceBackingSize, mHMDSize);
+            CGLEnable(mContext, kCGLCESurfaceBackingSize);
+        }
+        if (!mCursorHidden)
+        {
+            hideNSCursor();
+        }
     }
-    else if (!mCursorHidden && oldHMDMode && !mHMDMode)
+    else if (oldHMDMode && !mHMDMode)
     {
-        showNSCursor();
+        if (mirrored && mCurRCIdx == 0 && mContext)
+        {
+            if (!mainFullScreen)
+            {
+                exitFullScreen()
+            }
+            CGLDisable(mContext, kCGLCESurfaceBackingSize);
+        }
+        if (!mCursorHidden)
+        {
+            showNSCursor();
+        }
     }
     setMinSize(min_width, min_height, false);
 }
