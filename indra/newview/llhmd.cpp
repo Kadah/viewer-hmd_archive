@@ -550,15 +550,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     {
                         setRenderWindowMain();
                         windowp->setHMDMode(TRUE, isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-//                        if (!isMainFullScreen() && !isHMDMirror())
-//                        {
-//#if LL_DARWIN
-//                            windowp->setSize(mMainClientSize);
-//#else
-//                            windowp->setSize(mMainWindowSize);
-//#endif
-//                            windowp->setPosition(mMainWindowPos);
-//                        }
                         if (isMainFullScreen())
                         {
                             onViewChange();
@@ -581,6 +572,17 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             setRenderWindowMain();
                         }
                         windowp->setHMDMode(FALSE, isHMDMirror(), isMainFullScreen(), gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
+#if LL_DARWIN
+                        if (isHMDMirror())
+                        {
+                            LLWindowMacOSX* w = dynamic_cast<LLWindowMacOSX*>(windowp);
+                            if (w)
+                            {
+                                w->exitFullScreen(mMainWindowPos, mMainClientSize);
+                            }
+                        }
+                        else
+#endif
                         if (!isMainFullScreen())
                         {
 #if LL_DARWIN
@@ -589,23 +591,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             windowp->setSize(mMainWindowSize);
 #endif
                             windowp->setPosition(mMainWindowPos);
-//                            if (isHMDMirror())
-//                            {
-//                                LLWindowMacOSX* w = dynamic_cast<LLWindowMacOSX*>(windowp);
-//                                if (w)
-//                                {
-//                                    w->exitFullScreen(mMainWindowPos, mMainClientSize);
-//                                }
-//                            }
-//                            else
-//                            {
-//                                windowp->setSize(mMainClientSize);
-//                                windowp->setPosition(mMainWindowPos);
-//                            }
-//#else
-//                            windowp->setSize(mMainWindowSize);
-//                            windowp->setPosition(mMainWindowPos);
-//#endif
                         }
                         if (oldMode == RenderMode_HMD)
                         {
@@ -1823,22 +1808,6 @@ void LLHMD::postRender2DUI()
         gPipeline.mUIScreen.flush();
         if (LLRenderTarget::sUseFBO)
         {
-            ////copy depth buffer from mScreen to framebuffer
-            //S32 d[2] = { gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight() };
-            //if (gHMD.getRenderMode() == LLHMD::RenderMode_ScreenStereo)
-            //{
-            //    d[0] = llmax(0, mMainClientSize.mX - 25);
-            //    d[1] = llmax(0, mMainClientSize.mY - 75);
-            //    static S32 foo = 0;
-            //    if ((foo % 30) == 0)
-            //    {
-            //        LL_INFOS("HMD") << "screenstereo: mScreen = {" << gPipeline.mScreen.getWidth() << "," << gPipeline.mScreen.getHeight() << "},  d = {" << d[0] << "," << d[1] << "}" << LL_ENDL;
-            //    }
-            //    foo++;
-            //}
-            //LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
-            //    0, 0, d[0], d[1], GL_DEPTH_BUFFER_BIT, GL_NEAREST); // GL_LINEAR);
-
             //copy depth buffer from mScreen to framebuffer
             LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
                 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
