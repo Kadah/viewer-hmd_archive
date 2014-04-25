@@ -560,7 +560,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             windowp->setPosition(mMainWindowPos);
                         }
                         windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
-                        //LL_INFOS("HMD") << "isHMD to Stereo:  Default FOV = " << std::setprecision(6) << pCamera->getDefaultFOV() << ", FOV = " << gSavedSettings.getF32("CameraAngle") << ", Aspect = " << pCamera->getAspect() << LL_ENDL;
                     }
                     break;
                 case RenderMode_None:
@@ -602,7 +601,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         gSavedSettings.setF32("CameraAngle", mMainWindowFOV);
                         pCamera->setDefaultFOV(gSavedSettings.getF32("CameraAngle"));
                         gViewerWindow->reshape(mMainClientSize.mX, mMainClientSize.mY);
-                        //LL_INFOS("HMD") << "isHMD to normal:  Default FOV = " << std::setprecision(6) << pCamera->getDefaultFOV() << ", FOV = " << gSavedSettings.getF32("CameraAngle") << ", Aspect = " << pCamera->getAspect() << LL_ENDL;
                     }
                     break;
                 }
@@ -665,37 +663,16 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
                         onViewChange();
-                        //LL_INFOS("HMD") << "Normal to HMD:  Default FOV = " << std::setprecision(6) << pCamera->getDefaultFOV() << ", FOV = " << gSavedSettings.getF32("CameraAngle") << ", Aspect = " << pCamera->getAspect() << LL_ENDL;
                     }
                     break;
                 case RenderMode_ScreenStereo:
                     // switching from Normal to ScreenStereo
                     {
-                        //if (isHMDMirror())
-                        //{
-                        //    windowp->enterFullScreen();
-                        //    windowp->setRenderWindow(0, TRUE);
-                        //}
-//#if LL_DARWIN
-//                        if (isHMDMirror() && !isMainFullScreen())
-//                        {
-//                            LLWindowMacOSX* w = dynamic_cast<LLWindowMacOSX*>(windowp);
-//                            if (w)
-//                            {
-//                                w->enterFullScreen();
-//                                w->setRenderWindow(0, TRUE);
-//                            }
-//                        }
-//#endif
                         windowp->setHMDMode(TRUE, isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         pCamera->setAspect(gHMD.getAspect());
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
-                        if (isMainFullScreen()
-//#if LL_DARWIN
-                            || isHMDMirror()
-//#endif
-                            )
+                        if (isMainFullScreen() || isHMDMirror())
                         {
                             onViewChange();
                         }
@@ -704,7 +681,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             windowp->setSize(getHMDClientSize(), TRUE);
                             windowp->setPosition(mMainWindowPos);
                         }
-                        //LL_INFOS("HMD") << "Normal to Stereo:  Default FOV = " << std::setprecision(6) << pCamera->getDefaultFOV() << ", FOV = " << gSavedSettings.getF32("CameraAngle") << ", Aspect = " << pCamera->getAspect() << LL_ENDL;
                     }
                     break;
                 }

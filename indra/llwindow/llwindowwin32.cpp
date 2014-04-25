@@ -399,7 +399,9 @@ LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
 	mMousePositionModified = FALSE;
 	mInputProcessingPaused = FALSE;
     mHMDMode = FALSE;
+    mHMDMirrored = FALSE;
     mHMDWidth = mHMDHeight = mHMDClientHeightDiff = 0;
+    mHMDScale[0] = mHMDScale[1] = 1.0f;
 	mPreeditor = NULL;
 	mKeyCharCode = 0;
 	mKeyScanCode = 0;
@@ -2333,6 +2335,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2363,6 +2366,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2403,6 +2407,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2438,6 +2443,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2467,6 +2473,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2502,6 +2509,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2531,6 +2539,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2603,7 +2612,9 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 			{
 				window_imp->mCallbacks->handlePingWatchdog(window_imp, "Main:WM_MOUSEMOVE");
 				MASK mask = gKeyboard->currentMask(TRUE);
-				window_imp->mCallbacks->handleMouseMove(window_imp, window_coord.convert(), mask);
+                gl_coord = window_coord.convert();
+                window_imp->adjustPosForHMDScaling(gl_coord);
+				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
 				return 0;
 			}
 
@@ -2664,12 +2675,18 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				// Actually resize all of our views
 				if (w_param != SIZE_MINIMIZED)
 				{
-                    window_imp->calculateHMDClientHeightDiff(height);
+                    if (window_imp->mHMDMode && window_imp->mCurRCIdx == 0)
+                    {
+                        window_imp->adjustHMDScale(width, height);
+                        if (!window_imp->mHMDMirrored)
+                        {
+                            width = llmax(window_imp->mHMDWidth, width);
+                            height = llmax(window_imp->mHMDHeight, height);
+                        }
+                    }
 
 					// Ignore updates for minimizing and minimized "windows"
-					window_imp->mCallbacks->handleResize(	window_imp, 
-						LOWORD(l_param), 
-						HIWORD(l_param) );
+					window_imp->mCallbacks->handleResize(window_imp, width, height);
 				}
 
 				window_imp->mLastSizeWParam = w_param;
@@ -4021,7 +4038,7 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL
         mPostQuit = TRUE;
     }
 
-    isMirror = testMainDisplayIsMirrored(left, top, width, height);
+    mHMDMirrored = isMirror = testMainDisplayIsMirrored(left, top, width, height);
     if (isMirror)
     {
         // don't create a window in this case since we just want to use the "advanced" HMD mode in this case
@@ -4137,7 +4154,7 @@ BOOL LLWindowWin32::setFocusWindow(S32 idx)
     }
     SetForegroundWindow(mWindowHandle[idx]);
     SetFocus(mWindowHandle[idx]);
-    calculateHMDClientHeightDiff();
+    adjustHMDScale();
     return TRUE;
 }
 
@@ -4168,23 +4185,59 @@ void LLWindowWin32::setHMDMode(BOOL mode, BOOL mirrored, BOOL mainFullScreen, U3
 }
 
 
-void LLWindowWin32::calculateHMDClientHeightDiff()
+void LLWindowWin32::adjustHMDScale()
 {
     mHMDClientHeightDiff = 0;
+    mHMDScale[0] = mHMDScale[1] = 1.0f;
     if (mHMDMode && mCurRCIdx == 0 && mWindowHandle[mCurRCIdx])
     {
         RECT r;
         if (GetClientRect(mWindowHandle[mCurRCIdx], &r))
         {
-            calculateHMDClientHeightDiff((S32)(r.bottom - r.top));
+            S32 actual_dim[2] = { (S32)(r.right - r.left), (S32)(r.bottom - r.top) };
+            adjustHMDScale(actual_dim[0], actual_dim[1]);
         }
     }
 }
 
 
-void LLWindowWin32::calculateHMDClientHeightDiff(S32 actualClientHeight)
+void LLWindowWin32::adjustHMDScale(S32 w, S32 h)
 {
-    mHMDClientHeightDiff = (mHMDMode && mCurRCIdx == 0) ? llmax(0, actualClientHeight - mHMDHeight) : 0;
+    mHMDClientHeightDiff = 0;
+    mHMDScale[0] = mHMDScale[1] = 1.0f;
+    if (mHMDMode && mCurRCIdx == 0 && mWindowHandle[mCurRCIdx])
+    {
+        if (mHMDWidth > 0 && w > 0 && w < mHMDWidth)
+        {
+            mHMDScale[0] = (F32)((F32)w / (F32)mHMDWidth);
+        }
+
+        if (mHMDHeight > 0 && h > 0 && h < mHMDHeight)
+        {
+            mHMDScale[1] = (F32)((F32)h / (F32)mHMDHeight);
+        }
+        else
+        {
+            mHMDClientHeightDiff = llmax(0, h - mHMDHeight);
+        }
+        //LL_INFOS("HMD") << std::setprecision(6) << "hmd = {" << mHMDWidth << "," << mHMDHeight << "}, wh = {" << w << "," << h  << "}, scale = {" << mHMDScale[0] << "," << mHMDScale[1] << "}, hd = " << mHMDClientHeightDiff << LL_ENDL;
+    }
+}
+
+
+void LLWindowWin32::adjustPosForHMDScaling(LLCoordGL& pt)
+{
+    if (mHMDMode && mCurRCIdx == 0)
+    {
+        if (mHMDScale[0] > 0.0f && mHMDScale[0] < 1.0f)
+        {
+            pt.mX = llround((F32)pt.mX / mHMDScale[0]);
+        }
+        if (mHMDScale[1] > 0.0f && mHMDScale[1] < 1.0f)
+        {
+            pt.mY = llround((F32)pt.mY / mHMDScale[1]);
+        }
+    }
 }
 
 
