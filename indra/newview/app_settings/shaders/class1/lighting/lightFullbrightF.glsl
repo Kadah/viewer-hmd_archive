@@ -33,6 +33,7 @@ VARYING vec4 vertex_color;
 VARYING vec2 vary_texcoord0;
 
 uniform float texture_gamma;
+uniform float alpha_offset;
 
 vec3 fullbrightAtmosTransport(vec3 light);
 vec3 fullbrightScaleSoftClip(vec3 light);
@@ -50,5 +51,6 @@ void fullbright_lighting()
 	color.rgb = pow(color.rgb, vec3(1.0/texture_gamma));
 
 	frag_color = color;
+	frag_color.a += alpha_offset;
 }
 

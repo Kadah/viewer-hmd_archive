@@ -785,6 +785,11 @@ S32 LLViewerDisplay::cull(LLCullResult& cullResult)
 	}
 	gDepthDirty = FALSE;
 
+    if (gHMD.isHMDMode() && !LLPipeline::sRenderDeferred)
+    {
+        LLPipeline::sUseOcclusion = 0;
+    }
+
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 	LLGLState::checkClientArrays();
