@@ -1715,7 +1715,7 @@ void LLHMD::render3DUI()
     {
         if (!gPipeline.mUIScreen.allocate(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
         {
-            llwarns << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
+            LL_WARNS() << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
             return;
         }
     }

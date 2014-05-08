@@ -29,8 +29,6 @@
 
 #include "llboost.h"
 #include "llevent.h"
-#include "llnametable.h"
-#include "llmap.h"
 #include "llstring.h"
 #include "llrect.h"
 #include "llrefcount.h"
@@ -167,7 +165,7 @@ typedef LLPointer<LLControlVariable> LLControlVariablePtr;
 template <class T> 
 eControlType get_control_type()
 {
-	llwarns << "Usupported control type: " << typeid(T).name() << "." << llendl;
+	LL_WARNS() << "Usupported control type: " << typeid(T).name() << "." << LL_ENDL;
 	return TYPE_COUNT;
 }
 
@@ -261,7 +259,7 @@ public:
 		}
 		else
 		{
-			llwarns << "Control " << name << " not found." << llendl;
+			LL_WARNS() << "Control " << name << " not found." << LL_ENDL;
 			return T();
 		}
 		return convert_from_llsd<T>(value, type, name);
@@ -293,7 +291,7 @@ public:
 		}
 		else
 		{
-			llwarns << "Invalid control " << name << llendl;
+			LL_WARNS() << "Invalid control " << name << LL_ENDL;
 		}
 	}
 	
@@ -329,7 +327,7 @@ public:
 		{
 			if(!declareTypedControl(group, name, default_value, comment))
 			{
-				llerrs << "The control could not be created!!!" << llendl;
+				LL_ERRS() << "The control could not be created!!!" << LL_ENDL;
 			}
 		}
 
@@ -342,7 +340,7 @@ public:
 	{
 		if(!group.controlExists(name))
 		{
-			llerrs << "Control named " << name << "not found." << llendl;
+			LL_ERRS() << "Control named " << name << "not found." << LL_ENDL;
 		}
 
 		bindToControl(group, name);
@@ -401,7 +399,6 @@ class LLCachedControl
 public:
 	LLCachedControl(LLControlGroup& group,
 					const std::string& name,
-
 					const T& default_value, 
 					const std::string& comment = "Declared In Code")
 	{
@@ -409,6 +406,16 @@ public:
 		if (mCachedControlPtr.isNull())
 		{
 			mCachedControlPtr = new LLControlCache<T>(group, name, default_value, comment);
+		}
+	}
+
+	LLCachedControl(LLControlGroup& group,
+					const std::string& name)
+	{
+		mCachedControlPtr = LLControlCache<T>::getInstance(name);
+		if (mCachedControlPtr.isNull())
+		{
+			mCachedControlPtr = new LLControlCache<T>(group, name);
 		}
 	}
 

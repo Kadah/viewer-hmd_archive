@@ -148,7 +148,7 @@ LLControlVariable::LLControlVariable(const std::string& name, eControlType type,
 {
 	if ((persist != PERSIST_NO) && mComment.empty())
 	{
-		llerrs << "Must supply a comment for control " << mName << llendl;
+		LL_ERRS() << "Must supply a comment for control " << mName << LL_ENDL;
 	}
 	//Push back versus setValue'ing here, since we don't want to call a signal yet
 	mValues.push_back(initial);
@@ -635,7 +635,7 @@ void LLControlGroup::setUntypedValue(const std::string& name, const LLSD& val)
 	}
 	else
 	{
-		CONTROL_ERRS << "Invalid control " << name << llendl;
+		CONTROL_ERRS << "Invalid control " << name << LL_ENDL;
 	}
 }
 
@@ -945,9 +945,9 @@ U32 LLControlGroup::loadFromFile(const std::string& filename, bool set_default_v
 				}
 				else
 				{
-					llerrs << "Mismatched type of control variable '"
+					LL_ERRS() << "Mismatched type of control variable '"
 						   << name << "' found while loading '"
-						   << filename << "'." << llendl;
+						   << filename << "'." << LL_ENDL;
 				}
 			}
 			else if(existing_control->isPersisted())
@@ -1211,7 +1211,7 @@ bool convert_from_llsd<bool>(const LLSD& sd, eControlType type, const std::strin
 		return sd.asBoolean();
 	else
 	{
-		CONTROL_ERRS << "Invalid BOOL value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid BOOL value for " << control_name << ": " << sd << LL_ENDL;
 		return FALSE;
 	}
 }
@@ -1223,7 +1223,7 @@ S32 convert_from_llsd<S32>(const LLSD& sd, eControlType type, const std::string&
 		return sd.asInteger();
 	else
 	{
-		CONTROL_ERRS << "Invalid S32 value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid S32 value for " << control_name << ": " << sd << LL_ENDL;
 		return 0;
 	}
 }
@@ -1235,7 +1235,7 @@ U32 convert_from_llsd<U32>(const LLSD& sd, eControlType type, const std::string&
 		return sd.asInteger();
 	else
 	{
-		CONTROL_ERRS << "Invalid U32 value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid U32 value for " << control_name << ": " << sd << LL_ENDL;
 		return 0;
 	}
 }
@@ -1247,7 +1247,7 @@ F32 convert_from_llsd<F32>(const LLSD& sd, eControlType type, const std::string&
 		return (F32) sd.asReal();
 	else
 	{
-		CONTROL_ERRS << "Invalid F32 value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid F32 value for " << control_name << ": " << sd << LL_ENDL;
 		return 0.0f;
 	}
 }
@@ -1259,7 +1259,7 @@ std::string convert_from_llsd<std::string>(const LLSD& sd, eControlType type, co
 		return sd.asString();
 	else
 	{
-		CONTROL_ERRS << "Invalid string value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid string value for " << control_name << ": " << sd << LL_ENDL;
 		return LLStringUtil::null;
 	}
 }
@@ -1277,7 +1277,7 @@ LLVector3 convert_from_llsd<LLVector3>(const LLSD& sd, eControlType type, const 
 		return (LLVector3)sd;
 	else
 	{
-		CONTROL_ERRS << "Invalid LLVector3 value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid LLVector3 value for " << control_name << ": " << sd << LL_ENDL;
 		return LLVector3::zero;
 	}
 }
@@ -1289,7 +1289,7 @@ LLVector3d convert_from_llsd<LLVector3d>(const LLSD& sd, eControlType type, cons
 		return (LLVector3d)sd;
 	else
 	{
-		CONTROL_ERRS << "Invalid LLVector3d value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid LLVector3d value for " << control_name << ": " << sd << LL_ENDL;
 		return LLVector3d::zero;
 	}
 }
@@ -1301,7 +1301,7 @@ LLVector4 convert_from_llsd<LLVector4>(const LLSD& sd, eControlType type, const 
 		return (LLVector4)sd;
 	else
 	{
-		CONTROL_ERRS << "Invalid LLVector4 value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid LLVector4 value for " << control_name << ": " << sd << LL_ENDL;
 		return LLVector4::zero;
 	}
 }
@@ -1313,7 +1313,7 @@ LLRect convert_from_llsd<LLRect>(const LLSD& sd, eControlType type, const std::s
 		return LLRect(sd);
 	else
 	{
-		CONTROL_ERRS << "Invalid rect value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid rect value for " << control_name << ": " << sd << LL_ENDL;
 		return LLRect::null;
 	}
 }
@@ -1346,7 +1346,7 @@ LLColor4 convert_from_llsd<LLColor4>(const LLSD& sd, eControlType type, const st
 	}
 	else
 	{
-		CONTROL_ERRS << "Control " << control_name << " not a color" << llendl;
+		CONTROL_ERRS << "Control " << control_name << " not a color" << LL_ENDL;
 		return LLColor4::white;
 	}
 }
@@ -1358,7 +1358,7 @@ LLColor3 convert_from_llsd<LLColor3>(const LLSD& sd, eControlType type, const st
 		return sd;
 	else
 	{
-		CONTROL_ERRS << "Invalid LLColor3 value for " << control_name << ": " << sd << llendl;
+		CONTROL_ERRS << "Invalid LLColor3 value for " << control_name << ": " << sd << LL_ENDL;
 		return LLColor3::white;
 	}
 }
@@ -1393,13 +1393,13 @@ static LLCachedControl<std::string> test_BrowserHomePage("BrowserHomePage", "hah
 
 void test_cached_control()
 {
-#define TEST_LLCC(T, V) if((T)mySetting_##T != V) llerrs << "Fail "#T << llendl
+#define TEST_LLCC(T, V) if((T)mySetting_##T != V) LL_ERRS() << "Fail "#T << LL_ENDL
 	TEST_LLCC(U32, 666);
 	TEST_LLCC(S32, (S32)-666);
 	TEST_LLCC(F32, (F32)-666.666);
 	TEST_LLCC(bool, true);
 	TEST_LLCC(BOOL, FALSE);
-	if((std::string)mySetting_string != "Default String Value") llerrs << "Fail string" << llendl;
+	if((std::string)mySetting_string != "Default String Value") LL_ERRS() << "Fail string" << LL_ENDL;
 	TEST_LLCC(LLVector3, LLVector3(1.0f, 2.0f, 3.0f));
 	TEST_LLCC(LLVector3d, LLVector3d(6.0f, 5.0f, 4.0f));
 	TEST_LLCC(LLRect, LLRect(0, 0, 100, 500));
@@ -1408,7 +1408,7 @@ void test_cached_control()
 	TEST_LLCC(LLColor4U, LLColor4U(255, 200, 100, 255));
 //There's no LLSD comparsion for LLCC yet. TEST_LLCC(LLSD, test_llsd); 
 
-	if((std::string)test_BrowserHomePage != "http://www.secondlife.com") llerrs << "Fail BrowserHomePage" << llendl;
+	if((std::string)test_BrowserHomePage != "http://www.secondlife.com") LL_ERRS() << "Fail BrowserHomePage" << LL_ENDL;
 }
 #endif // TEST_CACHED_CONTROL
 

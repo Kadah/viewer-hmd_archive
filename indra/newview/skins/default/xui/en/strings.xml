@@ -2223,7 +2223,7 @@ For AI Character: Get the closest navigable point to the point provided.
 
 	<!-- mouselook -->
 	<string name="LeaveMouselook">Press ESC to return to World View</string>
-    
+
     <!-- HMD -->
     <string name="HMDPresetCustom">Custom</string>
     <string name="HMDPresetDefault">Default [INDEX]</string>
@@ -2232,7 +2232,7 @@ For AI Character: Get the closest navigable point to the point provided.
     <string name="HMDConfigUnitsMilliseconds">[VAL] ms</string>
     <string name="HMDConfigUnitsRadians">[VAL] PI</string>
 
-    <!-- inventory -->
+	<!-- inventory -->
 	<string name="InventoryNoMatchingItems">Didn't find what you're looking for? Try [secondlife:///app/search/all/[SEARCH_TERM] Search].</string>
 	<string name="PlacesNoMatchingItems">Didn't find what you're looking for? Try [secondlife:///app/search/places/[SEARCH_TERM] Search].</string>
 	<string name="FavoritesNoMatchingItems">Drag a landmark here to add it to your favorites.</string>
@@ -2469,6 +2469,7 @@ The [[MARKETPLACE_CREATE_STORE_URL] Marketplace store] is returning errors.
 
 	<!-- compile queue-->
 	<string name="CompileQueueDownloadedCompiling">Downloaded, now compiling</string>
+	<string name="CompileQueueServiceUnavailable">Script compilation service not available</string>
 	<string name="CompileQueueScriptNotFound">Script not found on server.</string>
 	<string name="CompileQueueProblemDownloading">Problem downloading</string>
 	<string name="CompileQueueInsufficientPermDownload">Insufficient permissions to download a script.</string>

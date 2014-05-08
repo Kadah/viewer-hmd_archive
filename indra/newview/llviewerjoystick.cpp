@@ -108,7 +108,7 @@ NDOF_HotPlugResult LLViewerJoystick::HotPlugAddCallback(NDOF_Device *dev)
 	LLViewerJoystick* joystick(LLViewerJoystick::getInstance());
 	if (joystick->mDriverState == JDS_UNINITIALIZED)
 	{
-        llinfos << "HotPlugAddCallback: will use device:" << llendl;
+        LL_INFOS() << "HotPlugAddCallback: will use device:" << LL_ENDL;
 		ndof_dump(dev);
 		joystick->mNdofDev = dev;
         joystick->mDriverState = JDS_INITIALIZED;
@@ -126,8 +126,8 @@ void LLViewerJoystick::HotPlugRemovalCallback(NDOF_Device *dev)
 	LLViewerJoystick* joystick(LLViewerJoystick::getInstance());
 	if (joystick->mNdofDev == dev)
 	{
-        llinfos << "HotPlugRemovalCallback: joystick->mNdofDev=" 
-				<< joystick->mNdofDev << "; removed device:" << llendl;
+        LL_INFOS() << "HotPlugRemovalCallback: joystick->mNdofDev=" 
+				<< joystick->mNdofDev << "; removed device:" << LL_ENDL;
 		ndof_dump(dev);
 		joystick->mDriverState = JDS_UNINITIALIZED;
 	}
@@ -216,7 +216,7 @@ void LLViewerJoystick::init(bool autoenable)
 			if (ndof_init_first(mNdofDev, NULL))
 			{
 				mDriverState = JDS_UNINITIALIZED;
-				llwarns << "ndof_init_first FAILED" << llendl;
+				LL_WARNS() << "ndof_init_first FAILED" << LL_ENDL;
 			}
 			else
 			{
@@ -260,8 +260,8 @@ void LLViewerJoystick::init(bool autoenable)
 		// No device connected, don't change any settings
 	}
 	
-	llinfos << "ndof: mDriverState=" << mDriverState << "; mNdofDev=" 
-			<< mNdofDev << "; libinit=" << libinit << llendl;
+	LL_INFOS() << "ndof: mDriverState=" << mDriverState << "; mNdofDev=" 
+			<< mNdofDev << "; libinit=" << libinit << LL_ENDL;
 #endif
 }
 
@@ -271,7 +271,7 @@ void LLViewerJoystick::terminate()
 #if LIB_NDOF
 
 	ndof_libcleanup();
-	llinfos << "Terminated connection with NDOF device." << llendl;
+	LL_INFOS() << "Terminated connection with NDOF device." << LL_ENDL;
 	mDriverState = JDS_UNINITIALIZED;
 #endif
 }
@@ -502,7 +502,7 @@ void LLViewerJoystick::moveObjects(bool reset)
 	};
 
 	F32 cur_delta[6];
-	F32 time = gFrameIntervalSeconds;
+	F32 time = gFrameIntervalSeconds.value();
 
 	// avoid making ridicously big movements if there's a big drop in fps 
 	if (time > .2f)
@@ -666,7 +666,7 @@ void LLViewerJoystick::moveAvatar(bool reset)
 	};
 
 	// time interval in seconds between this frame and the previous
-	F32 time = gFrameIntervalSeconds;
+	F32 time = gFrameIntervalSeconds.value();
 
 	// avoid making ridicously big movements if there's a big drop in fps 
 	if (time > .2f)
@@ -879,7 +879,7 @@ void LLViewerJoystick::moveFlycam(bool reset)
 		gSavedSettings.getF32("FlycamAxisDeadZone6")
 	};
 
-	F32 time = gFrameIntervalSeconds;
+	F32 time = gFrameIntervalSeconds.value();
 
 	// avoid making ridiculously big movements if there's a big drop in fps 
 	if (time > .2f)
@@ -1114,7 +1114,7 @@ void LLViewerJoystick::setSNDefaults()
 #endif
 	
 	//gViewerWindow->alertXml("CacheWillClear");
-	llinfos << "restoring SpaceNavigator defaults..." << llendl;
+	LL_INFOS() << "restoring SpaceNavigator defaults..." << LL_ENDL;
 	
 	gSavedSettings.setS32("JoystickAxis0", 1); // z (at)
 	gSavedSettings.setS32("JoystickAxis1", 0); // x (slide)

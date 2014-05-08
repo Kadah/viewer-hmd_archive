@@ -53,6 +53,7 @@ static LLStaticHashedString sTexture0("texture0");
 static LLStaticHashedString sTexture1("texture1");
 static LLStaticHashedString sTex0("tex0");
 static LLStaticHashedString sTex1("tex1");
+static LLStaticHashedString sDitherTex("dither_tex");
 static LLStaticHashedString sGlowMap("glowMap");
 static LLStaticHashedString sScreenMap("screenMap");
 
@@ -82,6 +83,8 @@ LLGLSLShader	gGlowCombineProgram;
 LLGLSLShader	gSplatTextureRectProgram;
 LLGLSLShader	gGlowCombineFXAAProgram;
 LLGLSLShader	gTwoTextureAddProgram;
+LLGLSLShader	gTwoTextureCompareProgram;
+LLGLSLShader	gOneTextureFilterProgram;
 LLGLSLShader	gOneTextureNoColorProgram;
 LLGLSLShader	gDebugProgram;
 LLGLSLShader	gClipProgram;
@@ -438,7 +441,7 @@ void LLViewerShaderMgr::setShaders()
 
 	// Shaders
 	LL_INFOS("ShaderLoading") << "\n~~~~~~~~~~~~~~~~~~\n Loading Shaders:\n~~~~~~~~~~~~~~~~~~" << LL_ENDL;
-	LL_INFOS("ShaderLoading") << llformat("Using GLSL %d.%d", gGLManager.mGLSLVersionMajor, gGLManager.mGLSLVersionMinor) << llendl;
+	LL_INFOS("ShaderLoading") << llformat("Using GLSL %d.%d", gGLManager.mGLSLVersionMajor, gGLManager.mGLSLVersionMinor) << LL_ENDL;
 
 	for (S32 i = 0; i < SHADER_COUNT; i++)
 	{
@@ -706,6 +709,8 @@ void LLViewerShaderMgr::unloadShaders()
 	gBarrelDistortProgram.unload();
 	gGlowCombineFXAAProgram.unload();
 	gTwoTextureAddProgram.unload();
+	gTwoTextureCompareProgram.unload();
+	gOneTextureFilterProgram.unload();
 	gOneTextureNoColorProgram.unload();
 	gSolidColorProgram.unload();
 
@@ -3138,6 +3143,40 @@ BOOL LLViewerShaderMgr::loadShadersInterface()
 			gTwoTextureAddProgram.uniform1i(sTex1, 1);
 		}
 	}
+
+#ifdef LL_WINDOWS
+	if (success)
+	{
+		gTwoTextureCompareProgram.mName = "Two Texture Compare Shader";
+		gTwoTextureCompareProgram.mShaderFiles.clear();
+		gTwoTextureCompareProgram.mShaderFiles.push_back(make_pair("interface/twotexturecompareV.glsl", GL_VERTEX_SHADER_ARB));
+		gTwoTextureCompareProgram.mShaderFiles.push_back(make_pair("interface/twotexturecompareF.glsl", GL_FRAGMENT_SHADER_ARB));
+		gTwoTextureCompareProgram.mShaderLevel = mVertexShaderLevel[SHADER_INTERFACE];
+		success = gTwoTextureCompareProgram.createShader(NULL, NULL);
+		if (success)
+		{
+			gTwoTextureCompareProgram.bind();
+			gTwoTextureCompareProgram.uniform1i(sTex0, 0);
+			gTwoTextureCompareProgram.uniform1i(sTex1, 1);
+			gTwoTextureCompareProgram.uniform1i(sDitherTex, 2);
+		}
+	}
+
+	if (success)
+	{
+		gOneTextureFilterProgram.mName = "One Texture Filter Shader";
+		gOneTextureFilterProgram.mShaderFiles.clear();
+		gOneTextureFilterProgram.mShaderFiles.push_back(make_pair("interface/onetexturefilterV.glsl", GL_VERTEX_SHADER_ARB));
+		gOneTextureFilterProgram.mShaderFiles.push_back(make_pair("interface/onetexturefilterF.glsl", GL_FRAGMENT_SHADER_ARB));
+		gOneTextureFilterProgram.mShaderLevel = mVertexShaderLevel[SHADER_INTERFACE];
+		success = gOneTextureFilterProgram.createShader(NULL, NULL);
+		if (success)
+		{
+			gOneTextureFilterProgram.bind();
+			gOneTextureFilterProgram.uniform1i(sTex0, 0);
+		}
+	}
+#endif
 
 	if (success)
 	{
