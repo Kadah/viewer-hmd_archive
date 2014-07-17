@@ -524,7 +524,7 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
             LLVector3 dir = LLVector3(gHMD.getMouseWorldEnd().getF32ptr()) - mouse_world;
             dir.normalize();
             F32 r2 = (mScaledBoxHandleSize * mScaledBoxHandleSize) * (0.5f * 0.5f);
-	        for (minpulator_list_t::iterator it = mProjectedManipulators.begin(), itEnd = mProjectedManipulators.end(); it != itEnd; ++it)
+	        for (manipulator_list_t::iterator it = mProjectedManipulators.begin(), itEnd = mProjectedManipulators.end(); it != itEnd; ++it)
 	        {
 			    ManipulatorHandle* manipulator = *it;
                 LLVector3 other_direction = manipulator->mPosition - mouse_world;
