@@ -831,12 +831,9 @@ boost::signals2::connection LLAgent::addParcelChangedCallback(parcel_changed_cal
 //-----------------------------------------------------------------------------
 void LLAgent::setRegion(LLViewerRegion *regionp)
 {
-	bool notifyRegionChange;
-
 	llassert(regionp);
 	if (mRegionp != regionp)
 	{
-		notifyRegionChange = true;
 
 		std::string ip = regionp->getHost().getString();
 		LL_INFOS("AgentLocation") << "Moving agent into region: " << regionp->getName()
@@ -889,10 +886,7 @@ void LLAgent::setRegion(LLViewerRegion *regionp)
 		// Pass new region along to metrics components that care about this level of detail.
 		LLAppViewer::metricsUpdateRegion(regionp->getHandle());
 	}
-	else
-	{
-		notifyRegionChange = false;
-	}
+
 	mRegionp = regionp;
 
 	// TODO - most of what follows probably should be moved into callbacks
@@ -915,11 +909,8 @@ void LLAgent::setRegion(LLViewerRegion *regionp)
 
 	LLFloaterMove::sUpdateFlyingStatus();
 
-	if (notifyRegionChange)
-	{
-		LL_DEBUGS("AgentLocation") << "Calling RegionChanged callbacks" << LL_ENDL;
-		mRegionChangedSignal();
-	}
+	LL_DEBUGS("AgentLocation") << "Calling RegionChanged callbacks" << LL_ENDL;
+	mRegionChangedSignal();
 }
 
 
@@ -1434,6 +1425,7 @@ void LLAgent::setDoNotDisturb(bool pIsDoNotDisturb)
 	{
 		LLDoNotDisturbNotificationStorage::getInstance()->updateNotifications();
 	}
+	gIMMgr->updateDNDMessageStatus();
 }
 
 //-----------------------------------------------------------------------------
