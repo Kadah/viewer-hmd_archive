@@ -79,6 +79,11 @@ public:
         kFlag_HMDMirror                 = 1 << 12,
         kFlag_SavingSettings            = 1 << 13,
         kFlag_UseSavedHMDPreferences    = 1 << 14,
+
+        kFlag_UsingDebugHMD             = 1 << 15,
+        kFlag_HMDDisplayEnabled         = 1 << 16,
+        kFlag_UsingAppWindow            = 1 << 17,
+        kFlag_PositionTrackingEnabled   = 1 << 18,
     };
 
     enum eUIPresetType
@@ -160,7 +165,15 @@ public:
     void isSavingSettings(BOOL b) { if (b) { mFlags |= kFlag_SavingSettings; } else { mFlags &= ~kFlag_SavingSettings; } }
     BOOL useSavedHMDPreferences() const { return ((mFlags & kFlag_UseSavedHMDPreferences) != 0) ? TRUE : FALSE; }
     void useSavedHMDPreferences(BOOL b) { if (b) { mFlags |= kFlag_UseSavedHMDPreferences; } else { mFlags &= ~kFlag_UseSavedHMDPreferences; } }
-    
+    BOOL isUsingDebugHMD() const { return ((mFlags & kFlag_UsingDebugHMD) != 0) ? TRUE : FALSE; }
+    void isUsingDebugHMD(BOOL b) { if (b) { mFlags |= kFlag_UsingDebugHMD; } else { mFlags &= ~kFlag_UsingDebugHMD; } }
+    BOOL isHMDDisplayEnabled() const { return ((mFlags & kFlag_HMDDisplayEnabled) != 0) ? TRUE : FALSE; }
+    void isHMDDisplayEnabled(BOOL b) { if (b) { mFlags |= kFlag_HMDDisplayEnabled; } else { mFlags &= ~kFlag_HMDDisplayEnabled; } }
+    BOOL isUsingAppWindow() const { return ((mFlags & kFlag_UsingAppWindow) != 0) ? TRUE : FALSE; }
+    void isUsingAppWindow(BOOL b) { if (b) { mFlags |= kFlag_UsingAppWindow; } else { mFlags &= ~kFlag_UsingAppWindow; } }
+    BOOL isPositionTrackingEnabled() const { return ((mFlags & kFlag_PositionTrackingEnabled) != 0) ? TRUE : FALSE; }
+    void isPositionTrackingEnabled(BOOL b) { if (b) { mFlags |= kFlag_PositionTrackingEnabled; } else { mFlags &= ~kFlag_PositionTrackingEnabled; } }
+
     // True if render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
 
