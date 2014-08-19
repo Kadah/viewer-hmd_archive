@@ -75,7 +75,6 @@ const F32 LLHMDImpl::kDefaultDistortionScale = 1.7146f;
 const F32 LLHMDImpl::kDefaultOrthoPixelOffset = 0.1775f; // -0.1775f Right Eye
 const F32 LLHMDImpl::kDefaultVerticalFOVRadians = 2.196863;
 const F32 LLHMDImpl::kDefaultAspect = 0.8f;
-const F32 LLHMDImpl::kDefaultAspectMult = 1.0f;
 
 
 LLHMD gHMD;
@@ -101,7 +100,8 @@ LLHMD::LLHMD()
     , mCameraOffset(0.0f)
     , mProjectionOffset(0.0f)
     , mStereoCullCameraFOV(0.0f)
-	, mStereoCullCameraAspect(0.0f)
+    , mStereoCullCameraAspect(0.0f)
+    , mTimewarpIntervalSeconds(0.0001f)
 {
     memset(&mUIShape, 0, sizeof(UISurfaceShapeSettings));
     mUIShape.mPresetType = (U32)LLHMD::kCustom;
@@ -141,12 +141,24 @@ BOOL LLHMD::init()
 
     gSavedSettings.getControl("HMDAdvancedMode")->getSignal()->connect(boost::bind(&onChangeHMDAdvancedMode));
     onChangeHMDAdvancedMode();
+    gSavedSettings.getControl("DisableVerticalSync")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
+    gSavedSettings.getControl("HMDLowPersistence")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
+    gSavedSettings.getControl("HMDPixelLuminanceOverdrive")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
+    gSavedSettings.getControl("HMDUseMotionPrediction")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
+    gSavedSettings.getControl("HMDTimewarp")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
+    gSavedSettings.getControl("HMDTimewarpIntervalSeconds")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
+    gSavedSettings.getControl("HMDTimewarpNoJit")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
+    gSavedSettings.getControl("HMDEnablePositionalTracking")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
+    gSavedSettings.getControl("HMDPixelDensity")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
+    // intentionally not calling onChangeRenderSettings here
     gSavedSettings.getControl("HMDInterpupillaryDistance")->getSignal()->connect(boost::bind(&onChangeInterpupillaryDistance));
     // intentionally not calling onChangeInterpupillaryDistance here
     gSavedSettings.getControl("HMDEyeToScreenDistance")->getSignal()->connect(boost::bind(&onChangeEyeToScreenDistance));
     // intentionally not calling onChangeEyeToScreenDistance here
     gSavedSettings.getControl("HMDEyeDepth")->getSignal()->connect(boost::bind(&onChangeEyeDepth));
     onChangeEyeDepth();
+    gSavedSettings.getControl("HMDDynamicResolutionScaling")->getSignal()->connect(boost::bind(&onChangeDynamicResolutionScaling));
+    onChangeDynamicResolutionScaling();
     gSavedSettings.getControl("HMDUISurfaceArcHorizontal")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
     gSavedSettings.getControl("HMDUISurfaceArcVertical")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
     gSavedSettings.getControl("HMDUISurfaceToroidWidth")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
@@ -171,6 +183,15 @@ BOOL LLHMD::init()
     onChangeUseSavedHMDPreferences();
     gSavedSettings.getControl("HMDMouselookControlMode")->getSignal()->connect(boost::bind(&onChangeMouselookControlMode));
     onChangeMouselookControlMode();
+
+    //hmdCaps |= gSavedSettings.getBOOL("HMDLowPersistence") ? ovrHmdCap_LowPersistence : 0;
+    //gSavedSettings.getBOOL("HMDPixelLuminanceOverdrive");
+    ////hmdCaps |= gSavedSettings.getBOOL("HMDUseMotionPrediction") ? ovrHmdCap_DynamicPrediction : 0;
+    //BOOL timewarp = (mHMD->DistortionCaps & ovrDistortionCap_TimeWarp) != 0 && gSavedSettings.getBOOL("HMDTimewarp");
+    //distortionCaps |= timewarp ? ovrDistortionCap_TimeWarp : 0;
+    //distortionCaps |= timewarp && gSavedSettings.getBOOL("HMDTimewarpNoJit") ? ovrDistortionCap_ProfileNoTimewarpSpinWaits : 0;
+    //sensorCaps |= (gSavedSettings.getBOOL("HMDEnablePositionalTracking") && (mHMD->TrackingCaps & ovrTrackingCap_Position) != 0) ? ovrTrackingCap_Position : 0;
+
 
     preInitResult = mImpl->preInit();
     if (preInitResult)
@@ -319,9 +340,9 @@ BOOL LLHMD::init()
 }
 
 void LLHMD::onChangeHMDAdvancedMode() { gHMD.isAdvancedMode(gSavedSettings.getBOOL("HMDAdvancedMode")); }
-void LLHMD::onChangeInterpupillaryDistance() { if (!gHMD.isSavingSettings()) { gHMD.setInterpupillaryOffset(gSavedSettings.getF32("HMDInterpupillaryDistance")); } }
-void LLHMD::onChangeEyeToScreenDistance() { if (!gHMD.isSavingSettings()) { gHMD.setEyeToScreenDistance(gSavedSettings.getF32("HMDEyeToScreenDistance")); } }
-void LLHMD::onChangeEyeDepth() { if (!gHMD.isSavingSettings()) { gHMD.mEyeDepth = gSavedSettings.getF32("HMDEyeDepth"); } }
+void LLHMD::onChangeInterpupillaryDistance() { if (!gHMD.isSavingSettings()) { gHMD.setInterpupillaryOffset(gSavedSettings.getF32("HMDInterpupillaryDistance")); onChangeRenderSettings(); } }
+void LLHMD::onChangeEyeToScreenDistance() { if (!gHMD.isSavingSettings()) { gHMD.setEyeToScreenDistance(gSavedSettings.getF32("HMDEyeToScreenDistance")); onChangeRenderSettings(); } }
+void LLHMD::onChangeEyeDepth() { if (!gHMD.isSavingSettings()) { gHMD.mEyeDepth = gSavedSettings.getF32("HMDEyeDepth"); onChangeRenderSettings(); } }
 void LLHMD::onChangeUIMagnification() { if (!gHMD.isSavingSettings()) { gHMD.setUIMagnification(gSavedSettings.getF32("HMDUIMagnification")); } }
 
 void LLHMD::onChangeUISurfaceSavedParams()
@@ -422,6 +443,7 @@ void LLHMD::onChangeUIShapePreset() { if (!gHMD.isSavingSettings()) { gHMD.setUI
 void LLHMD::onChangeWorldCursorSizeMult() { if (!gHMD.isSavingSettings()) { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); } }
 void LLHMD::onChangeUseSavedHMDPreferences() { if (!gHMD.isSavingSettings()) { gHMD.useSavedHMDPreferences(gSavedSettings.getBOOL("HMDUseSavedHMDPreferences")); } }
 void LLHMD::onChangeMouselookControlMode() { if (!gHMD.isSavingSettings()) { gHMD.setMouselookControlMode(gSavedSettings.getS32("HMDMouselookControlMode")); } }
+void LLHMD::onChangeDynamicResolutionScaling() { if (!gHMD.isSavingSettings()) { gHMD.useDynamicResolutionScaling(gSavedSettings.getBOOL("HMDDynamicResolutionScaling")); } }
 
 void LLHMD::onChangeMouselookSettings()
 {
@@ -436,6 +458,16 @@ void LLHMD::onChangeMouselookSettings()
 void LLHMD::onChangeUISurfaceShape()
 {
     gPipeline.mHMDUISurface = NULL;
+}
+
+void LLHMD::onChangeRenderSettings()
+{
+    if (!gHMD.isSavingSettings())
+    {
+        gHMD.isTimewarpEnabled(gSavedSettings.getBOOL("HMDTimewarp"));
+        gHMD.setTimewarpIntervalSeconds(gSavedSettings.getF32("HMDTimewarpIntervalSeconds"));
+        gHMD.renderSettingsChanged(TRUE);
+    }
 }
 
 void LLHMD::shutdown()
@@ -1030,8 +1062,8 @@ std::string LLHMD::getUIShapeName() const
 {
     if (mUIShape.mPresetType >= (U32)LLHMD::kDefault)
     {
-	    LLStringUtil::format_map_t args;
-	    args["[INDEX]"] = llformat ("%u", mUIShape.mPresetTypeIndex);
+        LLStringUtil::format_map_t args;
+        args["[INDEX]"] = llformat ("%u", mUIShape.mPresetTypeIndex);
         return LLTrans::getString(mUIShape.mPresetType == (U32)LLHMD::kDefault ? "HMDPresetDefault" : "HMDPresetUser", args);
     }
     return LLTrans::getString("HMDPresetCustom");
@@ -1238,7 +1270,7 @@ void LLHMD::saveSettings()
     gSavedSettings.setLLSD("HMDUIPresetValues", entries);
 }
 
-const char* LLHMD::getLatencyTesterResults() { return mImpl ? mImpl->getLatencyTesterResults() : NULL; }
+//const char* LLHMD::getLatencyTesterResults() { return mImpl ? mImpl->getLatencyTesterResults() : NULL; }
 
 void LLHMD::onViewChange()
 {
@@ -1353,18 +1385,18 @@ void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
 
     if (gAgentCamera.cameraMouselook())
     {
-	    GLdouble x, y, z;
-	    F64 mdlv[16], proj[16];
+        GLdouble x, y, z;
+        F64 mdlv[16], proj[16];
         S32 vp[4];
         gViewerWindow->getWorldViewportRaw(vp, getHMDEyeWidth(), getHMDHeight());
-	    for (U32 i = 0; i < 16; i++)
-	    {
-		    mdlv[i] = (F64)mBaseModelView[i];
-		    proj[i] = (F64)mBaseProjection[i];
-	    }
-	    gluUnProject(   GLdouble(mouse_x), GLdouble(mouse_y), 0.0,
-		                mdlv, proj, (GLint*)gGLViewport,
-		                &x, &y, &z);
+        for (U32 i = 0; i < 16; i++)
+        {
+            mdlv[i] = (F64)mBaseModelView[i];
+            proj[i] = (F64)mBaseProjection[i];
+        }
+        gluUnProject(   GLdouble(mouse_x), GLdouble(mouse_y), 0.0,
+                        mdlv, proj, (GLint*)gGLViewport,
+                        &x, &y, &z);
         world.set((F32)x, (F32)y, (F32)z);
     }
     else
@@ -1439,32 +1471,32 @@ BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
 
 void LLHMD::setupStereoValues()
 {
-	// Remember default mono camera details.
+    // Remember default mono camera details.
     LLViewerCamera* cam = LLViewerCamera::getInstance();
-	mStereoCameraFOV = cam->getView();
-	mStereoCameraPosition = cam->getOrigin();
+    mStereoCameraFOV = cam->getView();
+    mStereoCameraPosition = cam->getOrigin();
 
-	// Stereo culling frustum camera parameters.
+    // Stereo culling frustum camera parameters.
     // Use lens rather than eye separation because it's collimated light.
-	F32 deltaZ = mImpl->getEyeToScreenDistance() * mImpl->getLensSeparationDistance() / (mImpl->getPhysicalScreenWidth() - mImpl->getLensSeparationDistance());
-	mStereoCullCameraDeltaForwards = -deltaZ * cam->getXAxis();
-	mStereoCullCameraFOV = mStereoCameraFOV;
-	mStereoCullCameraAspect = mImpl->getPhysicalScreenHeight() / (mImpl->getPhysicalScreenWidth() - mImpl->getLensSeparationDistance());
+    F32 deltaZ = mImpl->getEyeToScreenDistance() * mImpl->getLensSeparationDistance() / (mImpl->getPhysicalScreenWidth() - mImpl->getLensSeparationDistance());
+    mStereoCullCameraDeltaForwards = -deltaZ * cam->getXAxis();
+    mStereoCullCameraFOV = mStereoCameraFOV;
+    mStereoCullCameraAspect = mImpl->getPhysicalScreenHeight() / (mImpl->getPhysicalScreenWidth() - mImpl->getLensSeparationDistance());
 
-	// Delta position for left camera.
-	mStereoCameraDeltaLeft = (mImpl->getInterpupillaryOffset() / 2.0f) * cam->getYAxis();
+    // Delta position for left camera.
+    mStereoCameraDeltaLeft = (mImpl->getInterpupillaryOffset() / 2.0f) * cam->getYAxis();
 }
 
 
 void LLHMD::setupStereoCullFrustum()
 {
-	mCameraOffset = 0.f;
-	mProjectionOffset = 0.f;
+    mCameraOffset = 0.f;
+    mProjectionOffset = 0.f;
     LLViewerCamera* cam = LLViewerCamera::getInstance();
-	cam->setView(mStereoCullCameraFOV, TRUE);
-	cam->setAspect(mStereoCullCameraAspect);
-	LLVector3 new_position = mStereoCameraPosition + mStereoCullCameraDeltaForwards;
-	cam->setOrigin(new_position);
+    cam->setView(mStereoCullCameraFOV, TRUE);
+    cam->setAspect(mStereoCullCameraAspect);
+    LLVector3 new_position = mStereoCameraPosition + mStereoCullCameraDeltaForwards;
+    cam->setOrigin(new_position);
 }
 
 
@@ -1488,16 +1520,16 @@ void LLHMD::setupEye()
 
     mCameraOffset = mul * (mImpl->getInterpupillaryOffset() * 0.5f);
     mProjectionOffset = mul * (1.0f - (2.0f * mImpl->getLensSeparationDistance() / mImpl->getPhysicalScreenWidth()));
-	cam->setView(mStereoCameraFOV, getCurrentEye() == LLHMD::CENTER_EYE ? TRUE : FALSE);
-	cam->setAspect(mImpl->getAspect());
+    cam->setView(mStereoCameraFOV, getCurrentEye() == LLHMD::CENTER_EYE ? TRUE : FALSE);
+    cam->setAspect(mImpl->getAspect());
     LLVector3 new_position = mStereoCameraPosition - (mul * mStereoCameraDeltaLeft);
-	cam->setOrigin(new_position);
+    cam->setOrigin(new_position);
 }
 
 
 void LLHMD::setup2DRender()
 {
-	gl_state_for_2d(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), 0, gHMD.getOrthoPixelOffset());
+    gl_state_for_2d(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), 0, gHMD.getOrthoPixelOffset());
     gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDEyeWidth(), gHMD.getHMDHeight());
     glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
@@ -1646,9 +1678,9 @@ void LLHMD::renderCursor3D()
 
             if (LLGLSLShader::sNoFixedFunction)
             {
-		        gDebugProgram.bind();
+                gDebugProgram.bind();
             }
-	        gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
+            gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
 
             gGL.diffuseColor4f(1,0,0,0.5f);
             drawBox(LLVector3::zero, LLVector3(0.1f * scalingFactor, 0.022f * scalingFactor, 0.022f * scalingFactor));
@@ -1660,7 +1692,7 @@ void LLHMD::renderCursor3D()
             gGL.flush();
             if (LLGLSLShader::sNoFixedFunction)
             {
-		        gDebugProgram.unbind();
+                gDebugProgram.unbind();
             }
         }
         gGL.matrixMode(LLRender::MM_MODELVIEW);
@@ -1678,7 +1710,7 @@ void LLHMD::render3DUI()
     {
         //LLFastTimer t(FTM_RENDER_UI);
         LLViewerDisplay::render_ui_3d(FALSE);
-		LLGLState::checkStates();
+        LLGLState::checkStates();
     }
 
     renderCursor3D();
@@ -1727,24 +1759,24 @@ void LLHMD::render3DUI()
         if (toolBase != NULL && toolBase != gToolNull && toolBase == tool && !tool->isInGrabMode())
         {
             LLToolGun* gun = tool->getToolGun();
-	        LLGLSDefault gls_default;
-	        LLGLSUIDefault gls_ui;
-	        gPipeline.disableLights();
+            LLGLSDefault gls_default;
+            LLGLSUIDefault gls_ui;
+            gPipeline.disableLights();
             gGL.setColorMask(true, false);
             gGL.color4f(1,1,1,1);
 
-	        if (LLGLSLShader::sNoFixedFunction)
-	        {
-		        gUIProgram.bind();
-	        }
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gUIProgram.bind();
+            }
             LLViewerDisplay::push_state_gl();
             gHMD.setup2DRender();
             gun->drawCrosshairs((gHMD.getHMDEyeWidth() / 2), gHMD.getHMDHeight() / 2);
             LLViewerDisplay::pop_state_gl();
-    	    if (LLGLSLShader::sNoFixedFunction)
-	        {
-		        gUIProgram.unbind();
-	        }
+            if (LLGLSLShader::sNoFixedFunction)
+            {
+                gUIProgram.unbind();
+            }
         }
     }
 
@@ -1774,7 +1806,7 @@ void LLHMD::prerender2DUI()
 
 void LLHMD::postRender2DUI()
 {
-	if (getCurrentEye() == LLHMD::LEFT_EYE && LLViewerDisplay::gDisplaySwapBuffers)
+    if (getCurrentEye() == LLHMD::LEFT_EYE && LLViewerDisplay::gDisplaySwapBuffers)
     {
         LLViewerDisplay::gDisplaySwapBuffers = FALSE;
     }
@@ -1790,4 +1822,16 @@ void LLHMD::postRender2DUI()
         }
         LLUI::setDestIsRenderTarget(FALSE);
     }
+}
+
+
+BOOL LLHMD::beginFrame()
+{
+    return mImpl ? mImpl->beginFrame() : FALSE;
+}
+
+
+BOOL LLHMD::endFrame()
+{
+    return mImpl ? mImpl->endFrame() : FALSE;
 }

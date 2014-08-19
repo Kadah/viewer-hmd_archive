@@ -37,6 +37,11 @@
 #include "OVR.h"
 #include "OVR_Stereo.h"
 #include "Util/Util_Render_Stereo.h"
+//#if defined(OVR_OS_WIN32)
+//#include "win32_pl
+//#elif defined(OVR_OS_MAC) && !defined(OVR_MAC_X11)
+//#else
+//#endif
 //#include "Kernel/OVR_Timer.h"
 
 class LLHMDImplOculus : public LLHMDImpl //, OVR::MessageHandler
@@ -74,17 +79,15 @@ public:
     S32 getHMDHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
     S32 getHMDUIWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w : kDefaultHResolution; }
     S32 getHMDUIHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
-    F32 getPhysicalScreenWidth() const { return /* gHMD.isPostDetectionInitialized() ? mHMD->mStereoConfig.GetHMDInfo().HScreenSize : */ kDefaultHScreenSize; }
-    F32 getPhysicalScreenHeight() const { return /* gHMD.isPostDetectionInitialized() ? mStereoConfig.GetHMDInfo().VScreenSize : */ kDefaultVScreenSize; }
-    F32 getInterpupillaryOffset() const { return /* gHMD.isPostDetectionInitialized() ? mStereoConfig.GetIPD() : */ getInterpupillaryOffsetDefault(); }
-    void setInterpupillaryOffset(F32 f) {} //  if (gHMD.isPostDetectionInitialized()) { mStereoConfig.SetIPD(f); } }
-    F32 getLensSeparationDistance() const { return /* gHMD.isPostDetectionInitialized() ? mStereoConfig.GetHMDInfo().LensSeparationDistance : */ kDefaultLenSeparationDistance; }
-    F32 getEyeToScreenDistance() const { return /* gHMD.isPostDetectionInitialized() ? mStereoConfig.GetEyeToScreenDistance() : */ getEyeToScreenDistanceDefault(); }
-    void setEyeToScreenDistance(F32 f) {} //  if (gHMD.isPostDetectionInitialized()) { mStereoConfig.SetEyeToScreenDistance(f); } }
-    F32 getVerticalFOV() { return /* gHMD.isPostDetectionInitialized() ? mStereoConfig.GetYFOVRadians() : */ kDefaultVerticalFOVRadians; }
-    F32 getAspect() { return /* gHMD.isPostDetectionInitialized() ? mStereoConfig.GetAspect() : */ kDefaultAspect; }
-    F32 getAspectMultiplier() { return /* gHMD.isPostDetectionInitialized() ? mStereoConfig.GetAspectMultiplier() : */ kDefaultAspectMult; }
-    void setAspectMultiplier(F32 f) {} //  if (gHMD.isPostDetectionInitialized()) { mStereoConfig.SetAspectMultiplier(f); } }
+    F32 getPhysicalScreenWidth() const { return gHMD.isPostDetectionInitialized() ? mScreenSizeInMeters.w : kDefaultHScreenSize; }
+    F32 getPhysicalScreenHeight() const { return gHMD.isPostDetectionInitialized() ? mScreenSizeInMeters.h : kDefaultVScreenSize; }
+    F32 getInterpupillaryOffset() const { return gHMD.isPostDetectionInitialized() ? mInterpupillaryDistance : getInterpupillaryOffsetDefault(); }
+    void setInterpupillaryOffset(F32 f) { if (gHMD.isPostDetectionInitialized()) { mInterpupillaryDistance = f; } }
+    F32 getLensSeparationDistance() const { return gHMD.isPostDetectionInitialized() ? mLensSeparationInMeters : kDefaultLenSeparationDistance; }
+    F32 getEyeToScreenDistance() const { return gHMD.isPostDetectionInitialized() ? mEyeToScreenDistance : getEyeToScreenDistanceDefault(); }
+    void setEyeToScreenDistance(F32 f) { if (gHMD.isPostDetectionInitialized()) { mEyeToScreenDistance = f; } }
+    F32 getVerticalFOV() { return gHMD.isPostDetectionInitialized() ? mFOVRadians.h : kDefaultVerticalFOVRadians; }
+    F32 getAspect() { return gHMD.isPostDetectionInitialized() ? mAspect : kDefaultAspect; }
 
     LLVector4 getDistortionConstants() const;
     F32 getXCenterOffset() const { return /* gHMD.isPostDetectionInitialized() ? mCurrentEyeParams.pDistortion->XCenterOffset : */ kDefaultXCenterOffset; }
@@ -117,17 +120,50 @@ public:
 
     void resetOrientation() { if (gHMD.isPostDetectionInitialized()) { /* mSensorFusion->Reset(); */ } }
 
-    F32 getOrthoPixelOffset() const { return 0.0f; } // return gHMD.isPostDetectionInitialized() ? mCurrentEyeParams.OrthoProjection.M[0][3] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)OVR::StereoEye_Left ? 1.0f : -1.0f)); }
+    F32 getOrthoPixelOffset() const { return gHMD.isPostDetectionInitialized() ? mOrthoPixelOffset[mCurrentEye] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)OVR::StereoEye_Left ? 1.0f : -1.0f)); }
 
-
-    const char* getLatencyTesterResults() { return ""; } // if (gHMD.isPostDetectionInitialized() && mLatencyUtil.HasDevice()) { return mLatencyUtil.GetResultsString(); } else { return ""; } }
+    //const char* getLatencyTesterResults() { return ""; } // if (gHMD.isPostDetectionInitialized() && mLatencyUtil.HasDevice()) { return mLatencyUtil.GetResultsString(); } else { return ""; } }
 
     // OVR::MessageHandler override
     //virtual void OnMessage(const OVR::Message& msg);
 
+    // DK2
+    virtual BOOL beginFrame();
+    virtual BOOL endFrame();
+
+private:
+    BOOL calculateViewportSettings();
+    void applyDynamicResolutionScaling(double curTime);
+
 private:
     ovrHmd mHMD;
-    ovrFrameTiming mHMDFrameTiming;
+    ovrFrameTiming mFrameTiming;
+    ovrTrackingState mTrackingState;
+    //double mLastUpdate;
+    float mFovSideTanLimit; // TODO: make this local?
+    float mFovSideTanMax; // TODO: make this local?
+    OVR::Sizei mEyeRenderSize[ovrEye_Count];
+    ovrTexture mEyeTexture[ovrEye_Count];
+    ovrEyeRenderDesc mEyeRenderDesc[ovrEye_Count];
+    ovrPosef mEyeRenderPose[ovrEye_Count];
+    U32 mTrackingCaps;
+    OVR::Matrix4f mConvOculusToLL;
+    OVR::Matrix4f mConvLLToOculus;
+    OVR::Matrix4f mProjection[ovrEye_Count];
+    OVR::Matrix4f mOrthoProjection[ovrEye_Count];      // TODO: needed?
+    F32 mFPS;
+    F32 mSecondsPerFrame;
+    S32 mFrameCounter;
+    S32 mTotalFrameCounter;
+    double mLastFpsUpdate;
+    double mLastTimewarpUpdate;
+    OVR::Sizef mScreenSizeInMeters;
+    F32 mInterpupillaryDistance;
+    F32 mLensSeparationInMeters;
+    F32 mEyeToScreenDistance;
+    OVR::Sizef mFOVRadians;
+    F32 mAspect;
+    F32 mOrthoPixelOffset[3];
 
     //struct DeviceStatusNotificationDesc
     //{
@@ -142,17 +178,19 @@ private:
     //OVR::Ptr <OVR::HMDDevice> mHMD;
     //OVR::SensorFusion* mSensorFusion;
     //OVR::Ptr <OVR::SensorDevice> mSensorDevice;
-    OVR::Util::Render::StereoConfig mStereoConfig;
+    //OVR::Util::Render::StereoConfig mStereoConfig;
     //LLQuaternion mHeadRotationCorrection;
     //LLQuaternion mHeadPitchCorrection;
     //OVR::Array<DeviceStatusNotificationDesc>* mpDeviceStatusNotificationsQueue;
 
     //OVR::Util::LatencyTest mLatencyUtil;
     //OVR::Ptr<OVR::LatencyTestDevice> mpLatencyTester;
-    OVR::StereoEyeParams mCurrentEyeParams;
+    //OVR::StereoEyeParams mCurrentEyeParams;
     F32 mEyePitch;
     F32 mEyeRoll;
     F32 mEyeYaw;
+    LLVector3 mEyeRPY[ovrEye_Count];
+    LLVector3 mEyePos[ovrEye_Count];
     U32 mCurrentEye;
 };
 #endif // LL_HMD_SUPPORTED
