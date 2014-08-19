@@ -860,19 +860,6 @@ public:
 			addText(xpos, ypos, llformat("HMD Orient Euler: [roll=%f, pitch=%f, yaw=%f]", roll, pitch, yaw));
 			ypos += y_inc;
         }
-
-		if (gHMD.isPostDetectionInitialized() && gHMD.isLatencyTesterConnected() && gSavedSettings.getBOOL("HMDDebugShowLatency"))
-		{
-            const char* res = gHMD.getLatencyTesterResults();
-            if (res && *res)
-            {
-                //      // for debugging: put text in center of screen
-                //      xpos = llmax((mWindow->getWorldViewWidthScaled() / 2) - 200, 0);
-                //      ypos = (mWindow->getWorldViewHeightScaled() / 2) - (y_inc / 2);
-			    addText(xpos, ypos, llformat("HMD Latency: %s", res));
-			    ypos += y_inc;
-            }
-        }
 	}
 
 	void draw()
@@ -2298,13 +2285,13 @@ void LLViewerWindow::reshape(S32 width, S32 height)
 		LLView::sForceReshape = display_scale_changed;
         if (gHMD.isHMDMode())
         {
-		    setup2DViewport(0, 0, gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight());
-		    mRootView->reshape(llceil((F32)gHMD.getHMDUIWidth() / mDisplayScale.mV[VX]), llceil((F32)gHMD.getHMDUIHeight() / mDisplayScale.mV[VY]));
+            setup2DViewport(0, 0, gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight());
+            mRootView->reshape(llceil((F32)gHMD.getHMDUIWidth() / mDisplayScale.mV[VX]), llceil((F32)gHMD.getHMDUIHeight() / mDisplayScale.mV[VY]));
         }
         else
         {
-		    setup2DViewport();
-		mRootView->reshape(llceil((F32)width / mDisplayScale.mV[VX]), llceil((F32)height / mDisplayScale.mV[VY]));
+            setup2DViewport();
+            mRootView->reshape(llceil((F32)width / mDisplayScale.mV[VX]), llceil((F32)height / mDisplayScale.mV[VY]));
         }
 		LLView::sForceReshape = FALSE;
 
@@ -2340,6 +2327,11 @@ void LLViewerWindow::reshape(S32 width, S32 height)
 		sample(LLStatViewer::WINDOW_HEIGHT, height);
 
 		LLLayoutStack::updateClass();
+
+        if (gHMD.isHMDMode())
+        {
+            gHMD.renderSettingsChanged(TRUE);
+        }
 	}
 }
 

@@ -55,11 +55,11 @@ public:
     };
 
     enum eCameraEye
-	{
+    {
         CENTER_EYE  = 0,
-		LEFT_EYE    = 1,
-		RIGHT_EYE   = 2,
-	};
+        LEFT_EYE    = 1,
+        RIGHT_EYE   = 2,
+    };
 
     enum eFlags
     {
@@ -75,15 +75,21 @@ public:
         kFlag_ChangingRenderContext     = 1 << 8,
         kFlag_HMDAllowed                = 1 << 9,
         kFlag_HMDSensorConnected        = 1 << 10,
-        kFlag_LatencyTesterConnected    = 1 << 11,
+        kFlag_LatencyTesterConnected    = 1 << 11,  // TODO: remove
         kFlag_HMDMirror                 = 1 << 12,
         kFlag_SavingSettings            = 1 << 13,
-        kFlag_UseSavedHMDPreferences    = 1 << 14,
+        kFlag_UseSavedHMDPreferences    = 1 << 14,  // TODO: remove
 
         kFlag_UsingDebugHMD             = 1 << 15,
         kFlag_HMDDisplayEnabled         = 1 << 16,
         kFlag_UsingAppWindow            = 1 << 17,
         kFlag_PositionTrackingEnabled   = 1 << 18,
+        kFlag_FrameInProgress           = 1 << 19,
+        kFlag_SettingsChanged           = 1 << 20,
+        kFlag_TimewarpEnabled           = 1 << 21,
+        kFlag_FrameTimewarped           = 1 << 22,
+        kFlag_DynamicResolutionScaling  = 1 << 23,
+        //kFlag_LowPersistence            = 1 << 20,
     };
 
     enum eUIPresetType
@@ -173,6 +179,16 @@ public:
     void isUsingAppWindow(BOOL b) { if (b) { mFlags |= kFlag_UsingAppWindow; } else { mFlags &= ~kFlag_UsingAppWindow; } }
     BOOL isPositionTrackingEnabled() const { return ((mFlags & kFlag_PositionTrackingEnabled) != 0) ? TRUE : FALSE; }
     void isPositionTrackingEnabled(BOOL b) { if (b) { mFlags |= kFlag_PositionTrackingEnabled; } else { mFlags &= ~kFlag_PositionTrackingEnabled; } }
+    BOOL isFrameInProgress() const { return ((mFlags & kFlag_FrameInProgress) != 0) ? TRUE : FALSE; }
+    void isFrameInProgress(BOOL b) { if (b) { mFlags |= kFlag_FrameInProgress; } else { mFlags &= ~kFlag_FrameInProgress; } }
+    BOOL renderSettingsChanged() const { return ((mFlags & kFlag_SettingsChanged) != 0) ? TRUE : FALSE; }
+    void renderSettingsChanged(BOOL b) { if (b) { mFlags |= kFlag_SettingsChanged; } else { mFlags &= ~kFlag_SettingsChanged; } }
+    BOOL isTimewarpEnabled() const { return ((mFlags & kFlag_TimewarpEnabled) != 0) ? TRUE : FALSE; }
+    void isTimewarpEnabled(BOOL b) { if (b) { mFlags |= kFlag_TimewarpEnabled; } else { mFlags &= ~kFlag_TimewarpEnabled; } }
+    BOOL isFrameTimewarped() const { return ((mFlags & kFlag_FrameTimewarped) != 0) ? TRUE : FALSE; }
+    void isFrameTimewarped(BOOL b) { if (b) { mFlags |= kFlag_FrameTimewarped; } else { mFlags &= ~kFlag_FrameTimewarped; } }
+    BOOL useDynamicResolutionScaling() const { return ((mFlags & kFlag_DynamicResolutionScaling) != 0) ? TRUE : FALSE; }
+    void useDynamicResolutionScaling(BOOL b) { if (b) { mFlags |= kFlag_DynamicResolutionScaling; } else { mFlags &= ~kFlag_DynamicResolutionScaling; } }
 
     // True if render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
@@ -298,7 +314,7 @@ public:
     LLCoordWindow getMainClientSize() const { return mMainClientSize; }
     LLCoordWindow getHMDClientSize() const { return LLCoordWindow(getHMDWidth(), getHMDHeight()); }
 
-    const char* getLatencyTesterResults();
+    //const char* getLatencyTesterResults();
 
     void onViewChange();
 
@@ -363,6 +379,9 @@ public:
     S32 getMouselookControlMode() const { return mMouselookControlMode; }
     void setMouselookControlMode(S32 newMode) { mMouselookControlMode = llclamp(newMode, (S32)kMouselookControl_BEGIN, (S32)(kMouselookControl_END - 1)); }
 
+    F32 getTimewarpIntervalSeconds() const { return mTimewarpIntervalSeconds; }
+    void setTimewarpIntervalSeconds(F32 f) { mTimewarpIntervalSeconds = llmax(0.0001f, llmin(1.0f, f)); }
+
     // returns TRUE if we're in HMD Mode, mh is valid and mh has a valid mouse intersect override (in either UI or global coordinate space)
     BOOL handleMouseIntersectOverride(LLMouseHandler* mh);
 
@@ -379,6 +398,9 @@ public:
     void prerender2DUI();
     void postRender2DUI();
 
+    // DK2
+    BOOL beginFrame();
+    BOOL endFrame();
 
     static void onChangeHMDAdvancedMode();
     static void onChangeInterpupillaryDistance();
@@ -393,6 +415,8 @@ public:
     static void onChangeMouselookSettings();
     static void onChangeUseSavedHMDPreferences();
     static void onChangeMouselookControlMode();
+    static void onChangeRenderSettings();
+    static void onChangeDynamicResolutionScaling();
 
 private:
     void calculateUIEyeDepth();
@@ -440,14 +464,17 @@ private:
     F32 mMouselookRotMax;
     F32 mMouselookTurnSpeedMax;
     LLVector3 mLastRollPitchYaw;
-	F32 mStereoCameraFOV;
-	LLVector3 mStereoCameraPosition;
+    F32 mStereoCameraFOV;
+    LLVector3 mStereoCameraPosition;
     F32 mCameraOffset;
     F32 mProjectionOffset;
     LLVector3 mStereoCullCameraDeltaForwards;
     F32 mStereoCullCameraFOV;
-	F32 mStereoCullCameraAspect;
+    F32 mStereoCullCameraAspect;
     LLVector3 mStereoCameraDeltaLeft;
+
+    // DK2
+    float mTimewarpIntervalSeconds;
 };
 
 extern LLHMD gHMD;
@@ -475,7 +502,6 @@ public:
     static const F32 kDefaultOrthoPixelOffset;
     static const F32 kDefaultVerticalFOVRadians;
     static const F32 kDefaultAspect;
-    static const F32 kDefaultAspectMult;
 
 
 public:
@@ -506,8 +532,6 @@ public:
     virtual void setEyeToScreenDistance(F32 f) {}
     virtual F32 getVerticalFOV() { return kDefaultVerticalFOVRadians; }
     virtual F32 getAspect() { return kDefaultAspect; }
-    virtual F32 getAspectMultiplier() { return kDefaultAspectMult; }
-    virtual void setAspectMultiplier(F32 f) {}
 
     virtual LLVector4 getDistortionConstants() const { return LLVector4::zero; }
 
@@ -533,7 +557,10 @@ public:
 
     virtual void resetOrientation() {}
 
-    virtual const char* getLatencyTesterResults() { return ""; }
+    //virtual const char* getLatencyTesterResults() { return ""; }
+
+    virtual BOOL beginFrame() { return FALSE; }
+    virtual BOOL endFrame() { return FALSE; }
 };
 
 #endif // LL_LLHMD_H
