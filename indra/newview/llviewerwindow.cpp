@@ -4796,7 +4796,7 @@ void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset, S32 width, S32 
 	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 
-void LLViewerWindow::setup3DRender(S32 x_offset, S32 y_offset, S32 width, S32 height)
+void LLViewerWindow::setup3DRender(S32 x_offset, S32 y_offset, bool useHMDEyeWidth)
 {
 	// setup perspective camera
 	LLViewerCamera::getInstance()->setPerspective(  NOT_FOR_SELECTION,
@@ -4807,19 +4807,20 @@ void LLViewerWindow::setup3DRender(S32 x_offset, S32 y_offset, S32 width, S32 he
                                                     FALSE,
                                                     LLViewerCamera::getInstance()->getNear(),
                                                     MAX_FAR_CLIP * 2.0f);
-	setup3DViewport(x_offset, y_offset, width, height);
+	setup3DViewport(x_offset, y_offset, useHMDEyeWidth);
 }
 
-void LLViewerWindow::setup3DViewport(S32 x_offset, S32 y_offset, S32 width, S32 height)
+void LLViewerWindow::setup3DViewport(S32 x_offset, S32 y_offset, bool useHMDEyeWidth)
 {
-    width = (width > 0) ? width : getWorldViewWidthRaw();
-    height = (height > 0) ? height : getWorldViewHeightRaw();
-    getWorldViewportRaw(gGLViewport,
-                        width,
-                        height,
-                        x_offset,
-                        y_offset);
-	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+    if (gHMD.isHMDMode())
+    {
+        gHMD.setup3DViewport(x_offset, y_offset, useHMDEyeWidth);
+    }
+    else
+    {
+        getWorldViewportRaw(gGLViewport, 0, 0, x_offset, y_offset);
+	    glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+    }
 }
 
 void LLViewerWindow::revealIntroPanel()

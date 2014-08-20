@@ -845,8 +845,7 @@ BOOL LLHMDImplOculus::beginFrame()
                 OVR::Vector3f fwd = rpy.Transform(OVR::Vector3f(0.0f, 0.0f, -1.0f));
                 OVR::Vector3f pos = rpy.Transform(mEyeRenderPose[eye].Position);
                 OVR::Matrix4f v = OVR::Matrix4f::LookAtRH(pos, pos + fwd, up);
-                OVR::Matrix4f v2 = OVR::Matrix4f::Translation(mEyeRenderDesc[eye].ViewAdjust) * v;
-                OVR::Matrix4f v3 = mConvOculusToLL * v2;
+                mView[eye] = OVR::Matrix4f::Translation(mEyeRenderDesc[eye].ViewAdjust) * v;
             }
         }
     }
@@ -914,6 +913,37 @@ void LLHMDImplOculus::applyDynamicResolutionScaling(double curTime)
     // This viewport is used for rendering and passed into ovrHmd_EndEyeRender.
     mEyeTexture[ovrEye_Left].Header.RenderViewport.Size = OVR::Sizei(int(sizeLeft.w  * dynamicRezScale), int(sizeLeft.h  * dynamicRezScale));
     mEyeTexture[ovrEye_Right].Header.RenderViewport.Size = OVR::Sizei(int(sizeRight.w * dynamicRezScale), int(sizeRight.h * dynamicRezScale));
+}
+
+
+U32 LLHMDImplOculus::getCurrentEyeTextureWidth()
+{
+    return (U32)mEyeTexture[getCurrentOVREye()].Header.TextureSize.w;
+}
+
+
+U32 LLHMDImplOculus::getCurrentEyeTextureHeight()
+{
+    return (U32)mEyeTexture[getCurrentOVREye()].Header.TextureSize.h;
+}
+
+
+void LLHMDImplOculus::getViewportInfo(S32& x, S32& y, S32& w, S32& h)
+{
+    U32 eye = getCurrentOVREye();
+    x = mEyeTexture[eye].Header.RenderViewport.Pos.x;
+    y = mEyeTexture[eye].Header.RenderViewport.Pos.y;
+    w = mEyeTexture[eye].Header.RenderViewport.Size.w;
+    h = mEyeTexture[eye].Header.RenderViewport.Size.h;
+}
+
+void LLHMDImplOculus::getViewportInfo(S32 vp[4])
+{
+    U32 eye = getCurrentOVREye();
+    vp[0] = mEyeTexture[eye].Header.RenderViewport.Pos.x;
+    vp[1] = mEyeTexture[eye].Header.RenderViewport.Pos.y;
+    vp[2] = mEyeTexture[eye].Header.RenderViewport.Size.w;
+    vp[3] = mEyeTexture[eye].Header.RenderViewport.Size.h;
 }
 
 #endif // LL_HMD_SUPPORTED

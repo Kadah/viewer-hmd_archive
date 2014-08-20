@@ -801,17 +801,16 @@ void LLPipeline::resizeScreenTexture()
 		if ((resX != mScreen.getWidth()) || (resY != mScreen.getHeight()))
 		{
 			releaseScreenBuffers();
-		if (!allocateScreenBuffer(resX,resY))
+            if (!allocateScreenBuffer(resX,resY))
 			{
 #if PROBABLE_FALSE_DISABLES_OF_ALM_HERE
 				//FAILSAFE: screen buffer allocation failed, disable deferred rendering if it's enabled
-			//NOTE: if the session closes successfully after this call, deferred rendering will be 
-			// disabled on future sessions
-			if (LLPipeline::sRenderDeferred)
-			{
-				gSavedSettings.setBOOL("RenderDeferred", FALSE);
-				LLPipeline::refreshCachedSettings();
-
+			    //NOTE: if the session closes successfully after this call, deferred rendering will be 
+			    // disabled on future sessions
+			    if (LLPipeline::sRenderDeferred)
+			    {
+				    gSavedSettings.setBOOL("RenderDeferred", FALSE);
+				    LLPipeline::refreshCachedSettings();
 				}
 #endif
 			}
@@ -7513,33 +7512,10 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 
-    if (gHMD.getCurrentEye() != LLHMD::CENTER_EYE)
-	{
-        if (gHMD.getCurrentEye() == LLHMD::LEFT_EYE)
-        {
-            if (!mLeftEye.isComplete())
-            {
-                if (!mLeftEye.allocate(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
-                {
-                    LL_WARNS() << "could not allocate Left Eye buffer for HMD render mode" << LL_ENDL;
-                    return;
-                }
-            }
-            mLeftEye.bindTarget();
-        }
-        else if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
-        {
-            if (!mRightEye.isComplete())
-            {
-                if (!mRightEye.allocate(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
-                {
-                    LL_WARNS() << "could not allocate Right Eye buffer for HMD render mode" << LL_ENDL;
-                    return;
-                }
-            }
-            mRightEye.bindTarget();
-        }
-	}
+    if (gHMD.isHMDMode())
+    {
+        gHMD.bindEyeRT();
+    }
 
 	assertInitialized();
 
@@ -7681,14 +7657,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}*/
 
-    if (gHMD.isHMDMode())
-    {
-        gViewerWindow->setup3DViewport(0, 0, gHMD.getHMDEyeWidth(), gHMD.getHMDHeight());
-    }
-    else
-    {
-        gViewerWindow->setup3DViewport();
-    }
+    gViewerWindow->setup3DViewport(0, 0, true);
 
 	tc2.setVec((F32)mScreen.getWidth(), (F32)mScreen.getHeight());
 
@@ -7899,7 +7868,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				}
 				else
 				{
-                    gViewerWindow->setup3DViewport(0, 0, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0);
+                    gViewerWindow->setup3DViewport(0, 0, true);
 				}
 
 				shader = &gDeferredDoFCombineProgram;
@@ -8030,14 +7999,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
 			}
 			
-            if (gHMD.isHMDMode())
-            {
-                gViewerWindow->setup3DViewport(0, 0, gHMD.getHMDEyeWidth(), gHMD.getHMDHeight());
-            }
-            else
-            {
-                gViewerWindow->setup3DViewport();
-            }
+            gViewerWindow->setup3DViewport(0, 0, true);
 
 			F32 scale_x = (F32) width/mFXAABuffer.getWidth();
 			F32 scale_y = (F32) height/mFXAABuffer.getHeight();
@@ -11652,7 +11614,7 @@ void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL 
         {
             pRight->flush();
         }
-        gViewerWindow->setup3DViewport(0, 0);
+        gViewerWindow->setup3DViewport();
 
         LLGLSLShader* distortProgram = &gBarrelDistortProgram;
         if (distortProgram)

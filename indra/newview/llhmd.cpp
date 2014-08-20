@@ -954,6 +954,7 @@ void LLHMD::setCurrentEye(U32 eye)
 }
 
 void LLHMD::getViewportInfo(S32& x, S32& y, S32& w, S32& h) { if (mImpl) { mImpl->getViewportInfo(x, y, w, h); } }
+void LLHMD::getViewportInfo(S32 vp[4]) { if (mImpl) { mImpl->getViewportInfo(vp); } else { vp[0] = vp[1] = vp[2] = vp[3] = 0; } }
 S32 LLHMD::getHMDWidth() const { return mImpl ? mImpl->getHMDWidth() : 0; }
 S32 LLHMD::getHMDEyeWidth() const { return mImpl ? mImpl->getHMDEyeWidth() : 0; }
 S32 LLHMD::getHMDHeight() const { return mImpl ? mImpl->getHMDHeight() : 0; }
@@ -1524,6 +1525,85 @@ void LLHMD::setupEye()
     cam->setAspect(mImpl->getAspect());
     LLVector3 new_position = mStereoCameraPosition - (mul * mStereoCameraDeltaLeft);
     cam->setOrigin(new_position);
+}
+
+
+void LLHMD::bindEyeRT()
+{
+    LLRenderTarget* target = NULL;
+    switch (getCurrentEye())
+    {
+    case LLHMD::LEFT_EYE:
+        target = &gPipeline.mLeftEye;
+        break;
+    case LLHMD::RIGHT_EYE:
+        target = &gPipeline.mRightEye;
+        break;
+    case LLHMD::CENTER_EYE:
+    default:
+        break;
+    }
+    if (target)
+    {
+        if (!target->isComplete())
+        {
+            if (!target->allocate(mImpl->getCurrentEyeTextureWidth(), mImpl->getCurrentEyeTextureHeight(), GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
+            {
+                LL_WARNS() << "could not allocate Eye buffer for HMD render mode" << LL_ENDL;
+                return;
+            }
+        }
+        target->bindTarget();
+    }
+ //   if (gHMD.getCurrentEye() != LLHMD::CENTER_EYE)
+	//{
+ //       if (gHMD.getCurrentEye() == LLHMD::LEFT_EYE)
+ //       {
+ //           if (!gPipeline.mLeftEye.isComplete())
+ //           {
+ //               if (!gPipeline.mLeftEye.allocate(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
+ //               {
+ //                   LL_WARNS() << "could not allocate Left Eye buffer for HMD render mode" << LL_ENDL;
+ //                   return;
+ //               }
+ //           }
+ //           gPipeline.mLeftEye.bindTarget();
+ //       }
+ //       else if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
+ //       {
+ //           if (!gPipeline.mRightEye.isComplete())
+ //           {
+ //               if (!gPipeline.mRightEye.allocate(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
+ //               {
+ //                   LL_WARNS() << "could not allocate Right Eye buffer for HMD render mode" << LL_ENDL;
+ //                   return;
+ //               }
+ //           }
+ //           gPipeline.mRightEye.bindTarget();
+ //       }
+	//}
+}
+
+
+void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye)
+{
+#if LLHMD_DK1
+    S32 w = forEye ? getHMDEyeWidth() : 0;
+    // HMDHeight and WorldViewHeightRaw SHOULD always be the same, but just in case...
+    S32 h = forEye ? getHMDHeight() : 0;
+    S32 x = x_offset;
+    S32 y = y_offset;
+#else
+    S32 x = 0, y = 0, w = 0, h = 0;
+    if (forEye)
+    {
+        mImpl->getViewportInfo(x, y, w, h);
+    }
+    x += x_offset;
+    y += y_offset;
+#endif
+    gViewerWindow->getWorldViewportRaw(gGLViewport, w, h, x, y);
+	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 
 

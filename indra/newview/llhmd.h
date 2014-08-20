@@ -41,6 +41,7 @@ class LLViewerTexture;
 class LLVertexBuffer;
 class LLMouseHandler;
 
+#define LLHMD_DK1 0
 
 // TODO: move some of the data to this class instead of always requiring an extra method call via PIMPL
 class LLHMD
@@ -213,6 +214,7 @@ public:
 
     // size and Lower-Left corner for the viewer of the current eye
     void getViewportInfo(S32& x, S32& y, S32& w, S32& h);
+    void getViewportInfo(S32 vp[4]);
 
     S32 getHMDWidth() const;
     S32 getHMDEyeWidth() const;
@@ -401,6 +403,8 @@ public:
     // DK2
     BOOL beginFrame();
     BOOL endFrame();
+    void bindEyeRT();
+    void setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye);
 
     static void onChangeHMDAdvancedMode();
     static void onChangeInterpupillaryDistance();
@@ -481,7 +485,7 @@ extern LLHMD gHMD;
 
 
 
-// dummmy class to satisfy API requirements on platforms which we don't support HMD on
+// dummy class to satisfy API requirements on platforms which we don't support HMD on
 class LLHMDImpl
 {
 public:
@@ -515,6 +519,7 @@ public:
     virtual U32 getCurrentEye() const { return 0; }
     virtual void setCurrentEye(U32 eye) {}
     virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h) { x = y = w = h = 0; }
+    virtual void getViewportInfo(S32 vp[4]) { vp[0] = vp[1] = vp[2] = vp[3] = 0; }
 
     virtual S32 getHMDWidth() const { return kDefaultHResolution; }
     virtual S32 getHMDEyeWidth() const { return (kDefaultHResolution / 2); }
@@ -561,6 +566,8 @@ public:
 
     virtual BOOL beginFrame() { return FALSE; }
     virtual BOOL endFrame() { return FALSE; }
+    virtual U32 getCurrentEyeTextureWidth() { return 0; }
+    virtual U32 getCurrentEyeTextureHeight() { return 0; }
 };
 
 #endif // LL_LLHMD_H

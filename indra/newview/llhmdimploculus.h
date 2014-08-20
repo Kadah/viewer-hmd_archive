@@ -61,19 +61,14 @@ public:
     void shutdown();
     void onIdle();
     U32 getCurrentEye() const { return mCurrentEye; }
+    U32 getCurrentOVREye() const { return mCurrentEye == LLHMD::RIGHT_EYE ? 1 : 0; }
     void setCurrentEye(U32 eye)
     {
         mCurrentEye = llclamp(eye, (U32)OVR::StereoEye_Center, (U32)OVR::StereoEye_Right);
         //mCurrentEyeParams = mStereoConfig.GetEyeRenderParams((OVR::StereoEye)mCurrentEye);
     }
-
-    void getViewportInfo(S32& x, S32& y, S32& w, S32& h)
-    {
-        //x = mCurrentEyeParams.VP.x;
-        //y = mCurrentEyeParams.VP.y;
-        //w = mCurrentEyeParams.VP.w;
-        //h = mCurrentEyeParams.VP.h;
-    }
+    virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h);
+    virtual void getViewportInfo(S32 vp[4]);
     S32 getHMDWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w : kDefaultHResolution; }
     S32 getHMDEyeWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w / 2.0f : (kDefaultHResolution / 2); }
     S32 getHMDHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
@@ -130,6 +125,8 @@ public:
     // DK2
     virtual BOOL beginFrame();
     virtual BOOL endFrame();
+    virtual U32 getCurrentEyeTextureWidth();
+    virtual U32 getCurrentEyeTextureHeight();
 
 private:
     BOOL calculateViewportSettings();
@@ -147,14 +144,16 @@ private:
     ovrEyeRenderDesc mEyeRenderDesc[ovrEye_Count];
     ovrPosef mEyeRenderPose[ovrEye_Count];
     U32 mTrackingCaps;
-    OVR::Matrix4f mConvOculusToLL;
-    OVR::Matrix4f mConvLLToOculus;
+    // Note: OVR matrices are RH, row-major with OGL axes (-Z forward, Y up, X Right)
     OVR::Matrix4f mProjection[ovrEye_Count];
     OVR::Matrix4f mOrthoProjection[ovrEye_Count];      // TODO: needed?
-    F32 mFPS;
-    F32 mSecondsPerFrame;
-    S32 mFrameCounter;
-    S32 mTotalFrameCounter;
+    OVR::Matrix4f mView[ovrEye_Count];
+    OVR::Matrix4f mConvOculusToLL;  // convert from OGL to LL (RH, Row-Major, X Forward, Z Up, Y Left)
+    OVR::Matrix4f mConvLLToOculus;  // convert from LL to OGL
+    F32 mFPS;               // TODO: needed?
+    F32 mSecondsPerFrame;   // TODO: needed?
+    S32 mFrameCounter;      // TODO: needed?
+    S32 mTotalFrameCounter; // TODO: needed?
     double mLastFpsUpdate;
     double mLastTimewarpUpdate;
     OVR::Sizef mScreenSizeInMeters;
@@ -186,12 +185,12 @@ private:
     //OVR::Util::LatencyTest mLatencyUtil;
     //OVR::Ptr<OVR::LatencyTestDevice> mpLatencyTester;
     //OVR::StereoEyeParams mCurrentEyeParams;
-    F32 mEyePitch;
-    F32 mEyeRoll;
-    F32 mEyeYaw;
+    F32 mEyePitch;  // TODO: remove
+    F32 mEyeRoll;   // TODO: remove
+    F32 mEyeYaw;    // TODO: remove
+    U32 mCurrentEye;
     LLVector3 mEyeRPY[ovrEye_Count];
     LLVector3 mEyePos[ovrEye_Count];
-    U32 mCurrentEye;
 };
 #endif // LL_HMD_SUPPORTED
 #endif // LL_LLHMDIMPL_OCULUS_H

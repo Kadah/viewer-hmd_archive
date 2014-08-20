@@ -620,14 +620,14 @@ LLColor4 LLManip::setupSnapGuideRenderPass(S32 pass)
 	{
 	case 0:
 		// shadow
-		gViewerWindow->setup3DViewport(1, -1);
+		gViewerWindow->setup3DViewport(1, -1, true);
 		line_color = grid_color_shadow;
 		line_color.mV[VALPHA] *= line_alpha;
 		LLUI::setLineWidth(2.f);
 		break;
 	case 1:
 		// hidden lines
-		gViewerWindow->setup3DViewport();
+		gViewerWindow->setup3DViewport(0, 0, true);
 		line_color = grid_color_bg;
 		line_color.mV[VALPHA] *= line_alpha;
 		LLUI::setLineWidth(1.f);
