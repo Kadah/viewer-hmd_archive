@@ -40,8 +40,10 @@ class LLHMDImpl;
 class LLViewerTexture;
 class LLVertexBuffer;
 class LLMouseHandler;
+class LLRenderTarget;
 
 #define LLHMD_DK1 0
+#define LLHMD_EXPERIMENTAL 0
 
 // TODO: move some of the data to this class instead of always requiring an extra method call via PIMPL
 class LLHMD
@@ -60,6 +62,13 @@ public:
         CENTER_EYE  = 0,
         LEFT_EYE    = 1,
         RIGHT_EYE   = 2,
+    };
+
+    enum eRPY
+    {
+        ROLL = 0,
+        PITCH = 1,
+        YAW = 2,
     };
 
     enum eFlags
@@ -392,7 +401,9 @@ public:
     void setupStereoValues();
     void setupStereoCullFrustum();
     void setupEye();
-    F32 getProjectionOffset() const { return mProjectionOffset; }
+    F32 getProjectionOffset(S32 row, S32 col) const { return mProjectionOffset[row][col]; }
+    //F32 getProjectionOffset02() const { return mProjectionOffset; }
+    //F32 getProjectionOffset11() const { return mProjectionOffset; }
     F32 getCameraOffset() const { return mCameraOffset; }
 
     void setup2DRender();
@@ -403,7 +414,10 @@ public:
     // DK2
     BOOL beginFrame();
     BOOL endFrame();
-    void bindEyeRT();
+    LLRenderTarget* getCurrentEyeRT();
+    void bindCurrentEyeRT();
+    void flushCurrentEyeRT();
+    void releaseAllEyeRT();
     void setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye);
 
     static void onChangeHMDAdvancedMode();
@@ -471,11 +485,10 @@ private:
     F32 mStereoCameraFOV;
     LLVector3 mStereoCameraPosition;
     F32 mCameraOffset;
-    F32 mProjectionOffset;
+    F32 mProjectionOffset[4][4];
     LLVector3 mStereoCullCameraDeltaForwards;
     F32 mStereoCullCameraFOV;
     F32 mStereoCullCameraAspect;
-    LLVector3 mStereoCameraDeltaLeft;
 
     // DK2
     float mTimewarpIntervalSeconds;
@@ -518,8 +531,8 @@ public:
     virtual void onIdle() {}
     virtual U32 getCurrentEye() const { return 0; }
     virtual void setCurrentEye(U32 eye) {}
-    virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h) { x = y = w = h = 0; }
-    virtual void getViewportInfo(S32 vp[4]) { vp[0] = vp[1] = vp[2] = vp[3] = 0; }
+    virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h) const { x = y = w = h = 0; }
+    virtual void getViewportInfo(S32 vp[4]) const { vp[0] = vp[1] = vp[2] = vp[3] = 0; }
 
     virtual S32 getHMDWidth() const { return kDefaultHResolution; }
     virtual S32 getHMDEyeWidth() const { return (kDefaultHResolution / 2); }
@@ -536,7 +549,7 @@ public:
     virtual F32 getEyeToScreenDistanceDefault() const { return kDefaultEyeToScreenDistance; }
     virtual void setEyeToScreenDistance(F32 f) {}
     virtual F32 getVerticalFOV() { return kDefaultVerticalFOVRadians; }
-    virtual F32 getAspect() { return kDefaultAspect; }
+    virtual F32 getAspect() const { return kDefaultAspect; }
 
     virtual LLVector4 getDistortionConstants() const { return LLVector4::zero; }
 
@@ -566,8 +579,12 @@ public:
 
     virtual BOOL beginFrame() { return FALSE; }
     virtual BOOL endFrame() { return FALSE; }
-    virtual U32 getCurrentEyeTextureWidth() { return 0; }
-    virtual U32 getCurrentEyeTextureHeight() { return 0; }
+    virtual void getCurrentEyeProjectionOffset(F32 p[4][4]) const {}
+    virtual LLVector3 getStereoCullCameraForwards() const { return LLVector3::zero; }
+    virtual F32 getCurrentEyeCameraOffset() const { return 0.0f; }
+    virtual LLVector3 getCurrentEyePosition(const LLVector3& centerPos) const { return centerPos; }
+    virtual LLRenderTarget* getCurrentEyeRT() { return NULL; }
+    virtual LLRenderTarget* getEyeRT(U32 eye) { return NULL; }
 };
 
 #endif // LL_LLHMD_H

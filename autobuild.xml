@@ -18,9 +18,9 @@
             <key>archive</key>
             <map>
               <key>hash</key>
-              <string>cdca0d640863f48d024604cade534967</string>
+              <string>6ed37477191ccc4b32657195cd63c49c</string>
               <key>url</key>
-              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-libovr/rev/292933/arch/Darwin/installer/libovr-0.4.1-darwin-20140814.tar.bz2</string>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-libovr/rev/293095/arch/Darwin/installer/libovr-0.4.1-darwin-20140819.tar.bz2</string>
             </map>
             <key>name</key>
             <string>darwin</string>
@@ -30,9 +30,9 @@
             <key>archive</key>
             <map>
               <key>hash</key>
-              <string>455a100bee30da19503bd66267b4a174</string>
+              <string>fa4b40a4b8d7382c96295a0899c9c0c7</string>
               <key>url</key>
-              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-libovr/rev/292933/arch/CYGWIN/installer/libovr-0.4.1-windows-20140814.tar.bz2</string>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-libovr/rev/293095/arch/CYGWIN/installer/libovr-0.4.1-windows-20140819.tar.bz2</string>
             </map>
             <key>name</key>
             <string>windows</string>

@@ -86,17 +86,28 @@ glh::matrix4f gl_pick_matrix(GLfloat x, GLfloat y, GLfloat width, GLfloat height
 glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar, BOOL display)
 {
 	GLfloat f = 1.f/tanf(DEG_TO_RAD*fovy/2.f);
+    GLfloat pm[4][4] =
+    {
+        { f / aspect, 0.0f, 0.0f, 0.0f }, 
+        { 0.0f, f, 0.0f, 0.0f }, 
+        { 0.0f, 0.0f, (zFar + zNear) / (zNear - zFar), (2.0f * zFar * zNear) / (zNear - zFar) }, 
+        { 0.0f, 0.0f, -1.0f, 0.0f }, 
+    };
+    if (display && gHMD.isHMDMode())
+    {
+        pm[0][0] = gHMD.getProjectionOffset(0, 0);
+        pm[0][2] = gHMD.getProjectionOffset(0, 2);
+        pm[1][1] = gHMD.getProjectionOffset(1, 1);
+    }
 
-	GLfloat proj_offset = 0.0f;
-	if (display && gHMD.isHMDMode())
-	{
-	    proj_offset = gHMD.getProjectionOffset();
-	}
-
-	return glh::matrix4f(f/aspect, 0, proj_offset, 0,
-						 0, f, 0, 0,
-						 0, 0, (zFar+zNear)/(zNear-zFar), (2.f*zFar*zNear)/(zNear-zFar),
-						 0, 0, -1.f, 0);
+	return glh::matrix4f(   pm[0][0], pm[0][1], pm[0][2], pm[0][3],
+                            pm[1][0], pm[1][1], pm[1][2], pm[1][3],
+                            pm[2][0], pm[2][1], pm[2][2], pm[2][3],
+                            pm[3][0], pm[3][1], pm[3][2], pm[3][3]);
+       // p00, 0, p02, p03,
+						 //0, p11, 0, 0,
+						 //0, 0, (zFar+zNear)/(zNear-zFar), (2.f*zFar*zNear)/(zNear-zFar),
+						 //0, 0, -1.f, 0);
 }
 
 glh::matrix4f gl_lookat(LLVector3 eye, LLVector3 center, LLVector3 up)

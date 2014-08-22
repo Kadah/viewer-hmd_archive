@@ -4489,6 +4489,28 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>HMDDynamicResolutionScaling</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable HMD Dynamic Resolution Scaling</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>HMDEnablePositionalTracking</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable HMD Positional Tracking (if hardware allows it)</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>HMDEyeDepth</key>
     <map>
       <key>Comment</key>
@@ -4521,6 +4543,17 @@
       <string>F32</string>
       <key>Value</key>
       <real>0.064</real>
+    </map>
+    <key>HMDLowPersistence</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable HMD Low Persistence Mode</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
     </map>
     <key>HMDMouselookControlMode</key>
     <map>
@@ -4565,6 +4598,61 @@
         <string>F32</string>
         <key>Value</key>
         <real>0.1</real>
+    </map>
+    <key>HMDPixelDensity</key>
+    <map>
+      <key>Comment</key>
+      <string>HMD Pixel Density</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.0</real>
+    </map>
+    <key>HMDPixelLuminanceOverdrive</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable HMD Pixel Luminance Overdrive</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>HMDTimewarp</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable HMD Timewarp Mode</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>HMDTimewarpIntervalSeconds</key>
+    <map>
+      <key>Comment</key>
+      <string>HMD Timewarp Rendering Interval</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.0001</real>
+    </map>
+    <key>HMDTimewarpNoJit</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable HMD Timewarp No-JIT Mode</string>
+      <key>Persist</key>
+      <integer>0</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
     <key>HMDUseSavedHMDPreferences</key>
     <map>

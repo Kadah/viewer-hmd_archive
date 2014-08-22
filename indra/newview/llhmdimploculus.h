@@ -35,6 +35,7 @@
 #include "llviewertexture.h"
 
 #include "OVR.h"
+#include "OVR_CAPI_GL.h"
 #include "OVR_Stereo.h"
 #include "Util/Util_Render_Stereo.h"
 //#if defined(OVR_OS_WIN32)
@@ -44,6 +45,9 @@
 //#endif
 //#include "Kernel/OVR_Timer.h"
 
+class LLRenderTarget;
+
+
 class LLHMDImplOculus : public LLHMDImpl //, OVR::MessageHandler
 {
 public:
@@ -52,7 +56,8 @@ public:
 
     BOOL preInit();
     BOOL postDetectionInit();
-    void initHMDDevice();
+    BOOL initHMDDevice();
+    void removeHMDDevice();
     //void initHMDSensor();
     //void initHMDLatencyTester();
     //void handleMessages();
@@ -67,8 +72,8 @@ public:
         mCurrentEye = llclamp(eye, (U32)OVR::StereoEye_Center, (U32)OVR::StereoEye_Right);
         //mCurrentEyeParams = mStereoConfig.GetEyeRenderParams((OVR::StereoEye)mCurrentEye);
     }
-    virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h);
-    virtual void getViewportInfo(S32 vp[4]);
+    virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h) const;
+    virtual void getViewportInfo(S32 vp[4]) const;
     S32 getHMDWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w : kDefaultHResolution; }
     S32 getHMDEyeWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w / 2.0f : (kDefaultHResolution / 2); }
     S32 getHMDHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
@@ -82,7 +87,7 @@ public:
     F32 getEyeToScreenDistance() const { return gHMD.isPostDetectionInitialized() ? mEyeToScreenDistance : getEyeToScreenDistanceDefault(); }
     void setEyeToScreenDistance(F32 f) { if (gHMD.isPostDetectionInitialized()) { mEyeToScreenDistance = f; } }
     F32 getVerticalFOV() { return gHMD.isPostDetectionInitialized() ? mFOVRadians.h : kDefaultVerticalFOVRadians; }
-    F32 getAspect() { return gHMD.isPostDetectionInitialized() ? mAspect : kDefaultAspect; }
+    virtual F32 getAspect() const;
 
     LLVector4 getDistortionConstants() const;
     F32 getXCenterOffset() const { return /* gHMD.isPostDetectionInitialized() ? mCurrentEyeParams.pDistortion->XCenterOffset : */ kDefaultXCenterOffset; }
@@ -96,16 +101,11 @@ public:
     F32 getMotionPredictionDeltaDefault() const { return 0.03f; }
     void setMotionPredictionDelta(F32 f) {} //  if (gHMD.isPostDetectionInitialized()) { mSensorFusion->SetPrediction(f); } }
 
-    LLQuaternion getHMDOrient() const
-    {
-        LLQuaternion q;
-        q.setEulerAngles(mEyeRoll, mEyePitch, mEyeYaw);
-        return q;
-    }
-    F32 getRoll() const { return mEyeRoll; }
-    F32 getPitch() const { return mEyePitch; }
-    F32 getYaw() const { return mEyeYaw; }
-    void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = mEyeRoll; pitch = mEyePitch; yaw = mEyeYaw; }
+    virtual LLQuaternion getHMDOrient() const;
+    F32 getRoll() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[getCurrentOVREye()][LLHMD::ROLL] : 0.0f; }
+    F32 getPitch() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[getCurrentOVREye()][LLHMD::PITCH] : 0.0f; }
+    F32 getYaw() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[getCurrentOVREye()][LLHMD::YAW] : 0.0f; }
+    void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     //virtual LLQuaternion getHeadRotationCorrection() const { return mHeadRotationCorrection; }
     //virtual void addHeadRotationCorrection(LLQuaternion quat) { mHeadRotationCorrection *= quat; mHeadRotationCorrection.normalize(); }
     //virtual void resetHeadRotationCorrection() { mHeadRotationCorrection = LLQuaternion::DEFAULT; }
@@ -125,8 +125,13 @@ public:
     // DK2
     virtual BOOL beginFrame();
     virtual BOOL endFrame();
-    virtual U32 getCurrentEyeTextureWidth();
-    virtual U32 getCurrentEyeTextureHeight();
+    virtual void getCurrentEyeProjectionOffset(F32 p[4][4]) const;
+    virtual LLVector3 getStereoCullCameraForwards() const;
+    virtual F32 getCurrentEyeCameraOffset() const;
+    virtual LLVector3 getCurrentEyePosition(const LLVector3& centerPos) const;
+
+    virtual LLRenderTarget* getCurrentEyeRT();
+    virtual LLRenderTarget* getEyeRT(U32 eye);
 
 private:
     BOOL calculateViewportSettings();
@@ -140,7 +145,7 @@ private:
     float mFovSideTanLimit; // TODO: make this local?
     float mFovSideTanMax; // TODO: make this local?
     OVR::Sizei mEyeRenderSize[ovrEye_Count];
-    ovrTexture mEyeTexture[ovrEye_Count];
+    ovrGLTexture mEyeTexture[ovrEye_Count];
     ovrEyeRenderDesc mEyeRenderDesc[ovrEye_Count];
     ovrPosef mEyeRenderPose[ovrEye_Count];
     U32 mTrackingCaps;
@@ -163,6 +168,8 @@ private:
     OVR::Sizef mFOVRadians;
     F32 mAspect;
     F32 mOrthoPixelOffset[3];
+    S32 mCurrentHMDCount;
+    LLRenderTarget* mEyeRT[3];
 
     //struct DeviceStatusNotificationDesc
     //{
@@ -185,9 +192,6 @@ private:
     //OVR::Util::LatencyTest mLatencyUtil;
     //OVR::Ptr<OVR::LatencyTestDevice> mpLatencyTester;
     //OVR::StereoEyeParams mCurrentEyeParams;
-    F32 mEyePitch;  // TODO: remove
-    F32 mEyeRoll;   // TODO: remove
-    F32 mEyeYaw;    // TODO: remove
     U32 mCurrentEye;
     LLVector3 mEyeRPY[ovrEye_Count];
     LLVector3 mEyePos[ovrEye_Count];

@@ -40,7 +40,7 @@ public:
     static void render_ui_3d(BOOL hmdUIMode = FALSE);
     static void render_ui_2d();
     static void display_cleanup();
-    static void swap();
+    static void swap(BOOL doSwap, BOOL newSwap);
 
     // Utility
     static void push_state_gl_identity();

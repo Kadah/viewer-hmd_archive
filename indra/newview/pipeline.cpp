@@ -43,7 +43,7 @@
 #include "llui.h" 
 #include "llglheaders.h"
 #include "llrender.h"
-#include "llwindow.h"	// swapBuffers()
+//#include "llwindow.h"	// swapBuffers()
 
 // newview includes
 #include "llagent.h"
@@ -1049,8 +1049,7 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		mDeferredScreen.shareDepthBuffer(mScreen);
 	}
 
-    mLeftEye.release();
-    mRightEye.release();
+    gHMD.releaseAllEyeRT();
 
 	gGL.getTexUnit(0)->disable();
 
@@ -1236,8 +1235,7 @@ void LLPipeline::releaseScreenBuffers()
 		mShadowOcclusion[i].release();
 	}
     mUIScreen.release();
-    mLeftEye.release();
-    mRightEye.release();
+    gHMD.releaseAllEyeRT();
 }
 
 
@@ -4843,7 +4841,7 @@ void LLPipeline::addTrianglesDrawn(S32 index_count, U32 render_type)
 
 	if (LLPipeline::sRenderFrameTest)
 	{
-		gViewerWindow->getWindow()->swapBuffers();
+        LLViewerDisplay::swap(TRUE, LLViewerDisplay::gDisplaySwapBuffers);
 		ms_sleep(16);
 	}
 }
@@ -7512,10 +7510,12 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 
+#if !LLHMD_EXPERIMENTAL
     if (gHMD.isHMDMode())
     {
-        gHMD.bindEyeRT();
+        gHMD.bindCurrentEyeRT();
     }
+#endif
 
 	assertInitialized();
 
@@ -7667,16 +7667,16 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 	if (LLPipeline::sRenderDeferred)
 	{
-
 		bool dof_enabled = !LLViewerCamera::getInstance()->cameraUnderWater() &&
 			(RenderDepthOfFieldInEditMode || !LLToolMgr::getInstance()->inBuildMode()) &&
-							RenderDepthOfField &&
-                            !gHMD.isHMDMode();
+							RenderDepthOfField;
+#if !LLHMD_EXPERIMENTAL
         // voidpointer 20131121: HMD Mode seems to have problems with DOF (probably because of the alpha-blend
         // changes necessary to handle rendering UI to a rendertarget, but not sure).  Could probably dive into
         // this and figure out why (and possibly even fix it), but have bigger problems to tackle before release.
         // Disabling DOF in HMD mode for now.
-
+        dof_enabled = dof_enabled && !gHMD.isHMDMode();
+#endif
 		bool multisample = RenderFSAASamples > 1 && mFXAABuffer.isComplete();
 
 		if (dof_enabled)
@@ -7861,15 +7861,19 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			}
 	
 			{ //combine result based on alpha
-				if (multisample)
-				{
-					mDeferredLight.bindTarget();
-					glViewport(0, 0, mDeferredScreen.getWidth(), mDeferredScreen.getHeight());
-				}
-				else
-				{
+                if (multisample)
+                {
+                    mDeferredLight.bindTarget();
+                    glViewport(0, 0, mDeferredScreen.getWidth(), mDeferredScreen.getHeight());
+                }
+                else
+                {
+#if LLHMD_EXPERIMENTAL
+                    gViewerWindow->setup3DViewport();
+#else
                     gViewerWindow->setup3DViewport(0, 0, true);
-				}
+#endif
+                }
 
 				shader = &gDeferredDoFCombineProgram;
 				bindDeferredShader(*shader);
@@ -7919,6 +7923,12 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			{
 				mDeferredLight.bindTarget();
 			}
+#if LLHMD_EXPERIMENTAL
+            else if (gHMD.isHMDMode())
+            {
+                gHMD.bindCurrentEyeRT();
+            }
+#endif
 			LLGLSLShader* shader = &gDeferredPostNoDoFProgram;
 			
 			bindDeferredShader(*shader);
@@ -7954,6 +7964,12 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			{
 				mDeferredLight.flush();
 			}
+#if LLHMD_EXPERIMENTAL
+            else if (gHMD.isHMDMode())
+            {
+                mScreen.flush();
+            }
+#endif
 		}
 
 		if (multisample)
@@ -7989,6 +8005,13 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			
 			mFXAABuffer.flush();
 
+#if LLHMD_EXPERIMENTAL
+            if (gHMD.isHMDMode())
+            {
+                gHMD.bindCurrentEyeRT();
+            }
+#endif
+
 			shader = &gFXAAProgram;
 			shader->bind();
 
@@ -8016,6 +8039,13 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 			gGL.flush();
 			shader->unbind();
+
+#if LLHMD_EXPERIMENTAL
+            if (gHMD.isHMDMode())
+            {
+                mScreen.flush();
+            }
+#endif
 		}
 	}
 	else
@@ -8065,9 +8095,13 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		
 		LLGLEnable multisample(RenderFSAASamples > 0 ? GL_MULTISAMPLE_ARB : 0);
 		
-		buff->setBuffer(mask);
-		buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
-		
+#if LLHMD_EXPERIMENTAL
+        if (!gHMD.isHMDMode())
+#endif
+        {
+    		buff->setBuffer(mask);
+		    buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
+        }
 		if (LLGLSLShader::sNoFixedFunction)
 		{
 			gGlowCombineProgram.unbind();
@@ -11594,73 +11628,83 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 	LLGLState::checkClientArrays();
 }
 
-void LLPipeline::postRender(LLRenderTarget* pLeft, LLRenderTarget* pRight, BOOL writeAlpha, BOOL doFlush)
+
+void LLPipeline::postRender(BOOL writeAlpha)
 {
     if (!(gPipeline.canUseVertexShaders() && sRenderGlow))
     {
         return;
     }
 
-    if (gHMD.getCurrentEye() == LLHMD::LEFT_EYE)
+    //if (gHMD.getCurrentEye() == LLHMD::LEFT_EYE)
+    //{
+    //    if (pLeft && doFlush)
+    //    {
+    //        pLeft->flush();
+    //    }
+    //}
+    //else if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
+    //{
+    //    if (pRight && doFlush)
+    //    {
+    //        pRight->flush();
+    //    }
+    //    gViewerWindow->setup3DViewport();
+
+    //    LLGLSLShader* distortProgram = &gBarrelDistortProgram;
+    //    if (distortProgram)
+    //    {
+    //        F32 as = (F32)gHMD.getHMDEyeWidth() / (F32)gHMD.getHMDHeight();
+    //        F32 scaleFactor = 1.0f / gHMD.getDistortionScale();
+
+    //        distortProgram->bind();
+    //        distortProgram->uniform2f(LLStaticHashedString("ScreenCenter"), 0.5f, 0.5f);
+    //        distortProgram->uniform2f(LLStaticHashedString("ScaleIn"), 2.0f, 2.0f / as);
+    //        distortProgram->uniform2f(LLStaticHashedString("ScaleOut"), 0.5f * scaleFactor, 0.5f * scaleFactor * as);
+    //        // We are using 1/4 of DistortionCenter offset value here, since it is relative to [-1,1] range that gets mapped to [0, 0.5].
+    //        distortProgram->uniform2f(LLStaticHashedString("LensCenter"), (1.0f + gHMD.getXCenterOffset()) * 0.5f, 0.5f);
+    //        distortProgram->uniform4fv(LLStaticHashedString("HmdWarpParam"), 1, gHMD.getDistortionConstants().mV);
+    //        gGL.setColorMask(true, writeAlpha);
+    //        gGL.color4f(1,1,1,1);
+    //        if (pLeft)
+    //        {
+    //            gGL.getTexUnit(0)->bind(pLeft);
+    //            gGL.begin(LLRender::TRIANGLE_STRIP);
+    //            //bottom left, bottom right, top left, top right
+    //            gGL.texCoord2f(0, 0);       gGL.vertex2f(-1, -1);
+    //            gGL.texCoord2f(1, 0);       gGL.vertex2f(0, -1);
+    //            gGL.texCoord2f(0, 1);       gGL.vertex2f(-1,1);
+    //            gGL.texCoord2f(1, 1);       gGL.vertex2f(0,1);
+    //            gGL.end();
+    //        }
+
+    //        distortProgram->uniform2f(LLStaticHashedString("LensCenter"), (1.0f - gHMD.getXCenterOffset()) * 0.5f, 0.5f);
+    //        if (pRight)
+    //        {
+    //            gGL.getTexUnit(0)->bind(pRight);
+    //            gGL.begin(LLRender::TRIANGLE_STRIP);
+    //            //bottom left, bottom right, top left, top right
+    //            gGL.texCoord2f(0, 0);       gGL.vertex2f(0, -1);
+    //            gGL.texCoord2f(1, 0);       gGL.vertex2f(1, -1);
+    //            gGL.texCoord2f(0, 1);       gGL.vertex2f(0,1);
+    //            gGL.texCoord2f(1, 1);       gGL.vertex2f(1,1);
+    //            gGL.end();
+    //        }
+    //        gGL.flush();
+    //        distortProgram->unbind();
+    //    }
+    //}
+
+#if LLHMD_EXPERIMENTAL
+    if (LLRenderTarget::sUseFBO && !gHMD.isHMDMode())
+#else
+    if (gHMD.isHMDMode())
     {
-        if (pLeft && doFlush)
-        {
-            pLeft->flush();
-        }
-    }
-    else if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
-    {
-        if (pRight && doFlush)
-        {
-            pRight->flush();
-        }
-        gViewerWindow->setup3DViewport();
-
-        LLGLSLShader* distortProgram = &gBarrelDistortProgram;
-        if (distortProgram)
-        {
-            F32 as = (F32)gHMD.getHMDEyeWidth() / (F32)gHMD.getHMDHeight();
-            F32 scaleFactor = 1.0f / gHMD.getDistortionScale();
-
-            distortProgram->bind();
-            distortProgram->uniform2f(LLStaticHashedString("ScreenCenter"), 0.5f, 0.5f);
-            distortProgram->uniform2f(LLStaticHashedString("ScaleIn"), 2.0f, 2.0f / as);
-            distortProgram->uniform2f(LLStaticHashedString("ScaleOut"), 0.5f * scaleFactor, 0.5f * scaleFactor * as);
-            // We are using 1/4 of DistortionCenter offset value here, since it is relative to [-1,1] range that gets mapped to [0, 0.5].
-            distortProgram->uniform2f(LLStaticHashedString("LensCenter"), (1.0f + gHMD.getXCenterOffset()) * 0.5f, 0.5f);
-            distortProgram->uniform4fv(LLStaticHashedString("HmdWarpParam"), 1, gHMD.getDistortionConstants().mV);
-            gGL.setColorMask(true, writeAlpha);
-            gGL.color4f(1,1,1,1);
-            if (pLeft)
-            {
-                gGL.getTexUnit(0)->bind(pLeft);
-                gGL.begin(LLRender::TRIANGLE_STRIP);
-                //bottom left, bottom right, top left, top right
-                gGL.texCoord2f(0, 0);       gGL.vertex2f(-1, -1);
-                gGL.texCoord2f(1, 0);       gGL.vertex2f(0, -1);
-                gGL.texCoord2f(0, 1);       gGL.vertex2f(-1,1);
-                gGL.texCoord2f(1, 1);       gGL.vertex2f(0,1);
-                gGL.end();
-            }
-
-            distortProgram->uniform2f(LLStaticHashedString("LensCenter"), (1.0f - gHMD.getXCenterOffset()) * 0.5f, 0.5f);
-            if (pRight)
-            {
-                gGL.getTexUnit(0)->bind(pRight);
-                gGL.begin(LLRender::TRIANGLE_STRIP);
-                //bottom left, bottom right, top left, top right
-                gGL.texCoord2f(0, 0);       gGL.vertex2f(0, -1);
-                gGL.texCoord2f(1, 0);       gGL.vertex2f(1, -1);
-                gGL.texCoord2f(0, 1);       gGL.vertex2f(0,1);
-                gGL.texCoord2f(1, 1);       gGL.vertex2f(1,1);
-                gGL.end();
-            }
-            gGL.flush();
-            distortProgram->unbind();
-        }
+        gHMD.flushCurrentEyeRT();
     }
 
     if (LLRenderTarget::sUseFBO && (!gHMD.isHMDMode() || gHMD.getCurrentEye() != LLHMD::LEFT_EYE))
+#endif
 	{
         //copy depth buffer from mScreen to framebuffer
 		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 

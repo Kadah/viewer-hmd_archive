@@ -218,10 +218,7 @@ void LLViewerDisplay::display_startup()
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 
-	if (gViewerWindow && gViewerWindow->getWindow())
-    {
-	    gViewerWindow->getWindow()->swapBuffers();
-    }
+    swap(TRUE, gDisplaySwapBuffers);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 }
@@ -283,7 +280,7 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
 		LL_RECORD_BLOCK_TIME(FTM_RESIZE_WINDOW);
 		gGL.flush();
 		glClear(GL_COLOR_BUFFER_BIT);
-		gViewerWindow->getWindow()->swapBuffers();
+        swap(TRUE, gDisplaySwapBuffers);
 		LLPipeline::refreshCachedSettings();
 		gPipeline.resizeScreenTexture();
 		gResizeScreenTexture = FALSE;
@@ -681,6 +678,7 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
                 render_frame(rebuild);
             }
         }
+        swap(gDisplaySwapBuffers, TRUE);
     }
 
     // this prevents forced shutdown while in HMD mode showing only a black screen
@@ -1345,15 +1343,22 @@ BOOL LLViewerDisplay::setup_hud_matrices()
 	return ::setup_hud_matrices(whole_screen);
 }
 
-void LLViewerDisplay::swap()
+void LLViewerDisplay::swap(BOOL doSwap, BOOL newSwap)
 {
 	LL_RECORD_BLOCK_TIME(FTM_SWAP);
 
-	if (gDisplaySwapBuffers)
+	if (doSwap)
 	{
-		gViewerWindow->getWindow()->swapBuffers();
+        if (gHMD.isHMDMode())
+        {
+            gHMD.endFrame();
+        }
+        else if (gViewerWindow && gViewerWindow->getWindow())
+        {
+            gViewerWindow->getWindow()->swapBuffers();
+        }
 	}
-	gDisplaySwapBuffers = TRUE;
+	gDisplaySwapBuffers = newSwap;
 }
 
 void LLViewerDisplay::renderCoordinateAxes()
@@ -1643,10 +1648,7 @@ void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
         {
             gHMD.render3DUI();
         }
-        else
-        {
-            gPipeline.postRender();
-        }
+        gPipeline.postRender();
         pop_state_gl();
 
         LLVertexBuffer::unbind();
@@ -1698,6 +1700,9 @@ void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
     if (gHMD.isHMDMode())
     {
         gHMD.postRender2DUI();
+#if LLHMD_EXPERIMENTAL
+        gHMD.flushCurrentEyeRT();
+#endif
     }
 
     // copy 
@@ -1707,7 +1712,6 @@ void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
 		glh_set_current_modelview(saved_view);
 		gGL.popMatrix();
 	}
-    swap();
 }
 
 void LLViewerDisplay::render_frame(BOOL rebuild)

@@ -98,7 +98,6 @@ LLHMD::LLHMD()
     , mMouselookTurnSpeedMax(0.1f)
     , mStereoCameraFOV(DEFAULT_FIELD_OF_VIEW)
     , mCameraOffset(0.0f)
-    , mProjectionOffset(0.0f)
     , mStereoCullCameraFOV(0.0f)
     , mStereoCullCameraAspect(0.0f)
     , mTimewarpIntervalSeconds(0.0001f)
@@ -108,6 +107,7 @@ LLHMD::LLHMD()
     mUIShape.mPresetTypeIndex = 0;
     // "Custom" preset is always in index 0
     mUIPresetValues.push_back(mUIShape);
+    memset(mProjectionOffset, 0, sizeof(F32) * 4 * 4);
 }
 
 
@@ -183,15 +183,6 @@ BOOL LLHMD::init()
     onChangeUseSavedHMDPreferences();
     gSavedSettings.getControl("HMDMouselookControlMode")->getSignal()->connect(boost::bind(&onChangeMouselookControlMode));
     onChangeMouselookControlMode();
-
-    //hmdCaps |= gSavedSettings.getBOOL("HMDLowPersistence") ? ovrHmdCap_LowPersistence : 0;
-    //gSavedSettings.getBOOL("HMDPixelLuminanceOverdrive");
-    ////hmdCaps |= gSavedSettings.getBOOL("HMDUseMotionPrediction") ? ovrHmdCap_DynamicPrediction : 0;
-    //BOOL timewarp = (mHMD->DistortionCaps & ovrDistortionCap_TimeWarp) != 0 && gSavedSettings.getBOOL("HMDTimewarp");
-    //distortionCaps |= timewarp ? ovrDistortionCap_TimeWarp : 0;
-    //distortionCaps |= timewarp && gSavedSettings.getBOOL("HMDTimewarpNoJit") ? ovrDistortionCap_ProfileNoTimewarpSpinWaits : 0;
-    //sensorCaps |= (gSavedSettings.getBOOL("HMDEnablePositionalTracking") && (mHMD->TrackingCaps & ovrTrackingCap_Position) != 0) ? ovrTrackingCap_Position : 0;
-
 
     preInitResult = mImpl->preInit();
     if (preInitResult)
@@ -571,8 +562,8 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                                 return;
                             }
                         }
-                        windowp->enableVSync(TRUE);
-                        windowp->setHMDMode(TRUE, FALSE, isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        //windowp->enableVSync(TRUE);
+                        windowp->setHMDMode(TRUE, gHMD.isUsingAppWindow(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         onViewChange();
                     }
                     break;
@@ -581,7 +572,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     // not much to do here except resize the main window
                     {
                         setRenderWindowMain();
-                        windowp->setHMDMode(TRUE, isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        windowp->setHMDMode(TRUE, isHMDMirror() || gHMD.isUsingAppWindow(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         if (isMainFullScreen())
                         {
                             onViewChange();
@@ -591,7 +582,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             windowp->setSize(getHMDClientSize());
                             windowp->setPosition(mMainWindowPos);
                         }
-                        windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
+                        //windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
                     }
                     break;
                 case RenderMode_None:
@@ -602,7 +593,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         {
                             setRenderWindowMain();
                         }
-                        windowp->setHMDMode(FALSE, isHMDMirror(), isMainFullScreen(), gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
+                        windowp->setHMDMode(FALSE, isHMDMirror() || gHMD.isUsingAppWindow(), isMainFullScreen(), gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
 #if LL_DARWIN
                         if (isHMDMirror())
                         {
@@ -623,10 +614,10 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 #endif
                             windowp->setPosition(mMainWindowPos);
                         }
-                        if (oldMode == RenderMode_HMD)
-                        {
-                            windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
-                        }
+                        //if (oldMode == RenderMode_HMD)
+                        //{
+                        //    windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
+                        //}
                         LLFloaterCamera::onHMDChange();
                         LLFloaterReg::setBlockInstance(false, "snapshot");
                         pCamera->setAspect(mMainWindowAspect);
@@ -689,8 +680,8 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                                 return;
                             }
                         }
-                        windowp->enableVSync(TRUE);
-                        windowp->setHMDMode(TRUE, FALSE, isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        //windowp->enableVSync(TRUE);
+                        windowp->setHMDMode(TRUE, gHMD.isUsingAppWindow(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         pCamera->setAspect(gHMD.getAspect());
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
@@ -700,7 +691,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 case RenderMode_ScreenStereo:
                     // switching from Normal to ScreenStereo
                     {
-                        windowp->setHMDMode(TRUE, isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        windowp->setHMDMode(TRUE, isHMDMirror() || gHMD.isUsingAppWindow(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         pCamera->setAspect(gHMD.getAspect());
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
@@ -744,7 +735,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 
 BOOL LLHMD::setRenderWindowMain()
 {
-    return gViewerWindow->getWindow()->setRenderWindow(0, gHMD.isMainFullScreen());
+    return gHMD.isUsingAppWindow() || gViewerWindow->getWindow()->setRenderWindow(0, gHMD.isMainFullScreen());
 }
 
 
@@ -752,7 +743,7 @@ BOOL LLHMD::setRenderWindowHMD()
 {
     BOOL res = FALSE;
 #if LL_HMD_SUPPORTED
-    res = gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
+    res = gHMD.isUsingAppWindow() || gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
 #endif // LL_HMD_SUPPORTED
     return res;
 }
@@ -881,6 +872,7 @@ void LLHMD::renderUnusedMainWindow()
         && gHMD.isPostDetectionInitialized()
         && gHMD.isHMDConnected()
         && gHMD.isHMDSensorConnected()
+        && !gHMD.isUsingAppWindow()
         && gViewerWindow
         && gViewerWindow->getWindow()
        )
@@ -891,7 +883,7 @@ void LLHMD::renderUnusedMainWindow()
             glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-            gViewerWindow->getWindow()->swapBuffers();
+            LLViewerDisplay::swap(TRUE, LLViewerDisplay::gDisplaySwapBuffers);
         }
     }
 #endif
@@ -905,6 +897,7 @@ void LLHMD::renderUnusedHMDWindow()
         && gHMD.isHMDConnected()
         && gHMD.isHMDSensorConnected()
         && gHMD.getRenderMode() != LLHMD::RenderMode_HMD
+        && !gHMD.isUsingAppWindow()
         && gViewerWindow
         && gViewerWindow->getWindow())
     {
@@ -915,7 +908,7 @@ void LLHMD::renderUnusedHMDWindow()
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             // write text "press CTRL-SHIFT-D to switch to HMD"
-            gViewerWindow->getWindow()->swapBuffers();
+            LLViewerDisplay::swap(TRUE, LLViewerDisplay::gDisplaySwapBuffers);
         }
     }
 #endif
@@ -1479,20 +1472,17 @@ void LLHMD::setupStereoValues()
 
     // Stereo culling frustum camera parameters.
     // Use lens rather than eye separation because it's collimated light.
-    F32 deltaZ = mImpl->getEyeToScreenDistance() * mImpl->getLensSeparationDistance() / (mImpl->getPhysicalScreenWidth() - mImpl->getLensSeparationDistance());
-    mStereoCullCameraDeltaForwards = -deltaZ * cam->getXAxis();
+    //F32 deltaZ = mImpl->getEyeToScreenDistance() * mImpl->getLensSeparationDistance() / (mImpl->getPhysicalScreenWidth() - mImpl->getLensSeparationDistance());
+    mStereoCullCameraDeltaForwards = mImpl->getStereoCullCameraForwards();
     mStereoCullCameraFOV = mStereoCameraFOV;
-    mStereoCullCameraAspect = mImpl->getPhysicalScreenHeight() / (mImpl->getPhysicalScreenWidth() - mImpl->getLensSeparationDistance());
-
-    // Delta position for left camera.
-    mStereoCameraDeltaLeft = (mImpl->getInterpupillaryOffset() / 2.0f) * cam->getYAxis();
+    mStereoCullCameraAspect = mImpl->getAspect();
 }
 
 
 void LLHMD::setupStereoCullFrustum()
 {
     mCameraOffset = 0.f;
-    mProjectionOffset = 0.f;
+    mProjectionOffset[0][2] = 0.0f;
     LLViewerCamera* cam = LLViewerCamera::getInstance();
     cam->setView(mStereoCullCameraFOV, TRUE);
     cam->setAspect(mStereoCullCameraAspect);
@@ -1503,85 +1493,54 @@ void LLHMD::setupStereoCullFrustum()
 
 void LLHMD::setupEye()
 {
-    LLViewerCamera* cam = LLViewerCamera::getInstance();
-    F32 mul = 0.0f;
-    switch (getCurrentEye())
-    {
-    case LLHMD::LEFT_EYE:
-        mul = -1.0f;
-        break;
-    case LLHMD::RIGHT_EYE:
-        mul = 1.0f;
-        break;
-    case LLHMD::CENTER_EYE:
-    default:
-        mul = 0.0f;
-        break;
-    }
+    mCameraOffset = mImpl->getCurrentEyeCameraOffset();
+    mImpl->getCurrentEyeProjectionOffset(mProjectionOffset);
 
-    mCameraOffset = mul * (mImpl->getInterpupillaryOffset() * 0.5f);
-    mProjectionOffset = mul * (1.0f - (2.0f * mImpl->getLensSeparationDistance() / mImpl->getPhysicalScreenWidth()));
-    cam->setView(mStereoCameraFOV, getCurrentEye() == LLHMD::CENTER_EYE ? TRUE : FALSE);
+    LLViewerCamera* cam = LLViewerCamera::getInstance();
+    cam->setView(mStereoCameraFOV, getCurrentEye() == (U32)LLHMD::CENTER_EYE ? TRUE : FALSE);
     cam->setAspect(mImpl->getAspect());
-    LLVector3 new_position = mStereoCameraPosition - (mul * mStereoCameraDeltaLeft);
-    cam->setOrigin(new_position);
+    cam->setOrigin(mImpl->getCurrentEyePosition(mStereoCameraPosition));
+}
+
+LLRenderTarget* LLHMD::getCurrentEyeRT()
+{
+    return mImpl ? mImpl->getCurrentEyeRT() : NULL;
 }
 
 
-void LLHMD::bindEyeRT()
+void LLHMD::bindCurrentEyeRT()
 {
-    LLRenderTarget* target = NULL;
-    switch (getCurrentEye())
-    {
-    case LLHMD::LEFT_EYE:
-        target = &gPipeline.mLeftEye;
-        break;
-    case LLHMD::RIGHT_EYE:
-        target = &gPipeline.mRightEye;
-        break;
-    case LLHMD::CENTER_EYE:
-    default:
-        break;
-    }
+    LLRenderTarget* target = getCurrentEyeRT();
     if (target)
     {
-        if (!target->isComplete())
-        {
-            if (!target->allocate(mImpl->getCurrentEyeTextureWidth(), mImpl->getCurrentEyeTextureHeight(), GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
-            {
-                LL_WARNS() << "could not allocate Eye buffer for HMD render mode" << LL_ENDL;
-                return;
-            }
-        }
         target->bindTarget();
     }
- //   if (gHMD.getCurrentEye() != LLHMD::CENTER_EYE)
-	//{
- //       if (gHMD.getCurrentEye() == LLHMD::LEFT_EYE)
- //       {
- //           if (!gPipeline.mLeftEye.isComplete())
- //           {
- //               if (!gPipeline.mLeftEye.allocate(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
- //               {
- //                   LL_WARNS() << "could not allocate Left Eye buffer for HMD render mode" << LL_ENDL;
- //                   return;
- //               }
- //           }
- //           gPipeline.mLeftEye.bindTarget();
- //       }
- //       else if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
- //       {
- //           if (!gPipeline.mRightEye.isComplete())
- //           {
- //               if (!gPipeline.mRightEye.allocate(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
- //               {
- //                   LL_WARNS() << "could not allocate Right Eye buffer for HMD render mode" << LL_ENDL;
- //                   return;
- //               }
- //           }
- //           gPipeline.mRightEye.bindTarget();
- //       }
-	//}
+}
+
+
+void LLHMD::flushCurrentEyeRT()
+{
+    LLRenderTarget* target = getCurrentEyeRT();
+    if (target)
+    {
+        target->flush();
+    }
+}
+
+
+void LLHMD::releaseAllEyeRT()
+{
+    if (mImpl)
+    {
+        for (U32 i = (U32)LLHMD::CENTER_EYE; i <= (U32)LLHMD::RIGHT_EYE; ++i)
+        {
+            LLRenderTarget* rt = mImpl->getEyeRT(i);
+            if (rt)
+            {
+                rt->release();
+            }
+        }
+    }
 }
 
 
@@ -1862,8 +1821,8 @@ void LLHMD::render3DUI()
 
     LLViewerDisplay::push_state_gl_identity();
 
-    // handle HMD distortion and copying mScreen to framebuffer
-    gPipeline.postRender(&gPipeline.mLeftEye, &gPipeline.mRightEye);
+    //// handle HMD distortion and copying mScreen to framebuffer
+    //gPipeline.postRender(&gPipeline.mLeftEye, &gPipeline.mRightEye);
 }
 
 
@@ -1886,20 +1845,23 @@ void LLHMD::prerender2DUI()
 
 void LLHMD::postRender2DUI()
 {
-    if (getCurrentEye() == LLHMD::LEFT_EYE && LLViewerDisplay::gDisplaySwapBuffers)
-    {
-        LLViewerDisplay::gDisplaySwapBuffers = FALSE;
-    }
-    else if (getCurrentEye() == LLHMD::RIGHT_EYE)
+    //if (getCurrentEye() == LLHMD::LEFT_EYE && LLViewerDisplay::gDisplaySwapBuffers)
+    //{
+    //    LLViewerDisplay::gDisplaySwapBuffers = FALSE;
+    //}
+    //else 
+    if (getCurrentEye() == LLHMD::RIGHT_EYE)
     {
         gHMD.renderCursor2D();
         gPipeline.mUIScreen.flush();
+#if !LLHMD_EXPERIMENTAL
         if (LLRenderTarget::sUseFBO)
         {
             //copy depth buffer from mScreen to framebuffer
             LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
                 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
         }
+#endif
         LLUI::setDestIsRenderTarget(FALSE);
     }
 }
