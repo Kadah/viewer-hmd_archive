@@ -562,7 +562,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                                 return;
                             }
                         }
-                        //windowp->enableVSync(TRUE);
+                        windowp->enableVSync(TRUE);
                         windowp->setHMDMode(TRUE, gHMD.isUsingAppWindow(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         onViewChange();
                     }
@@ -572,7 +572,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     // not much to do here except resize the main window
                     {
                         setRenderWindowMain();
-                        windowp->setHMDMode(TRUE, isHMDMirror() || gHMD.isUsingAppWindow(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        windowp->setHMDMode(TRUE, isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         if (isMainFullScreen())
                         {
                             onViewChange();
@@ -582,7 +582,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             windowp->setSize(getHMDClientSize());
                             windowp->setPosition(mMainWindowPos);
                         }
-                        //windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
+                        windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
                     }
                     break;
                 case RenderMode_None:
@@ -593,7 +593,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         {
                             setRenderWindowMain();
                         }
-                        windowp->setHMDMode(FALSE, isHMDMirror() || gHMD.isUsingAppWindow(), isMainFullScreen(), gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
+                        windowp->setHMDMode(FALSE, isHMDMirror(), isMainFullScreen(), gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
 #if LL_DARWIN
                         if (isHMDMirror())
                         {
@@ -614,10 +614,10 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 #endif
                             windowp->setPosition(mMainWindowPos);
                         }
-                        //if (oldMode == RenderMode_HMD)
-                        //{
-                        //    windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
-                        //}
+                        if (oldMode == RenderMode_HMD)
+                        {
+                            windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
+                        }
                         LLFloaterCamera::onHMDChange();
                         LLFloaterReg::setBlockInstance(false, "snapshot");
                         pCamera->setAspect(mMainWindowAspect);
@@ -680,7 +680,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                                 return;
                             }
                         }
-                        //windowp->enableVSync(TRUE);
+                        windowp->enableVSync(TRUE);
                         windowp->setHMDMode(TRUE, gHMD.isUsingAppWindow(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         pCamera->setAspect(gHMD.getAspect());
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
@@ -691,7 +691,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 case RenderMode_ScreenStereo:
                     // switching from Normal to ScreenStereo
                     {
-                        windowp->setHMDMode(TRUE, isHMDMirror() || gHMD.isUsingAppWindow(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        windowp->setHMDMode(TRUE, isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         pCamera->setAspect(gHMD.getAspect());
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
@@ -867,26 +867,26 @@ void LLHMD::onAppFocusLost()
 
 void LLHMD::renderUnusedMainWindow()
 {
-#if LL_HMD_SUPPORTED
-    if (gHMD.getRenderMode() == LLHMD::RenderMode_HMD
-        && gHMD.isPostDetectionInitialized()
-        && gHMD.isHMDConnected()
-        && gHMD.isHMDSensorConnected()
-        && !gHMD.isUsingAppWindow()
-        && gViewerWindow
-        && gViewerWindow->getWindow()
-       )
-    {
-        if (gHMD.setRenderWindowMain())
-        {
-            gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getMainWindowWidth(), gHMD.getMainWindowHeight());
-            glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-            LLViewerDisplay::swap(TRUE, LLViewerDisplay::gDisplaySwapBuffers);
-        }
-    }
-#endif
+//#if LL_HMD_SUPPORTED
+//    if (gHMD.getRenderMode() == LLHMD::RenderMode_HMD
+//        && gHMD.isPostDetectionInitialized()
+//        && gHMD.isHMDConnected()
+//        && gHMD.isHMDSensorConnected()
+//        && !gHMD.isUsingAppWindow()
+//        && gViewerWindow
+//        && gViewerWindow->getWindow()
+//       )
+//    {
+//        if (gHMD.setRenderWindowMain())
+//        {
+//            gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getMainWindowWidth(), gHMD.getMainWindowHeight());
+//            glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+//            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+//            glClear(GL_COLOR_BUFFER_BIT);
+//            LLViewerDisplay::swap(TRUE, LLViewerDisplay::gDisplaySwapBuffers);
+//        }
+//    }
+//#endif
 }
 
 
@@ -903,12 +903,14 @@ void LLHMD::renderUnusedHMDWindow()
     {
         if (gHMD.setRenderWindowHMD())
         {
-            gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDWidth(), gHMD.getHMDHeight());
+            gHMD.getViewportInfo(gGLViewport);
+            //gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDWidth(), gHMD.getHMDHeight());
             glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             // write text "press CTRL-SHIFT-D to switch to HMD"
-            LLViewerDisplay::swap(TRUE, LLViewerDisplay::gDisplaySwapBuffers);
+            gViewerWindow->getWindow()->swapBuffers();
+            //LLViewerDisplay::swap(TRUE, LLViewerDisplay::gDisplaySwapBuffers);
         }
     }
 #endif
@@ -1271,7 +1273,17 @@ void LLHMD::onViewChange()
     if (gHMD.isHMDMode())
     {
         mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
+#if LLHMD_DK1
         gViewerWindow->reshape(gHMD.getHMDWidth(), gHMD.getHMDHeight());
+#else
+        S32 vp[4];
+        mImpl->getViewportInfo(vp);
+        gViewerWindow->reshape(vp[2], vp[3]);
+#endif
+    }
+    if (mImpl)
+    {
+        mImpl->onViewChange();
     }
 }
 

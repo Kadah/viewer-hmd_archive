@@ -4068,7 +4068,9 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL
         mPostQuit = TRUE;
     }
 
-    mHMDMirrored = isMirror = testMainDisplayIsMirrored(left, top, width, height);
+    // Voidpointer082514: HACK HACK HACK.   Until the SDK actually handles attaching to a non-main window and/or openGL/Direct mode, this hack
+    // allows things to partially work, at least.
+    mHMDMirrored = isMirror = true; // testMainDisplayIsMirrored(left, top, width, height);
     if (isMirror)
     {
         // don't create a window in this case since we just want to use the "advanced" HMD mode in this case

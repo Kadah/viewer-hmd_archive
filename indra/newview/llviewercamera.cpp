@@ -536,7 +536,12 @@ BOOL LLViewerCamera::projectPosAgentToScreen(const LLVector3 &pos_agent, LLCoord
 	}
 
 	S32	viewport[4];
+#if LLHMD_DK1
     gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? useHMDEyeWidth ? gHMD.getHMDEyeWidth() : gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
+#else
+    //gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
+    gViewerWindow->getWorldViewportRaw(viewport); // , gHMD.isHMDMode() ? useHMDEyeWidth ? gHMD.getHMDEyeWidth() : gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
+#endif
 	F64 mdlv[16];
 	F64 proj[16];
 	for (U32 i = 0; i < 16; i++)
@@ -643,7 +648,12 @@ BOOL LLViewerCamera::projectPosAgentToScreenEdge(const LLVector3 &pos_agent,
 	}
 
 	S32	viewport[4];
+#if LLHMD_DK1
     gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? useHMDEyeWidth ? gHMD.getHMDEyeWidth() : gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
+#else
+    //gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
+    gViewerWindow->getWorldViewportRaw(viewport);
+#endif
 	GLdouble	x, y, z;			// object's window coords, GL-style
 
 	F64 mdlv[16];

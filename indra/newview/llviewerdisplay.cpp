@@ -672,6 +672,7 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
             if (render_ok)
             {
                 gHMD.setupStereoValues();
+                glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
                 gHMD.setCurrentEye(LLHMD::LEFT_EYE);
                 render_frame(rebuild);
                 gHMD.setCurrentEye(LLHMD::RIGHT_EYE);
@@ -1656,15 +1657,15 @@ void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
         LLGLState::checkTextureChannels();
     }
 
+    if (gHMD.isHMDMode())
+    {
+        gHMD.prerender2DUI();
+    }
     if (gHMD.getCurrentEye() != LLHMD::LEFT_EYE)
     {
         if (gHMD.getCurrentEye() == LLHMD::CENTER_EYE)
         {
             render_hud_elements();  // in-world text, labels, nametags
-        }
-        else
-        {
-            gHMD.prerender2DUI();
         }
         render_hud_attachments();   // huds worn by avatar
 

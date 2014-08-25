@@ -91,7 +91,12 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	
 	F64 winX, winY, winZ;
 	S32	viewport[4];
+#if LLHMD_DK1
     gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
+#else
+    //gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
+    gViewerWindow->getWorldViewportRaw(viewport);
+#endif
 
 	F64 mdlv[16];
 	F64 proj[16];

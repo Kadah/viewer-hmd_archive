@@ -585,6 +585,7 @@ public:
     virtual LLVector3 getCurrentEyePosition(const LLVector3& centerPos) const { return centerPos; }
     virtual LLRenderTarget* getCurrentEyeRT() { return NULL; }
     virtual LLRenderTarget* getEyeRT(U32 eye) { return NULL; }
+    virtual void onViewChange() {}
 };
 
 #endif // LL_LLHMD_H

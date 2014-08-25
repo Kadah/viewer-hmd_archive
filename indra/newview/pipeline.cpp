@@ -11695,15 +11695,16 @@ void LLPipeline::postRender(BOOL writeAlpha)
     //    }
     //}
 
-#if LLHMD_EXPERIMENTAL
-    if (LLRenderTarget::sUseFBO && !gHMD.isHMDMode())
-#else
+#if !LLHMD_EXPERIMENTAL
     if (gHMD.isHMDMode())
     {
         gHMD.flushCurrentEyeRT();
     }
-
+#endif
+#if LLHMD_DK1
     if (LLRenderTarget::sUseFBO && (!gHMD.isHMDMode() || gHMD.getCurrentEye() != LLHMD::LEFT_EYE))
+#else
+    if (LLRenderTarget::sUseFBO && !gHMD.isHMDMode())
 #endif
 	{
         //copy depth buffer from mScreen to framebuffer

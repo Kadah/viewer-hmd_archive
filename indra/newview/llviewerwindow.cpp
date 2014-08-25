@@ -5164,7 +5164,7 @@ BOOL LLViewerWindow::changeDisplaySettings(LLCoordScreen size, BOOL disable_vsyn
 
 F32	LLViewerWindow::getWorldViewAspectRatio() const
 {
-	F32 world_aspect = (F32)getWorldViewWidthRaw() / (F32)getWorldViewHeightRaw();
+    F32 world_aspect = gHMD.isHMDMode() ? gHMD.getAspect() : ((F32)getWorldViewWidthRaw() / (F32)getWorldViewHeightRaw());
 	return world_aspect;
 }
 
@@ -5184,7 +5184,7 @@ void LLViewerWindow::calcDisplayScale()
     else
     {
 	    ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
-	display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+	    display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
     }
 	display_scale *= ui_scale_factor;
 

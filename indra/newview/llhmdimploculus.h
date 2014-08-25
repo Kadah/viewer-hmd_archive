@@ -132,6 +132,8 @@ public:
 
     virtual LLRenderTarget* getCurrentEyeRT();
     virtual LLRenderTarget* getEyeRT(U32 eye);
+    virtual void onViewChange();
+
 
 private:
     BOOL calculateViewportSettings();

@@ -166,10 +166,14 @@ BOOL LLHMDImplOculus::initHMDDevice()
             }
         }
     }
-    gHMD.isHMDConnected(mHMD && (mHMD->HmdCaps & ovrHmdCap_Present) != 0);
-    gHMD.isHMDSensorConnected(mHMD && (mHMD->HmdCaps & (ovrHmdCap_Available | ovrHmdCap_Captured)) != 0);
-    gHMD.isHMDDisplayEnabled(mHMD && mHMD->ProductName && mHMD->ProductName[0] != 0);
-    gHMD.isUsingAppWindow(mHMD && (mHMD->HmdCaps & ovrHmdCap_ExtendDesktop) == 0);
+    BOOL hmdConnected = mHMD && (mHMD->HmdCaps & ovrHmdCap_Present) != 0;
+    gHMD.isHMDConnected(hmdConnected);
+    //BOOL hmdSensor
+    //gHMD.isHMDSensorConnected(mHMD && (mHMD->HmdCaps & (ovrHmdCap_Available | ovrHmdCap_Captured)) != 0);
+    BOOL hmdDisplayEnabled = mHMD && mHMD->ProductName && mHMD->ProductName[0] != 0;
+    gHMD.isHMDDisplayEnabled(hmdDisplayEnabled);
+    BOOL hmdUsingAppWindow = mHMD && (mHMD->HmdCaps & ovrHmdCap_ExtendDesktop) == 0;
+    gHMD.isUsingAppWindow(hmdUsingAppWindow);
     //mStereoConfig.SetStereoMode(OVR::Util::Render::StereoConfig::Stereo_LeftRight_Multipass);
     // if mHMD is gone and we've already created a HMDWindow, then destroy it.
     if (!mHMD && gHMD.isPostDetectionInitialized())
@@ -180,7 +184,7 @@ BOOL LLHMDImplOculus::initHMDDevice()
     {
         gHMD.renderSettingsChanged(TRUE);
     }
-    BOOL res = mHMD != NULL && !gHMD.isUsingDebugHMD();
+    BOOL res = mHMD != NULL; //  && !gHMD.isUsingDebugHMD();
     mCurrentHMDCount = res ? 1 : 0;
     return res;
 }
@@ -225,14 +229,13 @@ BOOL LLHMDImplOculus::postDetectionInit()
     }
     //const OVR::HMDInfo& info = mStereoConfig.GetHMDInfo();
     BOOL isMirror = FALSE;
-#if defined(LL_WINDOWS) || defined(LL_DARWIN)
-    if (gHMD.isUsingAppWindow())
-    {
-        isMirror = TRUE;
-        ovrHmd_AttachToWindow(mHMD, pWin->getPlatformWindow(), NULL, NULL);
-    }
-    else
-#endif
+//#if defined(LL_WINDOWS) || defined(LL_DARWIN)
+//    if (gHMD.isUsingAppWindow())
+//    {
+//        isMirror = TRUE;
+//    }
+//    else
+//#endif
 #if LL_WINDOWS
     if (!pWin->initHMDWindow(mHMD->WindowsPos.x, mHMD->WindowsPos.y, mHMD->Resolution.w, mHMD->Resolution.h, isMirror))
 #elif LL_DARWIN
@@ -250,6 +253,22 @@ BOOL LLHMDImplOculus::postDetectionInit()
     gHMD.isHMDMirror(isMirror);
 
     setCurrentEye(OVR::StereoEye_Center);
+
+#if defined(LL_WINDOWS) || defined(LL_DARWIN)
+    if (gHMD.isHMDMirror())
+    {
+        ovrHmd_AttachToWindow(mHMD, pWin->getPlatformWindow(), NULL, NULL);
+    }
+    else
+    {
+        // Voidpointer082514: the current OVRSDK (0.4.1b) cannot handle attaching the HMD to a secondary window.   Bleh.
+        // For now this hack allows at least some partial functionality by attaching to the main window and always assuming
+        // we're in mirrored mode.
+        //gHMD.setRenderWindowHMD();
+        ovrHmd_AttachToWindow(mHMD, pWin->getPlatformWindow(), NULL, NULL);
+        //gHMD.setRenderWindowMain();
+    }
+#endif
 
     LL_INFOS("HMD") << "HMD Post-Detection Init Success" << LL_ENDL;
 
@@ -287,6 +306,8 @@ void LLHMDImplOculus::onIdle()
         // call every frame, we're basically forced to restart the viewer to detect an HMD or re-detect only when the user tells us to.  Grrrr.  WHY, Oculus, WHYYYYYY???
         // TODO: as a temporary hack, every second or so, call ovrHmd_Detect() and compare the result against the previous.  If they differ, then an HMD has been
         //       attached/detached and we then call ovrHmd_Create or ovrHmdDestroy
+        // Note2: this ends up being VERY slow and jerky as the detect/init takes a long time.  Need to add a way for user to manually tell us when to search for a
+        // HMD
         static const U32 kFramePollInterval = 100;
         if (gFrameCount > 0 && (gFrameCount % kFramePollInterval) == 0)
         {
@@ -309,7 +330,7 @@ void LLHMDImplOculus::onIdle()
         gHMD.isHMDConnected(mHMD && (mHMD->HmdCaps & ovrHmdCap_Present) != 0);
         //gHMD.isHMDSensorConnected(mHMD && (mHMD->HmdCaps & (ovrHmdCap_Available | ovrHmdCap_Captured)) != 0);
         // ovrHmdCap_Available and ovrHmdCap_Captured don't seem to be getting set by the SDK, ignoring for now
-        gHMD.isHMDSensorConnected(mHMD && (mHMD->HmdCaps & ovrHmdCap_Present) != 0);
+        gHMD.isHMDSensorConnected(gHMD.isHMDConnected());
         gHMD.isHMDDisplayEnabled(mHMD && mHMD->ProductName && mHMD->ProductName[0] != 0);
         //if ((!wasHMDConnected && gHMD.isHMDConnected()) || (!wasHMDSensorConnected && gHMD.isHMDSensorConnected()))
         //{
@@ -437,7 +458,7 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
             {
                 mEyeRT[i]->release();
             }
-            if (!mEyeRT[i]->allocate(w, h, GL_RGB, false, false, LLTexUnit::TT_TEXTURE, true))
+            if (!mEyeRT[i]->allocate(w, h, GL_RGBA, false, false, LLTexUnit::TT_TEXTURE, true))
             {
                 LL_WARNS() << "could not allocate Eye RenderTarget for HMD" << LL_ENDL;
                 removeHMDDevice();
@@ -445,10 +466,11 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
             }
         }
         mEyeTexture[eye].OGL.TexId = mEyeRT[i]->isComplete() ? mEyeRT[i]->getTexture() : 0;
+        mEyeTexture[eye].OGL.Header.TextureSize = mEyeRT[i]->isComplete() ? OVR::Sizei(mEyeRT[i]->getWidth(), mEyeRT[i]->getHeight()) : OVR::Sizei(0, 0);
     }
 
     // Calculate HMD Hardware Settings
-    U32 hmdCaps = gSavedSettings.getBOOL("DisableVerticalSync") ? ovrHmdCap_NoVSync : 0;
+    U32 hmdCaps = 0; // gSavedSettings.getBOOL("DisableVerticalSync") ? ovrHmdCap_NoVSync : 0;
     hmdCaps |= gSavedSettings.getBOOL("HMDLowPersistence") ? ovrHmdCap_LowPersistence : 0;
     hmdCaps |= gSavedSettings.getBOOL("HMDUseMotionPrediction") ? ovrHmdCap_DynamicPrediction : 0;
     hmdCaps |= gHMD.isHMDDisplayEnabled() ? 0 : ovrHmdCap_DisplayOff;
@@ -605,7 +627,8 @@ BOOL LLHMDImplOculus::endFrame()
     BOOL res = gHMD.isFrameInProgress();
     if (res)
     {
-        ovrHmd_EndFrame(mHMD, mEyeRenderPose, const_cast<ovrTexture*>(reinterpret_cast<const ovrTexture*>(mEyeTexture)));
+        ovrTexture* t = const_cast<ovrTexture*>(reinterpret_cast<const ovrTexture*>(mEyeTexture));
+        ovrHmd_EndFrame(mHMD, mEyeRenderPose, t);
     }
     gHMD.isFrameInProgress(FALSE);
     return res;
@@ -778,6 +801,24 @@ LLRenderTarget* LLHMDImplOculus::getCurrentEyeRT()
 LLRenderTarget* LLHMDImplOculus::getEyeRT(U32 eye)
 {
     return (eye >= (U32)LLHMD::CENTER_EYE && eye <= (U32)LLHMD::RIGHT_EYE) ? mEyeRT[eye] : NULL;
+}
+
+void LLHMDImplOculus::onViewChange()
+{
+    if (gHMD.isHMDMode() && mHMD)
+    {
+        ovrHmd_DismissHSWDisplay(mHMD);
+        if (!gHMD.isUsingAppWindow() && gHMD.isHMDMirror())
+        {
+            // HACK!  Move main window to HMD
+            LLWindow* windowp = gViewerWindow ? gViewerWindow->getWindow() : NULL;
+            if (windowp)
+            {
+                LLCoordScreen c(mHMD->WindowsPos.x, mHMD->WindowsPos.y);
+                windowp->setPosition(c);
+            }
+        }
+    }
 }
 
 
