@@ -119,6 +119,7 @@ public:
     /*virtual*/ void setHMDMode(BOOL mode, BOOL mirrored, BOOL mainFullScreen, U32 min_width = 0, U32 min_height = 0);
     /*virtual*/ S32 getDisplayCount();
     /*virtual*/ void enableVSync(BOOL b);
+    /*virtual*/ void setBorderStyle(BOOL on);
 
 	static std::vector<std::string> getDynamicFallbackFontList();
 

@@ -720,6 +720,15 @@ void LLHMDImplOculus::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
 }
 
 
+void LLHMDImplOculus::resetOrientation()
+{
+    if (gHMD.isPostDetectionInitialized())
+    {
+        ovrHmd_RecenterPose(mHMD);
+    }
+}
+
+
 void LLHMDImplOculus::getCurrentEyeProjectionOffset(F32 p[4][4]) const
 {
     if (mCurrentEye == (U32)LLHMD::CENTER_EYE)
@@ -781,6 +790,18 @@ void LLHMDImplOculus::getViewportInfo(S32 vp[4]) const
 }
 
 
+S32 LLHMDImplOculus::getViewportWidth() const
+{
+    return gHMD.isPostDetectionInitialized() ? mEyeTexture[getCurrentOVREye()].OGL.Header.RenderViewport.Size.w : 0;
+}
+
+
+S32 LLHMDImplOculus::getViewportHeight() const
+{
+    return gHMD.isPostDetectionInitialized() ? mEyeTexture[getCurrentOVREye()].OGL.Header.RenderViewport.Size.h : 0;
+}
+
+
 F32 LLHMDImplOculus::getCurrentEyeCameraOffset() const
 {
     return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? -mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x : 0.0f;
@@ -803,21 +824,27 @@ LLRenderTarget* LLHMDImplOculus::getEyeRT(U32 eye)
     return (eye >= (U32)LLHMD::CENTER_EYE && eye <= (U32)LLHMD::RIGHT_EYE) ? mEyeRT[eye] : NULL;
 }
 
-void LLHMDImplOculus::onViewChange()
+void LLHMDImplOculus::onViewChange(S32 oldMode)
 {
-    if (gHMD.isHMDMode() && mHMD)
+    if (!mHMD)
     {
-        ovrHmd_DismissHSWDisplay(mHMD);
-        if (!gHMD.isUsingAppWindow() && gHMD.isHMDMirror())
+        return;
+    }
+    if (!gHMD.isUsingAppWindow() && gHMD.isHMDMirror())
+    {
+        LLWindow* windowp = gViewerWindow ? gViewerWindow->getWindow() : NULL;
+        if (gHMD.isHMDMode() && windowp)
         {
             // HACK!  Move main window to HMD
-            LLWindow* windowp = gViewerWindow ? gViewerWindow->getWindow() : NULL;
-            if (windowp)
-            {
-                LLCoordScreen c(mHMD->WindowsPos.x, mHMD->WindowsPos.y);
-                windowp->setPosition(c);
-            }
+            //windowp->setBorderStyle(FALSE);
+            LLCoordScreen c(mHMD->WindowsPos.x, mHMD->WindowsPos.y);
+            windowp->setPosition(c);
+            ovrHmd_DismissHSWDisplay(mHMD);
         }
+        //else if (windowp)
+        //{
+        //    windowp->setBorderStyle(TRUE);
+        //}         
     }
 }
 

@@ -230,6 +230,8 @@ public:
     S32 getHMDHeight() const;
     S32 getHMDUIWidth() const;
     S32 getHMDUIHeight() const;
+    S32 getHMDViewportWidth() const;
+    S32 getHMDViewportHeight() const;
 
     F32 getPhysicalScreenWidth() const;
     F32 getPhysicalScreenHeight() const; 
@@ -327,7 +329,7 @@ public:
 
     //const char* getLatencyTesterResults();
 
-    void onViewChange();
+    void onViewChange(S32 oldMode);
 
     std::string getUIShapeName() const;
     F32 getUISurfaceArcHorizontal() const { return mUIShape.mArcHorizontal; }
@@ -533,6 +535,8 @@ public:
     virtual void setCurrentEye(U32 eye) {}
     virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h) const { x = y = w = h = 0; }
     virtual void getViewportInfo(S32 vp[4]) const { vp[0] = vp[1] = vp[2] = vp[3] = 0; }
+    virtual S32 getViewportWidth() const { return 0; }
+    virtual S32 getViewportHeight() const { return 0; }
 
     virtual S32 getHMDWidth() const { return kDefaultHResolution; }
     virtual S32 getHMDEyeWidth() const { return (kDefaultHResolution / 2); }
@@ -585,7 +589,7 @@ public:
     virtual LLVector3 getCurrentEyePosition(const LLVector3& centerPos) const { return centerPos; }
     virtual LLRenderTarget* getCurrentEyeRT() { return NULL; }
     virtual LLRenderTarget* getEyeRT(U32 eye) { return NULL; }
-    virtual void onViewChange() {}
+    virtual void onViewChange(S32 oldMode) {}
 };
 
 #endif // LL_LLHMD_H

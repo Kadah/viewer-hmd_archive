@@ -4333,6 +4333,20 @@ void LLWindowWin32::enableVSync(BOOL b)
 	}
 }
 
+void LLWindowWin32::setBorderStyle(BOOL on)
+{
+    if (on)
+    {
+        SetWindowLong(mWindowHandle[0], GWL_STYLE, mDwStyle[0]);
+        SetWindowLong(mWindowHandle[0], GWL_EXSTYLE, mDwExStyle[0]);
+    }
+    else
+    {
+        SetWindowLong(mWindowHandle[0], GWL_STYLE, mDwStyle[0] & ~(WS_CAPTION | WS_THICKFRAME));
+        SetWindowLong(mWindowHandle[0], GWL_EXSTYLE, mDwExStyle[0] & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE));
+    }
+}
+
 //static
 std::vector<std::string> LLWindowWin32::getDynamicFallbackFontList()
 {

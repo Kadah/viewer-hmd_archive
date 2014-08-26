@@ -184,7 +184,6 @@ extern LLGLSLShader			gDebugProgram;
 extern LLGLSLShader			gClipProgram;
 extern LLGLSLShader			gDownsampleDepthProgram;
 extern LLGLSLShader			gDownsampleDepthRectProgram;
-extern LLGLSLShader			gBarrelDistortProgram;
 extern LLGLSLShader			gBenchmarkProgram;
 
 //output tex0[tc0] + tex1[tc1]

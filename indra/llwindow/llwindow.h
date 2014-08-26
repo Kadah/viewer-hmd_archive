@@ -176,6 +176,7 @@ public:
     virtual void setHMDMode(BOOL mode, BOOL mirrored, BOOL mainFullScreen, U32 min_width = 0, U32 min_height = 0) {}
     virtual S32 getDisplayCount() { return 1; };
     virtual void enableVSync(BOOL b) {}
+    virtual void setBorderStyle(BOOL on) {}
 
     // See note in llwindowmacosx.h for why this method exists
     virtual BOOL getFramePos(LLCoordScreen* pos) { return getPosition(pos); }

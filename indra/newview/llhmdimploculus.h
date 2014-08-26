@@ -74,6 +74,8 @@ public:
     }
     virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h) const;
     virtual void getViewportInfo(S32 vp[4]) const;
+    virtual S32 getViewportWidth() const;
+    virtual S32 getViewportHeight() const;
     S32 getHMDWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w : kDefaultHResolution; }
     S32 getHMDEyeWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w / 2.0f : (kDefaultHResolution / 2); }
     S32 getHMDHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
@@ -113,7 +115,7 @@ public:
     //virtual void addHeadPitchCorrection(LLQuaternion quat) { mHeadPitchCorrection *= quat; mHeadPitchCorrection.normalize(); }
     //virtual void resetHeadPitchCorrection() { mHeadPitchCorrection = LLQuaternion::DEFAULT; }
 
-    void resetOrientation() { if (gHMD.isPostDetectionInitialized()) { /* mSensorFusion->Reset(); */ } }
+    void resetOrientation();
 
     F32 getOrthoPixelOffset() const { return gHMD.isPostDetectionInitialized() ? mOrthoPixelOffset[mCurrentEye] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)OVR::StereoEye_Left ? 1.0f : -1.0f)); }
 
@@ -132,7 +134,7 @@ public:
 
     virtual LLRenderTarget* getCurrentEyeRT();
     virtual LLRenderTarget* getEyeRT(U32 eye);
-    virtual void onViewChange();
+    virtual void onViewChange(S32 oldMode);
 
 
 private:

@@ -11636,65 +11636,6 @@ void LLPipeline::postRender(BOOL writeAlpha)
         return;
     }
 
-    //if (gHMD.getCurrentEye() == LLHMD::LEFT_EYE)
-    //{
-    //    if (pLeft && doFlush)
-    //    {
-    //        pLeft->flush();
-    //    }
-    //}
-    //else if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
-    //{
-    //    if (pRight && doFlush)
-    //    {
-    //        pRight->flush();
-    //    }
-    //    gViewerWindow->setup3DViewport();
-
-    //    LLGLSLShader* distortProgram = &gBarrelDistortProgram;
-    //    if (distortProgram)
-    //    {
-    //        F32 as = (F32)gHMD.getHMDEyeWidth() / (F32)gHMD.getHMDHeight();
-    //        F32 scaleFactor = 1.0f / gHMD.getDistortionScale();
-
-    //        distortProgram->bind();
-    //        distortProgram->uniform2f(LLStaticHashedString("ScreenCenter"), 0.5f, 0.5f);
-    //        distortProgram->uniform2f(LLStaticHashedString("ScaleIn"), 2.0f, 2.0f / as);
-    //        distortProgram->uniform2f(LLStaticHashedString("ScaleOut"), 0.5f * scaleFactor, 0.5f * scaleFactor * as);
-    //        // We are using 1/4 of DistortionCenter offset value here, since it is relative to [-1,1] range that gets mapped to [0, 0.5].
-    //        distortProgram->uniform2f(LLStaticHashedString("LensCenter"), (1.0f + gHMD.getXCenterOffset()) * 0.5f, 0.5f);
-    //        distortProgram->uniform4fv(LLStaticHashedString("HmdWarpParam"), 1, gHMD.getDistortionConstants().mV);
-    //        gGL.setColorMask(true, writeAlpha);
-    //        gGL.color4f(1,1,1,1);
-    //        if (pLeft)
-    //        {
-    //            gGL.getTexUnit(0)->bind(pLeft);
-    //            gGL.begin(LLRender::TRIANGLE_STRIP);
-    //            //bottom left, bottom right, top left, top right
-    //            gGL.texCoord2f(0, 0);       gGL.vertex2f(-1, -1);
-    //            gGL.texCoord2f(1, 0);       gGL.vertex2f(0, -1);
-    //            gGL.texCoord2f(0, 1);       gGL.vertex2f(-1,1);
-    //            gGL.texCoord2f(1, 1);       gGL.vertex2f(0,1);
-    //            gGL.end();
-    //        }
-
-    //        distortProgram->uniform2f(LLStaticHashedString("LensCenter"), (1.0f - gHMD.getXCenterOffset()) * 0.5f, 0.5f);
-    //        if (pRight)
-    //        {
-    //            gGL.getTexUnit(0)->bind(pRight);
-    //            gGL.begin(LLRender::TRIANGLE_STRIP);
-    //            //bottom left, bottom right, top left, top right
-    //            gGL.texCoord2f(0, 0);       gGL.vertex2f(0, -1);
-    //            gGL.texCoord2f(1, 0);       gGL.vertex2f(1, -1);
-    //            gGL.texCoord2f(0, 1);       gGL.vertex2f(0,1);
-    //            gGL.texCoord2f(1, 1);       gGL.vertex2f(1,1);
-    //            gGL.end();
-    //        }
-    //        gGL.flush();
-    //        distortProgram->unbind();
-    //    }
-    //}
-
 #if !LLHMD_EXPERIMENTAL
     if (gHMD.isHMDMode())
     {

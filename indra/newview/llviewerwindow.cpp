@@ -3581,7 +3581,11 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 {
 	// Store last mouse location.
 	// If mouse leaves window, pretend last point was on edge of window
-
+    if (gAgentCamera.cameraMouselook())
+    {
+        LL_INFOS("HMD") << "point == [" << point.mX << "," << point.mY << "], mLastMousePoint == [" << mLastMousePoint.mX << "," << mLastMousePoint.mY << "]" << LL_ENDL;
+    }
+    
 	mLastMousePoint = mCurrentMousePoint;
 
 	if (point.mX < 0)

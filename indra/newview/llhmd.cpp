@@ -564,7 +564,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         }
                         windowp->enableVSync(TRUE);
                         windowp->setHMDMode(TRUE, gHMD.isUsingAppWindow(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-                        onViewChange();
+                        onViewChange(oldMode);
                     }
                     break;
                 case RenderMode_ScreenStereo:
@@ -575,7 +575,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         windowp->setHMDMode(TRUE, isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         if (isMainFullScreen())
                         {
-                            onViewChange();
+                            onViewChange(oldMode);
                         }
                         else
                         {
@@ -607,6 +607,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 #endif
                         if (!isMainFullScreen())
                         {
+                            onViewChange(oldMode);
 #if LL_DARWIN
                             windowp->setSize(mMainClientSize);
 #else
@@ -685,7 +686,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         pCamera->setAspect(gHMD.getAspect());
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
-                        onViewChange();
+                        onViewChange(oldMode);
                     }
                     break;
                 case RenderMode_ScreenStereo:
@@ -697,7 +698,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
                         if (isMainFullScreen() || isHMDMirror())
                         {
-                            onViewChange();
+                            onViewChange(oldMode);
                         }
                         else
                         {
@@ -955,6 +956,8 @@ S32 LLHMD::getHMDEyeWidth() const { return mImpl ? mImpl->getHMDEyeWidth() : 0; 
 S32 LLHMD::getHMDHeight() const { return mImpl ? mImpl->getHMDHeight() : 0; }
 S32 LLHMD::getHMDUIWidth() const { return mImpl ? mImpl->getHMDUIWidth() : 0; }
 S32 LLHMD::getHMDUIHeight() const { return mImpl ? mImpl->getHMDUIHeight() : 0; }
+S32 LLHMD::getHMDViewportWidth() const { return mImpl ? mImpl->getViewportWidth() : 0; }
+S32 LLHMD::getHMDViewportHeight() const { return mImpl ? mImpl->getViewportHeight() : 0; }
 F32 LLHMD::getPhysicalScreenWidth() const { return mImpl ? mImpl->getPhysicalScreenWidth() : 0.0f; }
 F32 LLHMD::getPhysicalScreenHeight() const { return mImpl ? mImpl->getPhysicalScreenHeight() : 0.0f; }
 F32 LLHMD::getInterpupillaryOffset() const { return mImpl ? mImpl->getInterpupillaryOffset() : 0.0f; }
@@ -1268,22 +1271,20 @@ void LLHMD::saveSettings()
 
 //const char* LLHMD::getLatencyTesterResults() { return mImpl ? mImpl->getLatencyTesterResults() : NULL; }
 
-void LLHMD::onViewChange()
+void LLHMD::onViewChange(S32 oldMode)
 {
+    if (mImpl)
+    {
+        mImpl->onViewChange(oldMode);
+    }
     if (gHMD.isHMDMode())
     {
         mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
 #if LLHMD_DK1
         gViewerWindow->reshape(gHMD.getHMDWidth(), gHMD.getHMDHeight());
 #else
-        S32 vp[4];
-        mImpl->getViewportInfo(vp);
-        gViewerWindow->reshape(vp[2], vp[3]);
+        gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight());
 #endif
-    }
-    if (mImpl)
-    {
-        mImpl->onViewChange();
     }
 }
 
@@ -1394,7 +1395,11 @@ void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
         GLdouble x, y, z;
         F64 mdlv[16], proj[16];
         S32 vp[4];
+#if LLHMD_DK1
         gViewerWindow->getWorldViewportRaw(vp, getHMDEyeWidth(), getHMDHeight());
+#else
+        gViewerWindow->getWorldViewportRaw(vp, getHMDViewportWidth(), gHMD.getHMDViewportHeight());
+#endif
         for (U32 i = 0; i < 16; i++)
         {
             mdlv[i] = (F64)mBaseModelView[i];
@@ -1580,8 +1585,13 @@ void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye)
 
 void LLHMD::setup2DRender()
 {
+#if LLHMD_DK1
     gl_state_for_2d(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), 0, gHMD.getOrthoPixelOffset());
     gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDEyeWidth(), gHMD.getHMDHeight());
+#else
+    gl_state_for_2d(gHMD.getHMDViewportWidth(), gHMD.getHMDViewportHeight(), 0, gHMD.getOrthoPixelOffset());
+    gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDViewportWidth(), gHMD.getHMDViewportHeight());
+#endif
     glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 
@@ -1822,7 +1832,11 @@ void LLHMD::render3DUI()
             }
             LLViewerDisplay::push_state_gl();
             gHMD.setup2DRender();
+#if LLHMD_DK1
             gun->drawCrosshairs((gHMD.getHMDEyeWidth() / 2), gHMD.getHMDHeight() / 2);
+#else
+            gun->drawCrosshairs((gHMD.getHMDViewportWidth() / 2), gHMD.getHMDViewportHeight() / 2);
+#endif
             LLViewerDisplay::pop_state_gl();
             if (LLGLSLShader::sNoFixedFunction)
             {
