@@ -728,7 +728,7 @@ LLVector3 LLHMDImplOculus::getCurrentEyeOffset(const LLVector3& centerPos) const
 
 LLVector3 LLHMDImplOculus::getEyePosition() const
 {
-    return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? mEyePos : LLVector3::zero;
+    return (gHMD.isPostDetectionInitialized()) ? mEyePos : LLVector3::zero;
 }
 
 

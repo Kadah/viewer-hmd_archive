@@ -1442,7 +1442,11 @@ void LLAgentCamera::updateCamera()
 	    LLQuaternion p(gHMD.getHMDPitch(), LLVector3::y_axis);
 	    LLQuaternion r(gHMD.getHMDRoll(), LLVector3::x_axis);
 
-        mCameraPositionAgent += (gHMD.getEyePosition() * gHMD.getAgentRotation());
+        LLVector3 hmdOffset = gHMD.getEyePosition();
+
+        LLVector3 rotOffset = hmdOffset * focusPitchAndYaw;
+
+        mCameraPositionAgent += rotOffset;
 
         LLVector3 original_camera_up_vector = mCameraUpVector;
 		mCameraUpVector = LLVector3::z_axis * r * y * focusPitchAndYaw;
