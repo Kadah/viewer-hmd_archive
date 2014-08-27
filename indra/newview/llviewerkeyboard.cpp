@@ -766,6 +766,12 @@ BOOL LLViewerKeyboard::modeFromString(const std::string& string, S32 *mode)
 
 BOOL LLViewerKeyboard::handleKey(KEY translated_key,  MASK translated_mask, BOOL repeated)
 {
+    if (gHMD.isHMDMode() && gHMD.isHSWShowing())
+    {
+        gHMD.showHSW(FALSE);
+        return FALSE;
+    }
+
 	LL_DEBUGS("Keyboard Handling") << "Handling key " << translated_key << LL_ENDL;
 	// check for re-map
 	EKeyboardMode mode = gViewerKeyboard.getMode();

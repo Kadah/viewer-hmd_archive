@@ -1273,10 +1273,6 @@ void LLHMD::saveSettings()
 
 void LLHMD::onViewChange(S32 oldMode)
 {
-    if (mImpl)
-    {
-        mImpl->onViewChange(oldMode);
-    }
     if (gHMD.isHMDMode())
     {
         mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
@@ -1285,6 +1281,10 @@ void LLHMD::onViewChange(S32 oldMode)
 #else
         gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight());
 #endif
+    }
+    if (mImpl)
+    {
+        mImpl->onViewChange(oldMode);
     }
 }
 
@@ -1902,4 +1902,13 @@ BOOL LLHMD::beginFrame()
 BOOL LLHMD::endFrame()
 {
     return mImpl ? mImpl->endFrame() : FALSE;
+}
+
+
+void LLHMD::showHSW(BOOL show)
+{
+    if (mImpl)
+    {
+        mImpl->showHSW(show);
+    }
 }

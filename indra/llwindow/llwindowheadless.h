@@ -88,7 +88,7 @@ public:
 	/*virtual*/ F32 getPixelAspectRatio() { return 1.0f; };
 	/*virtual*/ void setNativeAspectRatio(F32 ratio) {}
 
-	/*virtual*/ void *getPlatformWindow() { return 0; };
+	/*virtual*/ void *getPlatformWindow(S32 idx = -1) { return 0; };
 	/*virtual*/ void bringToFront() {};
 	
 	LLWindowHeadless(LLWindowCallbacks* callbacks,

@@ -1713,9 +1713,12 @@ BOOL LLWindowWin32::setCursorPosition(const LLCoordWindow position)
 		return FALSE;
 	}
 
+    LLCoordGL gl_coord = position.convert();
+    adjustPosForHMDScaling(gl_coord);
+
 	// Inform the application of the new mouse position (needed for per-frame
 	// hover/picking to function).
-	mCallbacks->handleMouseMove(this, position.convert(), (MASK)0);
+	mCallbacks->handleMouseMove(this, gl_coord, (MASK)0);
 	
 	// DEV-18951 VWR-8524 Camera moves wildly when alt-clicking.
 	// Because we have preemptively notified the application of the new
@@ -3398,9 +3401,10 @@ BOOL LLWindowWin32::dialogColorPicker( F32 *r, F32 *g, F32 *b )
 	return (retval);
 }
 
-void *LLWindowWin32::getPlatformWindow()
+void *LLWindowWin32::getPlatformWindow(S32 idx)
 {
-	return (void*)mWindowHandle[mCurRCIdx];
+    idx = (idx < 0) ? mCurRCIdx : idx > 0 ? mWindowHandle[1] == NULL ? 0 : 1 : 0;
+    return (void*)mWindowHandle[idx];
 }
 
 void LLWindowWin32::bringToFront()
@@ -4024,7 +4028,7 @@ BOOL LLWindowWin32::testMainDisplayIsMirrored(S32 left, S32 top, S32 width, S32 
 }
 
 
-BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror)
+BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL forceMirror, BOOL& isMirror)
 {
     mHMDWidth = width;
     mHMDHeight = height;
@@ -4068,9 +4072,7 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL
         mPostQuit = TRUE;
     }
 
-    // Voidpointer082514: HACK HACK HACK.   Until the SDK actually handles attaching to a non-main window and/or openGL/Direct mode, this hack
-    // allows things to partially work, at least.
-    mHMDMirrored = isMirror = true; // testMainDisplayIsMirrored(left, top, width, height);
+    mHMDMirrored = isMirror = forceMirror || testMainDisplayIsMirrored(left, top, width, height);
     if (isMirror)
     {
         // don't create a window in this case since we just want to use the "advanced" HMD mode in this case
@@ -4333,17 +4335,20 @@ void LLWindowWin32::enableVSync(BOOL b)
 	}
 }
 
-void LLWindowWin32::setBorderStyle(BOOL on)
+void LLWindowWin32::setBorderStyle(BOOL on, S32 idx)
 {
+    idx = (idx < 0) ? mCurRCIdx : idx > 0 ? mWindowHandle[1] == NULL ? 0 : 1 : 0;
     if (on)
     {
-        SetWindowLong(mWindowHandle[0], GWL_STYLE, mDwStyle[0]);
-        SetWindowLong(mWindowHandle[0], GWL_EXSTYLE, mDwExStyle[0]);
+        SetWindowLong(mWindowHandle[idx], GWL_STYLE, mDwStyle[idx]);
+        SetWindowLong(mWindowHandle[idx], GWL_EXSTYLE, mDwExStyle[idx]);
+        SetWindowPos(mWindowHandle[idx], HWND_TOP, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
     }
     else
     {
-        SetWindowLong(mWindowHandle[0], GWL_STYLE, mDwStyle[0] & ~(WS_CAPTION | WS_THICKFRAME));
-        SetWindowLong(mWindowHandle[0], GWL_EXSTYLE, mDwExStyle[0] & ~(WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE));
+        SetWindowLong(mWindowHandle[idx], GWL_STYLE, mDwStyle[idx] & ~(WS_OVERLAPPEDWINDOW));
+        SetWindowLong(mWindowHandle[idx], GWL_EXSTYLE, mDwExStyle[idx] & ~(WS_EX_OVERLAPPEDWINDOW | WS_EX_STATICEDGE));
+        SetWindowPos(mWindowHandle[idx], HWND_TOP, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
     }
 }
 

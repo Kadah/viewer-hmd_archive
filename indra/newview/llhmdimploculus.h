@@ -135,7 +135,7 @@ public:
     virtual LLRenderTarget* getCurrentEyeRT();
     virtual LLRenderTarget* getEyeRT(U32 eye);
     virtual void onViewChange(S32 oldMode);
-
+    virtual void showHSW(BOOL show);
 
 private:
     BOOL calculateViewportSettings();

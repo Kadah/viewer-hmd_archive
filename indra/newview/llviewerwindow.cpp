@@ -2268,7 +2268,7 @@ void LLViewerWindow::reshape(S32 width, S32 height)
 		if (height > 0)
 		{ 
 			LLViewerCamera::getInstance()->setViewHeightInPixels( mWorldViewRectRaw.getHeight() );
-			LLViewerCamera::getInstance()->setAspect( gHMD.isHMDMode() ? gHMD.getAspect() : getWorldViewAspectRatio() );
+			LLViewerCamera::getInstance()->setAspect(getWorldViewAspectRatio());
 		}
 
 		calcDisplayScale();
@@ -3567,7 +3567,7 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 		LLViewerDisplay::gResizeScreenTexture = TRUE;
         LLViewerCamera* camera = LLViewerCamera::getInstance();
 		camera->setViewHeightInPixels( mWorldViewRectRaw.getHeight() );
-		camera->setAspect( gHMD.isHMDMode() ? gHMD.getAspect() : getWorldViewAspectRatio() );
+		camera->setAspect(getWorldViewAspectRatio());
 
 		LLRect old_world_rect_scaled = mWorldViewRectScaled;
 		mWorldViewRectScaled = calcScaledRect(mWorldViewRectRaw, mDisplayScale);
@@ -3581,11 +3581,6 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 {
 	// Store last mouse location.
 	// If mouse leaves window, pretend last point was on edge of window
-    if (gAgentCamera.cameraMouselook())
-    {
-        LL_INFOS("HMD") << "point == [" << point.mX << "," << point.mY << "], mLastMousePoint == [" << mLastMousePoint.mX << "," << mLastMousePoint.mY << "]" << LL_ENDL;
-    }
-    
 	mLastMousePoint = mCurrentMousePoint;
 
 	if (point.mX < 0)
@@ -4700,7 +4695,7 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 	{
 		mWorldViewRectRaw = window_rect;
 		LLViewerCamera::getInstance()->setViewHeightInPixels( mWorldViewRectRaw.getHeight() );
-		LLViewerCamera::getInstance()->setAspect( gHMD.isHMDMode() ? gHMD.getAspect() : getWorldViewAspectRatio() );
+		LLViewerCamera::getInstance()->setAspect(getWorldViewAspectRatio());
 		scratch_space.flush();
 		scratch_space.release();
 		gPipeline.allocateScreenBuffer(original_width, original_height);
@@ -4743,7 +4738,7 @@ void LLViewerWindow::drawMouselookInstructions()
 		LLFontGL::NORMAL,LLFontGL::DROP_SHADOW);
 }
 
-void* LLViewerWindow::getPlatformWindow() const { return mWindow->getPlatformWindow(); }
+void* LLViewerWindow::getPlatformWindow(S32 idx) const { return mWindow->getPlatformWindow(idx); }
 void* LLViewerWindow::getMediaWindow() const { return mWindow->getMediaWindow(); }
 void LLViewerWindow::focusClient() const { return mWindow->focusClient(); }
 LLRootView*	LLViewerWindow::getRootView() const { return mRootView; }

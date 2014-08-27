@@ -254,7 +254,7 @@ public:
     S32             getWindowBottomRaw() const;
 
 	LLWindow*		getWindow()			const	{ return mWindow; }
-	void*			getPlatformWindow() const;
+	void*			getPlatformWindow(S32 idx = 0) const;
 	void*			getMediaWindow() 	const;
 	void			focusClient()		const;
 

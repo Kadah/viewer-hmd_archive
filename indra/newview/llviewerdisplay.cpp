@@ -672,7 +672,6 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
             if (render_ok)
             {
                 gHMD.setupStereoValues();
-                glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
                 gHMD.setCurrentEye(LLHMD::LEFT_EYE);
                 render_frame(rebuild);
                 gHMD.setCurrentEye(LLHMD::RIGHT_EYE);

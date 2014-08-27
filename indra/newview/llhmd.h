@@ -99,6 +99,8 @@ public:
         kFlag_TimewarpEnabled           = 1 << 21,
         kFlag_FrameTimewarped           = 1 << 22,
         kFlag_DynamicResolutionScaling  = 1 << 23,
+        kFlag_HSWShowing                = 1 << 24,
+        kFlag_MirrorHack                = 1 << 25,  // temp until SDK supports attaching to a secondary window
         //kFlag_LowPersistence            = 1 << 20,
     };
 
@@ -199,6 +201,10 @@ public:
     void isFrameTimewarped(BOOL b) { if (b) { mFlags |= kFlag_FrameTimewarped; } else { mFlags &= ~kFlag_FrameTimewarped; } }
     BOOL useDynamicResolutionScaling() const { return ((mFlags & kFlag_DynamicResolutionScaling) != 0) ? TRUE : FALSE; }
     void useDynamicResolutionScaling(BOOL b) { if (b) { mFlags |= kFlag_DynamicResolutionScaling; } else { mFlags &= ~kFlag_DynamicResolutionScaling; } }
+    BOOL isHSWShowing() const { return ((mFlags & kFlag_HSWShowing) != 0) ? TRUE : FALSE; }
+    void isHSWShowing(BOOL b) { if (b) { mFlags |= kFlag_HSWShowing; } else { mFlags &= ~kFlag_HSWShowing; } }
+    BOOL useMirrorHack() const { return ((mFlags & kFlag_MirrorHack) != 0) ? TRUE : FALSE; }
+    void useMirrorHack(BOOL b) { if (b) { mFlags |= kFlag_MirrorHack; } else { mFlags &= ~kFlag_MirrorHack; } }
 
     // True if render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
@@ -421,6 +427,7 @@ public:
     void flushCurrentEyeRT();
     void releaseAllEyeRT();
     void setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye);
+    void showHSW(BOOL show);
 
     static void onChangeHMDAdvancedMode();
     static void onChangeInterpupillaryDistance();
@@ -590,6 +597,7 @@ public:
     virtual LLRenderTarget* getCurrentEyeRT() { return NULL; }
     virtual LLRenderTarget* getEyeRT(U32 eye) { return NULL; }
     virtual void onViewChange(S32 oldMode) {}
+    virtual void showHSW(BOOL show) {}
 };
 
 #endif // LL_LLHMD_H

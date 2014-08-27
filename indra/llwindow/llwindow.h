@@ -150,7 +150,7 @@ public:
 	virtual BOOL dialogColorPicker(F32 *r, F32 *g, F32 *b);
 
 // return a platform-specific window reference (HWND on Windows, WindowRef on the Mac, Gtk window on Linux)
-	virtual void *getPlatformWindow() = 0;
+	virtual void *getPlatformWindow(S32 idx = -1) = 0;
 
 // return the platform-specific window reference we use to initialize llmozlib (HWND on Windows, WindowRef on the Mac, Gtk window on Linux)
 	virtual void *getMediaWindow();
@@ -168,7 +168,7 @@ public:
 	virtual LLSD getNativeKeyData() { return LLSD::emptyMap(); }
 
     // HMD support
-    virtual BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror) { isMirror = FALSE; return FALSE; }
+    virtual BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL forceMirror, BOOL& isMirror) { isMirror = FALSE; return FALSE; }
     virtual BOOL destroyHMDWindow() { return FALSE; };
     S32 getRenderWindow(BOOL& fullScreen) const { fullScreen = mFullscreen; return mCurRCIdx; }
     virtual BOOL setRenderWindow(S32 idx, BOOL fullscreen) { return FALSE; };
@@ -176,7 +176,7 @@ public:
     virtual void setHMDMode(BOOL mode, BOOL mirrored, BOOL mainFullScreen, U32 min_width = 0, U32 min_height = 0) {}
     virtual S32 getDisplayCount() { return 1; };
     virtual void enableVSync(BOOL b) {}
-    virtual void setBorderStyle(BOOL on) {}
+    virtual void setBorderStyle(BOOL on, S32 idx = -1) {}
 
     // See note in llwindowmacosx.h for why this method exists
     virtual BOOL getFramePos(LLCoordScreen* pos) { return getPosition(pos); }

@@ -2584,7 +2584,7 @@ void LLWindowSDL::spawnWebBrowser(const std::string& escaped_url, bool async)
 }
 
 
-void *LLWindowSDL::getPlatformWindow()
+void *LLWindowSDL::getPlatformWindow(S32 idx)
 {
 #if LL_GTK && LL_LLMOZLIB_ENABLED
 	if (LLWindowSDL::ll_try_gtk_init())

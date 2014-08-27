@@ -118,7 +118,7 @@ public:
 
 	/*virtual*/ BOOL dialogColorPicker(F32 *r, F32 *g, F32 *b);
 
-	/*virtual*/ void *getPlatformWindow();
+	/*virtual*/ void *getPlatformWindow(S32 idx = -1);
 	/*virtual*/ void bringToFront();
 
 	/*virtual*/ void spawnWebBrowser(const std::string& escaped_url, bool async);

@@ -1973,10 +1973,11 @@ BOOL LLWindowMacOSX::dialogColorPicker( F32 *r, F32 *g, F32 *b)
 	return (retval);
 }
 
-void *LLWindowMacOSX::getPlatformWindow()
+void *LLWindowMacOSX::getPlatformWindow(S32 idx)
 {
 	// NOTE: this will be NULL in fullscreen mode.  Plan accordingly.
-	return (void*)(mWindow[mCurRCIdx]);
+    idx = (idx < 0) ? mCurRCIdx : idx > 0 ? mWindow[1] == NULL ? 0 : 1 : 0;
+	return (void*)(mWindow[idx]);
 }
 
 // get a double value from a dictionary
@@ -2063,7 +2064,7 @@ MASK LLWindowMacOSX::modifiersToMask(S16 modifiers)
 
 // HMD Support
 /*virtual*/
-BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror)
+BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL forceMirror, BOOL& isMirror)
 {
     LL_INFOS("Window") << "initHMDWindow" << LL_ENDL;
     destroyHMDWindow();
@@ -2087,7 +2088,7 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOO
         return FALSE;
     }
 
-    isMirror = CGDisplayIsInMirrorSet((CGDirectDisplayID)left);
+    isMirror = forceMirror || CGDisplayIsInMirrorSet((CGDirectDisplayID)left);
     if (isMirror)
     {
         // don't create a window in this case since we just want to use the "advanced" HMD mode in this case

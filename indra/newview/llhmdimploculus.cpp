@@ -227,19 +227,18 @@ BOOL LLHMDImplOculus::postDetectionInit()
     {
         gHMD.isMainFullScreen(mainFullScreen);
     }
-    //const OVR::HMDInfo& info = mStereoConfig.GetHMDInfo();
+
+    // NOTE:  as of OVR SDK 0.4.1b:
+    //   - direct mode is detected, but will not render to the HMD with opengl
+    //   - extended mode cannot render to a secondary window
+    //   Thus, the only way things work is in extended mode and to render to the main window (i.e. mirroring) and then move the window to the HMD.  *sigh*
+    gHMD.useMirrorHack(TRUE);
+    //gHMD.useMirrorHack(gHMD.isUsingAppWindow());
     BOOL isMirror = FALSE;
-//#if defined(LL_WINDOWS) || defined(LL_DARWIN)
-//    if (gHMD.isUsingAppWindow())
-//    {
-//        isMirror = TRUE;
-//    }
-//    else
-//#endif
 #if LL_WINDOWS
-    if (!pWin->initHMDWindow(mHMD->WindowsPos.x, mHMD->WindowsPos.y, mHMD->Resolution.w, mHMD->Resolution.h, isMirror))
+    if (!pWin->initHMDWindow(mHMD->WindowsPos.x, mHMD->WindowsPos.y, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
 #elif LL_DARWIN
-    if (!pWin->initHMDWindow(info.DisplayId, 0, mHMD->Resolution.w, mHMD->Resolution.h, isMirror))
+    if (!pWin->initHMDWindow(info.DisplayId, 0, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
 #else
     if (FALSE)
 #endif
@@ -248,31 +247,33 @@ BOOL LLHMDImplOculus::postDetectionInit()
         return FALSE;
     }
 
-    gHMD.isPostDetectionInitialized(TRUE);
-    gHMD.failedInit(FALSE);
-    gHMD.isHMDMirror(isMirror);
-
-    setCurrentEye(OVR::StereoEye_Center);
-
 #if defined(LL_WINDOWS) || defined(LL_DARWIN)
-    if (gHMD.isHMDMirror())
+    BOOL attach = FALSE;
+    if (isMirror)
     {
-        ovrHmd_AttachToWindow(mHMD, pWin->getPlatformWindow(), NULL, NULL);
+        attach = (BOOL)ovrHmd_AttachToWindow(mHMD, pWin->getPlatformWindow(0), NULL, NULL);
     }
     else
     {
-        // Voidpointer082514: the current OVRSDK (0.4.1b) cannot handle attaching the HMD to a secondary window.   Bleh.
-        // For now this hack allows at least some partial functionality by attaching to the main window and always assuming
-        // we're in mirrored mode.
-        //gHMD.setRenderWindowHMD();
-        ovrHmd_AttachToWindow(mHMD, pWin->getPlatformWindow(), NULL, NULL);
-        //gHMD.setRenderWindowMain();
+        attach = (BOOL)ovrHmd_AttachToWindow(mHMD, pWin->getPlatformWindow(1), NULL, NULL);
     }
 #endif
+    if (attach)
+    {
+        gHMD.isPostDetectionInitialized(TRUE);
+        gHMD.failedInit(FALSE);
+        gHMD.isHMDMirror(isMirror);
+        gHMD.isHSWShowing(TRUE);
 
-    LL_INFOS("HMD") << "HMD Post-Detection Init Success" << LL_ENDL;
+        setCurrentEye(OVR::StereoEye_Center);
 
-    return TRUE;
+        LL_INFOS("HMD") << "HMD Post-Detection Init Success" << LL_ENDL;
+    }
+    else
+    {
+        LL_INFOS("HMD") << "HMD Post-Detection attach to window failed!" << LL_ENDL;
+    }
+    return attach;
 }
 
 
@@ -477,11 +478,15 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     hmdCaps |= (gHMD.isUsingAppWindow() && !gHMD.isHMDMirror()) ? ovrHmdCap_NoMirrorToWindow : 0;
     ovrHmd_SetEnabledCaps(mHMD, hmdCaps);
 
-    ovrRenderAPIConfig config;
-    config.Header.API = ovrRenderAPI_OpenGL;
-    config.Header.RTSize.w = gHMD.isUsingAppWindow() ? gViewerWindow->getWindowWidthRaw() : mHMD->Resolution.w;
-    config.Header.RTSize.h = gHMD.isUsingAppWindow() ? gViewerWindow->getWindowHeightRaw() : mHMD->Resolution.h;
-    config.Header.Multisample = gGLManager.mHasTextureMultisample;
+    ovrGLConfig config;
+    config.OGL.Header.API = ovrRenderAPI_OpenGL;
+    config.OGL.Header.RTSize.w = gHMD.isUsingAppWindow() ? gViewerWindow->getWindowWidthRaw() : mHMD->Resolution.w;
+    config.OGL.Header.RTSize.h = gHMD.isUsingAppWindow() ? gViewerWindow->getWindowHeightRaw() : mHMD->Resolution.h;
+    config.OGL.Header.Multisample = gGLManager.mHasTextureMultisample;
+#if LL_WINDOWS
+    config.OGL.Window = (HWND)gViewerWindow->getWindow()->getPlatformWindow((!gHMD.isHMDMirror() && !gHMD.isUsingAppWindow()) ? 1 : 0);
+    config.OGL.DC = NULL;
+#endif
 
     U32 distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_Vignette;
     distortionCaps |= gHMD.isUsingAppWindow() ? ovrDistortionCap_SRGB : 0;
@@ -489,7 +494,7 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     distortionCaps |= gHMD.isTimewarpEnabled() ? ovrDistortionCap_TimeWarp : 0;
     distortionCaps |= gHMD.isTimewarpEnabled() && gSavedSettings.getBOOL("HMDTimewarpNoJit") ? ovrDistortionCap_ProfileNoTimewarpSpinWaits : 0;
 
-    if (!ovrHmd_ConfigureRendering(mHMD, &config, distortionCaps, eyeFov, mEyeRenderDesc))
+    if (!ovrHmd_ConfigureRendering(mHMD, reinterpret_cast<ovrRenderAPIConfig*>(&config), distortionCaps, eyeFov, mEyeRenderDesc))
     {
         return FALSE;
     }
@@ -826,27 +831,48 @@ LLRenderTarget* LLHMDImplOculus::getEyeRT(U32 eye)
 
 void LLHMDImplOculus::onViewChange(S32 oldMode)
 {
-    if (!mHMD)
-    {
-        return;
-    }
-    if (!gHMD.isUsingAppWindow() && gHMD.isHMDMirror())
+    if (mHMD && !gHMD.isUsingAppWindow() && gHMD.isHMDMirror() && gHMD.useMirrorHack())
     {
         LLWindow* windowp = gViewerWindow ? gViewerWindow->getWindow() : NULL;
-        if (gHMD.isHMDMode() && windowp)
+        if (!windowp)
+        {
+            return;
+        }
+        if (gHMD.isHMDMode())
         {
             // HACK!  Move main window to HMD
-            //windowp->setBorderStyle(FALSE);
+            windowp->setBorderStyle(FALSE, 0);  // remove title bar
             LLCoordScreen c(mHMD->WindowsPos.x, mHMD->WindowsPos.y);
             windowp->setPosition(c);
-            ovrHmd_DismissHSWDisplay(mHMD);
+            windowp->maximize();
+            calculateViewportSettings();
         }
-        //else if (windowp)
-        //{
-        //    windowp->setBorderStyle(TRUE);
-        //}         
+        else
+        {
+            windowp->setBorderStyle(TRUE, 0);   // re-add title bar
+        }
     }
 }
 
+
+void LLHMDImplOculus::showHSW(BOOL show)
+{
+    if (show && !gHMD.isHSWShowing())
+    {
+        if (mHMD)
+        {
+            ovrhmd_EnableHSWDisplaySDKRender(mHMD, FALSE);
+        }
+        gHMD.isHSWShowing(TRUE);
+    }
+    if (!show && gHMD.isHSWShowing())
+    {
+        if (mHMD)
+        {
+            ovrHmd_DismissHSWDisplay(mHMD);
+        }
+        gHMD.isHSWShowing(FALSE);
+    }
+}
 
 #endif // LL_HMD_SUPPORTED

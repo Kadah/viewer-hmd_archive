@@ -106,7 +106,7 @@ public:
 
 	/*virtual*/ BOOL dialogColorPicker(F32 *r, F32 *g, F32 *b);
 
-	/*virtual*/ void *getPlatformWindow();
+	/*virtual*/ void *getPlatformWindow(S32 idx = -1);
 	/*virtual*/ void bringToFront() {};
 	
 	/*virtual*/ void allowLanguageTextInput(LLPreeditor *preeditor, BOOL b);
@@ -130,7 +130,7 @@ public:
     bool allowsLanguageInput() { return mLanguageTextInputAllowed; }
 
     // HMD support
-    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror);
+    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL forceMirror, BOOL& isMirror);
     /*virtual*/ BOOL destroyHMDWindow();
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
     /*virtual*/ BOOL setFocusWindow(S32 idx);

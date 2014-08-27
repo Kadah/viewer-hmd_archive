@@ -99,7 +99,7 @@ public:
 
 	/*virtual*/	BOOL dialogColorPicker(F32 *r, F32 *g, F32 *b );
 
-	/*virtual*/ void *getPlatformWindow();
+	/*virtual*/ void *getPlatformWindow(S32 idx = -1);
 	/*virtual*/ void bringToFront();
 	/*virtual*/ void focusClient();
 
@@ -112,14 +112,14 @@ public:
 	LLWindowCallbacks::DragNDropResult completeDragNDropRequest( const LLCoordGL gl_coord, const MASK mask, LLWindowCallbacks::DragNDropAction action, const std::string url );
 
     // HMD support
-    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL& isMirror);
+    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL forceMirror, BOOL& isMirror);
     /*virtual*/ BOOL destroyHMDWindow();
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
     /*virtual*/ BOOL setFocusWindow(S32 idx);
     /*virtual*/ void setHMDMode(BOOL mode, BOOL mirrored, BOOL mainFullScreen, U32 min_width = 0, U32 min_height = 0);
     /*virtual*/ S32 getDisplayCount();
     /*virtual*/ void enableVSync(BOOL b);
-    /*virtual*/ void setBorderStyle(BOOL on);
+    /*virtual*/ void setBorderStyle(BOOL on, S32 idx = -1);
 
 	static std::vector<std::string> getDynamicFallbackFontList();
 
