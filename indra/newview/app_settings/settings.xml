@@ -4511,17 +4511,6 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
-    <key>HMDEyeDepth</key>
-    <map>
-      <key>Comment</key>
-      <string>amount (in meters) that the eyes are positioned in front of the center of the head.  Recommend to leave this at 0, otherwise there can be jarring visual effects in some cases.</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>F32</string>
-      <key>Value</key>
-      <real>0.0</real>
-    </map>
     <key>HMDEyeToScreenDistance</key>
     <map>
       <key>Comment</key>

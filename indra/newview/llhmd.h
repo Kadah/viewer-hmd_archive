@@ -239,33 +239,18 @@ public:
     S32 getHMDViewportWidth() const;
     S32 getHMDViewportHeight() const;
 
-    F32 getPhysicalScreenWidth() const;
-    F32 getPhysicalScreenHeight() const; 
     F32 getInterpupillaryOffset() const;
     F32 getInterpupillaryOffsetDefault() const;
     void setInterpupillaryOffset(F32 f);
-    F32 getLensSeparationDistance() const;
     F32 getEyeToScreenDistance() const;
     void setEyeToScreenDistance(F32 f);
     F32 getEyeToScreenDistanceDefault() const;
     F32 getVerticalFOV() const;
     F32 getAspect();
     F32 getUIAspect() const { return mPresetUIAspect; }
-    F32 getEyeDepth() const { return mEyeDepth; }
     F32 getUIEyeDepth() const { return mUIEyeDepth; }
     F32 getUIMagnification() { return mUIShape.mUIMagnification; }
     void setUIMagnification(F32 f);
-
-    // coefficients for the distortion function.
-    LLVector4 getDistortionConstants() const;
-
-    // CenterOffsets are the offsets of lens distortion center from the center of one-eye screen half. [-1, 1] Range.
-    F32 getXCenterOffset() const;
-    F32 getYCenterOffset() const;
-
-    // Scale is a factor of how much larger will the input image be, with a factor of 1.0f being no scaling.
-    // An inverse of this value is applied to sampled UV coordinates (1/Scale).
-    F32 getDistortionScale() const;
 
     BOOL useMotionPrediction() const;
     BOOL useMotionPredictionDefault() const;
@@ -275,7 +260,6 @@ public:
     void setMotionPredictionDelta(F32 f);
 
     // Get the current HMD orientation
-    LLQuaternion getHMDOrient() const;
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     void getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     void getHMDDeltaRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
@@ -428,11 +412,12 @@ public:
     void releaseAllEyeRT();
     void setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye);
     void showHSW(BOOL show);
+    LLVector3 getEyePosition() const;
+    const LLQuaternion& getAgentRotation() const { return mAgentRot; }
 
     static void onChangeHMDAdvancedMode();
     static void onChangeInterpupillaryDistance();
     static void onChangeEyeToScreenDistance();
-    static void onChangeEyeDepth();
     static void onChangeUISurfaceSavedParams();
     static void onChangeUISurfaceShape();
     static void onChangeUIMagnification();
@@ -457,7 +442,6 @@ private:
     U32 mRenderMode;
     F32 mInterpupillaryDistance;
     LLHMD::UISurfaceShapeSettings mUIShape;
-    F32 mEyeDepth;
     F32 mUIEyeDepth;
     S32 mUIShapePreset;
     U32 mNextUserPresetIndex;
@@ -498,6 +482,7 @@ private:
     LLVector3 mStereoCullCameraDeltaForwards;
     F32 mStereoCullCameraFOV;
     F32 mStereoCullCameraAspect;
+    LLQuaternion mAgentRot;
 
     // DK2
     float mTimewarpIntervalSeconds;
@@ -550,23 +535,14 @@ public:
     virtual S32 getHMDHeight() const { return kDefaultVResolution; }
     virtual S32 getHMDUIWidth() const { return kDefaultHResolution; }
     virtual S32 getHMDUIHeight() const { return kDefaultVResolution; }
-    virtual F32 getPhysicalScreenWidth() const { return kDefaultHScreenSize; }
-    virtual F32 getPhysicalScreenHeight() const { return kDefaultVScreenSize; }
     virtual F32 getInterpupillaryOffset() const { return kDefaultInterpupillaryOffset; }
     virtual F32 getInterpupillaryOffsetDefault() const { return kDefaultInterpupillaryOffset; }
     virtual void setInterpupillaryOffset(F32 f) {}
-    virtual F32 getLensSeparationDistance() const { return kDefaultLenSeparationDistance; }
     virtual F32 getEyeToScreenDistance() const { return kDefaultEyeToScreenDistance; }
     virtual F32 getEyeToScreenDistanceDefault() const { return kDefaultEyeToScreenDistance; }
     virtual void setEyeToScreenDistance(F32 f) {}
     virtual F32 getVerticalFOV() { return kDefaultVerticalFOVRadians; }
     virtual F32 getAspect() const { return kDefaultAspect; }
-
-    virtual LLVector4 getDistortionConstants() const { return LLVector4::zero; }
-
-    virtual F32 getXCenterOffset() const { return 0.0f; }
-    virtual F32 getYCenterOffset() const { return 0.0f; }
-    virtual F32 getDistortionScale() const { return kDefaultDistortionScale; }
 
     virtual BOOL useMotionPrediction() { return FALSE; }
     virtual BOOL useMotionPredictionDefault() const { return FALSE; }
@@ -574,8 +550,6 @@ public:
     virtual F32 getMotionPredictionDelta() { return 0.0f; }
     virtual F32 getMotionPredictionDeltaDefault() const { return 0.03f; }
     virtual void setMotionPredictionDelta(F32 f) {}
-
-    virtual LLQuaternion getHMDOrient() const { return LLQuaternion::DEFAULT; }
 
     virtual F32 getRoll() const { return 0.0f; }
     virtual F32 getPitch() const { return 0.0f; }
@@ -593,7 +567,8 @@ public:
     virtual void getCurrentEyeProjectionOffset(F32 p[4][4]) const {}
     virtual LLVector3 getStereoCullCameraForwards() const { return LLVector3::zero; }
     virtual F32 getCurrentEyeCameraOffset() const { return 0.0f; }
-    virtual LLVector3 getCurrentEyePosition(const LLVector3& centerPos) const { return centerPos; }
+    virtual LLVector3 getCurrentEyeOffset(const LLVector3& centerPos) const { return centerPos; }
+    virtual LLVector3 getEyePosition() const { return LLVector3::zero; }
     virtual LLRenderTarget* getCurrentEyeRT() { return NULL; }
     virtual LLRenderTarget* getEyeRT(U32 eye) { return NULL; }
     virtual void onViewChange(S32 oldMode) {}

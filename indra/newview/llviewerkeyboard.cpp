@@ -34,6 +34,7 @@
 #include "llagentcamera.h"
 #include "llfloaterimnearbychat.h"
 #include "llviewercontrol.h"
+#include "llviewerjoystick.h"
 #include "llfocusmgr.h"
 #include "llmorphview.h"
 #include "llmoveview.h"
@@ -189,13 +190,14 @@ void align_hips_to_eyes( EKeystate state )
 	{
         if (!gAgentCamera.cameraMouselook() || gHMD.getMouselookControlMode() == (S32)LLHMD::kMouselookControl_Independent)
         {
-            float r, p, y;
-            gHMD.getHMDRollPitchYaw(r, p, y);
             LLVector3 atl = gAgent.getAtAxis();
             atl[VZ] = 0.0f;
             gAgent.resetAxes(atl);
-            //gAgent.pitch(p);
-            gAgent.yaw(y);
+            gAgent.yaw(gHMD.getHMDYaw());
+        }
+        else if (LLViewerJoystick::getInstance()->getOverrideCamera())
+        {
+            LLViewerJoystick::getInstance()->moveFlycam(true);
         }
         gHMD.resetOrientation();
 	}

@@ -977,13 +977,15 @@ void LLViewerJoystick::moveFlycam(bool reset)
 	}
 
 	LLMatrix3 mat;
+    LLVector3 deltaPos(LLVector3::zero);
 	if (gHMD.isHMDMode())
 	{
 	    LLQuaternion r(gHMD.getHMDRoll(), LLVector3::x_axis);
         LLQuaternion y(gHMD.getHMDYaw(), LLVector3::z_axis);
 	    LLQuaternion p(gHMD.getHMDPitch(), LLVector3::y_axis);
-		LLQuaternion mat2 = p * r * y * sFlycamRotation;
+		LLQuaternion mat2 = r * p * y * sFlycamRotation;
 		mat = LLMatrix3(mat2);
+        deltaPos = gHMD.getEyePosition() * sFlycamRotation;
 	}
 	else
 	{
@@ -991,10 +993,29 @@ void LLViewerJoystick::moveFlycam(bool reset)
 	}
 
 	LLViewerCamera::getInstance()->setView(sFlycamZoom);
-	LLViewerCamera::getInstance()->setOrigin(sFlycamPosition);
+	LLViewerCamera::getInstance()->setOrigin(sFlycamPosition + deltaPos);
 	LLViewerCamera::getInstance()->mXAxis = LLVector3(mat.mMatrix[0]);
 	LLViewerCamera::getInstance()->mYAxis = LLVector3(mat.mMatrix[1]);
 	LLViewerCamera::getInstance()->mZAxis = LLVector3(mat.mMatrix[2]);
+
+    //if (gHMD.isHMDMode())
+    //{
+    //    LLMatrix4 m1(sFlycamRotation, LLVector4(sFlycamPosition));
+    //    LLMatrix4 cfr(OGL_TO_CFR_ROTATION);
+    //    getMatrixToLocal(mModelviewMatrix);
+    //    mModelviewMatrix *= cfr;
+
+    //    gHMD.setBaseLookAt((F32*)m1.mMatrix);
+
+    //    LLVector3 up = LLVector3::z_axis;
+    //    // make z same as origin so that we guarantee no pitch in the forward axis.  This ensures that the UI surface is not slanted in relation to the viewpoint.
+    //    LLVector3 poi(original_point_of_interest[VX], original_point_of_interest[VY], origin[VZ]);
+    //    setOriginAndLookAt(origin, up, poi);
+    //    gHMD.setUIModelView((F32*)getModelview().mMatrix);
+
+    //    setOriginAndLookAt(origin, original_up_direction, original_point_of_interest);
+    //    gHMD.setBaseLookAt((F32*)LLViewerCamera::getInstance()->getModelview().mMatrix);
+    //}
 }
 
 // -----------------------------------------------------------------------------

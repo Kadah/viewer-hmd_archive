@@ -1125,6 +1125,14 @@ void LLAgentCamera::updateLookAt(const S32 mouse_x, const S32 mouse_y)
 		if (cameraMouselook() || cameraFirstPerson())
 		{
 			lookAtType = LOOKAT_TARGET_MOUSELOOK;
+            if (gHMD.isHMDMode())
+            {
+                headLookAxis.set(LLVector3::x_axis * gHMD.getHMDPitch() * gHMD.getHMDYaw() * gHMD.getAgentRotation());
+            }
+            else
+            {
+                headLookAxis = frameCamera.getAtAxis();
+            }
 		}
 		else if (cameraThirdPerson())
 		{
@@ -1140,9 +1148,9 @@ void LLAgentCamera::updateLookAt(const S32 mouse_x, const S32 mouse_y)
 			    frameCamera.pitch( - y_from_center * gSavedSettings.getF32("PitchFromMousePosition") * DEG_TO_RAD);
             }
 			lookAtType = LOOKAT_TARGET_FREELOOK;
+            headLookAxis = frameCamera.getAtAxis();
 		}
 
-		headLookAxis = frameCamera.getAtAxis();
 		// RN: we use world-space offset for mouselook and freelook
 		//headLookAxis = headLookAxis * av_inv_rot;
 		setLookAt(lookAtType, gAgentAvatarp, headLookAxis);
@@ -1433,6 +1441,8 @@ void LLAgentCamera::updateCamera()
         LLQuaternion y(gHMD.getHMDYaw(), LLVector3::z_axis);
 	    LLQuaternion p(gHMD.getHMDPitch(), LLVector3::y_axis);
 	    LLQuaternion r(gHMD.getHMDRoll(), LLVector3::x_axis);
+
+        mCameraPositionAgent += (gHMD.getEyePosition() * gHMD.getAgentRotation());
 
         LLVector3 original_camera_up_vector = mCameraUpVector;
 		mCameraUpVector = LLVector3::z_axis * r * y * focusPitchAndYaw;

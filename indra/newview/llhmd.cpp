@@ -49,6 +49,7 @@
 #include "llviewertexture.h"
 #include "llviewershadermgr.h"
 #include "llviewerwindow.h"
+#include "llvoavatarself.h"
 #include "llwindow.h"
 #if LL_DARWIN
     #include "llwindowmacosx.h"
@@ -84,7 +85,6 @@ LLHMD::LLHMD()
     , mFlags(0)
     , mRenderMode(RenderMode_None)
     , mInterpupillaryDistance(0.064f)
-    , mEyeDepth(0.0f)
     , mUIEyeDepth(0.65f)
     , mUIShapePreset(0)
     , mNextUserPresetIndex(1)
@@ -155,8 +155,6 @@ BOOL LLHMD::init()
     // intentionally not calling onChangeInterpupillaryDistance here
     gSavedSettings.getControl("HMDEyeToScreenDistance")->getSignal()->connect(boost::bind(&onChangeEyeToScreenDistance));
     // intentionally not calling onChangeEyeToScreenDistance here
-    gSavedSettings.getControl("HMDEyeDepth")->getSignal()->connect(boost::bind(&onChangeEyeDepth));
-    onChangeEyeDepth();
     gSavedSettings.getControl("HMDDynamicResolutionScaling")->getSignal()->connect(boost::bind(&onChangeDynamicResolutionScaling));
     onChangeDynamicResolutionScaling();
     gSavedSettings.getControl("HMDUISurfaceArcHorizontal")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
@@ -333,7 +331,6 @@ BOOL LLHMD::init()
 void LLHMD::onChangeHMDAdvancedMode() { gHMD.isAdvancedMode(gSavedSettings.getBOOL("HMDAdvancedMode")); }
 void LLHMD::onChangeInterpupillaryDistance() { if (!gHMD.isSavingSettings()) { gHMD.setInterpupillaryOffset(gSavedSettings.getF32("HMDInterpupillaryDistance")); onChangeRenderSettings(); } }
 void LLHMD::onChangeEyeToScreenDistance() { if (!gHMD.isSavingSettings()) { gHMD.setEyeToScreenDistance(gSavedSettings.getF32("HMDEyeToScreenDistance")); onChangeRenderSettings(); } }
-void LLHMD::onChangeEyeDepth() { if (!gHMD.isSavingSettings()) { gHMD.mEyeDepth = gSavedSettings.getF32("HMDEyeDepth"); onChangeRenderSettings(); } }
 void LLHMD::onChangeUIMagnification() { if (!gHMD.isSavingSettings()) { gHMD.setUIMagnification(gSavedSettings.getF32("HMDUIMagnification")); } }
 
 void LLHMD::onChangeUISurfaceSavedParams()
@@ -958,12 +955,9 @@ S32 LLHMD::getHMDUIWidth() const { return mImpl ? mImpl->getHMDUIWidth() : 0; }
 S32 LLHMD::getHMDUIHeight() const { return mImpl ? mImpl->getHMDUIHeight() : 0; }
 S32 LLHMD::getHMDViewportWidth() const { return mImpl ? mImpl->getViewportWidth() : 0; }
 S32 LLHMD::getHMDViewportHeight() const { return mImpl ? mImpl->getViewportHeight() : 0; }
-F32 LLHMD::getPhysicalScreenWidth() const { return mImpl ? mImpl->getPhysicalScreenWidth() : 0.0f; }
-F32 LLHMD::getPhysicalScreenHeight() const { return mImpl ? mImpl->getPhysicalScreenHeight() : 0.0f; }
 F32 LLHMD::getInterpupillaryOffset() const { return mImpl ? mImpl->getInterpupillaryOffset() : 0.0f; }
 void LLHMD::setInterpupillaryOffset(F32 f) { if (mImpl) { mImpl->setInterpupillaryOffset(f); } }
 F32 LLHMD::getInterpupillaryOffsetDefault() const { return mImpl ? mImpl->getInterpupillaryOffsetDefault() : 0.0f; }
-F32 LLHMD::getLensSeparationDistance() const { return mImpl ? mImpl->getLensSeparationDistance() : 0.0f; }
 F32 LLHMD::getEyeToScreenDistance() const { return mImpl ? mImpl->getEyeToScreenDistance() : 0.0f; }
 F32 LLHMD::getEyeToScreenDistanceDefault() const { return mImpl ? mImpl->getEyeToScreenDistanceDefault() : 0.0f; }
 
@@ -1016,11 +1010,6 @@ void LLHMD::setUISurfaceParam(F32* p, F32 f)
     }
 }
 
-LLVector4 LLHMD::getDistortionConstants() const { return mImpl ? mImpl->getDistortionConstants() : LLVector4::zero; }
-F32 LLHMD::getXCenterOffset() const { return mImpl ? mImpl->getXCenterOffset() : 0.0f; }
-F32 LLHMD::getYCenterOffset() const { return mImpl ? mImpl->getYCenterOffset() : 0.0f; }
-F32 LLHMD::getDistortionScale() const { return mImpl ? mImpl->getDistortionScale() : 0.0f; }
-LLQuaternion LLHMD::getHMDOrient() const { return mImpl ? mImpl->getHMDOrient() : LLQuaternion::DEFAULT; }
 void LLHMD::resetOrientation() { if (mImpl) { mImpl->resetOrientation(); } }
 void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { if (mImpl) { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); } else { roll = pitch = yaw = 0.0f; } }
 void LLHMD::getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = mLastRollPitchYaw[VX]; pitch = mLastRollPitchYaw[VY], yaw = mLastRollPitchYaw[VZ]; }
@@ -1046,6 +1035,8 @@ F32 LLHMD::getHMDDeltaPitch() const { if (mImpl) { return mImpl->getPitch() - mL
 F32 LLHMD::getHMDYaw() const { return mImpl ? mImpl->getYaw() : 0.0f; }
 F32 LLHMD::getHMDLastYaw() const { return mLastRollPitchYaw[VZ]; }
 F32 LLHMD::getHMDDeltaYaw() const { if (mImpl) { return mImpl->getYaw() - mLastRollPitchYaw[VZ]; } else { return 0.0f; } }
+LLVector3 LLHMD::getEyePosition() const { if (mImpl) { return mImpl->getEyePosition(); } else { return LLVector3::zero; } }
+
 F32 LLHMD::getVerticalFOV() const { return mImpl ? mImpl->getVerticalFOV() : 0.0f; }
 F32 LLHMD::getAspect() { return mImpl ? mImpl->getAspect() : 0.0f; }
 BOOL LLHMD::useMotionPrediction() const { return mImpl ? mImpl->useMotionPrediction() : FALSE; }
@@ -1238,7 +1229,6 @@ void LLHMD::saveSettings()
     gSavedSettings.setF32("HMDUIMagnification", gHMD.getUIMagnification());
     gSavedSettings.setS32("HMDUIShapePreset", gHMD.getUIShapePresetIndex());
     gSavedSettings.setF32("HMDEyeToScreenDistance", gHMD.getEyeToScreenDistance());
-    gSavedSettings.setF32("HMDEyeDepth", gHMD.getEyeDepth());
     gSavedSettings.setBOOL("HMDUseMotionPrediction", gHMD.useMotionPrediction());
     gSavedSettings.setF32("HMDWorldCursorSizeMult", gHMD.getWorldCursorSizeMult());
     gSavedSettings.setS32("HMDMouselookControlMode", gHMD.getMouselookControlMode());
@@ -1488,8 +1478,6 @@ void LLHMD::setupStereoValues()
     mStereoCameraPosition = cam->getOrigin();
 
     // Stereo culling frustum camera parameters.
-    // Use lens rather than eye separation because it's collimated light.
-    //F32 deltaZ = mImpl->getEyeToScreenDistance() * mImpl->getLensSeparationDistance() / (mImpl->getPhysicalScreenWidth() - mImpl->getLensSeparationDistance());
     mStereoCullCameraDeltaForwards = mImpl->getStereoCullCameraForwards();
     mStereoCullCameraFOV = mStereoCameraFOV;
     mStereoCullCameraAspect = mImpl->getAspect();
@@ -1516,7 +1504,7 @@ void LLHMD::setupEye()
     LLViewerCamera* cam = LLViewerCamera::getInstance();
     cam->setView(mStereoCameraFOV, getCurrentEye() == (U32)LLHMD::CENTER_EYE ? TRUE : FALSE);
     cam->setAspect(mImpl->getAspect());
-    cam->setOrigin(mImpl->getCurrentEyePosition(mStereoCameraPosition));
+    cam->setOrigin(mImpl->getCurrentEyeOffset(mStereoCameraPosition));
 }
 
 LLRenderTarget* LLHMD::getCurrentEyeRT()
@@ -1895,6 +1883,16 @@ void LLHMD::postRender2DUI()
 
 BOOL LLHMD::beginFrame()
 {
+    mAgentRot = gAgent.getFrameAgent().getQuaternion();
+    if (isAgentAvatarValid() && gAgentAvatarp->getParent())
+    {
+        LLViewerObject* rootObject = (LLViewerObject*)gAgentAvatarp->getRoot();
+        if (rootObject && !rootObject->flagCameraDecoupled())
+        {
+            mAgentRot *= ((LLViewerObject*)(gAgentAvatarp->getParent()))->getRenderRotation();
+        }
+    }
+
     return mImpl ? mImpl->beginFrame() : FALSE;
 }
 

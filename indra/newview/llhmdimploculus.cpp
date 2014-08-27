@@ -50,35 +50,23 @@
 
 
 LLHMDImplOculus::LLHMDImplOculus()
-    //: mDeviceManager(NULL)
     : mHMD(NULL)
-    //, mLastUpdate(0.0)
-    , mFovSideTanLimit(0.0f)
-    , mFovSideTanMax(0.0f)
     , mTrackingCaps(0)
-    , mFPS(0.0f)
-    , mSecondsPerFrame(0.0f)
-    , mFrameCounter(0)
-    , mTotalFrameCounter(0)
-    , mLastFpsUpdate(0.0)
+    //, mFPS(0.0f)
+    //, mSecondsPerFrame(0.0f)
+    //, mFrameCounter(0)
+    //, mTotalFrameCounter(0)
+    //, mLastFpsUpdate(0.0)
     , mLastTimewarpUpdate(0.0)
     , mCurrentHMDCount(0)
-    //, mSensorFusion(NULL)
-    //, mSensorDevice(NULL)
-    //, mHeadRotationCorrection(LLQuaternion::DEFAULT)
-    //, mHeadPitchCorrection(LLQuaternion::DEFAULT)
-    //, mpDeviceStatusNotificationsQueue(NULL)
-    //, mpLatencyTester(NULL)
     , mCurrentEye(LLHMD::CENTER_EYE)
 {
     OVR::WorldAxes axesOculus(OVR::Axis_Right, OVR::Axis_Up, OVR::Axis_Out);
     OVR::WorldAxes axesLL(OVR::Axis_In, OVR::Axis_Left, OVR::Axis_Up);
-    mConvOculusToLL = OVR::Matrix4f::AxisConversion(axesLL, axesOculus);
-    mConvLLToOculus = OVR::Matrix4f::AxisConversion(axesOculus, axesLL);
-    mEyeRPY[ovrEye_Left].set(0.0f, 0.0f, 0.0f);
-    mEyeRPY[ovrEye_Right].set(0.0f, 0.0f, 0.0f);
-    mEyePos[ovrEye_Left].set(0.0f, 0.0f, 0.0f);
-    mEyePos[ovrEye_Right].set(0.0f, 0.0f, 0.0f);
+    //mConvOculusToLL = OVR::Matrix4f::AxisConversion(axesLL, axesOculus);
+    //mConvLLToOculus = OVR::Matrix4f::AxisConversion(axesOculus, axesLL);
+    mEyeRPY.set(0.0f, 0.0f, 0.0f);
+    mEyePos.set(0.0f, 0.0f, 0.0f);
     mEyeRT[LLHMD::CENTER_EYE] = NULL;
     mEyeRT[LLHMD::LEFT_EYE] = &gPipeline.mLeftEye;
     mEyeRT[LLHMD::RIGHT_EYE] = &gPipeline.mRightEye;
@@ -108,46 +96,6 @@ BOOL LLHMDImplOculus::preInit()
         }
     }
     return init;
-    //if (!gHMD.isPreDetectionInitialized())
-    //{
-    //    return FALSE;
-    //}
-    //mHMD = ovrHmd_Create(0);
-    //if (!mHMD && gHMD.isAdvancedMode())
-    //{
-    //    // no Rift device detected, but create one for debugging anyway
-    //    mHMD = ovrHmd_CreateDebug(ovrHmd_DK2);
-    //    if (mHMD)
-    //    {
-    //        gHMD.isUsingDebugHMD(TRUE);
-    //    }
-    //}
-    //OVR::System::Init(OVR::Log::ConfigureDefaultLog(OVR::LogMask_None));
-
-    //mSensorDevice = NULL;
-    //mSensorFusion = new OVR::SensorFusion(NULL);
-    //mpDeviceStatusNotificationsQueue = new OVR::Array<DeviceStatusNotificationDesc>();
-    
-    //mDeviceManager = *OVR::DeviceManager::Create();
-    //if (!mDeviceManager)
-    //{
-    //    LL_INFOS("HMD") << "HMD Preinit abort: could not create Oculus Rift HMD device manager" << LL_ENDL;
-    //    gHMD.isPreDetectionInitialized(FALSE);
-    //    return FALSE;
-    //}
-
-    //mDeviceManager->SetMessageHandler(this);
-
-    //mHMD = *mDeviceManager->EnumerateDevices<OVR::HMDDevice>().CreateDevice();
-    //initHMDDevice();
-    //mpLatencyTester = *(mDeviceManager->EnumerateDevices<OVR::LatencyTestDevice>().CreateDevice());
-    //initHMDLatencyTester();
-
-    // consider ourselves pre-initialized if we get here
-    //LL_INFOS("HMD") << "HMD Preinit successful" << LL_ENDL;
-
-    //gHMD.isPreDetectionInitialized(TRUE);
-    //return TRUE;
 }
 
 
@@ -174,7 +122,6 @@ BOOL LLHMDImplOculus::initHMDDevice()
     gHMD.isHMDDisplayEnabled(hmdDisplayEnabled);
     BOOL hmdUsingAppWindow = mHMD && (mHMD->HmdCaps & ovrHmdCap_ExtendDesktop) == 0;
     gHMD.isUsingAppWindow(hmdUsingAppWindow);
-    //mStereoConfig.SetStereoMode(OVR::Util::Render::StereoConfig::Stereo_LeftRight_Multipass);
     // if mHMD is gone and we've already created a HMDWindow, then destroy it.
     if (!mHMD && gHMD.isPostDetectionInitialized())
     {
@@ -384,41 +331,22 @@ void LLHMDImplOculus::onIdle()
 }
 
 
-LLVector4 LLHMDImplOculus::getDistortionConstants() const
-{
-//    if (gHMD.isPostDetectionInitialized())
-//    {
-//        return LLVector4(   mCurrentEyeParams.pDistortion->K[0],
-//                            mCurrentEyeParams.pDistortion->K[1],
-//                            mCurrentEyeParams.pDistortion->K[2],
-//                            mCurrentEyeParams.pDistortion->K[3]);
-//    }
-//    else
-    {
-        return LLVector4(   kDefaultDistortionConstant0,
-                            kDefaultDistortionConstant1,
-                            kDefaultDistortionConstant2,
-                            kDefaultDistortionConstant3);
-    }
-}
-
-
 BOOL LLHMDImplOculus::calculateViewportSettings()
 {
     llassert(mHMD);
 
     // Initialize FovSideTanMax, which allows us to change all Fov sides at once - Fov
     // starts at default and is clamped to this value.
-    mFovSideTanLimit = OVR::FovPort::Max(mHMD->MaxEyeFov[ovrEye_Left], mHMD->MaxEyeFov[ovrEye_Right]).GetMaxSideTan();
-    mFovSideTanMax = OVR::FovPort::Max(mHMD->DefaultEyeFov[ovrEye_Left], mHMD->DefaultEyeFov[ovrEye_Right]).GetMaxSideTan();
+    //F32 fovSideTanLimit = OVR::FovPort::Max(mHMD->MaxEyeFov[ovrEye_Left], mHMD->MaxEyeFov[ovrEye_Right]).GetMaxSideTan();
+    F32 fovSideTanMax = OVR::FovPort::Max(mHMD->DefaultEyeFov[ovrEye_Left], mHMD->DefaultEyeFov[ovrEye_Right]).GetMaxSideTan();
 
     // Initialize eye rendering information for ovrHmd_Configure.
     // The viewport sizes are re-computed in case RenderTargetSize changed due to HW limitations.
     // Clamp Fov based on our dynamically adjustable FovSideTanMax.
     // Most apps should use the default, but reducing Fov does reduce rendering cost.
     ovrFovPort eyeFov[ovrEye_Count];
-    eyeFov[ovrEye_Left] = OVR::FovPort::Min(mHMD->DefaultEyeFov[ovrEye_Left], OVR::FovPort::FovPort(mFovSideTanMax));
-    eyeFov[ovrEye_Right] = OVR::FovPort::Min(mHMD->DefaultEyeFov[ovrEye_Right], OVR::FovPort::FovPort(mFovSideTanMax));
+    eyeFov[ovrEye_Left] = OVR::FovPort::Min(mHMD->DefaultEyeFov[ovrEye_Left], OVR::FovPort::FovPort(fovSideTanMax));
+    eyeFov[ovrEye_Right] = OVR::FovPort::Min(mHMD->DefaultEyeFov[ovrEye_Right], OVR::FovPort::FovPort(fovSideTanMax));
 
     // Configure Stereo settings. Default pixel density is 1.0f.
     float desiredPixelDensity = llmin(1.5f, llmax(0.5f, gSavedSettings.getF32("HMDPixelDensity")));
@@ -517,14 +445,11 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     OVR::Vector2f orthoScale0 = OVR::Vector2f(1.0f) / OVR::Vector2f(mEyeRenderDesc[ovrEye_Left].PixelsPerTanAngleAtCenter);
     OVR::Vector2f orthoScale1 = OVR::Vector2f(1.0f) / OVR::Vector2f(mEyeRenderDesc[ovrEye_Right].PixelsPerTanAngleAtCenter);
 
-    mOrthoProjection[ovrEye_Left] = ovrMatrix4f_OrthoSubProjection(mProjection[ovrEye_Left], orthoScale0, orthoDistance, mEyeRenderDesc[ovrEye_Left].ViewAdjust.x);
-    mOrthoProjection[ovrEye_Right] = ovrMatrix4f_OrthoSubProjection(mProjection[ovrEye_Right], orthoScale1, orthoDistance, mEyeRenderDesc[ovrEye_Right].ViewAdjust.x);
-
     OVR::CAPI::HMDState* hmdState = (OVR::CAPI::HMDState*)mHMD->Handle;
     OVR::CAPI::HMDRenderState* renderState = hmdState ? &(hmdState->RenderState) : NULL;
     OVR::HmdRenderInfo* renderInfo = renderState ? &(renderState->RenderInfo) : NULL;
-    mScreenSizeInMeters = renderInfo ? renderInfo->ScreenSizeInMeters : OVR::Sizef(kDefaultHScreenSize, kDefaultVScreenSize);
-    mLensSeparationInMeters = renderInfo ? renderInfo->LensSeparationInMeters : kDefaultLenSeparationDistance;
+    //mScreenSizeInMeters = renderInfo ? renderInfo->ScreenSizeInMeters : OVR::Sizef(kDefaultHScreenSize, kDefaultVScreenSize);
+    //mLensSeparationInMeters = renderInfo ? renderInfo->LensSeparationInMeters : kDefaultLenSeparationDistance;
     mEyeToScreenDistance = renderInfo ? (0.5f * (renderInfo->EyeLeft.ReliefInMeters + renderInfo->EyeRight.ReliefInMeters)) : getEyeToScreenDistanceDefault();
     mInterpupillaryDistance = ovrHmd_GetFloat(mHMD, OVR_KEY_IPD, getInterpupillaryOffsetDefault());
 
@@ -535,9 +460,13 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     mAspect = mFOVRadians.w / mFOVRadians.h;
     // TODO: alternatively:
     // mAspect = ((F32)mHMD->Resolution.w / 2.0f) / (F32)mHMD->Resolution.h;
+
+    OVR::Matrix4f orthoProjection[ovrEye_Count];
+    orthoProjection[ovrEye_Left] = ovrMatrix4f_OrthoSubProjection(mProjection[ovrEye_Left], orthoScale0, orthoDistance, mEyeRenderDesc[ovrEye_Left].ViewAdjust.x);
+    orthoProjection[ovrEye_Right] = ovrMatrix4f_OrthoSubProjection(mProjection[ovrEye_Right], orthoScale1, orthoDistance, mEyeRenderDesc[ovrEye_Right].ViewAdjust.x);
     mOrthoPixelOffset[(U32)OVR::StereoEye_Center] = 0.0f;
-    mOrthoPixelOffset[(U32)OVR::StereoEye_Left] = mOrthoProjection[ovrEye_Left].M[0][3];
-    mOrthoPixelOffset[(U32)OVR::StereoEye_Right] = mOrthoProjection[ovrEye_Right].M[0][3];
+    mOrthoPixelOffset[(U32)OVR::StereoEye_Left] = orthoProjection[ovrEye_Left].M[0][3];
+    mOrthoPixelOffset[(U32)OVR::StereoEye_Right] = orthoProjection[ovrEye_Right].M[0][3];
 
     gHMD.renderSettingsChanged(FALSE);
     return TRUE;
@@ -558,25 +487,25 @@ BOOL LLHMDImplOculus::beginFrame()
         mTrackingState = ovrHmd_GetTrackingState(mHMD, mFrameTiming.ScanoutMidpointSeconds);
         gHMD.isPositionTrackingEnabled((mTrackingState.StatusFlags & (ovrStatus_PositionConnected | ovrStatus_PositionTracked)) == (ovrStatus_PositionConnected | ovrStatus_PositionTracked));
         
-        mFrameCounter++;
-        mTotalFrameCounter++;
-        if (mLastFpsUpdate == 0.0f)
-        {
-            mLastFpsUpdate = curTime;
-        }
-        float dtFPS = (float)(curTime - mLastFpsUpdate);
-        if (dtFPS >= 1.0f)
-        {
-            mSecondsPerFrame = (float)(curTime - mLastFpsUpdate) / (float)mFrameCounter;
-            mFPS = 1.0f / mSecondsPerFrame;
-            mLastFpsUpdate = curTime;
-            mFrameCounter = 0;
-        }
+        //mFrameCounter++;
+        //mTotalFrameCounter++;
+        //if (mLastFpsUpdate == 0.0f)
+        //{
+        //    mLastFpsUpdate = curTime;
+        //}
+        //float dtFPS = (float)(curTime - mLastFpsUpdate);
+        //if (dtFPS >= 1.0f)
+        //{
+        //    mSecondsPerFrame = (float)(curTime - mLastFpsUpdate) / (float)mFrameCounter;
+        //    mFPS = 1.0f / mSecondsPerFrame;
+        //    mLastFpsUpdate = curTime;
+        //    mFrameCounter = 0;
+        //}
 
         gHMD.isFrameTimewarped(FALSE);
-        double dtTimewarp = curTime - mLastTimewarpUpdate;
         if (gHMD.isTimewarpEnabled())
         {
+            double dtTimewarp = curTime - mLastTimewarpUpdate;
             if ((dtTimewarp < 0.0) || ((float)dtTimewarp > gHMD.getTimewarpIntervalSeconds()))
             {
                 // This allows us to do "fractional" speeds, e.g. 45fps rendering on a 60fps display.
@@ -599,28 +528,27 @@ BOOL LLHMDImplOculus::beginFrame()
             {
                 ovrEyeType eye = mHMD->EyeRenderOrder[eyeIndex];
                 mEyeRenderPose[eye] = ovrHmd_GetEyePose(mHMD, eye);
-
-                // Note that the LL coord system uses X forward, Y left, and Z up whereas the Oculus SDK uses the
-                // OpenGL coord system of -Z forward, X right, Y up.  To compensate, we retrieve the angles in the Oculus
-                // coord system, but change the axes to ours, then negate X and Z to account for the forward left axes
-                // being positive in LL, but negative in Oculus.
-                // LL X = Oculus -Z, LL Y = Oculus -X, and LL Z = Oculus Y
-                // Yaw = rotation around the "up" axis          (LL  Z, Oculus  Y)
-                // Pitch = rotation around the left/right axis  (LL -Y, Oculus  X)
-                // Roll = rotation around the forward axis      (LL  X, Oculus -Z)
-                OVR::Quatf orient = mEyeRenderPose[eye].Orientation;
-                float r, p, y;
-                orient.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&y, &p, &r);
-                mEyeRPY[eyeIndex].set(-r, -p, y);
-                mEyePos[eyeIndex].set(-mEyeRenderPose[ovrEye_Left].Position.z, -mEyeRenderPose[ovrEye_Left].Position.x, mEyeRenderPose[ovrEye_Left].Position.y);
-
-                OVR::Matrix4f rpy = OVR::Matrix4f(mEyeRenderPose[eye].Orientation);
-                OVR::Vector3f up = rpy.Transform(OVR::Vector3f(0.0f, 1.0f, 0.0f));
-                OVR::Vector3f fwd = rpy.Transform(OVR::Vector3f(0.0f, 0.0f, -1.0f));
-                OVR::Vector3f pos = rpy.Transform(mEyeRenderPose[eye].Position);
-                OVR::Matrix4f v = OVR::Matrix4f::LookAtRH(pos, pos + fwd, up);
-                mView[eye] = OVR::Matrix4f::Translation(mEyeRenderDesc[eye].ViewAdjust) * v;
+                //OVR::Matrix4f rpy = OVR::Matrix4f(mEyeRenderPose[eye].Orientation);
+                //OVR::Vector3f up = rpy.Transform(OVR::Vector3f(0.0f, 1.0f, 0.0f));
+                //OVR::Vector3f fwd = rpy.Transform(OVR::Vector3f(0.0f, 0.0f, -1.0f));
+                //OVR::Vector3f pos = rpy.Transform(mEyeRenderPose[eye].Position);
+                //OVR::Matrix4f v = OVR::Matrix4f::LookAtRH(pos, pos + fwd, up);
+                //mView[eye] = OVR::Matrix4f::Translation(mEyeRenderDesc[eye].ViewAdjust) * v;
             }
+            OVR::Posef pose = mTrackingState.HeadPose.ThePose;
+
+            // Note that the LL coord system uses X forward, Y left, and Z up whereas the Oculus SDK uses the
+            // OpenGL coord system of -Z forward, X right, Y up.  To compensate, we retrieve the angles in the Oculus
+            // coord system, but change the axes to ours, then negate X and Z to account for the forward left axes
+            // being positive in LL, but negative in Oculus.
+            // LL X = Oculus -Z, LL Y = Oculus -X, and LL Z = Oculus Y
+            // Yaw = rotation around the "up" axis          (LL  Z, Oculus  Y)
+            // Pitch = rotation around the left/right axis  (LL -Y, Oculus  X)
+            // Roll = rotation around the forward axis      (LL  X, Oculus -Z)
+            float r, p, y;
+            pose.Rotation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&y, &p, &r);
+            mEyeRPY.set(-r, -p, y);
+            mEyePos.set(-pose.Translation.z, -pose.Translation.x, pose.Translation.y);
         }
     }
     return gHMD.isFrameInProgress();
@@ -697,26 +625,13 @@ F32 LLHMDImplOculus::getAspect() const
 }
 
 
-LLQuaternion LLHMDImplOculus::getHMDOrient() const
-{
-    LLQuaternion q(0.0f, 0.0f, 0.0f, 1.0f);
-    if (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE)
-    {
-        U32 eye = getCurrentOVREye();
-        q.setEulerAngles(mEyeRPY[eye][LLHMD::ROLL], mEyeRPY[eye][LLHMD::PITCH], mEyeRPY[eye][LLHMD::YAW]);
-    }
-    return q;
-}
-
-
 void LLHMDImplOculus::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
 {
     if (gHMD.isPostDetectionInitialized())
     {
-        U32 eye = getCurrentOVREye();
-        roll = mEyeRPY[eye][LLHMD::ROLL];
-        pitch = mEyeRPY[eye][LLHMD::PITCH];
-        yaw = mEyeRPY[eye][LLHMD::YAW];
+        roll = mEyeRPY[LLHMD::ROLL];
+        pitch = mEyeRPY[LLHMD::PITCH];
+        yaw = mEyeRPY[LLHMD::YAW];
     }
     else
     {
@@ -744,14 +659,6 @@ void LLHMDImplOculus::getCurrentEyeProjectionOffset(F32 p[4][4]) const
     {
         memcpy(p, mProjection[getCurrentOVREye()].M, sizeof(F32) * 4 * 4);
     }
-    //U32 eye = getCurrentOVREye();
-    //for (S32 row = 0; row < 4; ++row)
-    //{
-    //    for (S32 col = 0; col < 4; ++col)
-    //    {
-    //        p[row][col] = mProjection[eye].M[row][col];
-    //    }
-    //}
 }
 
 
@@ -813,9 +720,15 @@ F32 LLHMDImplOculus::getCurrentEyeCameraOffset() const
 }
 
 
-LLVector3 LLHMDImplOculus::getCurrentEyePosition(const LLVector3& centerPos) const
+LLVector3 LLHMDImplOculus::getCurrentEyeOffset(const LLVector3& centerPos) const
 {
     return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? (centerPos - (-mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x * LLViewerCamera::getInstance()->getYAxis())) : centerPos;
+}
+
+
+LLVector3 LLHMDImplOculus::getEyePosition() const
+{
+    return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? mEyePos : LLVector3::zero;
 }
 
 
@@ -824,10 +737,12 @@ LLRenderTarget* LLHMDImplOculus::getCurrentEyeRT()
     return mEyeRT[mCurrentEye];
 }
 
+
 LLRenderTarget* LLHMDImplOculus::getEyeRT(U32 eye)
 {
     return (eye >= (U32)LLHMD::CENTER_EYE && eye <= (U32)LLHMD::RIGHT_EYE) ? mEyeRT[eye] : NULL;
 }
+
 
 void LLHMDImplOculus::onViewChange(S32 oldMode)
 {
