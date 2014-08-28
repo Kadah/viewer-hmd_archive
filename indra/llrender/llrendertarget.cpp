@@ -348,6 +348,11 @@ void LLRenderTarget::shareDepthBuffer(LLRenderTarget& target)
 
 void LLRenderTarget::release()
 {
+    if (mFBO)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+    }
+
 	if (mDepth)
 	{
 		if (mStencil)
@@ -366,8 +371,6 @@ void LLRenderTarget::release()
 	}
 	else if (mFBO)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
-
 		if (mUseDepth)
 		{ //detach shared depth buffer
 			if (mStencil)

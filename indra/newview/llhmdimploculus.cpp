@@ -738,8 +738,6 @@ LLVector3 LLHMDImplOculus::getCurrentEyeOffset(const LLVector3& centerPos) const
     }
 
     return ret;
-
-    //return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? (centerPos - (-mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x * LLViewerCamera::getInstance()->getYAxis())) : centerPos;
 }
 
 
