@@ -537,18 +537,13 @@ BOOL LLHMDImplOculus::beginFrame()
             }
             OVR::Posef pose = mTrackingState.HeadPose.ThePose;
 
-            // Note that the LL coord system uses X forward, Y left, and Z up whereas the Oculus SDK uses the
-            // OpenGL coord system of -Z forward, X right, Y up.  To compensate, we retrieve the angles in the Oculus
-            // coord system, but change the axes to ours, then negate X and Z to account for the forward left axes
-            // being positive in LL, but negative in Oculus.
-            // LL X = Oculus -Z, LL Y = Oculus -X, and LL Z = Oculus Y
-            // Yaw = rotation around the "up" axis          (LL  Z, Oculus  Y)
-            // Pitch = rotation around the left/right axis  (LL -Y, Oculus  X)
-            // Roll = rotation around the forward axis      (LL  X, Oculus -Z)
+            // OpenGL coord system of -Z forward, X right, Y up. 
             float r, p, y;
-            pose.Rotation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&y, &p, &r);
-            mEyeRPY.set(-r, -p, y);
-            mEyePos.set(-pose.Translation.z, -pose.Translation.x, pose.Translation.y);
+            pose.Rotation.GetEulerAngles<OVR::Axis_X, OVR::Axis_Y, OVR::Axis_Z>(&p, &y, &r);
+            mEyeRotation.set(pose.Rotation.x, pose.Rotation.y, pose.Rotation.z, pose.Rotation.w);
+
+            mEyeRPY.set(r, p, y);
+            mEyePos.set(pose.Translation.x, pose.Translation.y, pose.Translation.z);
         }
     }
     return gHMD.isFrameInProgress();

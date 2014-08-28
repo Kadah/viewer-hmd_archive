@@ -1910,3 +1910,8 @@ void LLHMD::showHSW(BOOL show)
         mImpl->showHSW(show);
     }
 }
+
+LLQuaternion LLHMD::getHMDRotation() const
+{
+    return mImpl ? mImpl->getHMDRotation() : LLQuaternion();
+}

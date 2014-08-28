@@ -99,6 +99,7 @@ public:
     F32 getPitch() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::PITCH] : 0.0f; }
     F32 getYaw() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::YAW] : 0.0f; }
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
+    LLQuaternion getHMDRotation() const { return mEyeRotation; }
 
     //virtual LLQuaternion getHeadRotationCorrection() const { return mHeadRotationCorrection; }
     //virtual void addHeadRotationCorrection(LLQuaternion quat) { mHeadRotationCorrection *= quat; mHeadRotationCorrection.normalize(); }
@@ -164,6 +165,7 @@ private:
     U32 mCurrentEye;
     LLVector3 mEyeRPY;
     LLVector3 mEyePos;
+    LLQuaternion mEyeRotation;
 };
 #endif // LL_HMD_SUPPORTED
 #endif // LL_LLHMDIMPL_OCULUS_H

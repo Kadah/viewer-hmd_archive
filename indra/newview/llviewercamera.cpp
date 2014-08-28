@@ -180,24 +180,87 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3& center,
 		origin.mV[2] = llmin(origin.mV[2], water_height-0.20f);
 	}
 
+    
+
     if (gHMD.isHMDMode())
     {
+        LLMatrix4 mat;
+        LLMatrix4 cfr(OGL_TO_CFR_ROTATION);
+        
         LLVector3 up = LLVector3::z_axis;
         // make z same as origin so that we guarantee no pitch in the forward axis.  This ensures that the UI surface is not slanted in relation to the viewpoint.
         LLVector3 poi(original_point_of_interest[VX], original_point_of_interest[VY], origin[VZ]);
         setOriginAndLookAt(origin, up, poi);
-        gHMD.setUIModelView((F32*)getModelview().mMatrix);
+        getMatrixToLocal(mat);
+        mat *= cfr;
+        gHMD.setUIModelView((F32*)mat.mMatrix);
 
         setOriginAndLookAt(origin, original_up_direction, original_point_of_interest);
-        gHMD.setBaseLookAt((F32*)getModelview().mMatrix);
+        getMatrixToLocal(mat);
+        mat *= cfr;
+        gHMD.setBaseLookAt((F32*)mat.mMatrix);
+
     }
+
     setOriginAndLookAt(origin, up_direction, point_of_interest);
-    if (gHMD.isHMDMode() && gAgentCamera.cameraMouselook() && gHMD.getMouselookControlMode() == (S32)LLHMD::kMouselookControl_Linked)
+
+
+#if 0
+    if (gHMD.isHMDMode())
+    {
+
+        LLQuaternion quat = gHMD.getHMDRotation();
+
+        /*LLMatrix4 cameraToHMD(quat);
+        
+        LLMatrix4 agentToCamera;
+        getMatrixToLocal(agentToCamera);
+
+        agentToCamera *= cameraToHMD;
+        
+        LLMatrix4& mat = agentToCamera; //cameraToHMD;
+
+        mOrigin.set(mat.mMatrix[VW]);
+        mXAxis.set(mat.mMatrix[VX]);
+        mYAxis.set(mat.mMatrix[VY]);
+        mZAxis.set(mat.mMatrix[VZ]);*/
+
+        float y,p,r;
+        quat.getEulerAngles(&p,&y,&r);
+
+        LLQuaternion newQuat;
+        newQuat.setEulerAngles(-r, -p, y);
+
+        LLMatrix4 hmdMat(newQuat);
+
+        LLMatrix4 camMat;
+        getMatrixToLocal(camMat);
+
+        //camMat *= hmdMat;
+
+        
+        LLMatrix4& mat = camMat;
+
+        mOrigin.set(mat.mMatrix[VW]);
+        mXAxis.set(mat.mMatrix[VX]);
+        mYAxis.set(mat.mMatrix[VY]);
+        mZAxis.set(mat.mMatrix[VZ]);
+        
+        //rotate(newQuat);
+        /*yaw(y);
+        pitch(-p);  //CORRECT
+        roll(-r); //CORRECT*/
+
+    }
+#endif
+
+    
+    /*if (gHMD.isHMDMode() && gAgentCamera.cameraMouselook() && gHMD.getMouselookControlMode() == (S32)LLHMD::kMouselookControl_Linked)
     {
         LLQuaternion qr(gHMD.getHMDRoll(), mXAxis);
         qr.normalize();
         rotate(qr);
-    }
+    }*/
 
 	mVelocityDir = origin - last_position ; 
 	F32 dpos = mVelocityDir.normVec();
@@ -233,6 +296,14 @@ const LLMatrix4 &LLViewerCamera::getModelview() const
 	LLMatrix4 cfr(OGL_TO_CFR_ROTATION);
 	getMatrixToLocal(mModelviewMatrix);
 	mModelviewMatrix *= cfr;
+
+    if (gHMD.isHMDMode())
+    {
+        LLMatrix4 mat(~gHMD.getHMDRotation());
+        mModelviewMatrix *= mat;
+    }
+    
+
 	return mModelviewMatrix;
 }
 
@@ -442,14 +513,10 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
 
-	glh::matrix4f modelview((GLfloat*) OGL_TO_CFR_ROTATION);
+    
+    LLMatrix4 mdlv = getModelview();
 
-    GLfloat			ogl_matrix[16];
-
-	getOpenGLTransform(ogl_matrix);
-
-    glh::matrix4f ogl(ogl_matrix);
-	modelview *= ogl;
+	glh::matrix4f modelview((GLfloat*) mdlv.mMatrix);
 
     if (gHMD.isHMDMode())
     {

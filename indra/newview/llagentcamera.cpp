@@ -1423,6 +1423,7 @@ void LLAgentCamera::updateCamera()
 
     if (gHMD.isHMDMode() && (!cameraMouselook() || gHMD.getMouselookControlMode() != (S32)LLHMD::kMouselookControl_Linked))
     {
+#if 0
         LLQuaternion focusRotation;
 		focusRotation.shortestArc(LLVector3::x_axis, LLVector3(mFocusGlobal - camera_pos_global));
 		F32 focusRoll, focusPitch, focusYaw;
@@ -1453,6 +1454,10 @@ void LLAgentCamera::updateCamera()
 
 		LLVector3 hmd_focus_agent = mCameraPositionAgent + LLVector3::x_axis * p * y * focusPitchAndYaw;
         LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, hmd_focus_agent, original_camera_up_vector, focus_agent);
+
+#else
+        LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent, mCameraUpVector, focus_agent);
+#endif
     }
     else
     {

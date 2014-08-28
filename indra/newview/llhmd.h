@@ -261,6 +261,7 @@ public:
 
     // Get the current HMD orientation
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
+    LLQuaternion getHMDRotation() const;
     void getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     void getHMDDeltaRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     F32 getHMDRoll() const;
@@ -555,7 +556,8 @@ public:
     virtual F32 getPitch() const { return 0.0f; }
     virtual F32 getYaw() const { return 0.0f; }
     virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = pitch = yaw = 0.0f; }
-
+    virtual LLQuaternion getHMDRotation() const { return LLQuaternion(); };
+    
     virtual F32 getOrthoPixelOffset() const { return kDefaultOrthoPixelOffset; }
 
     virtual void resetOrientation() {}
