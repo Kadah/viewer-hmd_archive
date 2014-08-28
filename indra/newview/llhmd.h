@@ -414,7 +414,7 @@ public:
     void releaseAllEyeRT();
     void setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye);
     void showHSW(BOOL show);
-    LLVector3 getEyePosition() const;
+    LLVector3 getHeadPosition() const;
     const LLQuaternion& getAgentRotation() const { return mAgentRot; }
 
     static void onChangeHMDAdvancedMode();
@@ -571,7 +571,7 @@ public:
     virtual LLVector3 getStereoCullCameraForwards() const { return LLVector3::zero; }
     virtual LLVector3 getCurrentEyeCameraOffset() const { return LLVector3::zero; }
     virtual LLVector3 getCurrentEyeOffset(const LLVector3& centerPos) const { return centerPos; }
-    virtual LLVector3 getEyePosition() const { return LLVector3::zero; }
+    virtual LLVector3 getHeadPosition() const { return LLVector3::zero; }
     virtual LLRenderTarget* getCurrentEyeRT() { return NULL; }
     virtual LLRenderTarget* getEyeRT(U32 eye) { return NULL; }
     virtual void onViewChange(S32 oldMode) {}

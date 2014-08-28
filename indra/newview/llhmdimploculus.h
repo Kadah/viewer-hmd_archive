@@ -124,7 +124,7 @@ public:
     virtual LLVector3 getStereoCullCameraForwards() const;
     virtual LLVector3 getCurrentEyeCameraOffset() const;
     virtual LLVector3 getCurrentEyeOffset(const LLVector3& centerPos) const;
-    virtual LLVector3 getEyePosition() const;
+    virtual LLVector3 getHeadPosition() const;
 
     virtual LLRenderTarget* getCurrentEyeRT();
     virtual LLRenderTarget* getEyeRT(U32 eye);
@@ -164,7 +164,7 @@ private:
     LLRenderTarget* mEyeRT[3];
     U32 mCurrentEye;
     LLVector3 mEyeRPY;
-    LLVector3 mEyePos;
+    LLVector3 mHeadPos;
     LLQuaternion mEyeRotation;
 };
 #endif // LL_HMD_SUPPORTED

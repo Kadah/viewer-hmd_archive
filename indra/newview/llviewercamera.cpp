@@ -194,14 +194,10 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3& center,
         LLMatrix4 mat = getModelview();
         gHMD.setUIModelView((F32*)mat.mMatrix);
 
-        setOriginAndLookAt(origin, original_up_direction, original_point_of_interest);
-        mat = getModelview();
-        gHMD.setBaseLookAt((F32*)mat.mMatrix);
-
         mat = LLMatrix4(~gHMD.getHMDRotation());
 
         LLVector3 translation = gHMD.getCurrentEyeCameraOffset();
-        translation -= gHMD.getEyePosition();
+        translation -= gHMD.getHeadPosition();
 
         mat.setTranslation(translation);
         modelview *= mat;

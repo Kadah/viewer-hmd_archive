@@ -66,7 +66,7 @@ LLHMDImplOculus::LLHMDImplOculus()
     //mConvOculusToLL = OVR::Matrix4f::AxisConversion(axesLL, axesOculus);
     //mConvLLToOculus = OVR::Matrix4f::AxisConversion(axesOculus, axesLL);
     mEyeRPY.set(0.0f, 0.0f, 0.0f);
-    mEyePos.set(0.0f, 0.0f, 0.0f);
+    mHeadPos.set(0.0f, 0.0f, 0.0f);
     mEyeRT[LLHMD::CENTER_EYE] = NULL;
     mEyeRT[LLHMD::LEFT_EYE] = &gPipeline.mLeftEye;
     mEyeRT[LLHMD::RIGHT_EYE] = &gPipeline.mRightEye;
@@ -543,7 +543,7 @@ BOOL LLHMDImplOculus::beginFrame()
             mEyeRotation.set(pose.Rotation.x, pose.Rotation.y, pose.Rotation.z, pose.Rotation.w);
 
             mEyeRPY.set(r, p, y);
-            mEyePos.set(pose.Translation.x, pose.Translation.y, pose.Translation.z);
+            mHeadPos.set(pose.Translation.x, pose.Translation.y, pose.Translation.z);
         }
     }
     return gHMD.isFrameInProgress();
@@ -721,13 +721,31 @@ LLVector3 LLHMDImplOculus::getCurrentEyeCameraOffset() const
 
 LLVector3 LLHMDImplOculus::getCurrentEyeOffset(const LLVector3& centerPos) const
 {
-    return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? (centerPos - (-mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x * LLViewerCamera::getInstance()->getYAxis())) : centerPos;
+    LLVector3 ret = centerPos;
+
+    if (gHMD.isPostDetectionInitialized())
+    {
+        if (mCurrentEye != (U32)LLHMD::CENTER_EYE)
+        {
+            U32 eye = getCurrentOVREye();
+            LLViewerCamera* camera = LLViewerCamera::getInstance();
+            LLVector3 trans = -mEyeRenderDesc[eye].ViewAdjust.z * camera->getXAxis() +
+                              -mEyeRenderDesc[eye].ViewAdjust.x * camera->getYAxis() +
+                            mEyeRenderDesc[eye].ViewAdjust.y * camera->getZAxis();
+
+            ret -= trans;
+        }
+    }
+
+    return ret;
+
+    //return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? (centerPos - (-mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x * LLViewerCamera::getInstance()->getYAxis())) : centerPos;
 }
 
 
-LLVector3 LLHMDImplOculus::getEyePosition() const
+LLVector3 LLHMDImplOculus::getHeadPosition() const
 {
-    return (gHMD.isPostDetectionInitialized()) ? mEyePos : LLVector3::zero;
+    return (gHMD.isPostDetectionInitialized()) ? mHeadPos : LLVector3::zero;
 }
 
 
