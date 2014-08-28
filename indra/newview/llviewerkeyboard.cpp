@@ -655,6 +655,7 @@ void emulate_left_mouse_button( EKeystate s )
         }
         break;
     case CAMERA_MODE_FIRST_PERSON:
+    case CAMERA_MODE_THIRD_PERSON:
         // fire "gun"
         if (s == KEYSTATE_DOWN || s == KEYSTATE_LEVEL)
         {
