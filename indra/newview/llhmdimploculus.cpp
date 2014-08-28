@@ -709,9 +709,13 @@ S32 LLHMDImplOculus::getViewportHeight() const
 }
 
 
-F32 LLHMDImplOculus::getCurrentEyeCameraOffset() const
+LLVector3 LLHMDImplOculus::getCurrentEyeCameraOffset() const
 {
-    return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? -mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x : 0.0f;
+    return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? 
+        LLVector3(mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x,
+        mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.y,
+        mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.z) : 
+        LLVector3::zero;
 }
 
 

@@ -122,7 +122,7 @@ public:
     virtual BOOL endFrame();
     virtual void getCurrentEyeProjectionOffset(F32 p[4][4]) const;
     virtual LLVector3 getStereoCullCameraForwards() const;
-    virtual F32 getCurrentEyeCameraOffset() const;
+    virtual LLVector3 getCurrentEyeCameraOffset() const;
     virtual LLVector3 getCurrentEyeOffset(const LLVector3& centerPos) const;
     virtual LLVector3 getEyePosition() const;
 

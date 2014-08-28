@@ -97,7 +97,6 @@ LLHMD::LLHMD()
     , mMouselookRotMax(30.0f * DEG_TO_RAD)
     , mMouselookTurnSpeedMax(0.1f)
     , mStereoCameraFOV(DEFAULT_FIELD_OF_VIEW)
-    , mCameraOffset(0.0f)
     , mStereoCullCameraFOV(0.0f)
     , mStereoCullCameraAspect(0.0f)
     , mTimewarpIntervalSeconds(0.0001f)
@@ -942,7 +941,7 @@ void LLHMD::setCurrentEye(U32 eye)
     }
     if (eye == CENTER_EYE)
     {
-        mCameraOffset = 0.0f;
+        mCameraOffset = LLVector3::zero;
     }
 }
 
@@ -1486,7 +1485,7 @@ void LLHMD::setupStereoValues()
 
 void LLHMD::setupStereoCullFrustum()
 {
-    mCameraOffset = 0.f;
+    mCameraOffset = LLVector3::zero;
     mProjectionOffset[0][2] = 0.0f;
     LLViewerCamera* cam = LLViewerCamera::getInstance();
     cam->setView(mStereoCullCameraFOV, TRUE);
@@ -1915,3 +1914,9 @@ LLQuaternion LLHMD::getHMDRotation() const
 {
     return mImpl ? mImpl->getHMDRotation() : LLQuaternion();
 }
+
+LLVector3 LLHMD::getCurrentEyeCameraOffset() const
+{
+    return mImpl ? mImpl->getCurrentEyeCameraOffset() : LLVector3::zero;
+}
+

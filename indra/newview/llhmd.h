@@ -273,6 +273,7 @@ public:
     F32 getHMDYaw() const;
     F32 getHMDLastYaw() const;
     F32 getHMDDeltaYaw() const;
+    LLVector3 getCurrentEyeCameraOffset() const;
 
     // head correction (difference in rotation between head and body)
     //LLQuaternion getHeadRotationCorrection() const;
@@ -397,7 +398,7 @@ public:
     F32 getProjectionOffset(S32 row, S32 col) const { return mProjectionOffset[row][col]; }
     //F32 getProjectionOffset02() const { return mProjectionOffset; }
     //F32 getProjectionOffset11() const { return mProjectionOffset; }
-    F32 getCameraOffset() const { return mCameraOffset; }
+    LLVector3 getCameraOffset() const { return mCameraOffset; }
 
     void setup2DRender();
     void render3DUI();
@@ -478,7 +479,7 @@ private:
     LLVector3 mLastRollPitchYaw;
     F32 mStereoCameraFOV;
     LLVector3 mStereoCameraPosition;
-    F32 mCameraOffset;
+    LLVector3 mCameraOffset;
     F32 mProjectionOffset[4][4];
     LLVector3 mStereoCullCameraDeltaForwards;
     F32 mStereoCullCameraFOV;
@@ -568,7 +569,7 @@ public:
     virtual BOOL endFrame() { return FALSE; }
     virtual void getCurrentEyeProjectionOffset(F32 p[4][4]) const {}
     virtual LLVector3 getStereoCullCameraForwards() const { return LLVector3::zero; }
-    virtual F32 getCurrentEyeCameraOffset() const { return 0.0f; }
+    virtual LLVector3 getCurrentEyeCameraOffset() const { return LLVector3::zero; }
     virtual LLVector3 getCurrentEyeOffset(const LLVector3& centerPos) const { return centerPos; }
     virtual LLVector3 getEyePosition() const { return LLVector3::zero; }
     virtual LLRenderTarget* getCurrentEyeRT() { return NULL; }
