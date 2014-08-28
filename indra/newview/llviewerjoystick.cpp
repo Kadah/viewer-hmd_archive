@@ -985,7 +985,7 @@ void LLViewerJoystick::moveFlycam(bool reset)
 	    LLQuaternion p(gHMD.getHMDPitch(), LLVector3::y_axis);
 		LLQuaternion mat2 = r * p * y * sFlycamRotation;
 		mat = LLMatrix3(mat2);
-        deltaPos = gHMD.getEyePosition() * sFlycamRotation;
+        deltaPos = gHMD.getHeadPosition() * sFlycamRotation;
 	}
 	else
 	{

@@ -66,7 +66,7 @@ LLHMDImplOculus::LLHMDImplOculus()
     //mConvOculusToLL = OVR::Matrix4f::AxisConversion(axesLL, axesOculus);
     //mConvLLToOculus = OVR::Matrix4f::AxisConversion(axesOculus, axesLL);
     mEyeRPY.set(0.0f, 0.0f, 0.0f);
-    mEyePos.set(0.0f, 0.0f, 0.0f);
+    mHeadPos.set(0.0f, 0.0f, 0.0f);
     mEyeRT[LLHMD::CENTER_EYE] = NULL;
     mEyeRT[LLHMD::LEFT_EYE] = &gPipeline.mLeftEye;
     mEyeRT[LLHMD::RIGHT_EYE] = &gPipeline.mRightEye;
@@ -537,18 +537,13 @@ BOOL LLHMDImplOculus::beginFrame()
             }
             OVR::Posef pose = mTrackingState.HeadPose.ThePose;
 
-            // Note that the LL coord system uses X forward, Y left, and Z up whereas the Oculus SDK uses the
-            // OpenGL coord system of -Z forward, X right, Y up.  To compensate, we retrieve the angles in the Oculus
-            // coord system, but change the axes to ours, then negate X and Z to account for the forward left axes
-            // being positive in LL, but negative in Oculus.
-            // LL X = Oculus -Z, LL Y = Oculus -X, and LL Z = Oculus Y
-            // Yaw = rotation around the "up" axis          (LL  Z, Oculus  Y)
-            // Pitch = rotation around the left/right axis  (LL -Y, Oculus  X)
-            // Roll = rotation around the forward axis      (LL  X, Oculus -Z)
+            // OpenGL coord system of -Z forward, X right, Y up. 
             float r, p, y;
-            pose.Rotation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&y, &p, &r);
-            mEyeRPY.set(-r, -p, y);
-            mEyePos.set(-pose.Translation.z, -pose.Translation.x, pose.Translation.y);
+            pose.Rotation.GetEulerAngles<OVR::Axis_X, OVR::Axis_Y, OVR::Axis_Z>(&p, &y, &r);
+            mEyeRotation.set(pose.Rotation.x, pose.Rotation.y, pose.Rotation.z, pose.Rotation.w);
+
+            mEyeRPY.set(r, p, y);
+            mHeadPos.set(pose.Translation.x, pose.Translation.y, pose.Translation.z);
         }
     }
     return gHMD.isFrameInProgress();
@@ -714,21 +709,43 @@ S32 LLHMDImplOculus::getViewportHeight() const
 }
 
 
-F32 LLHMDImplOculus::getCurrentEyeCameraOffset() const
+LLVector3 LLHMDImplOculus::getCurrentEyeCameraOffset() const
 {
-    return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? -mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x : 0.0f;
+    return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? 
+        LLVector3(mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x,
+        mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.y,
+        mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.z) : 
+        LLVector3::zero;
 }
 
 
 LLVector3 LLHMDImplOculus::getCurrentEyeOffset(const LLVector3& centerPos) const
 {
-    return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? (centerPos - (-mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x * LLViewerCamera::getInstance()->getYAxis())) : centerPos;
+    LLVector3 ret = centerPos;
+
+    if (gHMD.isPostDetectionInitialized())
+    {
+        if (mCurrentEye != (U32)LLHMD::CENTER_EYE)
+        {
+            U32 eye = getCurrentOVREye();
+            LLViewerCamera* camera = LLViewerCamera::getInstance();
+            LLVector3 trans = -mEyeRenderDesc[eye].ViewAdjust.z * camera->getXAxis() +
+                              -mEyeRenderDesc[eye].ViewAdjust.x * camera->getYAxis() +
+                            mEyeRenderDesc[eye].ViewAdjust.y * camera->getZAxis();
+
+            ret -= trans;
+        }
+    }
+
+    return ret;
+
+    //return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? (centerPos - (-mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x * LLViewerCamera::getInstance()->getYAxis())) : centerPos;
 }
 
 
-LLVector3 LLHMDImplOculus::getEyePosition() const
+LLVector3 LLHMDImplOculus::getHeadPosition() const
 {
-    return (gHMD.isPostDetectionInitialized()) ? mEyePos : LLVector3::zero;
+    return (gHMD.isPostDetectionInitialized()) ? mHeadPos : LLVector3::zero;
 }
 
 

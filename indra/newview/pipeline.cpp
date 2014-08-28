@@ -10508,7 +10508,6 @@ void LLPipeline::generateHighlight(LLCamera& camera)
 	}
 }
 
-
 static LLTrace::BlockTimerStatHandle FTM_GEN_SUN_SHADOW("Gen Sun Shadow");
 
 void LLPipeline::generateSunShadow(LLCamera& camera)
@@ -10622,7 +10621,7 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 	
 	LLVector3 at = lightDir;
 
-	LLVector3 up = camera.getAtAxis();
+    LLVector3 up = camera.getAtAxis();
 
 	if (fabsf(up*lightDir) > 0.75f)
 	{

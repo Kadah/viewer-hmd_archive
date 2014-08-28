@@ -261,6 +261,7 @@ public:
 
     // Get the current HMD orientation
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
+    LLQuaternion getHMDRotation() const;
     void getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     void getHMDDeltaRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     F32 getHMDRoll() const;
@@ -272,6 +273,7 @@ public:
     F32 getHMDYaw() const;
     F32 getHMDLastYaw() const;
     F32 getHMDDeltaYaw() const;
+    LLVector3 getCurrentEyeCameraOffset() const;
 
     // head correction (difference in rotation between head and body)
     //LLQuaternion getHeadRotationCorrection() const;
@@ -396,7 +398,7 @@ public:
     F32 getProjectionOffset(S32 row, S32 col) const { return mProjectionOffset[row][col]; }
     //F32 getProjectionOffset02() const { return mProjectionOffset; }
     //F32 getProjectionOffset11() const { return mProjectionOffset; }
-    F32 getCameraOffset() const { return mCameraOffset; }
+    LLVector3 getCameraOffset() const { return mCameraOffset; }
 
     void setup2DRender();
     void render3DUI();
@@ -412,7 +414,7 @@ public:
     void releaseAllEyeRT();
     void setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye);
     void showHSW(BOOL show);
-    LLVector3 getEyePosition() const;
+    LLVector3 getHeadPosition() const;
     const LLQuaternion& getAgentRotation() const { return mAgentRot; }
 
     static void onChangeHMDAdvancedMode();
@@ -477,7 +479,7 @@ private:
     LLVector3 mLastRollPitchYaw;
     F32 mStereoCameraFOV;
     LLVector3 mStereoCameraPosition;
-    F32 mCameraOffset;
+    LLVector3 mCameraOffset;
     F32 mProjectionOffset[4][4];
     LLVector3 mStereoCullCameraDeltaForwards;
     F32 mStereoCullCameraFOV;
@@ -555,7 +557,8 @@ public:
     virtual F32 getPitch() const { return 0.0f; }
     virtual F32 getYaw() const { return 0.0f; }
     virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = pitch = yaw = 0.0f; }
-
+    virtual LLQuaternion getHMDRotation() const { return LLQuaternion(); };
+    
     virtual F32 getOrthoPixelOffset() const { return kDefaultOrthoPixelOffset; }
 
     virtual void resetOrientation() {}
@@ -566,9 +569,9 @@ public:
     virtual BOOL endFrame() { return FALSE; }
     virtual void getCurrentEyeProjectionOffset(F32 p[4][4]) const {}
     virtual LLVector3 getStereoCullCameraForwards() const { return LLVector3::zero; }
-    virtual F32 getCurrentEyeCameraOffset() const { return 0.0f; }
+    virtual LLVector3 getCurrentEyeCameraOffset() const { return LLVector3::zero; }
     virtual LLVector3 getCurrentEyeOffset(const LLVector3& centerPos) const { return centerPos; }
-    virtual LLVector3 getEyePosition() const { return LLVector3::zero; }
+    virtual LLVector3 getHeadPosition() const { return LLVector3::zero; }
     virtual LLRenderTarget* getCurrentEyeRT() { return NULL; }
     virtual LLRenderTarget* getEyeRT(U32 eye) { return NULL; }
     virtual void onViewChange(S32 oldMode) {}

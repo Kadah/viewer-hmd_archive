@@ -99,6 +99,7 @@ public:
     F32 getPitch() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::PITCH] : 0.0f; }
     F32 getYaw() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::YAW] : 0.0f; }
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
+    LLQuaternion getHMDRotation() const { return mEyeRotation; }
 
     //virtual LLQuaternion getHeadRotationCorrection() const { return mHeadRotationCorrection; }
     //virtual void addHeadRotationCorrection(LLQuaternion quat) { mHeadRotationCorrection *= quat; mHeadRotationCorrection.normalize(); }
@@ -121,9 +122,9 @@ public:
     virtual BOOL endFrame();
     virtual void getCurrentEyeProjectionOffset(F32 p[4][4]) const;
     virtual LLVector3 getStereoCullCameraForwards() const;
-    virtual F32 getCurrentEyeCameraOffset() const;
+    virtual LLVector3 getCurrentEyeCameraOffset() const;
     virtual LLVector3 getCurrentEyeOffset(const LLVector3& centerPos) const;
-    virtual LLVector3 getEyePosition() const;
+    virtual LLVector3 getHeadPosition() const;
 
     virtual LLRenderTarget* getCurrentEyeRT();
     virtual LLRenderTarget* getEyeRT(U32 eye);
@@ -163,7 +164,8 @@ private:
     LLRenderTarget* mEyeRT[3];
     U32 mCurrentEye;
     LLVector3 mEyeRPY;
-    LLVector3 mEyePos;
+    LLVector3 mHeadPos;
+    LLQuaternion mEyeRotation;
 };
 #endif // LL_HMD_SUPPORTED
 #endif // LL_LLHMDIMPL_OCULUS_H
