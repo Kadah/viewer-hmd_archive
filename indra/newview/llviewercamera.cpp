@@ -188,8 +188,22 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3& center,
         //grab (default_ modelview matrix)
         setOriginAndLookAt(origin, up_direction, point_of_interest);
         LLMatrix4 modelview = getModelview();
-        LLMatrix4 mat(~gHMD.getHMDRotation(), LLVector4(-gHMD.getHeadPosition()));
+        
+        //nudge origin by tracked head position
+        LLVector3 headPos = gHMD.getHeadPosition();
+        LLQuaternion quat(modelview);
+        headPos *= ~quat;
+        origin += headPos;
+        LLVector3 poi = point_of_interest + headPos;
+
+        //refresh modelview matrix
+        setOriginAndLookAt(origin, up_direction, poi);
+        modelview = getModelview();
+        
+        //apply HMD rotation
+        LLMatrix4 mat(~gHMD.getHMDRotation());
         modelview *= mat;
+
 
         //determine origin, lookat, and up vector
         glh::matrix4f tm((float*) modelview.mMatrix);

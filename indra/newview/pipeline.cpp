@@ -7510,13 +7510,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 
-#if !LLHMD_EXPERIMENTAL
-    if (gHMD.isHMDMode())
-    {
-        gHMD.bindCurrentEyeRT();
-    }
-#endif
-
 	assertInitialized();
 
 	if (gUseWireframe)
@@ -7923,13 +7916,8 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			{
 				mDeferredLight.bindTarget();
 			}
-#if LLHMD_EXPERIMENTAL
-            else if (gHMD.isHMDMode())
-            {
-                gHMD.bindCurrentEyeRT();
-            }
-#endif
-			LLGLSLShader* shader = &gDeferredPostNoDoFProgram;
+
+            LLGLSLShader* shader = &gDeferredPostNoDoFProgram;
 			
 			bindDeferredShader(*shader);
 							
@@ -8004,13 +7992,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			shader->unbind();
 			
 			mFXAABuffer.flush();
-
-#if LLHMD_EXPERIMENTAL
-            if (gHMD.isHMDMode())
-            {
-                gHMD.bindCurrentEyeRT();
-            }
-#endif
 
 			shader = &gFXAAProgram;
 			shader->bind();
@@ -11635,12 +11616,11 @@ void LLPipeline::postRender(BOOL writeAlpha)
         return;
     }
 
-#if !LLHMD_EXPERIMENTAL
     if (gHMD.isHMDMode())
     {
         gHMD.flushCurrentEyeRT();
     }
-#endif
+
     if (LLRenderTarget::sUseFBO && !gHMD.isHMDMode())
 	{
         //copy depth buffer from mScreen to framebuffer

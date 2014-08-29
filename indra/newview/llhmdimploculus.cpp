@@ -387,7 +387,7 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
             {
                 mEyeRT[i]->release();
             }
-            if (!mEyeRT[i]->allocate(w, h, GL_RGBA, false, false, LLTexUnit::TT_TEXTURE, true))
+            if (!mEyeRT[i]->allocate(w, h, GL_RGBA, true, false, LLTexUnit::TT_TEXTURE, true))
             {
                 LL_WARNS() << "could not allocate Eye RenderTarget for HMD" << LL_ENDL;
                 removeHMDDevice();
@@ -737,7 +737,12 @@ LLVector3 LLHMDImplOculus::getCurrentEyeOffset(const LLVector3& centerPos) const
     {
         U32 eye = getCurrentOVREye();
         LLViewerCamera* camera = LLViewerCamera::getInstance();
-        LLVector3 trans = (-mEyeRenderDesc[eye].ViewAdjust.z * camera->getXAxis()) + (-mEyeRenderDesc[eye].ViewAdjust.x * camera->getYAxis()) + (mEyeRenderDesc[eye].ViewAdjust.y * camera->getZAxis());
+        LLQuaternion quat = LLQuaternion(camera->getModelview());
+        
+        LLVector3 trans(mEyeRenderDesc[eye].ViewAdjust.x, mEyeRenderDesc[eye].ViewAdjust.y, mEyeRenderDesc[eye].ViewAdjust.z);
+        
+        trans *= ~quat;
+
         ret -= trans;
     }
     return ret;
