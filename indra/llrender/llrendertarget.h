@@ -141,7 +141,6 @@ public:
 	//one renderable attachment (i.e. color buffer, depth buffer).
 	bool isComplete() const;
 
-	static LLRenderTarget* getCurrentBoundTarget() { return sBoundTarget; }
     void copyFramebuffer();
 protected:
 	U32 mResX;
@@ -150,6 +149,7 @@ protected:
 	std::vector<U32> mInternalFormat;
 	U32 mFBO;
 	U32 mPreviousFBO;
+    LLRenderTarget* mPreviousTarget;
 	U32 mPreviousResX;
 	U32 mPreviousResY;
 

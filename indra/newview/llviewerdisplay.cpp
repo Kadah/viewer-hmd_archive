@@ -1643,14 +1643,11 @@ void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
 	if (to_texture)
 	{
         push_state_gl_identity();
-        
 		gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
-        
         if (gHMD.isHMDMode())
         {
             gHMD.render3DUI();
         }
-
         gPipeline.postRender();
         pop_state_gl();
 
@@ -1719,12 +1716,14 @@ void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
 
 void LLViewerDisplay::render_frame(BOOL rebuild)
 {
+
     gViewerWindow->setup3DViewport();
 
     // Collect objects in the stereoscopic cull frustum rather than each eye's asymmetric camera frustum.
 	if (gHMD.isHMDMode())
 	{
         gHMD.setupStereoCullFrustum();
+        gHMD.bindCurrentEyeRT();
 	}
 
     update();

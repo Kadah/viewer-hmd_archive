@@ -7916,13 +7916,8 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			{
 				mDeferredLight.bindTarget();
 			}
-#if LLHMD_EXPERIMENTAL
-            else if (gHMD.isHMDMode())
-            {
-                gHMD.bindCurrentEyeRT();
-            }
-#endif
-			LLGLSLShader* shader = &gDeferredPostNoDoFProgram;
+
+            LLGLSLShader* shader = &gDeferredPostNoDoFProgram;
 			
 			bindDeferredShader(*shader);
 							
@@ -7997,13 +7992,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			shader->unbind();
 			
 			mFXAABuffer.flush();
-
-#if LLHMD_EXPERIMENTAL
-            if (gHMD.isHMDMode())
-            {
-                gHMD.bindCurrentEyeRT();
-            }
-#endif
 
 			shader = &gFXAAProgram;
 			shader->bind();
@@ -11630,25 +11618,9 @@ void LLPipeline::postRender(BOOL writeAlpha)
 
     if (gHMD.isHMDMode())
     {
-        gHMD.getCurrentEyeRT()->copyFramebuffer();
-    }
-
-/*#if !LLHMD_EXPERIMENTAL
-    if (gHMD.isHMDMode())
-    {
-        gHMD.bindCurrentEyeRT();
-
-        gHMD.getCurrentEyeRT()->copyFramebuffer();
-        
-    }
-#endif
-
-#if !LLHMD_EXPERIMENTAL
-    if (gHMD.isHMDMode())
-    {
         gHMD.flushCurrentEyeRT();
     }
-#endif*/
+
 #if LLHMD_DK1
     if (LLRenderTarget::sUseFBO && (!gHMD.isHMDMode() || gHMD.getCurrentEye() != LLHMD::LEFT_EYE))
 #else

@@ -1582,6 +1582,7 @@ BOOL LLPath::generate(const LLPathParams& params, F32 detail, S32 split,
 				mPath[i].mPos.set(lerp(0,params.getShear().mV[0],t),
 									 lerp(0,params.getShear().mV[1],t),
 									 t - 0.5f);
+                llassert(mPath[i].mPos.isFinite3());
 				LLQuaternion quat;
 				quat.setQuat(lerp(F_PI * params.getTwistBegin(),F_PI * params.getTwist(),t),0,0,1);
 				LLMatrix3 tmp(quat);
@@ -2123,6 +2124,12 @@ BOOL LLVolume::generate()
 {
 	LL_CHECK_MEMORY
 	llassert_always(mProfilep);
+#ifdef SHOW_ASSERT
+    for (int i = 0; i < mPathp->mPath.size(); ++i)
+    {
+        llassert(mPathp->mPath[i].mPos.isFinite3());
+    }
+#endif
 	
 	//Added 10.03.05 Dave Parks
 	// Split is a parameter to LLProfile::generate that tesselates edges on the profile 
