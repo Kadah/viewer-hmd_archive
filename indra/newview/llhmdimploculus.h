@@ -38,12 +38,6 @@
 #include "OVR_CAPI_GL.h"
 #include "OVR_Stereo.h"
 #include "Util/Util_Render_Stereo.h"
-//#if defined(OVR_OS_WIN32)
-//#include "win32_pl
-//#elif defined(OVR_OS_MAC) && !defined(OVR_MAC_X11)
-//#else
-//#endif
-//#include "Kernel/OVR_Timer.h"
 
 class LLRenderTarget;
 
@@ -58,20 +52,12 @@ public:
     BOOL postDetectionInit();
     BOOL initHMDDevice();
     void removeHMDDevice();
-    //void initHMDSensor();
-    //void initHMDLatencyTester();
-    //void handleMessages();
-    //bool isReady() { return mHMD && mSensorDevice && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected(); }
     bool isReady() { return mHMD && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected() && gHMD.isHMDDisplayEnabled(); }
     void shutdown();
     void onIdle();
     U32 getCurrentEye() const { return mCurrentEye; }
     U32 getCurrentOVREye() const { return mCurrentEye == LLHMD::RIGHT_EYE ? 1 : 0; }
-    void setCurrentEye(U32 eye)
-    {
-        mCurrentEye = llclamp(eye, (U32)OVR::StereoEye_Center, (U32)OVR::StereoEye_Right);
-        //mCurrentEyeParams = mStereoConfig.GetEyeRenderParams((OVR::StereoEye)mCurrentEye);
-    }
+    void setCurrentEye(U32 eye) { mCurrentEye = llclamp(eye, (U32)OVR::StereoEye_Center, (U32)OVR::StereoEye_Right); }
     virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h) const;
     virtual void getViewportInfo(S32 vp[4]) const;
     virtual S32 getViewportWidth() const;
@@ -101,21 +87,9 @@ public:
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     LLQuaternion getHMDRotation() const { return mEyeRotation; }
 
-    //virtual LLQuaternion getHeadRotationCorrection() const { return mHeadRotationCorrection; }
-    //virtual void addHeadRotationCorrection(LLQuaternion quat) { mHeadRotationCorrection *= quat; mHeadRotationCorrection.normalize(); }
-    //virtual void resetHeadRotationCorrection() { mHeadRotationCorrection = LLQuaternion::DEFAULT; }
-    //virtual LLQuaternion getHeadPitchCorrection() const { return mHeadPitchCorrection; }
-    //virtual void addHeadPitchCorrection(LLQuaternion quat) { mHeadPitchCorrection *= quat; mHeadPitchCorrection.normalize(); }
-    //virtual void resetHeadPitchCorrection() { mHeadPitchCorrection = LLQuaternion::DEFAULT; }
-
     void resetOrientation();
 
     F32 getOrthoPixelOffset() const { return gHMD.isPostDetectionInitialized() ? mOrthoPixelOffset[mCurrentEye] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)OVR::StereoEye_Left ? 1.0f : -1.0f)); }
-
-    //const char* getLatencyTesterResults() { return ""; } // if (gHMD.isPostDetectionInitialized() && mLatencyUtil.HasDevice()) { return mLatencyUtil.GetResultsString(); } else { return ""; } }
-
-    // OVR::MessageHandler override
-    //virtual void OnMessage(const OVR::Message& msg);
 
     // DK2
     virtual BOOL beginFrame();

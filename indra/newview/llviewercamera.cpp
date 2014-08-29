@@ -180,26 +180,15 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3& center,
 		origin.mV[2] = llmin(origin.mV[2], water_height-0.20f);
 	}
 
-    setOriginAndLookAt(origin, up_direction, point_of_interest);
-
     if (gHMD.isHMDMode())
     {   
+        setOriginAndLookAt(origin, original_up_direction, original_point_of_interest);
+        gHMD.setUIModelView((F32*)getModelview().mMatrix);
+
         //grab (default_ modelview matrix)
+        setOriginAndLookAt(origin, up_direction, point_of_interest);
         LLMatrix4 modelview = getModelview();
-
-        //LLVector3 up = LLVector3::z_axis;
-        // make z same as origin so that we guarantee no pitch in the forward axis.  This ensures that the UI surface is not slanted in relation to the viewpoint.
-        //LLVector3 poi(original_point_of_interest[VX], original_point_of_interest[VY], origin[VZ]);
-        //setOriginAndLookAt(origin, up, poi);
-        LLMatrix4 mat = getModelview();
-        gHMD.setUIModelView((F32*)mat.mMatrix);
-
-        mat = LLMatrix4(~gHMD.getHMDRotation());
-
-        LLVector3 translation = gHMD.getCurrentEyeCameraOffset();
-        translation -= gHMD.getHeadPosition();
-
-        mat.setTranslation(translation);
+        LLMatrix4 mat(~gHMD.getHMDRotation(), LLVector4(-gHMD.getHeadPosition()));
         modelview *= mat;
 
         //determine origin, lookat, and up vector
@@ -221,6 +210,10 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3& center,
         LLVector3 lookAt(l.v);
 
         setOriginAndLookAt(origin, up_dir, lookAt);
+    }
+    else
+    {
+        setOriginAndLookAt(origin, up_direction, point_of_interest);
     }
 
 	mVelocityDir = origin - last_position ; 
@@ -556,15 +549,7 @@ BOOL LLViewerCamera::projectPosAgentToScreen(const LLVector3 &pos_agent, LLCoord
 	}
 
 	S32	viewport[4];
-#if LLHMD_DK1
-    gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? useHMDEyeWidth ? gHMD.getHMDEyeWidth() : gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
-#else
-    gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? useHMDEyeWidth ? gHMD.getHMDViewportWidth() : gHMD.getHMDViewportWidth() * 2 : 0, gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : 0);
-    //gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? useHMDEyeWidth ? (gHMD.getHMDViewportWidth() / 2) : gHMD.getHMDViewportWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : 0);
-    //gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDViewportWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : 0);
-    //gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
-    //gViewerWindow->getWorldViewportRaw(viewport); // , gHMD.isHMDMode() ? useHMDEyeWidth ? gHMD.getHMDEyeWidth() : gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
-#endif
+    gViewerWindow->getWorldViewportRaw(viewport);
 	F64 mdlv[16];
 	F64 proj[16];
 	for (U32 i = 0; i < 16; i++)
@@ -671,15 +656,7 @@ BOOL LLViewerCamera::projectPosAgentToScreenEdge(const LLVector3 &pos_agent,
 	}
 
 	S32	viewport[4];
-#if LLHMD_DK1
-    gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? useHMDEyeWidth ? gHMD.getHMDEyeWidth() : gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
-#else
-    gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? useHMDEyeWidth ? gHMD.getHMDViewportWidth() : gHMD.getHMDViewportWidth() * 2 : 0, gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : 0);
-    //gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? useHMDEyeWidth ? (gHMD.getHMDViewportWidth() / 2) : gHMD.getHMDViewportWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : 0);
-    //gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDViewportWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : 0);
-    //gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
-    //gViewerWindow->getWorldViewportRaw(viewport);
-#endif
+    gViewerWindow->getWorldViewportRaw(viewport);
 	GLdouble	x, y, z;			// object's window coords, GL-style
 
 	F64 mdlv[16];
@@ -815,7 +792,7 @@ BOOL LLViewerCamera::projectPosAgentToScreenEdge(const LLVector3 &pos_agent,
 }
 
 
-void LLViewerCamera::getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, LLVector3 &right, BOOL allowRoll)
+void LLViewerCamera::getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, LLVector3 &right, BOOL keepLevel)
 {
 	LLVector3 to_vec = pos_agent - getOrigin();
 	F32 at_dist = to_vec * getAtAxis();
@@ -825,7 +802,7 @@ void LLViewerCamera::getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, 
 	F32 meters_per_pixel = height_meters / height_pixels;
 
     LLVector3 up_axis, left_axis;
-    if (allowRoll)
+    if (keepLevel)
     {
         up_axis.set(0.0f, 0.0f, 1.0f);
         left_axis = getLeftAxis();

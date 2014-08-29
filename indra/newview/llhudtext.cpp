@@ -184,7 +184,7 @@ void LLHUDText::renderText()
 	}
 	else
 	{
-		LLViewerCamera::getInstance()->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec);
+		LLViewerCamera::getInstance()->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec, gHMD.isHMDMode() && !gHMD.allowTextRoll());
 	}
 
 	LLVector3 width_vec = mWidth * x_pixel_vec;
@@ -243,7 +243,7 @@ void LLHUDText::renderText()
 			text_color = segment_iter->mColor;
 			text_color.mV[VALPHA] *= alpha_factor;
 
-			hud_render_text(segment_iter->getText(), render_position, *fontp, style, shadow, x_offset, y_offset, text_color, mOnHUDAttachment);
+			hud_render_text(segment_iter->getText(), render_position, *fontp, style, shadow, x_offset, y_offset, text_color, mOnHUDAttachment, gHMD.isHMDMode() && !gHMD.allowTextRoll());
 		}
 	}
 	/// Reset the default color to white.  The renderer expects this to be the default. 
@@ -411,7 +411,7 @@ void LLHUDText::updateVisibility()
 	LLVector3 x_pixel_vec;
 	LLVector3 y_pixel_vec;
 
-	LLViewerCamera::getInstance()->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec);
+	LLViewerCamera::getInstance()->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec, gHMD.isHMDMode() && !gHMD.allowTextRoll());
 
 	LLVector3 render_position = mPositionAgent + 			
 			(x_pixel_vec * mPositionOffset.mV[VX]) +

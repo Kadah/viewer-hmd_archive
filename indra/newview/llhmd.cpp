@@ -180,7 +180,10 @@ BOOL LLHMD::init()
     onChangeUseSavedHMDPreferences();
     gSavedSettings.getControl("HMDMouselookControlMode")->getSignal()->connect(boost::bind(&onChangeMouselookControlMode));
     onChangeMouselookControlMode();
+    gSavedSettings.getControl("HMDAllowTextRoll")->getSignal()->connect(boost::bind(&onChangeAllowTextRoll));
+    onChangeAllowTextRoll();
 
+    
     preInitResult = mImpl->preInit();
     if (preInitResult)
     {
@@ -327,10 +330,12 @@ BOOL LLHMD::init()
     return preInitResult;
 }
 
+
 void LLHMD::onChangeHMDAdvancedMode() { gHMD.isAdvancedMode(gSavedSettings.getBOOL("HMDAdvancedMode")); }
 void LLHMD::onChangeInterpupillaryDistance() { if (!gHMD.isSavingSettings()) { gHMD.setInterpupillaryOffset(gSavedSettings.getF32("HMDInterpupillaryDistance")); onChangeRenderSettings(); } }
 void LLHMD::onChangeEyeToScreenDistance() { if (!gHMD.isSavingSettings()) { gHMD.setEyeToScreenDistance(gSavedSettings.getF32("HMDEyeToScreenDistance")); onChangeRenderSettings(); } }
 void LLHMD::onChangeUIMagnification() { if (!gHMD.isSavingSettings()) { gHMD.setUIMagnification(gSavedSettings.getF32("HMDUIMagnification")); } }
+
 
 void LLHMD::onChangeUISurfaceSavedParams()
 {
@@ -351,6 +356,7 @@ void LLHMD::onChangeUISurfaceSavedParams()
         onChangeUISurfaceShape();
     }
 }
+
 
 void LLHMD::onChangePresetValues()
 {
@@ -426,11 +432,14 @@ void LLHMD::onChangePresetValues()
     }
 }
 
+
 void LLHMD::onChangeUIShapePreset() { if (!gHMD.isSavingSettings()) { gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset")); } }
 void LLHMD::onChangeWorldCursorSizeMult() { if (!gHMD.isSavingSettings()) { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); } }
 void LLHMD::onChangeUseSavedHMDPreferences() { if (!gHMD.isSavingSettings()) { gHMD.useSavedHMDPreferences(gSavedSettings.getBOOL("HMDUseSavedHMDPreferences")); } }
 void LLHMD::onChangeMouselookControlMode() { if (!gHMD.isSavingSettings()) { gHMD.setMouselookControlMode(gSavedSettings.getS32("HMDMouselookControlMode")); } }
 void LLHMD::onChangeDynamicResolutionScaling() { if (!gHMD.isSavingSettings()) { gHMD.useDynamicResolutionScaling(gSavedSettings.getBOOL("HMDDynamicResolutionScaling")); } }
+void LLHMD::onChangeAllowTextRoll() { if (!gHMD.isSavingSettings()) { gHMD.allowTextRoll(gSavedSettings.getBOOL("HMDAllowTextRoll")); } }
+
 
 void LLHMD::onChangeMouselookSettings()
 {
@@ -442,10 +451,9 @@ void LLHMD::onChangeMouselookSettings()
     }
 }
 
-void LLHMD::onChangeUISurfaceShape()
-{
-    gPipeline.mHMDUISurface = NULL;
-}
+
+void LLHMD::onChangeUISurfaceShape() { gPipeline.mHMDUISurface = NULL; }
+
 
 void LLHMD::onChangeRenderSettings()
 {
@@ -456,6 +464,7 @@ void LLHMD::onChangeRenderSettings()
         gHMD.renderSettingsChanged(TRUE);
     }
 }
+
 
 void LLHMD::shutdown()
 {
@@ -469,6 +478,7 @@ void LLHMD::shutdown()
     isPostDetectionInitialized(FALSE);
     failedInit(FALSE);
 }
+
 
 void LLHMD::onIdle()
 {
@@ -503,6 +513,7 @@ void LLHMD::onIdle()
         }
     }
 }
+
 
 void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 {
@@ -758,6 +769,10 @@ void LLHMD::setFocusWindowMain()
             // in this case, appFocusGained is not called because we're not changing windows,
             // so just call manually
             onAppFocusGained();
+            if (useMirrorHack() && !gViewerWindow->isMouseInWindow())
+            {
+                gViewerWindow->moveCursorToCenter();
+            }
         }
         else if (!isHMDMode())
         {
@@ -772,6 +787,10 @@ void LLHMD::setFocusWindowMain()
                 //// this is handled by the appfocuslost message in windows, but since that doesn't get called on Mac, we have to
                 //// handle the critical parts here instead.
                 //gViewerWindow->showCursor();
+                if (useMirrorHack() && !gViewerWindow->isMouseInWindow())
+                {
+                    gViewerWindow->moveCursorToCenter();
+                }
             }
             // in the case of switching from debug HMD mode to normal mode, no appfocus message is sent since 
             // we're already focused on the main window, so we have to manually disable mouse clipping.  In the case
@@ -913,6 +932,7 @@ void LLHMD::renderUnusedHMDWindow()
 #endif
 }
 
+
 U32 LLHMD::suspendHMDMode()
 {
     U32 oldMode = getRenderMode();
@@ -923,6 +943,7 @@ U32 LLHMD::suspendHMDMode()
     return oldMode;
 }
 
+
 void LLHMD::resumeHMDMode(U32 prevRenderMode)
 {
     if (prevRenderMode != RenderMode_None)
@@ -931,7 +952,9 @@ void LLHMD::resumeHMDMode(U32 prevRenderMode)
     }
 }
 
+
 U32 LLHMD::getCurrentEye() const { return mImpl ? mImpl->getCurrentEye() : 0; }
+
 
 void LLHMD::setCurrentEye(U32 eye)
 {
@@ -944,6 +967,7 @@ void LLHMD::setCurrentEye(U32 eye)
         mCameraOffset = LLVector3::zero;
     }
 }
+
 
 void LLHMD::getViewportInfo(S32& x, S32& y, S32& w, S32& h) { if (mImpl) { mImpl->getViewportInfo(x, y, w, h); } }
 void LLHMD::getViewportInfo(S32 vp[4]) { if (mImpl) { mImpl->getViewportInfo(vp); } else { vp[0] = vp[1] = vp[2] = vp[3] = 0; } }
@@ -960,6 +984,7 @@ F32 LLHMD::getInterpupillaryOffsetDefault() const { return mImpl ? mImpl->getInt
 F32 LLHMD::getEyeToScreenDistance() const { return mImpl ? mImpl->getEyeToScreenDistance() : 0.0f; }
 F32 LLHMD::getEyeToScreenDistanceDefault() const { return mImpl ? mImpl->getEyeToScreenDistanceDefault() : 0.0f; }
 
+
 void LLHMD::setEyeToScreenDistance(F32 f)
 {
     if (mImpl)
@@ -975,6 +1000,7 @@ void LLHMD::setEyeToScreenDistance(F32 f)
     }
 }
 
+
 void LLHMD::setUIMagnification(F32 f)
 {
     if (f != mUIShape.mUIMagnification)
@@ -989,6 +1015,7 @@ void LLHMD::setUIMagnification(F32 f)
         calculateUIEyeDepth();
     }
 }
+
 
 void LLHMD::setUISurfaceParam(F32* p, F32 f)
 {
@@ -1009,9 +1036,12 @@ void LLHMD::setUISurfaceParam(F32* p, F32 f)
     }
 }
 
+
 void LLHMD::resetOrientation() { if (mImpl) { mImpl->resetOrientation(); } }
 void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { if (mImpl) { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); } else { roll = pitch = yaw = 0.0f; } }
 void LLHMD::getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = mLastRollPitchYaw[VX]; pitch = mLastRollPitchYaw[VY], yaw = mLastRollPitchYaw[VZ]; }
+
+
 void LLHMD::getHMDDeltaRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
 {
     if (mImpl)
@@ -1025,6 +1055,8 @@ void LLHMD::getHMDDeltaRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
         roll = pitch = yaw = 0.0f;
     }
 }
+
+
 F32 LLHMD::getHMDRoll() const { return mImpl ? mImpl->getRoll() : 0.0f; }
 F32 LLHMD::getHMDLastRoll() const { return mLastRollPitchYaw[VX]; }
 F32 LLHMD::getHMDDeltaRoll() const { if (mImpl) { return mImpl->getRoll() - mLastRollPitchYaw[VX]; } else { return 0.0f; } }
@@ -1044,8 +1076,8 @@ BOOL LLHMD::useMotionPredictionDefault() const { return mImpl ? mImpl->useMotion
 F32 LLHMD::getMotionPredictionDelta() const { return mImpl ? mImpl->getMotionPredictionDelta() : 0.0f; }
 F32 LLHMD::getMotionPredictionDeltaDefault() const { return mImpl ? mImpl->getMotionPredictionDeltaDefault() : 0.0f; }
 void LLHMD::setMotionPredictionDelta(F32 f) { if (mImpl) { mImpl->setMotionPredictionDelta(f); } }
-//LLVector4 LLHMD::getChromaticAberrationConstants() const { return mImpl ? mImpl->getChromaticAberrationConstants() : LLVector4::zero; }
 F32 LLHMD::getOrthoPixelOffset() const { return mImpl ? mImpl->getOrthoPixelOffset() : 0.0f; }
+
 
 std::string LLHMD::getUIShapeName() const
 {
@@ -1057,6 +1089,7 @@ std::string LLHMD::getUIShapeName() const
     }
     return LLTrans::getString("HMDPresetCustom");
 }
+
 
 void LLHMD::calculateUIEyeDepth()
 {
@@ -1076,6 +1109,7 @@ void LLHMD::calculateUIEyeDepth()
     }
 }
 
+
 void LLHMD::setBaseModelView(F32* m)
 {
     glh::matrix4f bmvInv(m);
@@ -1087,6 +1121,7 @@ void LLHMD::setBaseModelView(F32* m)
     }
 }
 
+
 void LLHMD::setUIModelView(F32* m)
 {
     glh::matrix4f uivInv(m);
@@ -1097,6 +1132,7 @@ void LLHMD::setUIModelView(F32* m)
         mUIModelViewInv[i] = uivInv.m[i];
     }
 }
+
 
 void LLHMD::setUIShapePresetIndex(S32 idx)
 {
@@ -1118,6 +1154,7 @@ void LLHMD::setUIShapePresetIndex(S32 idx)
     }
 }
 
+
 LLHMD::UISurfaceShapeSettings LLHMD::getUIShapePreset(S32 idx)
 {
     // Note: intentionally NOT returning a const ref here.  We do a copy because the contents of the vector can
@@ -1129,6 +1166,7 @@ LLHMD::UISurfaceShapeSettings LLHMD::getUIShapePreset(S32 idx)
     }
     return mUIPresetValues[idx];
 }
+
 
 BOOL LLHMD::addPreset()
 {
@@ -1167,6 +1205,7 @@ BOOL LLHMD::addPreset()
     return TRUE;
 }
 
+
 BOOL LLHMD::updatePreset()
 {
     if (mUIShapePreset < 1 || mUIShapePreset >= (S32)mUIPresetValues.size())
@@ -1180,6 +1219,7 @@ BOOL LLHMD::updatePreset()
     memcpy(&(mUIPresetValues[mUIShapePreset]), &mUIShape, sizeof(UISurfaceShapeSettings));
     return TRUE;
 }
+
 
 BOOL LLHMD::removePreset(S32 idx)
 {
@@ -1200,6 +1240,7 @@ BOOL LLHMD::removePreset(S32 idx)
     }
     return TRUE;
 }
+
 
 void LLHMD::saveSettings()
 {
@@ -1258,10 +1299,13 @@ void LLHMD::saveSettings()
     gSavedSettings.setLLSD("HMDUIPresetValues", entries);
 }
 
-//const char* LLHMD::getLatencyTesterResults() { return mImpl ? mImpl->getLatencyTesterResults() : NULL; }
 
 void LLHMD::onViewChange(S32 oldMode)
 {
+    if (mImpl)
+    {
+        mImpl->onViewChange(oldMode);
+    }
     if (gHMD.isHMDMode())
     {
         mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
@@ -1271,11 +1315,8 @@ void LLHMD::onViewChange(S32 oldMode)
         gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight());
 #endif
     }
-    if (mImpl)
-    {
-        mImpl->onViewChange(oldMode);
-    }
 }
+
 
 // Creates a surface that is part of an outer shell of a torus.
 // Results are in local-space with -z forward, y up (i.e. standard OpenGL)
@@ -1357,6 +1398,7 @@ LLVertexBuffer* LLHMD::createUISurface()
     return buff;
 }
 
+
 void LLHMD::getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* uv)
 {
     F32 cva = cos(va);
@@ -1384,11 +1426,7 @@ void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
         GLdouble x, y, z;
         F64 mdlv[16], proj[16];
         S32 vp[4];
-#if LLHMD_DK1
-        gViewerWindow->getWorldViewportRaw(vp, getHMDEyeWidth(), getHMDHeight());
-#else
-        gViewerWindow->getWorldViewportRaw(vp, getHMDViewportWidth(), gHMD.getHMDViewportHeight());
-#endif
+        gViewerWindow->getWorldViewportRaw(vp);
         for (U32 i = 0; i < 16; i++)
         {
             mdlv[i] = (F64)mBaseModelView[i];
@@ -1402,8 +1440,8 @@ void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
     else
     {
         // 1. determine horizontal and vertical percentage within toroidal UI surface based on mouse_x, mouse_y
-        F32 uiw = (F32)gViewerWindow->getWorldViewRectScaled().getWidth();
-        F32 uih = (F32)gViewerWindow->getWorldViewRectScaled().getHeight();
+        F32 uiw = (F32)gHMD.getHMDUIWidth();
+        F32 uih = (F32)gHMD.getHMDUIHeight();
         F32 nx = llclamp((F32)mouse_x / (F32)uiw, 0.0f, 1.0f);
         F32 ny = llclamp((F32)mouse_y / (F32)uih, 0.0f, 1.0f);
 
@@ -1425,12 +1463,14 @@ void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
     }
 }
 
+
 void LLHMD::updateHMDMouseInfo()
 {
 #if LL_HMD_SUPPORTED
     calculateMouseWorld(gViewerWindow->getCurrentMouse().mX, gViewerWindow->getCurrentMouse().mY, mMouseWorld);
 #endif // LL_HMD_SUPPORTED
 }
+
 
 BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
 {
@@ -1506,6 +1546,7 @@ void LLHMD::setupEye()
     cam->setOrigin(mImpl->getCurrentEyeOffset(mStereoCameraPosition));
 }
 
+
 LLRenderTarget* LLHMD::getCurrentEyeRT()
 {
     return mImpl ? mImpl->getCurrentEyeRT() : NULL;
@@ -1577,7 +1618,7 @@ void LLHMD::setup2DRender()
     gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDEyeWidth(), gHMD.getHMDHeight());
 #else
     gl_state_for_2d(gHMD.getHMDViewportWidth(), gHMD.getHMDViewportHeight(), 0, gHMD.getOrthoPixelOffset());
-    gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDViewportWidth(), gHMD.getHMDViewportHeight());
+    gViewerWindow->getWindowViewportRaw(gGLViewport);
 #endif
     glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
@@ -1833,9 +1874,6 @@ void LLHMD::render3DUI()
     }
 
     LLViewerDisplay::push_state_gl_identity();
-
-    //// handle HMD distortion and copying mScreen to framebuffer
-    //gPipeline.postRender(&gPipeline.mLeftEye, &gPipeline.mRightEye);
 }
 
 
@@ -1852,6 +1890,7 @@ void LLHMD::prerender2DUI()
         // this is necessary even though it theoretically already is using that blend type due to
         // setting the DestIsRenderTarget flag
         gGL.setSceneBlendType(LLRender::BT_ALPHA);
+        gViewerWindow->reshape(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), TRUE);
     }
 }
 
@@ -1876,6 +1915,7 @@ void LLHMD::postRender2DUI()
         }
 #endif
         LLUI::setDestIsRenderTarget(FALSE);
+        gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight(), TRUE);
     }
 }
 
@@ -1910,10 +1950,12 @@ void LLHMD::showHSW(BOOL show)
     }
 }
 
+
 LLQuaternion LLHMD::getHMDRotation() const
 {
     return mImpl ? mImpl->getHMDRotation() : LLQuaternion();
 }
+
 
 LLVector3 LLHMD::getCurrentEyeCameraOffset() const
 {

@@ -2251,7 +2251,7 @@ void LLViewerWindow::sendShapeToSim()
 
 // Must be called after window is created to set up agent
 // camera variables and UI variables.
-void LLViewerWindow::reshape(S32 width, S32 height)
+void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
 {
 	// Destroying the window at quit time generates spurious
 	// reshape messages.  We don't care about these, and we
@@ -2259,22 +2259,35 @@ void LLViewerWindow::reshape(S32 width, S32 height)
 	// may have been destructed.
 	if (!LLApp::isExiting())
 	{
-		LLViewerDisplay::gWindowResized = TRUE;
+        if (!only_ui)
+        {
+		    LLViewerDisplay::gWindowResized = TRUE;
+        }
 
 		// update our window rectangle
 		mWindowRectRaw.mRight = mWindowRectRaw.mLeft + width;
 		mWindowRectRaw.mTop = mWindowRectRaw.mBottom + height;
 
-		if (height > 0)
-		{ 
-			LLViewerCamera::getInstance()->setViewHeightInPixels( mWorldViewRectRaw.getHeight() );
-			LLViewerCamera::getInstance()->setAspect(getWorldViewAspectRatio());
-		}
+        if (only_ui)
+        {
+            mWorldViewRectRaw = getWindowRectRaw();
+            mWorldViewRectScaled = mWorldViewRectRaw;
+        }
 
-		calcDisplayScale();
-	
-		BOOL display_scale_changed = mDisplayScale != LLUI::getScaleFactor();
-		LLUI::setScaleFactor(mDisplayScale);
+        if (height > 0)
+        { 
+            LLViewerCamera::getInstance()->setViewHeightInPixels( mWorldViewRectRaw.getHeight() );
+            LLViewerCamera::getInstance()->setAspect(getWorldViewAspectRatio());
+        }
+
+        BOOL display_scale_changed = FALSE;
+        if (!only_ui)
+        {
+    		calcDisplayScale();
+            display_scale_changed = !only_ui && mDisplayScale != LLUI::getScaleFactor();
+            LLUI::setScaleFactor(mDisplayScale);
+            LLView::sForceReshape = display_scale_changed;
+        }
 
 		// update our window rectangle
 		mWindowRectScaled.mRight = mWindowRectScaled.mLeft + llround((F32)width / mDisplayScale.mV[VX]);
@@ -2282,7 +2295,6 @@ void LLViewerWindow::reshape(S32 width, S32 height)
 
 		// Inform lower views of the change
 		// round up when converting coordinates to make sure there are no gaps at edge of window
-		LLView::sForceReshape = display_scale_changed;
         if (gHMD.isHMDMode())
         {
             setup2DViewport(0, 0, gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight());
@@ -2301,34 +2313,40 @@ void LLViewerWindow::reshape(S32 width, S32 height)
 			LLHUDObject::reshapeAll();
 		}
 
-		sendShapeToSim();
+        if (only_ui)
+        {
+            LLHUDText::reshape();
+        }
+        else
+        {
+            sendShapeToSim();
+            // store new settings for the mode we are in, regardless
+            BOOL maximized = mWindow->getMaximized();
+            gSavedSettings.setBOOL("WindowMaximized", maximized);
 
-		// store new settings for the mode we are in, regardless
-		BOOL maximized = mWindow->getMaximized();
-		gSavedSettings.setBOOL("WindowMaximized", maximized);
+            if (!maximized)
+            {
+                U32 min_window_width = gHMD.isHMDMode() ? gHMD.getHMDWidth() : gSavedSettings.getU32("MinWindowWidth");
+                U32 min_window_height = gHMD.isHMDMode() ? gHMD.getHMDHeight() : gSavedSettings.getU32("MinWindowHeight");
+                // tell the OS specific window code about min window size
+                mWindow->setMinSize(min_window_width, min_window_height);
 
-		if (!maximized)
-		{
-			U32 min_window_width = gHMD.isHMDMode() ? gHMD.getHMDWidth() : gSavedSettings.getU32("MinWindowWidth");
-			U32 min_window_height = gHMD.isHMDMode() ? gHMD.getHMDHeight() : gSavedSettings.getU32("MinWindowHeight");
-			// tell the OS specific window code about min window size
-			mWindow->setMinSize(min_window_width, min_window_height);
+                LLCoordScreen window_rect;
+                if (mWindow->getSize(&window_rect))
+                {
+                    // Only save size if not maximized
+                    gSavedSettings.setU32("WindowWidth", window_rect.mX);
+                    gSavedSettings.setU32("WindowHeight", window_rect.mY);
+                }
+            }
 
-			LLCoordScreen window_rect;
-			if (mWindow->getSize(&window_rect))
-			{
-			// Only save size if not maximized
-				gSavedSettings.setU32("WindowWidth", window_rect.mX);
-				gSavedSettings.setU32("WindowHeight", window_rect.mY);
-			}
-		}
-
-		sample(LLStatViewer::WINDOW_WIDTH, width);
-		sample(LLStatViewer::WINDOW_HEIGHT, height);
+            sample(LLStatViewer::WINDOW_WIDTH, width);
+            sample(LLStatViewer::WINDOW_HEIGHT, height);
+        }
 
 		LLLayoutStack::updateClass();
 
-        if (gHMD.isHMDMode())
+        if (gHMD.isHMDMode() && !only_ui)
         {
             gHMD.renderSettingsChanged(TRUE);
         }
@@ -2958,7 +2976,14 @@ void LLViewerWindow::updateUI()
 
 	// use full window for world view when not rendering UI
 	bool world_view_uses_full_window = gAgentCamera.cameraMouselook() || !gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI);
-	updateWorldViewRect(world_view_uses_full_window);
+    if (gHMD.isHMDMode())
+    {
+        gViewerWindow->reshape(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), TRUE);
+    }
+    else
+    {
+	    updateWorldViewRect(world_view_uses_full_window);
+    }
 
 	LLView::sMouseHandlerMessage.clear();
     gHMD.cursorIntersectsWorld(FALSE);
@@ -3176,10 +3201,10 @@ void LLViewerWindow::updateUI()
             if (handled)
             {
                 gHMD.handleMouseIntersectOverride(mouse_captor);
-			if (LLView::sDebugMouseHandling)
-			{
-				LL_INFOS() << "Hover handled by captor " << mouse_captor->getName() << LL_ENDL;
-			}
+			    if (LLView::sDebugMouseHandling)
+			    {
+				    LL_INFOS() << "Hover handled by captor " << mouse_captor->getName() << LL_ENDL;
+			    }
             }
 			else
 			{
@@ -3350,6 +3375,11 @@ void LLViewerWindow::updateUI()
 	{
 		LLSelectMgr::getInstance()->deselectUnused();
 	}
+
+    if (gHMD.isHMDMode())
+    {
+        gViewerWindow->reshape(gHMD.getHMDViewportWidth(), gHMD.getHMDViewportHeight(), TRUE);
+    }
 }
 
 
@@ -3548,8 +3578,8 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 	if (use_full_window == false)
 	{
         if (mWorldViewPlaceholder.get() && !gHMD.isHMDMode())
-	{
-		new_world_rect = mWorldViewPlaceholder.get()->calcScreenRect();
+        {
+            new_world_rect = mWorldViewPlaceholder.get()->calcScreenRect();
         }
 		// clamp to at least a 1x1 rect so we don't try to allocate zero width gl buffers
 		new_world_rect.mTop = llmax(new_world_rect.mTop, new_world_rect.mBottom + 1);
@@ -3583,13 +3613,15 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 	// If mouse leaves window, pretend last point was on edge of window
 	mLastMousePoint = mCurrentMousePoint;
 
+    S32 maxW = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : getWindowWidthScaled();
+    S32 maxH = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : getWindowHeightScaled();
 	if (point.mX < 0)
 	{
 		mCurrentMousePoint.mX = 0;
 	}
-	else if (point.mX > getWindowWidthScaled())
+	else if (point.mX > maxW)
 	{
-		mCurrentMousePoint.mX = getWindowWidthScaled();
+		mCurrentMousePoint.mX = maxW;
 	}
 	else
 	{
@@ -3600,9 +3632,9 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 	{
 		mCurrentMousePoint.mY = 0;
 	}
-	else if (point.mY > getWindowHeightScaled() )
+	else if (point.mY > maxH)
 	{
-		mCurrentMousePoint.mY = getWindowHeightScaled();
+		mCurrentMousePoint.mY = maxH;
 	}
 	else
 	{
@@ -4051,26 +4083,26 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
     }
     else
     {
-	// find vertical field of view
+	    // find vertical field of view
 	    F32			fov = camera->getView();
 
-	// find world view center in scaled ui coordinates
-	F32			center_x = getWorldViewRectScaled().getCenterX();
-	F32			center_y = getWorldViewRectScaled().getCenterY();
+	    // find world view center in scaled ui coordinates
+	    F32			center_x = getWorldViewRectScaled().getCenterX();
+	    F32			center_y = getWorldViewRectScaled().getCenterY();
 
-	// calculate pixel distance to screen
-	F32			distance = ((F32)getWorldViewHeightScaled() * 0.5f) / (tan(fov / 2.f));
+	    // calculate pixel distance to screen
+	    F32			distance = ((F32)getWorldViewHeightScaled() * 0.5f) / (tan(fov / 2.f));
 
-	// calculate click point relative to middle of screen
-	F32			click_x = x - center_x;
-	F32			click_y = y - center_y;
+	    // calculate click point relative to middle of screen
+	    F32			click_x = x - center_x;
+	    F32			click_y = y - center_y;
 
-	// compute mouse vector
+	    // compute mouse vector
 	    mouse_vector =	distance * camera->getAtAxis()
 						- click_x * camera->getLeftAxis()
 						+ click_y * camera->getUpAxis();
 
-	mouse_vector.normVec();
+	    mouse_vector.normVec();
     }
 
 	return mouse_vector;
@@ -4079,11 +4111,11 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
 LLVector3 LLViewerWindow::mousePointHUD(const S32 x, const S32 y) const
 {
 	// find screen resolution
-	S32			height = getWorldViewHeightScaled();
+	S32			height = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : getWorldViewHeightScaled();
 
 	// find world view center
-	F32			center_x = getWorldViewRectScaled().getCenterX();
-	F32			center_y = getWorldViewRectScaled().getCenterY();
+	F32			center_x = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() / 2 : getWorldViewRectScaled().getCenterX();
+	F32			center_y = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() / 2 : getWorldViewRectScaled().getCenterY();
 
 	// remap with uniform scale (1/height) so that top is -0.5, bottom is +0.5
 	F32 hud_x = -((F32)x - center_x)  / height;
@@ -4101,12 +4133,12 @@ LLVector3 LLViewerWindow::mouseDirectionCamera(const S32 x, const S32 y) const
 	F32			fov_width = fov_height * LLViewerCamera::getInstance()->getAspect();
 
 	// find screen resolution
-	S32			height = getWorldViewHeightScaled();
-	S32			width = getWorldViewWidthScaled();
+	S32			height = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : getWorldViewHeightScaled();
+	S32			width = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : getWorldViewWidthScaled();
 
 	// find world view center
-	F32			center_x = getWorldViewRectScaled().getCenterX();
-	F32			center_y = getWorldViewRectScaled().getCenterY();
+    F32			center_x = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() / 2 : getWorldViewRectScaled().getCenterX();
+    F32			center_y = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() / 2 : getWorldViewRectScaled().getCenterY();
 
 	// calculate click point relative to middle of screen
 	F32			click_x = (((F32)x - center_x) / (F32)width) * fov_width * -1.f;

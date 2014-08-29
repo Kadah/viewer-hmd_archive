@@ -448,8 +448,6 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     OVR::CAPI::HMDState* hmdState = (OVR::CAPI::HMDState*)mHMD->Handle;
     OVR::CAPI::HMDRenderState* renderState = hmdState ? &(hmdState->RenderState) : NULL;
     OVR::HmdRenderInfo* renderInfo = renderState ? &(renderState->RenderInfo) : NULL;
-    //mScreenSizeInMeters = renderInfo ? renderInfo->ScreenSizeInMeters : OVR::Sizef(kDefaultHScreenSize, kDefaultVScreenSize);
-    //mLensSeparationInMeters = renderInfo ? renderInfo->LensSeparationInMeters : kDefaultLenSeparationDistance;
     mEyeToScreenDistance = renderInfo ? (0.5f * (renderInfo->EyeLeft.ReliefInMeters + renderInfo->EyeRight.ReliefInMeters)) : getEyeToScreenDistanceDefault();
     mInterpupillaryDistance = ovrHmd_GetFloat(mHMD, OVR_KEY_IPD, getInterpupillaryOffsetDefault());
 
@@ -538,12 +536,21 @@ BOOL LLHMDImplOculus::beginFrame()
             OVR::Posef pose = mTrackingState.HeadPose.ThePose;
 
             // OpenGL coord system of -Z forward, X right, Y up. 
-            float r, p, y;
-            pose.Rotation.GetEulerAngles<OVR::Axis_X, OVR::Axis_Y, OVR::Axis_Z>(&p, &y, &r);
             mEyeRotation.set(pose.Rotation.x, pose.Rotation.y, pose.Rotation.z, pose.Rotation.w);
-
-            mEyeRPY.set(r, p, y);
             mHeadPos.set(pose.Translation.x, pose.Translation.y, pose.Translation.z);
+
+            // These need to be in LL (CFR) coord system
+            // Note that the LL coord system uses X forward, Y left, and Z up whereas the Oculus SDK uses the
+            // OpenGL coord system of -Z forward, X right, Y up.  To compensate, we retrieve the angles in the Oculus
+            // coord system, but change the axes to ours, then negate X and Z to account for the forward left axes
+            // being positive in LL, but negative in Oculus.
+            // LL X = Oculus -Z, LL Y = Oculus -X, and LL Z = Oculus Y
+            // Yaw = rotation around the "up" axis          (LL  Z, Oculus  Y)
+            // Pitch = rotation around the left/right axis  (LL -Y, Oculus  X)
+            // Roll = rotation around the forward axis      (LL  X, Oculus -Z)
+            float r, p, y;
+            pose.Rotation.GetEulerAngles<OVR::Axis_Y, OVR::Axis_X, OVR::Axis_Z>(&y, &p, &r);
+            mEyeRPY.set(-r, -p, y);
         }
     }
     return gHMD.isFrameInProgress();
@@ -711,35 +718,29 @@ S32 LLHMDImplOculus::getViewportHeight() const
 
 LLVector3 LLHMDImplOculus::getCurrentEyeCameraOffset() const
 {
-    return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? 
-        LLVector3(mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x,
-        mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.y,
-        mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.z) : 
-        LLVector3::zero;
+    if (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE)
+    {
+        U32 eye = getCurrentOVREye();
+        return LLVector3(mEyeRenderDesc[eye].ViewAdjust.x, mEyeRenderDesc[eye].ViewAdjust.y, mEyeRenderDesc[eye].ViewAdjust.z);
+    }
+    else
+    {
+        return LLVector3::zero;
+    }
 }
 
 
 LLVector3 LLHMDImplOculus::getCurrentEyeOffset(const LLVector3& centerPos) const
 {
     LLVector3 ret = centerPos;
-
-    if (gHMD.isPostDetectionInitialized())
+    if (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE)
     {
-        if (mCurrentEye != (U32)LLHMD::CENTER_EYE)
-        {
-            U32 eye = getCurrentOVREye();
-            LLViewerCamera* camera = LLViewerCamera::getInstance();
-            LLVector3 trans = -mEyeRenderDesc[eye].ViewAdjust.z * camera->getXAxis() +
-                              -mEyeRenderDesc[eye].ViewAdjust.x * camera->getYAxis() +
-                            mEyeRenderDesc[eye].ViewAdjust.y * camera->getZAxis();
-
-            ret -= trans;
-        }
+        U32 eye = getCurrentOVREye();
+        LLViewerCamera* camera = LLViewerCamera::getInstance();
+        LLVector3 trans = (-mEyeRenderDesc[eye].ViewAdjust.z * camera->getXAxis()) + (-mEyeRenderDesc[eye].ViewAdjust.x * camera->getYAxis()) + (mEyeRenderDesc[eye].ViewAdjust.y * camera->getZAxis());
+        ret -= trans;
     }
-
     return ret;
-
-    //return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? (centerPos - (-mEyeRenderDesc[getCurrentOVREye()].ViewAdjust.x * LLViewerCamera::getInstance()->getYAxis())) : centerPos;
 }
 
 

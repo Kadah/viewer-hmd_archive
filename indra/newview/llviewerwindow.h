@@ -334,7 +334,7 @@ public:
 	void			setNormalControlsVisible( BOOL visible );
 	void			setMenuBackgroundColor(bool god_mode = false, bool dev_grid = false);
 
-	void			reshape(S32 width, S32 height);
+	void			reshape(S32 width, S32 height, BOOL only_ui = FALSE);
 	void			sendShapeToSim();
 
 	void			draw();

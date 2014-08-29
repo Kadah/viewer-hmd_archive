@@ -48,10 +48,10 @@ void hud_render_utf8text(const std::string &str, const LLVector3 &pos_agent,
 					 const F32 x_offset, const F32 y_offset,
 					 const LLColor4& color,
 					 const BOOL orthographic,
-                     BOOL allowRoll)
+                     BOOL keepLevel)
 {
 	LLWString wstr(utf8str_to_wstring(str));
-	hud_render_text(wstr, pos_agent, font, style, shadow, x_offset, y_offset, color, orthographic, allowRoll);
+	hud_render_text(wstr, pos_agent, font, style, shadow, x_offset, y_offset, color, orthographic, keepLevel);
 }
 
 void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
@@ -61,7 +61,7 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 					const F32 x_offset, const F32 y_offset,
 					const LLColor4& color,
 					const BOOL orthographic,
-                    BOOL allowRoll)
+                    BOOL keepLevel)
 {
 	LLViewerCamera* camera = LLViewerCamera::getInstance();
 	// Do cheap plane culling
@@ -82,7 +82,7 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	}
 	else
 	{
-		camera->getPixelVectors(pos_agent, up_axis, right_axis, allowRoll);
+		camera->getPixelVectors(pos_agent, up_axis, right_axis, keepLevel);
 	}
 
 	LLVector3 render_pos = pos_agent + (floorf(x_offset) * right_axis) + (floorf(y_offset) * up_axis);
@@ -91,14 +91,7 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	
 	F64 winX, winY, winZ;
 	S32	viewport[4];
-#if LLHMD_DK1
-    gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDEyeWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
-#else
-    gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDViewportWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : 0);
-    //gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? (gHMD.getHMDViewportWidth() / 2) : 0, gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : 0);
-    //gViewerWindow->getWorldViewportRaw(viewport, gHMD.isHMDMode() ? gHMD.getHMDWidth() : 0, gHMD.isHMDMode() ? gHMD.getHMDHeight() : 0);
-    //gViewerWindow->getWorldViewportRaw(viewport);
-#endif
+    gViewerWindow->getWorldViewportRaw(viewport);
 
 	F64 mdlv[16];
 	F64 proj[16];
@@ -130,7 +123,7 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	gGL.loadIdentity();
 
     LLVector4 uit((F32) winX*1.0f/LLFontGL::sScaleX, (F32) winY*1.0f/(LLFontGL::sScaleY), -(((F32) winZ*2.f)-1.f), 1.0f);
-    if (allowRoll && gHMD.isHMDMode())
+    if (keepLevel && gHMD.isHMDMode())
     {
         LLMatrix4 mat_neg_roll(0.0f, 0.0f, gHMD.getHMDRoll());
         LLMatrix4 mat_roll(0.0f, 0.0f, -gHMD.getHMDRoll());

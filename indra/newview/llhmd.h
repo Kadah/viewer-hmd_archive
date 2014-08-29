@@ -101,6 +101,7 @@ public:
         kFlag_DynamicResolutionScaling  = 1 << 23,
         kFlag_HSWShowing                = 1 << 24,
         kFlag_MirrorHack                = 1 << 25,  // temp until SDK supports attaching to a secondary window
+        kFlag_AllowTextRoll             = 1 << 26,
         //kFlag_LowPersistence            = 1 << 20,
     };
 
@@ -205,7 +206,9 @@ public:
     void isHSWShowing(BOOL b) { if (b) { mFlags |= kFlag_HSWShowing; } else { mFlags &= ~kFlag_HSWShowing; } }
     BOOL useMirrorHack() const { return ((mFlags & kFlag_MirrorHack) != 0) ? TRUE : FALSE; }
     void useMirrorHack(BOOL b) { if (b) { mFlags |= kFlag_MirrorHack; } else { mFlags &= ~kFlag_MirrorHack; } }
-
+    BOOL allowTextRoll() const { return ((mFlags & kFlag_AllowTextRoll) != 0) ? TRUE : FALSE; }
+    void allowTextRoll(BOOL b) { if (b) { mFlags |= kFlag_AllowTextRoll; } else { mFlags &= ~kFlag_AllowTextRoll; } }
+    
     // True if render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
 
@@ -275,13 +278,6 @@ public:
     F32 getHMDDeltaYaw() const;
     LLVector3 getCurrentEyeCameraOffset() const;
 
-    // head correction (difference in rotation between head and body)
-    //LLQuaternion getHeadRotationCorrection() const;
-    //void addHeadRotationCorrection(LLQuaternion quat);
-    //void resetHeadRotationCorrection();
-    //LLQuaternion getHeadPitchCorrection() const;
-    //void addHeadPitchCorrection(LLQuaternion quat);
-    //void resetHeadPitchCorrection();
     void resetOrientation();
 
     void setBaseModelView(F32* m);
@@ -292,17 +288,7 @@ public:
     void setUIModelView(F32* m);
     F32* getUIModelView() { return mUIModelView; }
     F32* getUIModelViewInv() { return mUIModelViewInv; }
-    void setBaseLookAt(F32* m) { for (int i = 0; i < 16; ++i) { mBaseLookAt[i] = m[i]; } }
-    F32* getBaseLookAt() { return mBaseLookAt; }
     
-    //// array of parameters for controlling additional Red and Blue scaling in order to reduce chromatic aberration
-    //// caused by the Rift lenses.  Additional per-channel scaling is applied after distortion:
-    //// Index [0] - Red channel constant coefficient.
-    //// Index [1] - Red channel r^2 coefficient.
-    //// Index [2] - Blue channel constant coefficient.
-    //// Index [3] - Blue channel r^2 coefficient.
-    //LLVector4 getChromaticAberrationConstants() const;
-
     F32 getOrthoPixelOffset() const;
 
     LLCoordScreen getMainWindowPos() const { return mMainWindowPos; }
@@ -318,8 +304,6 @@ public:
     void setMainClientHeight(S32 h) { mMainClientSize.mY = h; }
     LLCoordWindow getMainClientSize() const { return mMainClientSize; }
     LLCoordWindow getHMDClientSize() const { return LLCoordWindow(getHMDWidth(), getHMDHeight()); }
-
-    //const char* getLatencyTesterResults();
 
     void onViewChange(S32 oldMode);
 
@@ -396,8 +380,6 @@ public:
     void setupStereoCullFrustum();
     void setupEye();
     F32 getProjectionOffset(S32 row, S32 col) const { return mProjectionOffset[row][col]; }
-    //F32 getProjectionOffset02() const { return mProjectionOffset; }
-    //F32 getProjectionOffset11() const { return mProjectionOffset; }
     LLVector3 getCameraOffset() const { return mCameraOffset; }
 
     void setup2DRender();
@@ -431,6 +413,7 @@ public:
     static void onChangeMouselookControlMode();
     static void onChangeRenderSettings();
     static void onChangeDynamicResolutionScaling();
+    static void onChangeAllowTextRoll();
 
 private:
     void calculateUIEyeDepth();
@@ -452,7 +435,6 @@ private:
     F32 mBaseProjection[16];
     F32 mUIModelView[16];
     F32 mUIModelViewInv[16];
-    F32 mBaseLookAt[16];
     LLCoordScreen mMainWindowPos;
     LLCoordScreen mMainWindowSize;
     LLCoordWindow mMainClientSize;
@@ -562,8 +544,6 @@ public:
     virtual F32 getOrthoPixelOffset() const { return kDefaultOrthoPixelOffset; }
 
     virtual void resetOrientation() {}
-
-    //virtual const char* getLatencyTesterResults() { return ""; }
 
     virtual BOOL beginFrame() { return FALSE; }
     virtual BOOL endFrame() { return FALSE; }

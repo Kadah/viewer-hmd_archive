@@ -111,7 +111,7 @@ public:
 	F32     getAverageSpeed() {return mAverageSpeed ;}
 	F32     getAverageAngularSpeed() {return mAverageAngularSpeed;}
 
-	void getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, LLVector3 &right, BOOL allowRoll = FALSE);
+	void getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, LLVector3 &right, BOOL keepLevel = FALSE);
 
 	// Sets the current matrix
 	/* virtual */ void setView(F32 vertical_fov_rads);

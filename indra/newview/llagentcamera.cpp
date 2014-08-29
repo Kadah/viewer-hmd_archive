@@ -1423,12 +1423,15 @@ void LLAgentCamera::updateCamera()
 
     if (gHMD.isHMDMode() && (!cameraMouselook() || gHMD.getMouselookControlMode() != (S32)LLHMD::kMouselookControl_Linked))
     {
+        LLVector3 uiUp = mCameraUpVector;
+        LLVector3 uiFocus = focus_agent;
         if (cameraThirdPerson() || cameraFollow())
-        { //strip off pitch
+        {
+            //strip off pitch
             focus_agent.mV[VZ] = mCameraPositionAgent.mV[VZ];
+            uiFocus = focus_agent;
         }
-        
-        LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent, mCameraUpVector, focus_agent);
+        LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent, uiUp, uiFocus);
     }
     else
     {

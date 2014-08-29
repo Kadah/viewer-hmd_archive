@@ -4467,6 +4467,17 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>HMDAllowTextRoll</key>
+    <map>
+      <key>Comment</key>
+      <string>In-World text will always be oriented in the head direction rather than in the direction of the object it's attached to.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
     <key>HMDDebugShowLatency</key>
     <map>
       <key>Comment</key>
