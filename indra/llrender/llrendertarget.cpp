@@ -64,6 +64,7 @@ LLRenderTarget::LLRenderTarget() :
 	mResY(0),
 	mFBO(0),
 	mPreviousFBO(0),
+    mPreviousTarget(NULL),
 	mPreviousResX(0),
 	mPreviousResY(0),
 	mDepth(0),
@@ -348,6 +349,11 @@ void LLRenderTarget::shareDepthBuffer(LLRenderTarget& target)
 
 void LLRenderTarget::release()
 {
+    if (mFBO)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+    }
+
 	if (mDepth)
 	{
 		if (mStencil)
@@ -366,8 +372,6 @@ void LLRenderTarget::release()
 	}
 	else if (mFBO)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
-
 		if (mUseDepth)
 		{ //detach shared depth buffer
 			if (mStencil)
@@ -426,6 +430,8 @@ void LLRenderTarget::bindTarget()
 		stop_glerror();
 		
 		mPreviousFBO = sCurFBO;
+        mPreviousTarget = sBoundTarget;
+
 		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
 		sCurFBO = mFBO;
 		
@@ -532,6 +538,7 @@ void LLRenderTarget::flush(bool fetch_depth)
 		stop_glerror();
 		glBindFramebuffer(GL_FRAMEBUFFER, mPreviousFBO);
 		sCurFBO = mPreviousFBO;
+        sBoundTarget = mPreviousTarget;
 
 		if (mPreviousFBO)
 		{
@@ -601,12 +608,17 @@ void LLRenderTarget::copyContents(LLRenderTarget& source, S32 srcX0, S32 srcY0, 
 void LLRenderTarget::copyContentsToFramebuffer(LLRenderTarget& source, S32 srcX0, S32 srcY0, S32 srcX1, S32 srcY1,
 						S32 dstX0, S32 dstY0, S32 dstX1, S32 dstY1, U32 mask, U32 filter)
 {
-	if (!source.mFBO)
+    if (!source.mFBO)
 	{
 		LL_WARNS() << "Cannot copy framebuffer contents for non FBO render targets." << LL_ENDL;
 		return;
 	}
 
+    if (sBoundTarget && sBoundTarget != &source)
+    { //unbeknownst to the caller, some other target is masquerading as the framebuffer
+        sBoundTarget->copyContents(source, srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
+    }
+    else
 	{
 		GLboolean write_depth = mask & GL_DEPTH_BUFFER_BIT ? TRUE : FALSE;
 

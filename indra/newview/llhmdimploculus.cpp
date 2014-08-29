@@ -387,7 +387,7 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
             {
                 mEyeRT[i]->release();
             }
-            if (!mEyeRT[i]->allocate(w, h, GL_RGBA, false, false, LLTexUnit::TT_TEXTURE, true))
+            if (!mEyeRT[i]->allocate(w, h, GL_RGBA, true, false, LLTexUnit::TT_TEXTURE, true))
             {
                 LL_WARNS() << "could not allocate Eye RenderTarget for HMD" << LL_ENDL;
                 removeHMDDevice();
