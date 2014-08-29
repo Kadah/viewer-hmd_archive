@@ -1537,7 +1537,7 @@ void LLManipTranslate::renderSnapGuides()
 			//draw grid behind objects
 			LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
 
-			if (!gHMD.isHMDMode())
+			//if (!gHMD.isHMDMode())
             {
 				LLGLDisable stencil(GL_STENCIL_TEST);
 				{

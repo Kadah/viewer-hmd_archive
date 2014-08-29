@@ -152,7 +152,7 @@ void LLManipRotate::render()
 	{
 		
 		// are we in the middle of a constrained drag?
-		if (mManipPart >= LL_ROT_X && mManipPart <= LL_ROT_Z)
+		if (mManipPart >= LL_ROT_X && mManipPart <= LL_ROT_Z && !gHMD.isHMDMode())
 		{
 			renderSnapGuides();
 		}
@@ -750,7 +750,7 @@ void LLManipRotate::renderActiveRing( F32 radius, F32 width, const LLColor4& fro
 
 void LLManipRotate::renderSnapGuides()
 {
-	if (gHMD.isHMDMode() || !gSavedSettings.getBOOL("SnapEnabled"))
+	if (!gSavedSettings.getBOOL("SnapEnabled"))
 	{
 		return;
 	}
@@ -1135,10 +1135,10 @@ void LLManipRotate::renderSnapGuides()
 			std::string help_text =  LLTrans::getString("manip_hint1");
 			LLColor4 help_text_color = LLColor4::white;
 			help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
-			hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+			hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
 			help_text =  LLTrans::getString("manip_hint2");
 			help_text_pos -= offset_dir * mRadiusMeters * 0.4f;
-			hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+			hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
 		}
 	}
 }

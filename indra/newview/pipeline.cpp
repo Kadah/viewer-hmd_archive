@@ -11641,11 +11641,7 @@ void LLPipeline::postRender(BOOL writeAlpha)
         gHMD.flushCurrentEyeRT();
     }
 #endif
-#if LLHMD_DK1
-    if (LLRenderTarget::sUseFBO && (!gHMD.isHMDMode() || gHMD.getCurrentEye() != LLHMD::LEFT_EYE))
-#else
     if (LLRenderTarget::sUseFBO && !gHMD.isHMDMode())
-#endif
 	{
         //copy depth buffer from mScreen to framebuffer
 		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 

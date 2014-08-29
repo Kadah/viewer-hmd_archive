@@ -310,7 +310,7 @@ void LLManipScale::render()
 		}
 		gGL.popMatrix();
 
-		if (mManipPart != LL_NO_PART)
+		if (mManipPart != LL_NO_PART && !gHMD.isHMDMode())
 		{
 			renderSnapGuides(bbox);
 		}
@@ -1604,7 +1604,7 @@ void LLManipScale::updateSnapGuides(const LLBBox& bbox)
 
 void LLManipScale::renderSnapGuides(const LLBBox& bbox)
 {
-	if (gHMD.isHMDMode() || !gSavedSettings.getBOOL("SnapEnabled"))
+	if (!gSavedSettings.getBOOL("SnapEnabled"))
 	{
 		return;
 	}
@@ -1915,10 +1915,10 @@ void LLManipScale::renderSnapGuides(const LLBBox& bbox)
 				std::string help_text = LLTrans::getString("manip_hint1");
 				LLColor4 help_text_color = LLColor4::white;
 				help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, grid_alpha, 0.f);
-				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
 				help_text = LLTrans::getString("manip_hint2");
 				help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapRegimeOffset * 0.4f;
-				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
 			}
 		}
 	}
