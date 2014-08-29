@@ -7510,13 +7510,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 
-#if !LLHMD_EXPERIMENTAL
-    if (gHMD.isHMDMode())
-    {
-        gHMD.bindCurrentEyeRT();
-    }
-#endif
-
 	assertInitialized();
 
 	if (gUseWireframe)
@@ -11635,12 +11628,27 @@ void LLPipeline::postRender(BOOL writeAlpha)
         return;
     }
 
+    if (gHMD.isHMDMode())
+    {
+        gHMD.getCurrentEyeRT()->copyFramebuffer();
+    }
+
+/*#if !LLHMD_EXPERIMENTAL
+    if (gHMD.isHMDMode())
+    {
+        gHMD.bindCurrentEyeRT();
+
+        gHMD.getCurrentEyeRT()->copyFramebuffer();
+        
+    }
+#endif
+
 #if !LLHMD_EXPERIMENTAL
     if (gHMD.isHMDMode())
     {
         gHMD.flushCurrentEyeRT();
     }
-#endif
+#endif*/
 #if LLHMD_DK1
     if (LLRenderTarget::sUseFBO && (!gHMD.isHMDMode() || gHMD.getCurrentEye() != LLHMD::LEFT_EYE))
 #else

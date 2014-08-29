@@ -142,7 +142,7 @@ public:
 	bool isComplete() const;
 
 	static LLRenderTarget* getCurrentBoundTarget() { return sBoundTarget; }
-
+    void copyFramebuffer();
 protected:
 	U32 mResX;
 	U32 mResY;

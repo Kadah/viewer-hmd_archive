@@ -348,6 +348,11 @@ void LLRenderTarget::shareDepthBuffer(LLRenderTarget& target)
 
 void LLRenderTarget::release()
 {
+    if (mFBO)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+    }
+
 	if (mDepth)
 	{
 		if (mStencil)
@@ -366,8 +371,6 @@ void LLRenderTarget::release()
 	}
 	else if (mFBO)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
-
 		if (mUseDepth)
 		{ //detach shared depth buffer
 			if (mStencil)
@@ -625,6 +628,25 @@ void LLRenderTarget::copyContentsToFramebuffer(LLRenderTarget& source, S32 srcX0
 	}
 }
 
+void LLRenderTarget::copyFramebuffer()
+{
+    int srcX0 = gGLViewport[0];
+    int srcY0 = gGLViewport[1];
+    int srcX1 = srcX0+gGLViewport[2];
+    int srcY1 = srcY0+gGLViewport[3];
+    
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mFBO);
+    stop_glerror();
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+    stop_glerror();
+    check_framebuffer_status();
+    stop_glerror();
+    glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, 0, 0, getWidth(), getHeight(), GL_COLOR_BUFFER_BIT, GL_LINEAR);
+    stop_glerror();
+    glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
+    stop_glerror();
+}
+
 bool LLRenderTarget::isComplete() const
 {
 	return (!mTex.empty() || mDepth) ? true : false;
@@ -637,6 +659,7 @@ void LLRenderTarget::getViewport(S32* viewport)
 	viewport[2] = mResX;
 	viewport[3] = mResY;
 }
+
 
 
 
