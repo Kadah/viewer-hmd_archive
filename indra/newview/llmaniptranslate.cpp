@@ -963,8 +963,17 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
 	    LLVector2 manip_end_2d;
 	    LLVector2 manip_dir;
 	    LLRect world_view_rect = gViewerWindow->getWorldViewRectScaled();
-	    F32 half_width = (F32)world_view_rect.getWidth() / 2.f;
-	    F32 half_height = (F32)world_view_rect.getHeight() / 2.f;
+        F32 half_width = 0, half_height = 0;
+        if (gHMD.isHMDMode() && mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
+        {
+            half_width = (F32)gHMD.getHMDUIWidth() / 2.0f;
+            half_height = (F32)gHMD.getHMDUIHeight() / 2.0f;
+        }
+        else
+        {
+            half_width = (F32)world_view_rect.getWidth() / 2.f;
+            half_height = (F32)world_view_rect.getHeight() / 2.f;
+        }
 	    LLVector2 mousePos((F32)x - half_width, (F32)y - half_height);
 	    LLVector2 mouse_delta;
 
@@ -1861,7 +1870,8 @@ void LLManipTranslate::renderTranslationHandles()
 	// Drag handles 	
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
-		mArrowLengthMeters = mAxisArrowLength / gViewerWindow->getWorldViewHeightRaw();
+        S32 h = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightRaw();
+		mArrowLengthMeters = mAxisArrowLength / h;
 		mArrowLengthMeters /= gAgentCamera.mHUDCurZoom;
 	}
 	else

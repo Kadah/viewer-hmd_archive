@@ -4063,7 +4063,7 @@ LLViewerObject* LLViewerWindow::cursorIntersect(S32 mouse_x, S32 mouse_y, F32 de
 			}
 		}
 	}
-		
+
 	return found;
 }
 
@@ -4111,7 +4111,7 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
 LLVector3 LLViewerWindow::mousePointHUD(const S32 x, const S32 y) const
 {
 	// find screen resolution
-	S32			height = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : getWorldViewHeightScaled();
+	S32			height = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : getWorldViewHeightScaled();
 
 	// find world view center
 	F32			center_x = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() / 2 : getWorldViewRectScaled().getCenterX();
@@ -4133,12 +4133,12 @@ LLVector3 LLViewerWindow::mouseDirectionCamera(const S32 x, const S32 y) const
 	F32			fov_width = fov_height * LLViewerCamera::getInstance()->getAspect();
 
 	// find screen resolution
-	S32			height = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : getWorldViewHeightScaled();
-	S32			width = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : getWorldViewWidthScaled();
+	S32			height = getWorldViewHeightScaled();
+	S32			width = getWorldViewWidthScaled();
 
 	// find world view center
-    F32			center_x = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() / 2 : getWorldViewRectScaled().getCenterX();
-    F32			center_y = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() / 2 : getWorldViewRectScaled().getCenterY();
+    F32			center_x = getWorldViewRectScaled().getCenterX();
+    F32			center_y = getWorldViewRectScaled().getCenterY();
 
 	// calculate click point relative to middle of screen
 	F32			click_x = (((F32)x - center_x) / (F32)width) * fov_width * -1.f;

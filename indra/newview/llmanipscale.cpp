@@ -236,7 +236,7 @@ void LLManipScale::render()
 		{
 			for (S32 i = 0; i < NUM_MANIPULATORS; i++)
 			{
-				mBoxHandleSize[i] = BOX_HANDLE_BASE_SIZE * BOX_HANDLE_BASE_FACTOR / (F32) LLViewerCamera::getInstance()->getViewHeightInPixels();
+				mBoxHandleSize[i] = BOX_HANDLE_BASE_SIZE * BOX_HANDLE_BASE_FACTOR / (F32)(gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels());
 				mBoxHandleSize[i] /= gAgentCamera.mHUDCurZoom;
 			}
 		}
@@ -542,25 +542,33 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
         else
         {
             LLRect world_view_rect = gViewerWindow->getWorldViewRectScaled();
-		    F32 half_width = (F32)world_view_rect.getWidth() / 2.f;
-		    F32 half_height = (F32)world_view_rect.getHeight() / 2.f;
+            F32 half_width = 0, half_height = 0;
+            if (gHMD.isHMDMode() && mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
+            {
+                half_width = (F32)gHMD.getHMDUIWidth() / 2.0f;
+                half_height = (F32)gHMD.getHMDUIHeight() / 2.0f;
+            }
+            else
+            {
+                half_width = (F32)world_view_rect.getWidth() / 2.f;
+                half_height = (F32)world_view_rect.getHeight() / 2.f;
+            }
 		    LLVector2 manip2d;
 		    LLVector2 mousePos((F32)x - half_width, (F32)y - half_height);
 		    LLVector2 delta;
 
-		mHighlightedPart = LL_NO_PART;
+		    mHighlightedPart = LL_NO_PART;
 
-		for (manipulator_list_t::iterator iter = mProjectedManipulators.begin();
-			 iter != mProjectedManipulators.end(); ++iter)
-		{
-			ManipulatorHandle* manipulator = *iter;
-			{
-				manip2d.set(manipulator->mPosition.mV[VX] * half_width, manipulator->mPosition.mV[VY] * half_height);
+		    for (manipulator_list_t::iterator iter = mProjectedManipulators.begin(); iter != mProjectedManipulators.end(); ++iter)
+		    {
+			    ManipulatorHandle* manipulator = *iter;
+			    {
+				    manip2d.set(manipulator->mPosition.mV[VX] * half_width, manipulator->mPosition.mV[VY] * half_height);
 
-				delta = manip2d - mousePos;
-				if (delta.lengthSquared() < MAX_MANIP_SELECT_DISTANCE_SQUARED)
-				{
-					mHighlightedPart = manipulator->mManipID;
+    				delta = manip2d - mousePos;
+	    			if (delta.lengthSquared() < MAX_MANIP_SELECT_DISTANCE_SQUARED)
+		    		{
+			    		mHighlightedPart = manipulator->mManipID;
 
 					    //LL_INFOS() << "Tried: " << mHighlightedPart << LL_ENDL;
 					    break;
@@ -568,7 +576,7 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 			    }
 		    }
         }
-	}
+    }
 
 	for (S32 i = 0; i < NUM_MANIPULATORS; i++)
 	{

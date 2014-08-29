@@ -285,8 +285,10 @@ BOOL LLManip::getMousePointOnPlaneGlobal(LLVector3d& point, S32 x, S32 y, LLVect
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
 		BOOL result = FALSE;
-		F32 mouse_x = ((F32)x / gViewerWindow->getWorldViewWidthScaled() - 0.5f) * LLViewerCamera::getInstance()->getUIAspect() / gAgentCamera.mHUDCurZoom;
-		F32 mouse_y = ((F32)y / gViewerWindow->getWorldViewHeightScaled() - 0.5f) / gAgentCamera.mHUDCurZoom;
+        S32 w = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : gViewerWindow->getWorldViewWidthScaled();
+        S32 h = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled();
+		F32 mouse_x = ((F32)x / w - 0.5f) * LLViewerCamera::getInstance()->getUIAspect() / gAgentCamera.mHUDCurZoom;
+		F32 mouse_y = ((F32)y / h - 0.5f) / gAgentCamera.mHUDCurZoom;
 
 		LLVector3 origin_agent = gAgent.getPosAgentFromGlobal(origin);
 		LLVector3 mouse_pos = LLVector3(0.f, -mouse_x, mouse_y);
@@ -307,8 +309,7 @@ BOOL LLManip::getMousePointOnPlaneGlobal(LLVector3d& point, S32 x, S32 y, LLVect
 	}
 	else
 	{
-		return gViewerWindow->mousePointOnPlaneGlobal(
-										point, x, y, origin, normal );
+		return gViewerWindow->mousePointOnPlaneGlobal(point, x, y, origin, normal);
 	}
 
 	//return FALSE;
@@ -324,8 +325,11 @@ BOOL LLManip::nearestPointOnLineFromMouse( S32 x, S32 y, const LLVector3& b1, co
 
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
-		F32 mouse_x = (((F32)x / gViewerWindow->getWindowWidthScaled()) - 0.5f) * LLViewerCamera::getInstance()->getUIAspect() / gAgentCamera.mHUDCurZoom;
-		F32 mouse_y = (((F32)y / gViewerWindow->getWindowHeightScaled()) - 0.5f) / gAgentCamera.mHUDCurZoom;
+        S32 w = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : gViewerWindow->getWorldViewWidthScaled();
+        S32 h = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled();
+
+		F32 mouse_x = (((F32)x / w) - 0.5f) * LLViewerCamera::getInstance()->getUIAspect() / gAgentCamera.mHUDCurZoom;
+		F32 mouse_y = (((F32)y / h) - 0.5f) / gAgentCamera.mHUDCurZoom;
 		a1 = LLVector3(llmin(b1.mV[VX] - 0.1f, b2.mV[VX] - 0.1f, 0.f), -mouse_x, mouse_y);
 		a2 = a1 + LLVector3(1.f, 0.f, 0.f);
 	}
