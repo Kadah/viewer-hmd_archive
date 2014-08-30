@@ -4503,7 +4503,7 @@
     <key>HMDDynamicResolutionScaling</key>
     <map>
       <key>Comment</key>
-      <string>Enable HMD Dynamic Resolution Scaling</string>
+      <string>Enable HMD Dynamic Resolution Scaling: Changes the rendering resolution to increase framerate at the cost of more jagged/pixelated edges and lower rendering quality</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -4547,13 +4547,13 @@
     <key>HMDLowPersistence</key>
     <map>
       <key>Comment</key>
-      <string>Enable HMD Low Persistence Mode</string>
+      <string>Enable HMD Low Persistence Mode to reduce/eliminate motion blur and judder.  While it does help with these things, it also makes the display noticeably dimmer.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>1</integer>
+      <integer>0</integer>
     </map>
     <key>HMDMouselookControlMode</key>
     <map>
@@ -4613,7 +4613,7 @@
     <key>HMDPixelLuminanceOverdrive</key>
     <map>
       <key>Comment</key>
-      <string>Enable HMD Pixel Luminance Overdrive</string>
+      <string>Enable HMD Pixel Luminance Overdrive: Attempts to combat the dimness of Low Persistence Mode in software without sacrificing the benefits of that mode.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
@@ -4624,24 +4624,24 @@
     <key>HMDTimewarp</key>
     <map>
       <key>Comment</key>
-      <string>Enable HMD Timewarp Mode</string>
+      <string>Enable HMD Timewarp Mode: Reduce motion-to-photon latency, i.e. how long it takes from the moment you move your head to when the scene rendered by the Rift is updated.  This allows lower latency and higher frame rates.  Experimental.</string>
       <key>Persist</key>
       <integer>0</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>1</integer>
+      <integer>0</integer>
     </map>
     <key>HMDTimewarpIntervalSeconds</key>
     <map>
       <key>Comment</key>
-      <string>HMD Timewarp Rendering Interval</string>
+      <string>HMD Timewarp Rendering Interval.  Higher value = higher FPS, but more "dropped" frames.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>
       <string>F32</string>
       <key>Value</key>
-      <real>0.0001</real>
+      <real>0.015</real>
     </map>
     <key>HMDTimewarpNoJit</key>
     <map>
@@ -4701,24 +4701,24 @@
                 <key>PresetType</key>
                 <string>Default</string>
                 <key>ToroidRadiusWidth</key>
-                <real>1.0</real>
+                <real>1.4</real>
                 <key>ToroidRadiusDepth</key>
                 <real>1.0</real>
                 <key>ToroidCSRadiusWidth</key>
-                <real>0.2</real>
+                <real>0.1</real>
                 <key>ToroidCSRadiusHeight</key>
-                <real>1.2</real>
+                <real>2.0</real>
                 <key>ArcHorizontal</key>
-                <real>2.827433</real>
+                <real>2.513274</real>
                 <key>ArcVertical</key>
-                <real>1.884956</real>
+                <real>0.942478</real>
                 <key>UIMagnification</key>
-                <real>650.0</real>
+                <real>600.0</real>
                 <key>Offsets</key>
                 <array>
                     <real>0.0</real>
-                    <real>0.0</real>
-                    <real>-0.2</real>
+                    <real>-0.15</real>
+                    <real>-0.3</real>
                 </array>
             </map>
             <map>

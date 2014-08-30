@@ -140,7 +140,6 @@ BOOL LLHMD::init()
 
     gSavedSettings.getControl("HMDAdvancedMode")->getSignal()->connect(boost::bind(&onChangeHMDAdvancedMode));
     onChangeHMDAdvancedMode();
-    gSavedSettings.getControl("DisableVerticalSync")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDLowPersistence")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDPixelLuminanceOverdrive")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDUseMotionPrediction")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
@@ -149,11 +148,7 @@ BOOL LLHMD::init()
     gSavedSettings.getControl("HMDTimewarpNoJit")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDEnablePositionalTracking")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDPixelDensity")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
-    // intentionally not calling onChangeRenderSettings here
-    gSavedSettings.getControl("HMDInterpupillaryDistance")->getSignal()->connect(boost::bind(&onChangeInterpupillaryDistance));
-    // intentionally not calling onChangeInterpupillaryDistance here
-    gSavedSettings.getControl("HMDEyeToScreenDistance")->getSignal()->connect(boost::bind(&onChangeEyeToScreenDistance));
-    // intentionally not calling onChangeEyeToScreenDistance here
+    onChangeRenderSettings();
     gSavedSettings.getControl("HMDDynamicResolutionScaling")->getSignal()->connect(boost::bind(&onChangeDynamicResolutionScaling));
     onChangeDynamicResolutionScaling();
     gSavedSettings.getControl("HMDUISurfaceArcHorizontal")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
@@ -332,8 +327,6 @@ BOOL LLHMD::init()
 
 
 void LLHMD::onChangeHMDAdvancedMode() { gHMD.isAdvancedMode(gSavedSettings.getBOOL("HMDAdvancedMode")); }
-void LLHMD::onChangeInterpupillaryDistance() { if (!gHMD.isSavingSettings()) { gHMD.setInterpupillaryOffset(gSavedSettings.getF32("HMDInterpupillaryDistance")); onChangeRenderSettings(); } }
-void LLHMD::onChangeEyeToScreenDistance() { if (!gHMD.isSavingSettings()) { gHMD.setEyeToScreenDistance(gSavedSettings.getF32("HMDEyeToScreenDistance")); onChangeRenderSettings(); } }
 void LLHMD::onChangeUIMagnification() { if (!gHMD.isSavingSettings()) { gHMD.setUIMagnification(gSavedSettings.getF32("HMDUIMagnification")); } }
 
 
@@ -461,6 +454,8 @@ void LLHMD::onChangeRenderSettings()
     {
         gHMD.isTimewarpEnabled(gSavedSettings.getBOOL("HMDTimewarp"));
         gHMD.setTimewarpIntervalSeconds(gSavedSettings.getF32("HMDTimewarpIntervalSeconds"));
+        gHMD.useLowPersistence(gSavedSettings.getBOOL("HMDLowPersistence"));
+        gHMD.usePixelLuminanceOverdrive(gSavedSettings.getBOOL("HMDPixelLuminanceOverdrive"));
         gHMD.renderSettingsChanged(TRUE);
     }
 }
@@ -979,26 +974,10 @@ S32 LLHMD::getHMDUIHeight() const { return mImpl ? mImpl->getHMDUIHeight() : 0; 
 S32 LLHMD::getHMDViewportWidth() const { return mImpl ? mImpl->getViewportWidth() : 0; }
 S32 LLHMD::getHMDViewportHeight() const { return mImpl ? mImpl->getViewportHeight() : 0; }
 F32 LLHMD::getInterpupillaryOffset() const { return mImpl ? mImpl->getInterpupillaryOffset() : 0.0f; }
-void LLHMD::setInterpupillaryOffset(F32 f) { if (mImpl) { mImpl->setInterpupillaryOffset(f); } }
 F32 LLHMD::getInterpupillaryOffsetDefault() const { return mImpl ? mImpl->getInterpupillaryOffsetDefault() : 0.0f; }
 F32 LLHMD::getEyeToScreenDistance() const { return mImpl ? mImpl->getEyeToScreenDistance() : 0.0f; }
 F32 LLHMD::getEyeToScreenDistanceDefault() const { return mImpl ? mImpl->getEyeToScreenDistanceDefault() : 0.0f; }
-
-
-void LLHMD::setEyeToScreenDistance(F32 f)
-{
-    if (mImpl)
-    {
-        mImpl->setEyeToScreenDistance(f);
-        calculateUIEyeDepth();
-        if (gHMD.isHMDMode())
-        {
-            LLViewerCamera::getInstance()->setDefaultFOV(gHMD.getVerticalFOV());
-            gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
-        }
-        gPipeline.mHMDUISurface = NULL;
-    }
-}
+void LLHMD::setEyeToScreenDistance(F32 f) { calculateUIEyeDepth(); gPipeline.mHMDUISurface = NULL; }
 
 
 void LLHMD::setUIMagnification(F32 f)
@@ -1257,7 +1236,6 @@ void LLHMD::saveSettings()
     {
         updatePreset();
     }
-    gSavedSettings.setF32("HMDInterpupillaryDistance", gHMD.getInterpupillaryOffset());
     gSavedSettings.setF32("HMDUISurfaceArcHorizontal", gHMD.getUISurfaceArcHorizontal());
     gSavedSettings.setF32("HMDUISurfaceArcVertical", gHMD.getUISurfaceArcVertical());
     gSavedSettings.setF32("HMDUISurfaceToroidWidth", gHMD.getUISurfaceToroidRadiusWidth());
@@ -1268,7 +1246,6 @@ void LLHMD::saveSettings()
     gSavedSettings.setVector3("HMDUISurfaceOffsets", offsets);
     gSavedSettings.setF32("HMDUIMagnification", gHMD.getUIMagnification());
     gSavedSettings.setS32("HMDUIShapePreset", gHMD.getUIShapePresetIndex());
-    gSavedSettings.setF32("HMDEyeToScreenDistance", gHMD.getEyeToScreenDistance());
     gSavedSettings.setBOOL("HMDUseMotionPrediction", gHMD.useMotionPrediction());
     gSavedSettings.setF32("HMDWorldCursorSizeMult", gHMD.getWorldCursorSizeMult());
     gSavedSettings.setS32("HMDMouselookControlMode", gHMD.getMouselookControlMode());
@@ -1309,11 +1286,7 @@ void LLHMD::onViewChange(S32 oldMode)
     if (gHMD.isHMDMode())
     {
         mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
-#if LLHMD_DK1
-        gViewerWindow->reshape(gHMD.getHMDWidth(), gHMD.getHMDHeight());
-#else
         gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight());
-#endif
     }
 }
 
@@ -1591,13 +1564,6 @@ void LLHMD::releaseAllEyeRT()
 
 void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye)
 {
-#if LLHMD_DK1
-    S32 w = forEye ? getHMDEyeWidth() : 0;
-    // HMDHeight and WorldViewHeightRaw SHOULD always be the same, but just in case...
-    S32 h = forEye ? getHMDHeight() : 0;
-    S32 x = x_offset;
-    S32 y = y_offset;
-#else
     S32 x = 0, y = 0, w = 0, h = 0;
     if (forEye)
     {
@@ -1605,7 +1571,6 @@ void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye)
     }
     x += x_offset;
     y += y_offset;
-#endif
     gViewerWindow->getWorldViewportRaw(gGLViewport, w, h, x, y);
 	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
@@ -1613,13 +1578,8 @@ void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye)
 
 void LLHMD::setup2DRender()
 {
-#if LLHMD_DK1
-    gl_state_for_2d(gHMD.getHMDEyeWidth(), gHMD.getHMDHeight(), 0, gHMD.getOrthoPixelOffset());
-    gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDEyeWidth(), gHMD.getHMDHeight());
-#else
     gl_state_for_2d(gHMD.getHMDViewportWidth(), gHMD.getHMDViewportHeight(), 0, gHMD.getOrthoPixelOffset());
     gViewerWindow->getWindowViewportRaw(gGLViewport);
-#endif
     glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 
@@ -1860,11 +1820,7 @@ void LLHMD::render3DUI()
             }
             LLViewerDisplay::push_state_gl();
             gHMD.setup2DRender();
-#if LLHMD_DK1
-            gun->drawCrosshairs((gHMD.getHMDEyeWidth() / 2), gHMD.getHMDHeight() / 2);
-#else
             gun->drawCrosshairs((gHMD.getHMDViewportWidth() / 2), gHMD.getHMDViewportHeight() / 2);
-#endif
             LLViewerDisplay::pop_state_gl();
             if (LLGLSLShader::sNoFixedFunction)
             {
@@ -1906,14 +1862,12 @@ void LLHMD::postRender2DUI()
     {
         gHMD.renderCursor2D();
         gPipeline.mUIScreen.flush();
-#if !LLHMD_EXPERIMENTAL
         if (LLRenderTarget::sUseFBO)
         {
             //copy depth buffer from mScreen to framebuffer
             LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
                 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
         }
-#endif
         LLUI::setDestIsRenderTarget(FALSE);
         gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight(), TRUE);
     }

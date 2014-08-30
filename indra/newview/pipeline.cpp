@@ -7663,14 +7663,13 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		bool dof_enabled = !LLViewerCamera::getInstance()->cameraUnderWater() &&
 			(RenderDepthOfFieldInEditMode || !LLToolMgr::getInstance()->inBuildMode()) &&
 							RenderDepthOfField;
-#if !LLHMD_EXPERIMENTAL
         // voidpointer 20131121: HMD Mode seems to have problems with DOF (probably because of the alpha-blend
         // changes necessary to handle rendering UI to a rendertarget, but not sure).  Could probably dive into
         // this and figure out why (and possibly even fix it), but have bigger problems to tackle before release.
         // Disabling DOF in HMD mode for now.
         dof_enabled = dof_enabled && !gHMD.isHMDMode();
-#endif
-		bool multisample = RenderFSAASamples > 1 && mFXAABuffer.isComplete();
+
+        bool multisample = RenderFSAASamples > 1 && mFXAABuffer.isComplete();
 
 		if (dof_enabled)
 		{
@@ -7861,11 +7860,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
                 }
                 else
                 {
-#if LLHMD_EXPERIMENTAL
-                    gViewerWindow->setup3DViewport();
-#else
                     gViewerWindow->setup3DViewport(0, 0, true);
-#endif
                 }
 
 				shader = &gDeferredDoFCombineProgram;
@@ -7952,12 +7947,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			{
 				mDeferredLight.flush();
 			}
-#if LLHMD_EXPERIMENTAL
-            else if (gHMD.isHMDMode())
-            {
-                mScreen.flush();
-            }
-#endif
 		}
 
 		if (multisample)
@@ -8020,13 +8009,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 			gGL.flush();
 			shader->unbind();
-
-#if LLHMD_EXPERIMENTAL
-            if (gHMD.isHMDMode())
-            {
-                mScreen.flush();
-            }
-#endif
 		}
 	}
 	else
@@ -8076,13 +8058,8 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		
 		LLGLEnable multisample(RenderFSAASamples > 0 ? GL_MULTISAMPLE_ARB : 0);
 		
-#if LLHMD_EXPERIMENTAL
-        if (!gHMD.isHMDMode())
-#endif
-        {
-    		buff->setBuffer(mask);
-		    buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
-        }
+    	buff->setBuffer(mask);
+		buff->drawArrays(LLRender::TRIANGLE_STRIP, 0, 3);
 		if (LLGLSLShader::sNoFixedFunction)
 		{
 			gGlowCombineProgram.unbind();

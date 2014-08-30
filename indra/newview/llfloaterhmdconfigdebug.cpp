@@ -38,17 +38,6 @@ LLFloaterHMDConfigDebug* LLFloaterHMDConfigDebug::sInstance = NULL;
 
 LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     : LLFloater(key)
-    , mInterpupillaryOffsetSliderCtrl(NULL)
-    , mInterpupillaryOffsetAmountCtrl(NULL)
-    , mInterpupillaryOffsetOriginal(64.0f)
-    , mEyeToScreenSliderCtrl(NULL)
-    , mEyeToScreenAmountCtrl(NULL)
-    , mEyeToScreenDistanceOriginal(41.0f)
-    , mMotionPredictionCheckBoxCtrl(NULL)
-    , mMotionPredictionDeltaSliderCtrl(NULL)
-    , mMotionPredictionDeltaAmountCtrl(NULL)
-    , mMotionPredictionCheckedOriginal(TRUE)
-    , mMotionPredictionDeltaOriginal(30.0f)
     , mUISurfaceOffsetDepthSliderCtrl(NULL)
     , mUISurfaceOffsetDepthAmountCtrl(NULL)
     , mUISurfaceOffsetDepthOriginal(0.0f)
@@ -82,6 +71,19 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     , mUISurfaceShapePresetSliderCtrl(NULL)
     , mUISurfaceShapePresetLabelCtrl(NULL)
     , mUISurfaceShapePresetOriginal(0.0f)
+    , mLowPersistenceCheckBoxCtrl(NULL)
+    , mLowPersistenceCheckedOriginal(TRUE)
+    , mPLOCheckBoxCtrl(NULL)
+    , mPLOCheckedOriginal(TRUE)
+    , mMotionPredictionCheckBoxCtrl(NULL)
+    , mMotionPredictionCheckedOriginal(TRUE)
+    , mTimewarpCheckBoxCtrl(NULL)
+    , mTimewarpCheckedOriginal(TRUE)
+    , mTimewarpIntervalSliderCtrl(NULL)
+    , mTimewarpIntervalAmountCtrl(NULL)
+    , mTimewarpIntervalOriginal(0.01f)
+    , mDynamicResolutionScalingCheckBoxCtrl(NULL)
+    , mDynamicResolutionScalingCheckedOriginal(TRUE)
     , mDirty(FALSE)
 {
     sInstance = this;
@@ -92,7 +94,6 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     mCommitCallbackRegistrar.add("HMDConfigDebug.Cancel", boost::bind(&LLFloaterHMDConfigDebug::onClickCancel, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.Save", boost::bind(&LLFloaterHMDConfigDebug::onClickSave, this));
 
-    mCommitCallbackRegistrar.add("HMDConfigDebug.SetInterpupillaryOffset", boost::bind(&LLFloaterHMDConfigDebug::onSetInterpupillaryOffset, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetUISurfaceOffsetDepth", boost::bind(&LLFloaterHMDConfigDebug::onSetUISurfaceOffsetDepth, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetUISurfaceOffsetVertical", boost::bind(&LLFloaterHMDConfigDebug::onSetUISurfaceOffsetVertical, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetUISurfaceOffsetHorizontal", boost::bind(&LLFloaterHMDConfigDebug::onSetUISurfaceOffsetHorizontal, this));
@@ -105,9 +106,13 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetUISurfaceToroidCrossSectionRadiusHeight", boost::bind(&LLFloaterHMDConfigDebug::onSetUISurfaceToroidCrossSectionRadiusHeight, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetUISurfaceToroidArcHorizontal", boost::bind(&LLFloaterHMDConfigDebug::onSetUISurfaceToroidArcHorizontal, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetUISurfaceToroidArcVertical", boost::bind(&LLFloaterHMDConfigDebug::onSetUISurfaceToroidArcVertical, this));
-    mCommitCallbackRegistrar.add("HMDConfigDebug.SetEyeToScreenDistance", boost::bind(&LLFloaterHMDConfigDebug::onSetEyeToScreenDistance, this));
+
+    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckLowPersistence", boost::bind(&LLFloaterHMDConfigDebug::onCheckLowPersistence, this));
+    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckPixelLuminanceOverdrive", boost::bind(&LLFloaterHMDConfigDebug::onCheckPixelLuminanceOverdrive, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.CheckMotionPrediction", boost::bind(&LLFloaterHMDConfigDebug::onCheckMotionPrediction, this));
-    mCommitCallbackRegistrar.add("HMDConfigDebug.SetMotionPredictionDelta", boost::bind(&LLFloaterHMDConfigDebug::onSetMotionPredictionDelta, this));
+    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckTimewarp", boost::bind(&LLFloaterHMDConfigDebug::onCheckTimewarp, this));
+    mCommitCallbackRegistrar.add("HMDConfigDebug.SetTimewarpInterval", boost::bind(&LLFloaterHMDConfigDebug::onSetTimewarpInterval, this));
+    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckDynamicResolutionScaling", boost::bind(&LLFloaterHMDConfigDebug::onCheckDynamicResolutionScaling, this));
 }
 
 LLFloaterHMDConfigDebug::~LLFloaterHMDConfigDebug()
@@ -129,8 +134,6 @@ BOOL LLFloaterHMDConfigDebug::postBuild()
 {
     setVisible(FALSE);
 
-    mInterpupillaryOffsetSliderCtrl = getChild<LLSlider>("hmd_config_debug_interpupillary_offset_slider");
-    mInterpupillaryOffsetAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_interpupillary_offset_slider_amount");
     mUIMagnificationSliderCtrl = getChild<LLSlider>("hmd_config_debug_ui_magnification_slider");
     mUIMagnificationAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_ui_magnification_slider_amount");
     mUISurfaceOffsetDepthSliderCtrl = getChild<LLSlider>("hmd_config_debug_uisurface_offset_depth_slider");
@@ -153,11 +156,13 @@ BOOL LLFloaterHMDConfigDebug::postBuild()
     mUISurfaceToroidArcHorizontalAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_uisurface_toroid_arc_horizontal_slider_amount");
     mUISurfaceToroidArcVerticalSliderCtrl = getChild<LLSlider>("hmd_config_debug_uisurface_toroid_arc_vertical_slider");
     mUISurfaceToroidArcVerticalAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_uisurface_toroid_arc_vertical_slider_amount");
-    mEyeToScreenSliderCtrl = getChild<LLSlider>("hmd_config_debug_eye_to_screen_distance_slider");
-    mEyeToScreenAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_eye_to_screen_distance_slider_amount");
-    mMotionPredictionCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_hmd_motion_prediction");
-    mMotionPredictionDeltaSliderCtrl = getChild<LLSlider>("hmd_config_debug_motion_prediction_delta_slider");
-    mMotionPredictionDeltaAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_motion_prediction_delta_slider_amount");
+    mLowPersistenceCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_low_persistence");
+    mPLOCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_pixel_luminance_overdrive");
+    mMotionPredictionCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_motion_prediction");
+    mTimewarpCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_timewarp");
+    mTimewarpIntervalSliderCtrl = getChild<LLSlider>("hmd_config_debug_timewarp_interval_slider");
+    mTimewarpIntervalAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_timewarp_interval_slider_amount");
+    mDynamicResolutionScalingCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_dynamic_resolution_scaling");
 
     return LLFloater::postBuild();
 }
@@ -165,29 +170,6 @@ BOOL LLFloaterHMDConfigDebug::postBuild()
 void LLFloaterHMDConfigDebug::onOpen(const LLSD& key)
 {
     LLFloaterHMDConfigDebug* pPanel = LLFloaterHMDConfigDebug::getInstance();
-    if (pPanel->mInterpupillaryOffsetSliderCtrl)
-    {
-        pPanel->mInterpupillaryOffsetOriginal = gHMD.getInterpupillaryOffset() * 1000.0f;
-        pPanel->mInterpupillaryOffsetSliderCtrl->setValue(pPanel->mInterpupillaryOffsetOriginal);
-        pPanel->updateInterpupillaryOffsetLabel();
-    }
-    if (pPanel->mEyeToScreenSliderCtrl)
-    {
-        pPanel->mEyeToScreenDistanceOriginal = gHMD.getEyeToScreenDistance() * 1000.0f;
-        pPanel->mEyeToScreenSliderCtrl->setValue(pPanel->mEyeToScreenDistanceOriginal);
-        pPanel->updateEyeToScreenDistanceLabel();
-    }
-    if (pPanel->mMotionPredictionDeltaSliderCtrl)
-    {
-        pPanel->mMotionPredictionDeltaOriginal = gHMD.getMotionPredictionDelta() * 1000.0f;
-        pPanel->mMotionPredictionDeltaSliderCtrl->setValue(pPanel->mMotionPredictionDeltaOriginal);
-        pPanel->updateMotionPredictionDeltaLabel();
-    }
-    if (pPanel->mMotionPredictionCheckBoxCtrl)
-    {
-        pPanel->mMotionPredictionCheckedOriginal = gHMD.useMotionPrediction();
-        pPanel->mMotionPredictionCheckBoxCtrl->setValue(pPanel->mMotionPredictionCheckedOriginal);
-    }
     if (pPanel->mUISurfaceOffsetDepthSliderCtrl)
     {
         pPanel->mUISurfaceOffsetDepthOriginal = gHMD.getUISurfaceOffsetDepth();
@@ -261,6 +243,38 @@ void LLFloaterHMDConfigDebug::onOpen(const LLSD& key)
         pPanel->mUISurfaceShapePresetSliderCtrl->setValue(pPanel->mUISurfaceShapePresetOriginal);
         pPanel->updateUIShapePresetLabel(TRUE);
     }
+    if (pPanel->mLowPersistenceCheckBoxCtrl)
+    {
+        pPanel->mLowPersistenceCheckedOriginal = gHMD.useLowPersistence();
+        pPanel->mLowPersistenceCheckBoxCtrl->setValue(pPanel->mLowPersistenceCheckedOriginal);
+    }
+    if (pPanel->mPLOCheckBoxCtrl)
+    {
+        pPanel->mPLOCheckedOriginal = gHMD.usePixelLuminanceOverdrive();
+        pPanel->mPLOCheckBoxCtrl->setValue(pPanel->mPLOCheckedOriginal);
+    }
+    if (pPanel->mMotionPredictionCheckBoxCtrl)
+    {
+        pPanel->mMotionPredictionCheckedOriginal = gHMD.useMotionPrediction();
+        pPanel->mMotionPredictionCheckBoxCtrl->setValue(pPanel->mMotionPredictionCheckedOriginal);
+    }
+    if (pPanel->mTimewarpCheckBoxCtrl)
+    {
+        pPanel->mTimewarpCheckedOriginal = gHMD.isTimewarpEnabled();
+        pPanel->mTimewarpCheckBoxCtrl->setValue(pPanel->mTimewarpCheckedOriginal);
+    }
+    if (pPanel->mTimewarpIntervalSliderCtrl)
+    {
+        pPanel->mTimewarpIntervalOriginal = gHMD.getTimewarpIntervalSeconds() * 1000.0f;
+        pPanel->mTimewarpIntervalSliderCtrl->setValue(pPanel->mTimewarpCheckedOriginal);
+        pPanel->updateTimewarpIntervalLabel();
+    }
+    if (pPanel->mDynamicResolutionScalingCheckBoxCtrl)
+    {
+        pPanel->mDynamicResolutionScalingCheckedOriginal = gHMD.useDynamicResolutionScaling();
+        pPanel->mDynamicResolutionScalingCheckBoxCtrl->setValue(pPanel->mDynamicResolutionScalingCheckedOriginal);
+    }
+
     mDirty = FALSE;
 }
 
@@ -300,12 +314,6 @@ void LLFloaterHMDConfigDebug::onClickRemovePreset()
 
 void LLFloaterHMDConfigDebug::onClickResetValues()
 {
-    mInterpupillaryOffsetSliderCtrl->setValue(llround(gHMD.getInterpupillaryOffsetDefault() * 1000.0f, mInterpupillaryOffsetSliderCtrl->getIncrement()));
-    onSetInterpupillaryOffset();
-    mEyeToScreenSliderCtrl->setValue(llround(gHMD.getEyeToScreenDistanceDefault() * 1000.0f, mEyeToScreenSliderCtrl->getIncrement()));
-    onSetEyeToScreenDistance();
-    mMotionPredictionDeltaSliderCtrl->setValue(llround(gHMD.getMotionPredictionDeltaDefault() * 1000.0f, mMotionPredictionDeltaSliderCtrl->getIncrement()));
-    onSetMotionPredictionDelta();
     mMotionPredictionCheckBoxCtrl->setValue(gHMD.useMotionPredictionDefault());
     onCheckMotionPrediction();
     mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndexDefault());
@@ -315,8 +323,6 @@ void LLFloaterHMDConfigDebug::onClickResetValues()
 void LLFloaterHMDConfigDebug::onClickCancel()
 {
     // turn off panel and throw away values
-    mInterpupillaryOffsetSliderCtrl->setValue(mInterpupillaryOffsetOriginal);
-    onSetInterpupillaryOffset();
     mUIMagnificationSliderCtrl->setValue(mUIMagnificationOriginal);
     onSetUIMagnification();
     mUISurfaceOffsetDepthSliderCtrl->setValue(mUISurfaceOffsetDepthOriginal);
@@ -339,12 +345,18 @@ void LLFloaterHMDConfigDebug::onClickCancel()
     onSetUISurfaceToroidArcVertical();
     mUISurfaceShapePresetSliderCtrl->setValue(mUISurfaceShapePresetOriginal);
     onSetUIShapePreset();
-    mEyeToScreenSliderCtrl->setValue(mEyeToScreenDistanceOriginal);
-    onSetEyeToScreenDistance();
-    mMotionPredictionDeltaSliderCtrl->setValue(mMotionPredictionDeltaOriginal);
-    onSetMotionPredictionDelta();
+    mLowPersistenceCheckBoxCtrl->setValue(mLowPersistenceCheckedOriginal);
+    onCheckLowPersistence();
+    mPLOCheckBoxCtrl->setValue(mPLOCheckedOriginal);
+    onCheckPixelLuminanceOverdrive();
     mMotionPredictionCheckBoxCtrl->setValue(mMotionPredictionCheckedOriginal);
     onCheckMotionPrediction();
+    mTimewarpCheckBoxCtrl->setValue(mTimewarpCheckedOriginal);
+    onCheckTimewarp();
+    mTimewarpIntervalSliderCtrl->setValue(mTimewarpIntervalOriginal);
+    onSetTimewarpInterval();
+    mDynamicResolutionScalingCheckBoxCtrl->setValue(mDynamicResolutionScalingCheckedOriginal);
+    onCheckDynamicResolutionScaling();
     mDirty = FALSE;
 
 	closeFloater(false);
@@ -355,22 +367,6 @@ void LLFloaterHMDConfigDebug::onClickSave()
     gHMD.saveSettings();
     mDirty = FALSE;
 	closeFloater(false);
-}
-
-void LLFloaterHMDConfigDebug::onSetInterpupillaryOffset()
-{
-    F32 f = llround(mInterpupillaryOffsetSliderCtrl->getValueF32(), mInterpupillaryOffsetSliderCtrl->getIncrement());
-    F32 newVal = llround(f / 1000.0f, mInterpupillaryOffsetSliderCtrl->getIncrement() / 1000.0f);
-    gHMD.setInterpupillaryOffset(newVal);
-    updateInterpupillaryOffsetLabel();
-    updateDirty();
-}
-
-void LLFloaterHMDConfigDebug::updateInterpupillaryOffsetLabel()
-{
-	LLStringUtil::format_map_t args;
-	args["[VAL]"] = llformat("%.1f", gHMD.getInterpupillaryOffset() * 1000.0f);
-	mInterpupillaryOffsetAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsMillimeters", args));
 }
 
 void LLFloaterHMDConfigDebug::onSetUIMagnification()
@@ -511,7 +507,7 @@ void LLFloaterHMDConfigDebug::onSetUISurfaceToroidRadiusWidth()
 
 void LLFloaterHMDConfigDebug::updateUISurfaceToroidRadiusWidthLabel()
 {
-    mUISurfaceToroidRadiusWidthAmountCtrl->setValue(llformat("%.1f", gHMD.getUISurfaceToroidRadiusWidth()));
+    mUISurfaceToroidRadiusWidthAmountCtrl->setValue(llformat("%.03f", gHMD.getUISurfaceToroidRadiusWidth()));
 }
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidRadiusDepth()
@@ -526,7 +522,7 @@ void LLFloaterHMDConfigDebug::onSetUISurfaceToroidRadiusDepth()
 
 void LLFloaterHMDConfigDebug::updateUISurfaceToroidRadiusDepthLabel()
 {
-    mUISurfaceToroidRadiusDepthAmountCtrl->setValue(llformat("%.1f", gHMD.getUISurfaceToroidRadiusDepth()));
+    mUISurfaceToroidRadiusDepthAmountCtrl->setValue(llformat("%.03f", gHMD.getUISurfaceToroidRadiusDepth()));
 }
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidCrossSectionRadiusWidth()
@@ -543,7 +539,7 @@ void LLFloaterHMDConfigDebug::updateUISurfaceToroidCrossSectionRadiusWidthLabel(
 {
     std::ostringstream s;
     s << gHMD.getUISurfaceToroidCrossSectionRadiusWidth();
-    mUISurfaceToroidCrossSectionRadiusWidthAmountCtrl->setValue(llformat("%.1f", gHMD.getUISurfaceToroidCrossSectionRadiusWidth()));
+    mUISurfaceToroidCrossSectionRadiusWidthAmountCtrl->setValue(llformat("%.03f", gHMD.getUISurfaceToroidCrossSectionRadiusWidth()));
 }
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidCrossSectionRadiusHeight()
@@ -558,7 +554,7 @@ void LLFloaterHMDConfigDebug::onSetUISurfaceToroidCrossSectionRadiusHeight()
 
 void LLFloaterHMDConfigDebug::updateUISurfaceToroidCrossSectionRadiusHeightLabel()
 {
-    mUISurfaceToroidCrossSectionRadiusHeightAmountCtrl->setValue(llformat("%.1f", gHMD.getUISurfaceToroidCrossSectionRadiusHeight()));
+    mUISurfaceToroidCrossSectionRadiusHeightAmountCtrl->setValue(llformat("%.03f", gHMD.getUISurfaceToroidCrossSectionRadiusHeight()));
 }
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidArcHorizontal()
@@ -574,7 +570,7 @@ void LLFloaterHMDConfigDebug::onSetUISurfaceToroidArcHorizontal()
 void LLFloaterHMDConfigDebug::updateUISurfaceToroidArcHorizontalLabel()
 {
 	LLStringUtil::format_map_t args;
-	args["[VAL]"] = llformat("%.1f", gHMD.getUISurfaceArcHorizontal() / F_PI);
+	args["[VAL]"] = llformat("%.03f", gHMD.getUISurfaceArcHorizontal() / F_PI);
 	mUISurfaceToroidArcHorizontalAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsRadians", args));
 }
 
@@ -591,23 +587,22 @@ void LLFloaterHMDConfigDebug::onSetUISurfaceToroidArcVertical()
 void LLFloaterHMDConfigDebug::updateUISurfaceToroidArcVerticalLabel()
 {
 	LLStringUtil::format_map_t args;
-	args["[VAL]"] = llformat("%.1f", gHMD.getUISurfaceArcVertical() / F_PI);
+	args["[VAL]"] = llformat("%.03f", gHMD.getUISurfaceArcVertical() / F_PI);
 	mUISurfaceToroidArcVerticalAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsRadians", args));
 }
 
-void LLFloaterHMDConfigDebug::onSetEyeToScreenDistance()
+void LLFloaterHMDConfigDebug::onCheckLowPersistence()
 {
-    F32 f = llround(mEyeToScreenSliderCtrl->getValueF32(), mEyeToScreenSliderCtrl->getIncrement());
-    gHMD.setEyeToScreenDistance(llround(f / 1000.0f, mEyeToScreenSliderCtrl->getIncrement() / 1000.0f));
-    updateEyeToScreenDistanceLabel();
+    BOOL checked = mLowPersistenceCheckBoxCtrl->get();
+    gHMD.useMotionPrediction(checked);
     updateDirty();
 }
 
-void LLFloaterHMDConfigDebug::updateEyeToScreenDistanceLabel()
+void LLFloaterHMDConfigDebug::onCheckPixelLuminanceOverdrive()
 {
-	LLStringUtil::format_map_t args;
-	args["[VAL]"] = llformat("%.1f", gHMD.getEyeToScreenDistance() * 1000.0f);
-	mEyeToScreenAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsMillimeters", args));
+    BOOL checked = mPLOCheckBoxCtrl->get();
+    gHMD.usePixelLuminanceOverdrive(checked);
+    updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::onCheckMotionPrediction()
@@ -617,26 +612,39 @@ void LLFloaterHMDConfigDebug::onCheckMotionPrediction()
     updateDirty();
 }
 
-void LLFloaterHMDConfigDebug::onSetMotionPredictionDelta()
+void LLFloaterHMDConfigDebug::onCheckTimewarp()
 {
-    F32 f = llround(mMotionPredictionDeltaSliderCtrl->getValueF32(), mMotionPredictionDeltaSliderCtrl->getIncrement());
-    gHMD.setMotionPredictionDelta(llround(f / 1000.0f, mMotionPredictionDeltaSliderCtrl->getIncrement() / 1000.0f));
-    updateMotionPredictionDeltaLabel();
+    BOOL checked = mTimewarpCheckBoxCtrl->get();
+    gHMD.isTimewarpEnabled(checked);
     updateDirty();
 }
 
-void LLFloaterHMDConfigDebug::updateMotionPredictionDeltaLabel()
+void LLFloaterHMDConfigDebug::onSetTimewarpInterval()
 {
-	LLStringUtil::format_map_t args;
-	args["[VAL]"] = llformat("%.0f", gHMD.getMotionPredictionDelta() * 1000.0f);
-	mMotionPredictionDeltaAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsMilliseconds", args));
+    F32 f = llround(mTimewarpIntervalSliderCtrl->getValueF32(), mTimewarpIntervalSliderCtrl->getIncrement());
+    gHMD.setTimewarpIntervalSeconds(f / 1000.0f);
+    updateTimewarpIntervalLabel();
+    updateDirty();
+}
+
+void LLFloaterHMDConfigDebug::updateTimewarpIntervalLabel()
+{
+    LLStringUtil::format_map_t args;
+    args["[VAL]"] = llformat("%.03f", gHMD.getTimewarpIntervalSeconds() * 1000.0f);
+    mTimewarpIntervalAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsMilliseconds", args));
+}
+
+void LLFloaterHMDConfigDebug::onCheckDynamicResolutionScaling()
+{
+    BOOL checked = mDynamicResolutionScalingCheckBoxCtrl->get();
+    gHMD.useDynamicResolutionScaling(checked);
+    updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::updateDirty()
 {
     LLVector2 cur[] = 
     {
-        LLVector2(mInterpupillaryOffsetSliderCtrl->getValueF32(), mInterpupillaryOffsetOriginal),
         LLVector2(mUISurfaceOffsetDepthSliderCtrl->getValueF32(), mUISurfaceOffsetDepthOriginal),
         LLVector2(mUISurfaceOffsetVerticalSliderCtrl->getValueF32(), mUISurfaceOffsetVerticalOriginal),
         LLVector2(mUISurfaceOffsetHorizontalSliderCtrl->getValueF32(), mUISurfaceOffsetHorizontalOriginal),
@@ -648,8 +656,7 @@ void LLFloaterHMDConfigDebug::updateDirty()
         LLVector2(mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getValueF32(), mUISurfaceToroidCrossSectionRadiusHeightOriginal),
         LLVector2(mUISurfaceToroidArcHorizontalSliderCtrl->getValueF32(), mUISurfaceToroidArcHorizontalOriginal),
         LLVector2(mUISurfaceToroidArcVerticalSliderCtrl->getValueF32(), mUISurfaceToroidArcVerticalOriginal),
-        LLVector2(mEyeToScreenSliderCtrl->getValueF32(), mEyeToScreenDistanceOriginal),
-        LLVector2(mMotionPredictionDeltaSliderCtrl->getValueF32(), mMotionPredictionDeltaOriginal),
+        LLVector2(mTimewarpIntervalSliderCtrl->getValueF32(), mTimewarpIntervalOriginal),
     };
     U32 numVals = sizeof(cur) / sizeof(LLVector2);
 
@@ -658,5 +665,9 @@ void LLFloaterHMDConfigDebug::updateDirty()
     {
         mDirty = mDirty || !is_approx_equal(cur[i][0], cur[i][1]);
     }
+    mDirty = mDirty || (mLowPersistenceCheckBoxCtrl->get() != mLowPersistenceCheckedOriginal);
+    mDirty = mDirty || (mPLOCheckBoxCtrl->get() != mPLOCheckedOriginal);
     mDirty = mDirty || (mMotionPredictionCheckBoxCtrl->get() != mMotionPredictionCheckedOriginal);
+    mDirty = mDirty || (mTimewarpCheckBoxCtrl->get() != mTimewarpCheckedOriginal);
+    mDirty = mDirty || (mDynamicResolutionScalingCheckBoxCtrl->get() != mDynamicResolutionScalingCheckedOriginal);
 }

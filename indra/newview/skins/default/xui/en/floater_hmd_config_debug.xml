@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <floater
   name="floater_hmd_config_debug"
-  title="Debug HMD Configuration"
+  title="HMD Configuration"
   can_resize="true"
   can_minimize="true"
   can_close="true"
@@ -9,17 +9,17 @@
   single_instance="true"
   layout="topleft"
   min_height="640"
-  min_width="520"
-  width="520"
+  min_width="820"
+  width="820"
   height="640">
 
   <layout_stack
     layout="topleft"
     follows="all"
     orientation="horizontal"
-    width="520"
+    width="820"
     height="640"
-    min_width="520"
+    min_width="820"
     min_height="640">
     <layout_panel
       follows="all"
@@ -41,47 +41,6 @@
         min_width="400"
         min_height="600"        
         orientation="vertical">
-
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-Interpupillary Distance
-          </text>
-          <text
-            name="hmd_config_debug_interpupillary_offset_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-64.0 mm
-          </text>
-          <slider_bar
-            name="hmd_config_debug_interpupillary_offset_slider"
-            tool_tip="Configured distance between the user's eye centers, in millimeters"
-            min_val="50"
-            max_val="75"
-            increment="0.1"
-            initial_value="64"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
-            <slider_bar.commit_callback function="HMDConfigDebug.SetInterpupillaryOffset" />
-          </slider_bar>
-        </layout_panel>
 
         <layout_panel
           follows="left|right"
@@ -534,112 +493,94 @@ UI Surface Arc (Vertical)
           </slider_bar>
         </layout_panel>
 
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-Eye to Screen Distance (FOV)
-          </text>
-          <text
-            name="hmd_config_debug_eye_to_screen_distance_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-41.0 mm
-          </text>
-          <slider_bar
-            name="hmd_config_debug_eye_to_screen_distance_slider"
-            tool_tip="Distance from the eye to screen surface, in millimeters"
-            min_val="0"
-            max_val="100"
-            increment=".1"
-            initial_value="41"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
+      </layout_stack>
+    </layout_panel>
+
+    <layout_panel
+      follows="all"
+      left="400"
+      top="0"
+      width="300"
+      height="640"
+      min_width="300"
+      min_height="640">
+      <layout_stack
+        layout="topleft"
+        follows="top|left|right"
+        border_size="0"
+        left="0"
+        top="0"
+        height="640"
+        width="300"
+        min_width="300"
+        min_height="640"
+        orientation="vertical">
+        
+        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
+          <check_box name="hmd_config_debug_low_persistence"
+            initial_value="false"
+            top="5" left="5" width="32" height="16" valign="middle" halign="center">
+            <check_box.commit_callback function="HMDConfigDebug.CheckLowPersistence" />
+          </check_box>
+          <text font.name="SansSerifSmall" top="5" left="60" height="20" width="200" valign="middle" halign="left"
+                tool_tip="Low Persistence Mode to reduce/eliminate motion blur and judder.  While it does help with these things, it also makes the display noticeably dimmer.">Low Persistence</text>
+        </layout_panel>
+
+        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
+          <check_box name="hmd_config_debug_pixel_luminance_overdrive"
+            initial_value="true"
+            top="5" left="5" width="32" height="16" valign="middle" halign="center">
+            <check_box.commit_callback function="HMDConfigDebug.CheckPixelLuminanceOverdrive" />
+          </check_box>
+          <text font.name="SansSerifSmall" top="5" left="60" height="20" width="200" valign="middle" halign="left"
+                tool_tip="Attempts to combat the dimness of Low Persistence Mode in software without sacrificing the benefits of that mode.">Pixel Luminance Overdrive</text>
+        </layout_panel>
+
+        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
+          <check_box name="hmd_config_debug_motion_prediction"
+            tool_tip="Motion prediction attempts to predict headset movement for a smoother, less jerky experience"
+            initial_value="true"
+            top="5" left="15" width="32" height="16">
+            <check_box.commit_callback function="HMDConfigDebug.CheckMotionPrediction" />
+          </check_box>
+          <text font.name="SansSerifSmall" top="5" left="60" height="10" width="240" halign="left">Motion Prediction</text>
+        </layout_panel>
+
+        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
+          <check_box name="hmd_config_debug_timewarp"
+            tool_tip="Reduce motion-to-photon latency, i.e. how long it takes from the moment you move your head to when the scene rendered by the Rift is updated.  This allows lower latency and higher frame rates.  Experimental."
+            initial_value="true"
+            top="5" left="15" width="32" height="16">
+            <check_box.commit_callback function="HMDConfigDebug.CheckTimewarp" />
+          </check_box>
+          <text font.name="SansSerifSmall" top="5" left="60" height="10" width="240" halign="left">Timewarp</text>
+        </layout_panel>
+
+        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="left|right" halign="center">Timewarp Interval</text>
+          <text name="hmd_config_debug_timewarp_interval_slider_amount" font.name="SansSerifSmall" top="5" right="-15" height="10" width="70" follows="right" halign="right">0.01</text>
+          <slider_bar name="hmd_config_debug_timewarp_interval_slider"
+            tool_tip="Timewarp Rendering Interval.  Higher value = higher FPS, but more 'dropped' frames."
+            min_val="0.01" max_val="0.2" increment="0.005" initial_value="0.01"
+            top="18" left="5" right="-5" height="22"
             follows="left|right">
-            <slider_bar.commit_callback function="HMDConfigDebug.SetEyeToScreenDistance" />
+            <slider_bar.commit_callback function="HMDConfigDebug.SetTimewarpInterval" />
           </slider_bar>
         </layout_panel>
 
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            left="30"
-            top="5"
-            height="10"
-            width="100"
-            halign="center">
-Motion Prediction
-          </text>
-          <check_box
-            name="hmd_config_debug_hmd_motion_prediction"
-            tool_tip="Motion prediction attempts to predict headset movement for a smoother, less jerky experience"
-            initial_value="true"
-            left="60"
-            top="24"
-            width="32"
-            height="16">
-            <check_box.commit_callback function="HMDConfigDebug.CheckMotionPrediction" />
+        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
+          <check_box name="hmd_config_debug_dynamic_resolution_scaling"
+            tool_tip="Changes the rendering resolution to increase framerate at the cost of more jagged/pixelated edges and lower rendering quality"
+            initial_value="false"
+            top="5" left="15" width="32" height="16">
+            <check_box.commit_callback function="HMDConfigDebug.CheckDynamicResolutionScaling" />
           </check_box>
-          <text
-            font.name="SansSerifSmall"
-            left="120"
-            top="5"
-            width="220"
-            height="10"
-            follows="left|right"
-            halign="center">
-Motion Prediction Delta
-          </text>
-          <text
-            name="hmd_config_debug_motion_prediction_delta_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="50"
-            follows="right"
-            halign="right">
-30 ms
-          </text>
-          <slider_bar
-            name="hmd_config_debug_motion_prediction_delta_slider"
-            tool_tip="Specifies how much prediction should be applied in milliseconds; it should in general be under the average rendering latency"
-            min_val="0"
-            max_val="100"
-            increment="1"
-            initial_value="30"
-            top="18"
-            height="22"
-            left="125"
-            right="-5"
-            follows="left|right">
-            <slider_bar.commit_callback function="HMDConfigDebug.SetMotionPredictionDelta" />
-          </slider_bar>
+          <text font.name="SansSerifSmall" top="5" left="60" height="10" width="240" halign="left">Dynamic Resolution Scaling</text>
         </layout_panel>
 
       </layout_stack>
     </layout_panel>
-      
+
     <layout_panel
       follows="top|right"
       auto_resize="false"

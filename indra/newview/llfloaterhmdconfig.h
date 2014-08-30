@@ -27,6 +27,8 @@
 #ifndef LL_LLFLOATERHMDCONFIG_H
 #define LL_LLFLOATERHMDCONFIG_H
 
+#if 0
+
 #include "linden_common.h"
 
 #include "llfloater.h"
@@ -82,4 +84,5 @@ protected:
     static LLFloaterHMDConfig* sInstance;
 };
 
+#endif
 #endif // LL_LLFLOATERHMDCONFIG_H

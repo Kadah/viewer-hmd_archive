@@ -26,6 +26,8 @@
 
 #include "llviewerprecompiledheaders.h"
 
+#if 0
+
 #include "llfloaterhmdconfig.h"
 #include "llsliderctrl.h"
 #include "llcheckboxctrl.h"
@@ -289,3 +291,5 @@ void LLFloaterHMDConfig::updateDirty()
         mDirty = mDirty || !is_approx_equal(cur[i][0], cur[i][1]);
     }
 }
+
+#endif

@@ -55,13 +55,6 @@ public:
     void onClickResetValues();
 
 protected:
-    void onSetInterpupillaryOffset();
-    void updateInterpupillaryOffsetLabel();
-    void onSetEyeToScreenDistance();
-    void updateEyeToScreenDistanceLabel();
-    void onCheckMotionPrediction();
-    void onSetMotionPredictionDelta();
-    void updateMotionPredictionDeltaLabel();
     void onSetUISurfaceOffsetDepth();
     void updateUISurfaceOffsetDepthLabel();
     void onSetUISurfaceOffsetVertical();
@@ -85,20 +78,17 @@ protected:
     void onSetUIShapePreset();
     void updateUIShapePresetLabel(BOOL typeChanged);
 
+    void onCheckLowPersistence();
+    void onCheckPixelLuminanceOverdrive();
+    void onCheckMotionPrediction();
+    void onCheckTimewarp();
+    void onSetTimewarpInterval();
+    void updateTimewarpIntervalLabel();
+    void onCheckDynamicResolutionScaling();
+
     void updateDirty();
 
 protected:
-    LLSlider* mInterpupillaryOffsetSliderCtrl;
-    LLUICtrl* mInterpupillaryOffsetAmountCtrl;
-    F32 mInterpupillaryOffsetOriginal;
-    LLSlider* mEyeToScreenSliderCtrl;
-    LLUICtrl* mEyeToScreenAmountCtrl;
-    F32 mEyeToScreenDistanceOriginal;
-    LLCheckBoxCtrl* mMotionPredictionCheckBoxCtrl;
-    LLSlider* mMotionPredictionDeltaSliderCtrl;
-    LLUICtrl* mMotionPredictionDeltaAmountCtrl;
-    BOOL mMotionPredictionCheckedOriginal;
-    F32 mMotionPredictionDeltaOriginal;
     LLSlider* mUISurfaceOffsetDepthSliderCtrl;
     LLUICtrl* mUISurfaceOffsetDepthAmountCtrl;
     F32 mUISurfaceOffsetDepthOriginal;
@@ -132,6 +122,20 @@ protected:
     LLSlider* mUISurfaceShapePresetSliderCtrl;
     LLUICtrl* mUISurfaceShapePresetLabelCtrl;
     F32 mUISurfaceShapePresetOriginal;
+    LLCheckBoxCtrl* mLowPersistenceCheckBoxCtrl;
+    BOOL mLowPersistenceCheckedOriginal;
+    LLCheckBoxCtrl* mPLOCheckBoxCtrl;
+    BOOL mPLOCheckedOriginal;
+    LLCheckBoxCtrl* mMotionPredictionCheckBoxCtrl;
+    BOOL mMotionPredictionCheckedOriginal;
+    LLCheckBoxCtrl* mTimewarpCheckBoxCtrl;
+    BOOL mTimewarpCheckedOriginal;
+    LLSlider* mTimewarpIntervalSliderCtrl;
+    LLUICtrl* mTimewarpIntervalAmountCtrl;
+    F32 mTimewarpIntervalOriginal;
+    LLCheckBoxCtrl* mDynamicResolutionScalingCheckBoxCtrl;
+    BOOL mDynamicResolutionScalingCheckedOriginal;
+
     BOOL mDirty;
 
     static LLFloaterHMDConfigDebug* sInstance;

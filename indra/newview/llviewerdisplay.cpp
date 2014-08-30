@@ -669,7 +669,7 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
             {
                 render_ok = (hmd_ready && gHMD.setRenderWindowHMD());
             }
-            if (render_ok)
+            if (render_ok && !gHMD.isFrameTimewarped())
             {
                 gHMD.setupStereoValues();
                 gHMD.setCurrentEye(LLHMD::LEFT_EYE);
@@ -1700,9 +1700,6 @@ void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
     if (gHMD.isHMDMode())
     {
         gHMD.postRender2DUI();
-#if LLHMD_EXPERIMENTAL
-        gHMD.flushCurrentEyeRT();
-#endif
     }
 
     // copy 
@@ -1716,7 +1713,6 @@ void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
 
 void LLViewerDisplay::render_frame(BOOL rebuild)
 {
-
     gViewerWindow->setup3DViewport();
 
     // Collect objects in the stereoscopic cull frustum rather than each eye's asymmetric camera frustum.

@@ -223,7 +223,7 @@ void LLViewerFloaterReg::registerFloaters()
 	LLFloaterReg::add("group_picker", "floater_choose_group.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterGroupPicker>);
 
 	LLFloaterReg::add("help_browser", "floater_help_browser.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterHelpBrowser>);	
-	LLFloaterReg::add("floater_hmd_config", "floater_hmd_config.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterHMDConfig>);
+	//LLFloaterReg::add("floater_hmd_config", "floater_hmd_config.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterHMDConfig>);
 	LLFloaterReg::add("floater_hmd_config_debug", "floater_hmd_config_debug.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterHMDConfigDebug>);
 	LLFloaterReg::add("hud", "floater_hud.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterHUD>);
 

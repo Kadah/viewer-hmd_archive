@@ -42,9 +42,6 @@ class LLVertexBuffer;
 class LLMouseHandler;
 class LLRenderTarget;
 
-#define LLHMD_DK1 0
-#define LLHMD_EXPERIMENTAL 0
-
 // TODO: move some of the data to this class instead of always requiring an extra method call via PIMPL
 class LLHMD
 {
@@ -102,7 +99,8 @@ public:
         kFlag_HSWShowing                = 1 << 24,
         kFlag_MirrorHack                = 1 << 25,  // temp until SDK supports attaching to a secondary window
         kFlag_AllowTextRoll             = 1 << 26,
-        //kFlag_LowPersistence            = 1 << 20,
+        kFlag_UseLowPersistence         = 1 << 27,
+        kFlag_UsePixelLuminanceOverdrive= 1 << 28,
     };
 
     enum eUIPresetType
@@ -208,7 +206,11 @@ public:
     void useMirrorHack(BOOL b) { if (b) { mFlags |= kFlag_MirrorHack; } else { mFlags &= ~kFlag_MirrorHack; } }
     BOOL allowTextRoll() const { return ((mFlags & kFlag_AllowTextRoll) != 0) ? TRUE : FALSE; }
     void allowTextRoll(BOOL b) { if (b) { mFlags |= kFlag_AllowTextRoll; } else { mFlags &= ~kFlag_AllowTextRoll; } }
-    
+    BOOL useLowPersistence() const { return ((mFlags & kFlag_UseLowPersistence) != 0) ? TRUE : FALSE; }
+    void useLowPersistence(BOOL b) { if (b) { mFlags |= kFlag_UseLowPersistence; } else { mFlags &= ~kFlag_UseLowPersistence; } }
+    BOOL usePixelLuminanceOverdrive() const { return ((mFlags & kFlag_UsePixelLuminanceOverdrive) != 0) ? TRUE : FALSE; }
+    void usePixelLuminanceOverdrive(BOOL b) { if (b) { mFlags |= kFlag_UsePixelLuminanceOverdrive; } else { mFlags &= ~kFlag_UsePixelLuminanceOverdrive; } }
+
     // True if render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
 
@@ -244,7 +246,6 @@ public:
 
     F32 getInterpupillaryOffset() const;
     F32 getInterpupillaryOffsetDefault() const;
-    void setInterpupillaryOffset(F32 f);
     F32 getEyeToScreenDistance() const;
     void setEyeToScreenDistance(F32 f);
     F32 getEyeToScreenDistanceDefault() const;
@@ -401,7 +402,6 @@ public:
 
     static void onChangeHMDAdvancedMode();
     static void onChangeInterpupillaryDistance();
-    static void onChangeEyeToScreenDistance();
     static void onChangeUISurfaceSavedParams();
     static void onChangeUISurfaceShape();
     static void onChangeUIMagnification();
@@ -521,7 +521,6 @@ public:
     virtual S32 getHMDUIHeight() const { return kDefaultVResolution; }
     virtual F32 getInterpupillaryOffset() const { return kDefaultInterpupillaryOffset; }
     virtual F32 getInterpupillaryOffsetDefault() const { return kDefaultInterpupillaryOffset; }
-    virtual void setInterpupillaryOffset(F32 f) {}
     virtual F32 getEyeToScreenDistance() const { return kDefaultEyeToScreenDistance; }
     virtual F32 getEyeToScreenDistanceDefault() const { return kDefaultEyeToScreenDistance; }
     virtual void setEyeToScreenDistance(F32 f) {}
