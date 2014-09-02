@@ -91,7 +91,6 @@ LLHMD::LLHMD()
     , mMainWindowFOV(DEFAULT_FIELD_OF_VIEW)
     , mMainWindowAspect(1.658793f)
     , mMouseWorldSizeMult(5.0f)
-    , mPresetUIAspect(1.6f)
     , mMouselookControlMode(0)
     , mMouselookRotThreshold(45.0f * DEG_TO_RAD)
     , mMouselookRotMax(30.0f * DEG_TO_RAD)
@@ -171,8 +170,6 @@ BOOL LLHMD::init()
     gSavedSettings.getControl("HMDMouselookRotMax")->getSignal()->connect(boost::bind(&onChangeMouselookSettings));
     gSavedSettings.getControl("HMDMouselookTurnSpeedMax")->getSignal()->connect(boost::bind(&onChangeMouselookSettings));
     onChangeMouselookSettings();
-    gSavedSettings.getControl("HMDUseSavedHMDPreferences")->getSignal()->connect(boost::bind(&onChangeUseSavedHMDPreferences));
-    onChangeUseSavedHMDPreferences();
     gSavedSettings.getControl("HMDMouselookControlMode")->getSignal()->connect(boost::bind(&onChangeMouselookControlMode));
     onChangeMouselookControlMode();
     gSavedSettings.getControl("HMDAllowTextRoll")->getSignal()->connect(boost::bind(&onChangeAllowTextRoll));
@@ -428,7 +425,6 @@ void LLHMD::onChangePresetValues()
 
 void LLHMD::onChangeUIShapePreset() { if (!gHMD.isSavingSettings()) { gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset")); } }
 void LLHMD::onChangeWorldCursorSizeMult() { if (!gHMD.isSavingSettings()) { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); } }
-void LLHMD::onChangeUseSavedHMDPreferences() { if (!gHMD.isSavingSettings()) { gHMD.useSavedHMDPreferences(gSavedSettings.getBOOL("HMDUseSavedHMDPreferences")); } }
 void LLHMD::onChangeMouselookControlMode() { if (!gHMD.isSavingSettings()) { gHMD.setMouselookControlMode(gSavedSettings.getS32("HMDMouselookControlMode")); } }
 void LLHMD::onChangeDynamicResolutionScaling() { if (!gHMD.isSavingSettings()) { gHMD.useDynamicResolutionScaling(gSavedSettings.getBOOL("HMDDynamicResolutionScaling")); } }
 void LLHMD::onChangeAllowTextRoll() { if (!gHMD.isSavingSettings()) { gHMD.allowTextRoll(gSavedSettings.getBOOL("HMDAllowTextRoll")); } }
@@ -452,10 +448,12 @@ void LLHMD::onChangeRenderSettings()
 {
     if (!gHMD.isSavingSettings())
     {
-        gHMD.isTimewarpEnabled(gSavedSettings.getBOOL("HMDTimewarp"));
-        gHMD.setTimewarpIntervalSeconds(gSavedSettings.getF32("HMDTimewarpIntervalSeconds"));
         gHMD.useLowPersistence(gSavedSettings.getBOOL("HMDLowPersistence"));
         gHMD.usePixelLuminanceOverdrive(gSavedSettings.getBOOL("HMDPixelLuminanceOverdrive"));
+        gHMD.useMotionPrediction(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
+        gHMD.isTimewarpEnabled(gSavedSettings.getBOOL("HMDTimewarp"));
+        gHMD.setTimewarpIntervalSeconds(gSavedSettings.getF32("HMDTimewarpIntervalSeconds"));
+        gHMD.useDynamicResolutionScaling(gSavedSettings.getBOOL("HMDDynamicResolutionScaling"));
         gHMD.renderSettingsChanged(TRUE);
     }
 }
@@ -643,7 +641,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 mMainWindowAspect = pCamera->getAspect();
                 isMainFullScreen(windowp->getFullscreen());
                 renderUnusedMainWindow();
-                mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
 
                 // snapshots are disabled in HMD mode due to problems with always rendering UI and sometimes
                 // rendering black screen before saving.  This is probably a solvable issue, but not in the 
@@ -1236,6 +1233,7 @@ void LLHMD::saveSettings()
     {
         updatePreset();
     }
+
     gSavedSettings.setF32("HMDUISurfaceArcHorizontal", gHMD.getUISurfaceArcHorizontal());
     gSavedSettings.setF32("HMDUISurfaceArcVertical", gHMD.getUISurfaceArcVertical());
     gSavedSettings.setF32("HMDUISurfaceToroidWidth", gHMD.getUISurfaceToroidRadiusWidth());
@@ -1246,13 +1244,25 @@ void LLHMD::saveSettings()
     gSavedSettings.setVector3("HMDUISurfaceOffsets", offsets);
     gSavedSettings.setF32("HMDUIMagnification", gHMD.getUIMagnification());
     gSavedSettings.setS32("HMDUIShapePreset", gHMD.getUIShapePresetIndex());
+
+    gSavedSettings.setBOOL("HMDLowPersistence", gHMD.useLowPersistence());
+    gSavedSettings.setBOOL("HMDPixelLuminanceOverdrive", gHMD.usePixelLuminanceOverdrive());
     gSavedSettings.setBOOL("HMDUseMotionPrediction", gHMD.useMotionPrediction());
-    gSavedSettings.setF32("HMDWorldCursorSizeMult", gHMD.getWorldCursorSizeMult());
-    gSavedSettings.setS32("HMDMouselookControlMode", gHMD.getMouselookControlMode());
-    gSavedSettings.setF32("HMDMouselookRotThreshold", mMouselookRotThreshold);
-    gSavedSettings.setF32("HMDMouselookRotMax", mMouselookRotMax);
-    gSavedSettings.setF32("HMDMouselookTurnSpeedMax", mMouselookTurnSpeedMax);
-    gSavedSettings.setBOOL("HMDUseSavedHMDPreferences", gHMD.useSavedHMDPreferences());
+    gSavedSettings.setBOOL("HMDTimewarp", gHMD.isTimewarpEnabled());
+    gSavedSettings.setF32("HMDTimewarpIntervalSeconds", gHMD.getTimewarpIntervalSeconds());
+    gSavedSettings.setBOOL("HMDDynamicResolutionScaling", gHMD.useDynamicResolutionScaling());
+
+    //gSavedSettings.setBOOL("HMDAdvancedMode", gHMD.isAdvancedMode());
+    //gSavedSettings.setBOOL("HMDEnablePositionalTracking", gHMD.isPositionTrackingEnabled());
+    //gSavedSettings.setBOOL("HMDAllowTextRoll", gHMD.allowTextRoll());
+    //gSavedSettings.setF32("HMDWorldCursorSizeMult", gHMD.getWorldCursorSizeMult());
+    //gSavedSettings.setS32("HMDMouselookControlMode", gHMD.getMouselookControlMode());
+    //gSavedSettings.setF32("HMDMouselookRotThreshold", mMouselookRotThreshold);
+    //gSavedSettings.setF32("HMDMouselookRotMax", mMouselookRotMax);
+    //gSavedSettings.setF32("HMDMouselookTurnSpeedMax", mMouselookTurnSpeedMax);
+    //gSavedSettings.setBOOL("HMDTimewarpNoJit", gHMD.useMotionPrediction());
+    //gSavedSettings.setF32("HMDPixelDensity", gHMD.useMotionPrediction());
+
     isSavingSettings(FALSE);
 
     static const char* kPresetTypeStrings[] = { "Custom", "Default", "User" };
@@ -1285,7 +1295,6 @@ void LLHMD::onViewChange(S32 oldMode)
     }
     if (gHMD.isHMDMode())
     {
-        mPresetUIAspect = (F32)gHMD.getHMDUIWidth() / (F32)gHMD.getHMDUIHeight();
         gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight());
     }
 }

@@ -594,7 +594,8 @@ void LLFloaterHMDConfigDebug::updateUISurfaceToroidArcVerticalLabel()
 void LLFloaterHMDConfigDebug::onCheckLowPersistence()
 {
     BOOL checked = mLowPersistenceCheckBoxCtrl->get();
-    gHMD.useMotionPrediction(checked);
+    gHMD.useLowPersistence(checked);
+    gHMD.renderSettingsChanged(TRUE);
     updateDirty();
 }
 
@@ -602,6 +603,7 @@ void LLFloaterHMDConfigDebug::onCheckPixelLuminanceOverdrive()
 {
     BOOL checked = mPLOCheckBoxCtrl->get();
     gHMD.usePixelLuminanceOverdrive(checked);
+    gHMD.renderSettingsChanged(TRUE);
     updateDirty();
 }
 
@@ -609,6 +611,7 @@ void LLFloaterHMDConfigDebug::onCheckMotionPrediction()
 {
     BOOL checked = mMotionPredictionCheckBoxCtrl->get();
     gHMD.useMotionPrediction(checked);
+    gHMD.renderSettingsChanged(TRUE);
     updateDirty();
 }
 
@@ -616,6 +619,7 @@ void LLFloaterHMDConfigDebug::onCheckTimewarp()
 {
     BOOL checked = mTimewarpCheckBoxCtrl->get();
     gHMD.isTimewarpEnabled(checked);
+    gHMD.renderSettingsChanged(TRUE);
     updateDirty();
 }
 
@@ -638,6 +642,7 @@ void LLFloaterHMDConfigDebug::onCheckDynamicResolutionScaling()
 {
     BOOL checked = mDynamicResolutionScalingCheckBoxCtrl->get();
     gHMD.useDynamicResolutionScaling(checked);
+    gHMD.renderSettingsChanged(TRUE);
     updateDirty();
 }
 

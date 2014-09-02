@@ -4478,34 +4478,12 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
-    <key>HMDDebugShowLatency</key>
-    <map>
-      <key>Comment</key>
-      <string>Display HMD Latency Info (requires Latency Test tool)</string>
-      <key>Persist</key>
-      <integer>0</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-    </map>
-    <key>HMDDebugShowOrientation</key>
-    <map>
-      <key>Comment</key>
-      <string>Display HMD Orientation Info</string>
-      <key>Persist</key>
-      <integer>0</integer>
-      <key>Type</key>
-      <string>Boolean</string>
-      <key>Value</key>
-      <integer>0</integer>
-    </map>
     <key>HMDDynamicResolutionScaling</key>
     <map>
       <key>Comment</key>
       <string>Enable HMD Dynamic Resolution Scaling: Changes the rendering resolution to increase framerate at the cost of more jagged/pixelated edges and lower rendering quality</string>
       <key>Persist</key>
-      <integer>0</integer>
+      <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
@@ -4516,40 +4494,18 @@
       <key>Comment</key>
       <string>Enable HMD Positional Tracking (if hardware allows it)</string>
       <key>Persist</key>
-      <integer>0</integer>
+      <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
       <integer>1</integer>
-    </map>
-    <key>HMDEyeToScreenDistance</key>
-    <map>
-      <key>Comment</key>
-      <string>Saved Value of Eye To Screen Distance (FOV) for HMD</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>F32</string>
-      <key>Value</key>
-      <real>0.047</real>
-    </map>
-    <key>HMDInterpupillaryDistance</key>
-    <map>
-      <key>Comment</key>
-      <string>Saved Value of Interpupillary Distance for HMD</string>
-      <key>Persist</key>
-      <integer>1</integer>
-      <key>Type</key>
-      <string>F32</string>
-      <key>Value</key>
-      <real>0.064</real>
     </map>
     <key>HMDLowPersistence</key>
     <map>
       <key>Comment</key>
       <string>Enable HMD Low Persistence Mode to reduce/eliminate motion blur and judder.  While it does help with these things, it also makes the display noticeably dimmer.</string>
       <key>Persist</key>
-      <integer>0</integer>
+      <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
@@ -4615,7 +4571,7 @@
       <key>Comment</key>
       <string>Enable HMD Pixel Luminance Overdrive: Attempts to combat the dimness of Low Persistence Mode in software without sacrificing the benefits of that mode.</string>
       <key>Persist</key>
-      <integer>0</integer>
+      <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
@@ -4626,11 +4582,11 @@
       <key>Comment</key>
       <string>Enable HMD Timewarp Mode: Reduce motion-to-photon latency, i.e. how long it takes from the moment you move your head to when the scene rendered by the Rift is updated.  This allows lower latency and higher frame rates.  Experimental.</string>
       <key>Persist</key>
-      <integer>0</integer>
+      <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>0</integer>
+      <integer>1</integer>
     </map>
     <key>HMDTimewarpIntervalSeconds</key>
     <map>
@@ -4648,22 +4604,11 @@
       <key>Comment</key>
       <string>Enable HMD Timewarp No-JIT Mode</string>
       <key>Persist</key>
-      <integer>0</integer>
+      <integer>1</integer>
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
       <integer>0</integer>
-    </map>
-    <key>HMDUseSavedHMDPreferences</key>
-    <map>
-        <key>Comment</key>
-        <string>Normally, the values for user-configurable hardware parameters such as Interpupillary Distance and Eye-To-Screen Distance are set using the Oculus Configuration Tool and read by the viewer at run time.  These can be temporarily overridden, but will revert back to the hardware values the next time the viewer is run.  To override this behavior and use saved settings regardless of what is read from the hardware, you can enable this setting.</string>
-        <key>Persist</key>
-        <integer>1</integer>
-        <key>Type</key>
-        <string>Boolean</string>
-        <key>Value</key>
-        <integer>0</integer>
     </map>
     <key>HMDUIMagnification</key>
     <map>
@@ -4703,22 +4648,22 @@
                 <key>ToroidRadiusWidth</key>
                 <real>1.4</real>
                 <key>ToroidRadiusDepth</key>
-                <real>1.0</real>
+                <real>0.9</real>
                 <key>ToroidCSRadiusWidth</key>
                 <real>0.1</real>
                 <key>ToroidCSRadiusHeight</key>
                 <real>2.0</real>
                 <key>ArcHorizontal</key>
-                <real>2.513274</real>
+                <real>2.356194</real>
                 <key>ArcVertical</key>
-                <real>0.942478</real>
+                <real>0.785398</real>
                 <key>UIMagnification</key>
                 <real>600.0</real>
                 <key>Offsets</key>
                 <array>
                     <real>0.0</real>
-                    <real>-0.15</real>
-                    <real>-0.3</real>
+                    <real>0.0</real>
+                    <real>-0.75</real>
                 </array>
             </map>
             <map>

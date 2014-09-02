@@ -8,487 +8,144 @@
   save_visibility="false"
   single_instance="true"
   layout="topleft"
-  min_height="640"
+  min_height="480"
   min_width="820"
   width="820"
-  height="640">
+  height="480">
 
-  <layout_stack
-    layout="topleft"
-    follows="all"
-    orientation="horizontal"
-    width="820"
-    height="640"
-    min_width="820"
-    min_height="640">
-    <layout_panel
-      follows="all"
-      left="0"
-      top="0"
-      height="640"
-      width="400"
-      min_width="400"
-      min_height="640">
+  <layout_stack layout="topleft" follows="all" orientation="horizontal" top="0" left="0" right="-1" bottom="-1" width="820" height="480">
+    <layout_panel left="0" top="0" height="480" width="500" follows="all">
       
-      <layout_stack
-        layout="topleft"
-        follows="top|left|right"
-        border_size="0"
-        left="0"
-        top="0"
-        height="600"
-        width="400"
-        min_width="400"
-        min_height="600"        
-        orientation="vertical">
+      <layout_stack layout="topleft" follows="top|left|right" orientation="vertical" border_size="0" left="0" top="0" height="440" width="500">
 
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-UI Surface Shape Preset
-          </text>
-          <text
-            name="hmd_config_debug_uisurface_shape_preset_value"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-1
-          </text>
+        <layout_panel follows="top|left|right" width="500" height="40">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="top|left|right" halign="center"
+                tool_tip="Shape of the UI surface in HMD Mode">UI Surface Shape Preset</text>
+          <text name="hmd_config_debug_uisurface_shape_preset_value" font.name="SansSerifSmall" top="5" right="-15" height="10" width="70" follows="top|right" halign="right">1</text>
           <slider_bar
             name="hmd_config_debug_uisurface_shape_preset_slider"
-            tool_tip="Shape of the UI surface in HMD Mode"
-            min_val="0.0"
-            max_val="4.0"
-            increment="1.0"
-            initial_value="1.0"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
+            min_val="0.0" max_val="4.0" increment="1.0" initial_value="1.0"
+            top="18" left="15" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetUIShapePreset" />
           </slider_bar>
         </layout_panel>
 
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-UI Magnification
-          </text>
-          <text
-            name="hmd_config_debug_ui_magnification_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-600
-          </text>
+        <layout_panel follows="top|left|right" width="500" height="40">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="top|left|right" halign="center"
+            tool_tip="UI Magnification at default Eye-To-Screen distance">UI Magnification</text>
+          <text name="hmd_config_debug_ui_magnification_slider_amount" font.name="SansSerifSmall" top="5" right="-15" height="10" width="70" follows="top|right" halign="right">600</text>
           <slider_bar
             name="hmd_config_debug_ui_magnification_slider"
-            tool_tip="UI Magnification at default Eye-To-Screen distance"
-            min_val="0.0"
-            max_val="1000"
-            increment="10.0"
-            initial_value="600.0"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
+            min_val="0.0" max_val="1000" increment="10.0" initial_value="600.0"
+            left="15" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetUIMagnification" />
           </slider_bar>
         </layout_panel>
 
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-UI Surface Offset Depth
-          </text>
-          <text
-            name="hmd_config_debug_uisurface_offset_depth_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-0.0
-          </text>
+        <layout_panel follows="top|left|right" width="500" height="40">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="top|left|right" halign="center"
+                tool_tip="Forward Offset for UI Surface">UI Surface Offset Depth</text>
+          <text name="hmd_config_debug_uisurface_offset_depth_slider_amount" font.name="SansSerifSmall" top="5" right="-15" width="70" height="10" follows="top|right" halign="right">0.0</text>
           <slider_bar
             name="hmd_config_debug_uisurface_offset_depth_slider"
-            tool_tip="Forward Offset for UI Surface"
-            min_val="-1.0"
-            max_val="1.0"
-            increment="0.01"
-            initial_value="0.0"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
+            min_val="-1.0" max_val="1.0" increment="0.01" initial_value="0.0"
+            left="15" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceOffsetDepth" />
           </slider_bar>
         </layout_panel>
           
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-UI Surface Offset Vertical
-          </text>
-          <text
-            name="hmd_config_debug_uisurface_offset_vertical_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-0.0
-          </text>
+        <layout_panel follows="left|right" width="500" height="40">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="top|left|right" halign="center"
+            tool_tip="Vertical Offset for UI Surface">UI Surface Offset Vertical</text>
+          <text name="hmd_config_debug_uisurface_offset_vertical_slider_amount" font.name="SansSerifSmall" top="5" right="-15" width="70" height="10"  follows="top|right" halign="right">0.0</text>
           <slider_bar
             name="hmd_config_debug_uisurface_offset_vertical_slider"
-            tool_tip="Vertical Offset for UI Surface"
-            min_val="-1.0"
-            max_val="1.0"
-            increment="0.01"
-            initial_value="0.0"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
+            min_val="-1.0" max_val="1.0" increment="0.01" initial_value="0.0"
+            left="15" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceOffsetVertical" />
           </slider_bar>
         </layout_panel>
 
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-UI Surface Offset Horizontal
-          </text>
-          <text
-            name="hmd_config_debug_uisurface_offset_horizontal_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-0.0
-          </text>
+        <layout_panel follows="top|left|right" width="500" height="40">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="top|left|right" halign="center"
+                tool_tip="Horizontal Offset for UI Surface">UI Surface Offset Horizontal</text>
+          <text name="hmd_config_debug_uisurface_offset_horizontal_slider_amount" font.name="SansSerifSmall" top="5" right="-15" width="70" height="10" follows="top|right" halign="right">0.0</text>
           <slider_bar
             name="hmd_config_debug_uisurface_offset_horizontal_slider"
-            tool_tip="Horizontal Offset for UI Surface"
-            min_val="-1.0"
-            max_val="1.0"
-            increment="0.01"
-            initial_value="0.0"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
+            min_val="-1.0" max_val="1.0" increment="0.01" initial_value="0.0"
+            left="15" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceOffsetHorizontal" />
           </slider_bar>
         </layout_panel>
-          
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-Toroid Radius (Width)
-          </text>
-          <text
-            name="hmd_config_debug_uisurface_toroid_radius_width_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-0.3
-          </text>
-          <slider_bar
-            name="hmd_config_debug_uisurface_toroid_radius_width_slider"
-            tool_tip="Toroid Radius (Width)"
-            min_val="0.1"
-            max_val="10.0"
-            increment="0.1"
-            initial_value="0.3"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
+
+        <layout_panel follows="top|left|right" width="500" height="40">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="top|left|right" halign="center"
+                tool_tip="Toroid Radius (Width)">Toroid Radius (Width)</text>
+          <text name="hmd_config_debug_uisurface_toroid_radius_width_slider_amount" font.name="SansSerifSmall" top="5" right="-15" width="70" height="10" follows="top|right" halign="right">0.3</text>
+          <slider_bar name="hmd_config_debug_uisurface_toroid_radius_width_slider"
+            min_val="0.1" max_val="10.0" increment="0.1" initial_value="0.3"
+            left="15" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidRadiusWidth" />
           </slider_bar>
         </layout_panel>
 
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-Toroid Radius (Depth)
-          </text>
-          <text
-            name="hmd_config_debug_uisurface_toroid_radius_depth_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-0.6
-          </text>
+        <layout_panel follows="top|left|right" width="500" height="40">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="top|left|right" halign="center"
+                tool_tip="Toroid Radius (Depth)">Toroid Radius (Depth)</text>
+          <text name="hmd_config_debug_uisurface_toroid_radius_depth_slider_amount" font.name="SansSerifSmall" top="5" right="-15" width="70" height="10" follows="top|right" halign="right">0.6</text>
           <slider_bar
             name="hmd_config_debug_uisurface_toroid_radius_depth_slider"
-            tool_tip="Toroid Radius (Depth)"
-            min_val="0.1"
-            max_val="10.0"
-            increment="0.1"
-            initial_value="0.6"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
+            min_val="0.1" max_val="10.0" increment="0.1" initial_value="0.6"
+            left="15" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidRadiusDepth" />
           </slider_bar>
         </layout_panel>
 
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
+        <layout_panel follows="top|left|right" width="500" height="40">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="top|left|right" halign="center"
+                tool_tip="Toroid Cross-Section Radius (Width)">Toroid Cross-Section Radius (Width)</text>
           <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-Toroid Cross-Section Radius (Width)
-          </text>
-          <text
-            name="hmd_config_debug_uisurface_toroid_cross_section_radius_width_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-0.5
-          </text>
+            name="hmd_config_debug_uisurface_toroid_cross_section_radius_width_slider_amount" font.name="SansSerifSmall" top="5" right="-15" width="70" height="10" follows="top|right" halign="right">0.5</text>
           <slider_bar
             name="hmd_config_debug_uisurface_toroid_cross_section_radius_width_slider"
-            tool_tip="Toroid Cross-Section Radius (Width)"
-            min_val="0.1"
-            max_val="10.0"
-            increment="0.1"
-            initial_value="0.5"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
+            min_val="0.1" max_val="10.0" increment="0.1" initial_value="0.5"
+            left="15" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidCrossSectionRadiusWidth" />
           </slider_bar>
         </layout_panel>
 
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-Toroid Cross-Section Radius (Height)
-          </text>
-          <text
-            name="hmd_config_debug_uisurface_toroid_cross_section_radius_height_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-0.7
-          </text>
+        <layout_panel follows="top|left|right" width="500" height="40">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="top|left|right" halign="center"
+                tool_tip="Toroid Cross-Section Radius (Height)">Toroid Cross-Section Radius (Height)</text>
+          <text name="hmd_config_debug_uisurface_toroid_cross_section_radius_height_slider_amount" font.name="SansSerifSmall" top="5" right="-15" width="70" height="10" follows="top|right" halign="right">0.7</text>
           <slider_bar
             name="hmd_config_debug_uisurface_toroid_cross_section_radius_height_slider"
-            tool_tip="Toroid Cross-Section Radius (Height)"
-            min_val="0.1"
-            max_val="10.0"
-            increment="0.1"
-            initial_value="0.7"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
+            min_val="0.1" max_val="10.0" increment="0.1" initial_value="0.7"
+            left="15" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidCrossSectionRadiusHeight" />
           </slider_bar>
         </layout_panel>
 
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-UI Surface Arc (Horizontal)
-          </text>
-          <text
-            name="hmd_config_debug_uisurface_toroid_arc_horizontal_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-1.0 PI
-          </text>
+        <layout_panel follows="top|left|right" width="500" height="40">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="top|left|right" halign="center"
+                tool_tip="UI Surface Arc (Horizontal)">UI Surface Arc (Horizontal)</text>
+          <text name="hmd_config_debug_uisurface_toroid_arc_horizontal_slider_amount" font.name="SansSerifSmall" top="5" right="-15" width="70" height="10" follows="top|right" halign="right">1.0 PI</text>
           <slider_bar
             name="hmd_config_debug_uisurface_toroid_arc_horizontal_slider"
-            tool_tip="UI Surface Arc (Horizontal)"
-            min_val="0.1"
-            max_val="1.5"
-            increment="0.01"
-            initial_value="1.0"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
+            min_val="0.1" max_val="1.5" increment="0.01" initial_value="1.0"
+            left="15" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidArcHorizontal" />
           </slider_bar>
         </layout_panel>
 
-        <layout_panel
-          follows="left|right"
-          height="40"
-          width="400"
-          min_height="40"
-          text_color="white">
-          <text
-            font.name="SansSerifSmall"
-            top="5"
-            height="10"
-            follows="left|right"
-            halign="center">
-UI Surface Arc (Vertical)
-          </text>
-          <text
-            name="hmd_config_debug_uisurface_toroid_arc_vertical_slider_amount"
-            font.name="SansSerifSmall"
-            top="5"
-            right="-15"
-            height="10"
-            width="70"
-            follows="right"
-            halign="right">
-0.7
-          </text>
+        <layout_panel follows="top|left|right" width="500" height="40">
+          <text font.name="SansSerifSmall" top="5" height="10" follows="top|left|right" halign="center"
+                tool_tip="UI Surface Arc (Vertical)">UI Surface Arc (Vertical)</text>
+          <text name="hmd_config_debug_uisurface_toroid_arc_vertical_slider_amount" font.name="SansSerifSmall" top="5" right="-15" width="70" height="10" follows="top|right" halign="right">0.7</text>
           <slider_bar
             name="hmd_config_debug_uisurface_toroid_arc_vertical_slider"
-            tool_tip="UI Surface Arc (Vertical)"
-            min_val="0.1"
-            max_val="1.0"
-            increment="0.01"
-            initial_value="0.6"
-            top="18"
-            height="22"
-            left="15"
-            right="-5"
-            follows="left|right">
+            min_val="0.1" max_val="1.0" increment="0.01" initial_value="0.6"
+            left="15" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetUISurfaceToroidArcVertical" />
           </slider_bar>
         </layout_panel>
@@ -496,170 +153,111 @@ UI Surface Arc (Vertical)
       </layout_stack>
     </layout_panel>
 
-    <layout_panel
-      follows="all"
-      left="400"
-      top="0"
-      width="300"
-      height="640"
-      min_width="300"
-      min_height="640">
+    <layout_panel follows="all" left="500" top="0" width="200" height="480" auto_resize="false">
+
       <layout_stack
-        layout="topleft"
-        follows="top|left|right"
-        border_size="0"
-        left="0"
-        top="0"
-        height="640"
-        width="300"
-        min_width="300"
-        min_height="640"
-        orientation="vertical">
-        
-        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
+        layout="topleft" follows="top|left|right" orientation="vertical"
+        border_size="0" 
+        left="0" top="0" width="200" height ="240">
+
+        <layout_panel follows="top|left|right" width="200" height="40">
           <check_box name="hmd_config_debug_low_persistence"
             initial_value="false"
-            top="5" left="5" width="32" height="16" valign="middle" halign="center">
+            left="0" top="12" width="32" height="16" valign="center"
+            label="Low Persistence" label_text.valign="center" label_text.v_pad="-1" 
+            tool_tip="Low Persistence Mode to reduce/eliminate motion blur and judder.  While it does help with these things, it also makes the display noticeably dimmer.">
             <check_box.commit_callback function="HMDConfigDebug.CheckLowPersistence" />
           </check_box>
-          <text font.name="SansSerifSmall" top="5" left="60" height="20" width="200" valign="middle" halign="left"
-                tool_tip="Low Persistence Mode to reduce/eliminate motion blur and judder.  While it does help with these things, it also makes the display noticeably dimmer.">Low Persistence</text>
         </layout_panel>
 
-        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
+        <layout_panel follows="top|left|right" width="200" height="40">
           <check_box name="hmd_config_debug_pixel_luminance_overdrive"
             initial_value="true"
-            top="5" left="5" width="32" height="16" valign="middle" halign="center">
+            left="0" top="12" width="32" height="16" valign="center"
+            label="Pixel Luminance Overdrive" label_text.valign="center" label_text.v_pad="-1"
+            tool_tip="Attempts to combat the dimness of Low Persistence Mode in software without sacrificing the benefits of that mode.">
             <check_box.commit_callback function="HMDConfigDebug.CheckPixelLuminanceOverdrive" />
           </check_box>
-          <text font.name="SansSerifSmall" top="5" left="60" height="20" width="200" valign="middle" halign="left"
-                tool_tip="Attempts to combat the dimness of Low Persistence Mode in software without sacrificing the benefits of that mode.">Pixel Luminance Overdrive</text>
         </layout_panel>
 
-        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
+        <layout_panel follows="top|left|right" width="200" height="40">
           <check_box name="hmd_config_debug_motion_prediction"
-            tool_tip="Motion prediction attempts to predict headset movement for a smoother, less jerky experience"
             initial_value="true"
-            top="5" left="15" width="32" height="16">
+            left="0" top="12" width="32" height="16" valign="center"
+            label="Motion Prediction" label_text.valign="center" label_text.v_pad="-1"
+            tool_tip="Motion prediction attempts to predict headset movement for a smoother, less jerky experience">
             <check_box.commit_callback function="HMDConfigDebug.CheckMotionPrediction" />
           </check_box>
-          <text font.name="SansSerifSmall" top="5" left="60" height="10" width="240" halign="left">Motion Prediction</text>
         </layout_panel>
 
-        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
+        <layout_panel follows="top|left|right" width="200" height="40">
           <check_box name="hmd_config_debug_timewarp"
-            tool_tip="Reduce motion-to-photon latency, i.e. how long it takes from the moment you move your head to when the scene rendered by the Rift is updated.  This allows lower latency and higher frame rates.  Experimental."
             initial_value="true"
-            top="5" left="15" width="32" height="16">
+            left="0" top="12" width="32" height="16" valign="center"
+            label="Timewarp" label_text.valign="center" label_text.v_pad="-1"
+            tool_tip="Reduce motion-to-photon latency, i.e. how long it takes from the moment you move your head to when the scene rendered by the Rift is updated.  This allows lower latency and higher frame rates.  Experimental.">
             <check_box.commit_callback function="HMDConfigDebug.CheckTimewarp" />
           </check_box>
-          <text font.name="SansSerifSmall" top="5" left="60" height="10" width="240" halign="left">Timewarp</text>
         </layout_panel>
 
-        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
-          <text font.name="SansSerifSmall" top="5" height="10" follows="left|right" halign="center">Timewarp Interval</text>
-          <text name="hmd_config_debug_timewarp_interval_slider_amount" font.name="SansSerifSmall" top="5" right="-15" height="10" width="70" follows="right" halign="right">0.01</text>
-          <slider_bar name="hmd_config_debug_timewarp_interval_slider"
-            tool_tip="Timewarp Rendering Interval.  Higher value = higher FPS, but more 'dropped' frames."
-            min_val="0.01" max_val="0.2" increment="0.005" initial_value="0.01"
-            top="18" left="5" right="-5" height="22"
-            follows="left|right">
+        <layout_panel follows="top|left|right" width="200" height="40">
+          <text font.name="SansSerifSmall" left="5" top="5" right="-75" height="10" follows="top|left|right" halign="center"
+                tool_tip="Timewarp Rendering Interval.  Higher value = higher FPS, but more 'dropped' frames.">Timewarp Interval</text>
+          <text name="hmd_config_debug_timewarp_interval_slider_amount" font.name="SansSerifSmall" top="5" right="-5" width="70" height="10" follows="top|right" halign="right">0.01</text>
+          <slider_bar
+            name="hmd_config_debug_timewarp_interval_slider"
+            min_val="10" max_val="200" increment="5" initial_value="10"
+            left="5" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetTimewarpInterval" />
           </slider_bar>
         </layout_panel>
 
-        <layout_panel follows="left|right" height="40" width="300" min_height="40" text_color="white">
+        <layout_panel follows="top|left|right" width="200" height="40">
           <check_box name="hmd_config_debug_dynamic_resolution_scaling"
-            tool_tip="Changes the rendering resolution to increase framerate at the cost of more jagged/pixelated edges and lower rendering quality"
             initial_value="false"
-            top="5" left="15" width="32" height="16">
+            left="0" top="12" width="32" height="16" valign="center"
+            label="Dynamic Resolution Scaling" label_text.valign="center" label_text.v_pad="-1"
+            tool_tip="Changes the rendering resolution to increase framerate at the cost of more jagged/pixelated edges and lower rendering quality">
             <check_box.commit_callback function="HMDConfigDebug.CheckDynamicResolutionScaling" />
           </check_box>
-          <text font.name="SansSerifSmall" top="5" left="60" height="10" width="240" halign="left">Dynamic Resolution Scaling</text>
         </layout_panel>
 
       </layout_stack>
     </layout_panel>
 
-    <layout_panel
-      follows="top|right"
-      auto_resize="false"
-      top="0"
-      right="-10"
-      width="110"
-      height="600"
-      min_width="110"
-      min_height="600">
-      <layout_stack
-        orientation="vertical"
-        layout="topleft"
-        follows="top|left|right"
-        left="5"
-        top="5"
-        width="90"
-        height="600"
-        min_width="110"
-        min_height="600">
-        <layout_panel
-          auto_resize="false"
-          text_color="white"
-          height="25"
-          width="90">
-          <button
-            name="hmd_config_debug_hmd_reset_values_button"
-            label="Reset Values"
-            follows="all">
+    <layout_panel top="0" right="-10" width="110" height="480" follows="top|right" auto_resize="false">
+      <layout_stack orientation="vertical" layout="topleft" follows="top|left|right" left="5" top="5" width="90" height="440">
+        
+        <layout_panel width="90" height="25" auto_resize="false">
+          <button name="hmd_config_debug_hmd_reset_values_button" label="Reset Values" follows="all">
             <commit_callback function="HMDConfigDebug.ResetValues" />
           </button>
         </layout_panel>
-        <layout_panel
-          auto_resize="false"
-          text_color="white"
-          height="25"
-          width="90">
-          <button
-            name="hmd_config_debug_hmd_add_preset"
-            label="Add Preset"
-            follows="all">
+        
+        <layout_panel width="90" height="25" auto_resize="false">
+          <button name="hmd_config_debug_hmd_add_preset" label="Add Preset" follows="all">
             <commit_callback function="HMDConfigDebug.AddPreset" />
           </button>
         </layout_panel>
-        <layout_panel
-          auto_resize="false"
-          text_color="white"
-          height="25"
-          width="90">
-            <button
-              name="hmd_config_debug_hmd_remove_preset"
-              label="Remove Preset"
-              follows="all">
+
+        <layout_panel width="90" height="25" auto_resize="false">
+          <button name="hmd_config_debug_hmd_remove_preset" label="Remove Preset" follows="all">
                 <commit_callback function="HMDConfigDebug.RemovePreset" />
             </button>
         </layout_panel>
-        <layout_panel
-          auto_resize="false"
-          text_color="white"
-          height="25"
-          width="90">
-          <button
-            name="hmd_config_debug_hmd_cancel_button"
-            label="Cancel"
-            follows="all">
+
+        <layout_panel width="90" height="25" auto_resize="false">
+          <button name="hmd_config_debug_hmd_cancel_button" label="Cancel" follows="all">
             <commit_callback function="HMDConfigDebug.Cancel" />
           </button>
         </layout_panel>
-        <layout_panel
-          auto_resize="false"
-          text_color="white"
-          height="25"
-          width="90">
-          <button
-            name="hmd_config_debug_hmd_save_button"
-            label="Save"
-            follows="all">
+
+        <layout_panel width="90" height="25" auto_resize="false">
+          <button name="hmd_config_debug_hmd_save_button" label="Save" follows="all">
             <commit_callback function="HMDConfigDebug.Save" />
           </button>
         </layout_panel>          
+
       </layout_stack>
     </layout_panel>
   </layout_stack>

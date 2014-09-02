@@ -82,25 +82,22 @@ public:
         kFlag_ChangingRenderContext     = 1 << 8,
         kFlag_HMDAllowed                = 1 << 9,
         kFlag_HMDSensorConnected        = 1 << 10,
-        kFlag_LatencyTesterConnected    = 1 << 11,  // TODO: remove
-        kFlag_HMDMirror                 = 1 << 12,
-        kFlag_SavingSettings            = 1 << 13,
-        kFlag_UseSavedHMDPreferences    = 1 << 14,  // TODO: remove
-
-        kFlag_UsingDebugHMD             = 1 << 15,
-        kFlag_HMDDisplayEnabled         = 1 << 16,
-        kFlag_UsingAppWindow            = 1 << 17,
-        kFlag_PositionTrackingEnabled   = 1 << 18,
-        kFlag_FrameInProgress           = 1 << 19,
-        kFlag_SettingsChanged           = 1 << 20,
-        kFlag_TimewarpEnabled           = 1 << 21,
-        kFlag_FrameTimewarped           = 1 << 22,
-        kFlag_DynamicResolutionScaling  = 1 << 23,
-        kFlag_HSWShowing                = 1 << 24,
-        kFlag_MirrorHack                = 1 << 25,  // temp until SDK supports attaching to a secondary window
-        kFlag_AllowTextRoll             = 1 << 26,
-        kFlag_UseLowPersistence         = 1 << 27,
-        kFlag_UsePixelLuminanceOverdrive= 1 << 28,
+        kFlag_HMDMirror                 = 1 << 11,
+        kFlag_SavingSettings            = 1 << 12,
+        kFlag_UsingDebugHMD             = 1 << 13,
+        kFlag_HMDDisplayEnabled         = 1 << 14,
+        kFlag_UsingAppWindow            = 1 << 15,
+        kFlag_PositionTrackingEnabled   = 1 << 16,
+        kFlag_FrameInProgress           = 1 << 17,
+        kFlag_SettingsChanged           = 1 << 18,
+        kFlag_TimewarpEnabled           = 1 << 19,
+        kFlag_FrameTimewarped           = 1 << 20,
+        kFlag_DynamicResolutionScaling  = 1 << 21,
+        kFlag_HSWShowing                = 1 << 22,
+        kFlag_MirrorHack                = 1 << 23,  // temp until SDK supports attaching to a secondary window
+        kFlag_AllowTextRoll             = 1 << 24,
+        kFlag_UseLowPersistence         = 1 << 25,
+        kFlag_UsePixelLuminanceOverdrive= 1 << 26,
     };
 
     enum eUIPresetType
@@ -174,14 +171,10 @@ public:
     void isHMDAllowed(BOOL b) { if (b) { mFlags |= kFlag_HMDAllowed; } else { mFlags &= ~kFlag_HMDAllowed; } }
     BOOL isHMDSensorConnected() const { return ((mFlags & kFlag_HMDSensorConnected) != 0) ? TRUE : FALSE; }
     void isHMDSensorConnected(BOOL b) { if (b) { mFlags |= kFlag_HMDSensorConnected; } else { mFlags &= ~kFlag_HMDSensorConnected; } }
-    BOOL isLatencyTesterConnected() const { return ((mFlags & kFlag_LatencyTesterConnected) != 0) ? TRUE : FALSE; }
-    void isLatencyTesterConnected(BOOL b) { if (b) { mFlags |= kFlag_LatencyTesterConnected; } else { mFlags &= ~kFlag_LatencyTesterConnected; } }
     BOOL isHMDMirror() const { return ((mFlags & kFlag_HMDMirror) != 0) ? TRUE : FALSE; }
     void isHMDMirror(BOOL b) { if (b) { mFlags |= kFlag_HMDMirror; } else { mFlags &= ~kFlag_HMDMirror; } }
     BOOL isSavingSettings() const { return ((mFlags & kFlag_SavingSettings) != 0) ? TRUE : FALSE; }
     void isSavingSettings(BOOL b) { if (b) { mFlags |= kFlag_SavingSettings; } else { mFlags &= ~kFlag_SavingSettings; } }
-    BOOL useSavedHMDPreferences() const { return ((mFlags & kFlag_UseSavedHMDPreferences) != 0) ? TRUE : FALSE; }
-    void useSavedHMDPreferences(BOOL b) { if (b) { mFlags |= kFlag_UseSavedHMDPreferences; } else { mFlags &= ~kFlag_UseSavedHMDPreferences; } }
     BOOL isUsingDebugHMD() const { return ((mFlags & kFlag_UsingDebugHMD) != 0) ? TRUE : FALSE; }
     void isUsingDebugHMD(BOOL b) { if (b) { mFlags |= kFlag_UsingDebugHMD; } else { mFlags &= ~kFlag_UsingDebugHMD; } }
     BOOL isHMDDisplayEnabled() const { return ((mFlags & kFlag_HMDDisplayEnabled) != 0) ? TRUE : FALSE; }
@@ -251,7 +244,7 @@ public:
     F32 getEyeToScreenDistanceDefault() const;
     F32 getVerticalFOV() const;
     F32 getAspect();
-    F32 getUIAspect() const { return mPresetUIAspect; }
+    F32 getUIAspect() const { return (F32)getHMDUIWidth() / (F32)getHMDUIHeight(); }
     F32 getUIEyeDepth() const { return mUIEyeDepth; }
     F32 getUIMagnification() { return mUIShape.mUIMagnification; }
     void setUIMagnification(F32 f);
@@ -409,7 +402,6 @@ public:
     static void onChangeWorldCursorSizeMult();
     static void onChangePresetValues();
     static void onChangeMouselookSettings();
-    static void onChangeUseSavedHMDPreferences();
     static void onChangeMouselookControlMode();
     static void onChangeRenderSettings();
     static void onChangeDynamicResolutionScaling();
@@ -450,7 +442,6 @@ private:
     LLVector4a mMouseWorldRaycastNormal;
     LLVector4a mMouseWorldRaycastTangent;
     F32 mMouseWorldSizeMult;
-    F32 mPresetUIAspect;
     std::vector<UISurfaceShapeSettings> mUIPresetValues;
     std::vector<LLPointer<LLViewerTexture> > mCursorTextures;
     std::vector<LLVector2> mCursorHotSpotOffsets;

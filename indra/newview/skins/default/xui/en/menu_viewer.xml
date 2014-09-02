@@ -2357,29 +2357,6 @@
                  function="Advanced.ToggleShowObjectUpdates" />
             </menu_item_check>
 
-            <menu_item_separator/>
-
-            <menu_item_check
-             label="Show HMD Orientation Info"
-             name="Show HMD Orientation">
-                <menu_item_check.on_check
-                 function="CheckControl"
-                 parameter="HMDDebugShowOrientation" />
-                <menu_item_check.on_click
-                 function="ToggleControl"
-                 parameter="HMDDebugShowOrientation" />
-            </menu_item_check>
-            <menu_item_check
-             label="Show HMD Latency Test Info"
-             name="Show HMD Latency">
-                <menu_item_check.on_check
-                 function="CheckControl"
-                 parameter="HMDDebugShowLatency" />
-                <menu_item_check.on_click
-                 function="ToggleControl"
-                 parameter="HMDDebugShowLatency" />
-            </menu_item_check>
-
         </menu>
 
         <menu_item_separator/>

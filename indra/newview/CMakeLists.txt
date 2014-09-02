@@ -244,7 +244,6 @@ set(viewer_SOURCE_FILES
     llfloaterhandler.cpp
     llfloaterhardwaresettings.cpp
     llfloaterhelpbrowser.cpp
-    llfloaterhmdconfig.cpp
     llfloaterhmdconfigdebug.cpp
     llfloaterhud.cpp
     llfloaterimagepreview.cpp

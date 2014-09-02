@@ -185,7 +185,7 @@ BOOL LLHMDImplOculus::postDetectionInit()
 #if LL_WINDOWS
     if (!pWin->initHMDWindow(mHMD->WindowsPos.x, mHMD->WindowsPos.y, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
 #elif LL_DARWIN
-    if (!pWin->initHMDWindow(info.DisplayId, 0, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
+    if (!pWin->initHMDWindow(mHMD->DisplayId, 0, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
 #else
     if (FALSE)
 #endif
@@ -400,8 +400,8 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
 
     // Calculate HMD Hardware Settings
     U32 hmdCaps = 0; // gSavedSettings.getBOOL("DisableVerticalSync") ? ovrHmdCap_NoVSync : 0;
-    hmdCaps |= gSavedSettings.getBOOL("HMDLowPersistence") ? ovrHmdCap_LowPersistence : 0;
-    hmdCaps |= gSavedSettings.getBOOL("HMDUseMotionPrediction") ? ovrHmdCap_DynamicPrediction : 0;
+    hmdCaps |= gHMD.useLowPersistence() ? ovrHmdCap_LowPersistence : 0;
+    hmdCaps |= gHMD.useMotionPrediction() ? ovrHmdCap_DynamicPrediction : 0;
     hmdCaps |= gHMD.isHMDDisplayEnabled() ? 0 : ovrHmdCap_DisplayOff;
     hmdCaps |= (gHMD.isUsingAppWindow() && !gHMD.isHMDMirror()) ? ovrHmdCap_NoMirrorToWindow : 0;
     ovrHmd_SetEnabledCaps(mHMD, hmdCaps);
@@ -418,7 +418,7 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
 
     U32 distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_Vignette;
     distortionCaps |= gHMD.isUsingAppWindow() ? ovrDistortionCap_SRGB : 0;
-    distortionCaps |= gSavedSettings.getBOOL("HMDPixelLuminanceOverdrive") ? ovrDistortionCap_Overdrive : 0;
+    distortionCaps |= gHMD.usePixelLuminanceOverdrive() ? ovrDistortionCap_Overdrive : 0;
     distortionCaps |= gHMD.isTimewarpEnabled() ? ovrDistortionCap_TimeWarp : 0;
     distortionCaps |= gHMD.isTimewarpEnabled() && gSavedSettings.getBOOL("HMDTimewarpNoJit") ? ovrDistortionCap_ProfileNoTimewarpSpinWaits : 0;
 
@@ -465,6 +465,17 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     mOrthoPixelOffset[(U32)OVR::StereoEye_Center] = 0.0f;
     mOrthoPixelOffset[(U32)OVR::StereoEye_Left] = orthoProjection[ovrEye_Left].M[0][3];
     mOrthoPixelOffset[(U32)OVR::StereoEye_Right] = orthoProjection[ovrEye_Right].M[0][3];
+
+    if (gHMD.isHMDMode())
+    {
+        LLViewerCamera* pCamera = LLViewerCamera::getInstance();
+        pCamera->setAspect(getAspect());
+        pCamera->setDefaultFOV(getVerticalFOV());
+        gSavedSettings.setF32("CameraAngle", getVerticalFOV());
+    }
+    // this is a bit of a mislabeled function as it does a lot of calculations for the UI, many of which are based on the values calculated here,
+    // so while the preset didn't actually change here, the UI calculations based on the current preset very well might have.
+    gHMD.onChangeUIShapePreset();
 
     gHMD.renderSettingsChanged(FALSE);
     return TRUE;
@@ -623,7 +634,7 @@ void LLHMDImplOculus::applyDynamicResolutionScaling(double curTime)
 
 F32 LLHMDImplOculus::getAspect() const
 {
-    return (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE) ? mAspect : LLViewerCamera::getInstance()->getAspect();
+    return (gHMD.isPostDetectionInitialized() && gHMD.isHMDMode()) ? mAspect : LLViewerCamera::getInstance()->getAspect();
 }
 
 

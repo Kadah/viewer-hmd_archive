@@ -78,7 +78,6 @@
 #include "llvosky.h"
 #include "llfloaterpathfindingconsole.h"
 #include "llhmd.h"
-#include "llfloaterhmdconfig.h"
 #include "llfloaterhmdconfigdebug.h"
 
 // linden library includes
@@ -559,12 +558,6 @@ void LLFloaterPreference::apply()
 	}
 
     // hmd config apply
-    //LLFloaterHMDConfig* hmd_config_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfig>("floater_hmd_config");
-    //if (hmd_config_settings && hmd_config_settings->getVisible())
-    //{
-    //    hmd_config_settings->onClickSave();
-    //}
-    //else
     {
         LLFloaterHMDConfigDebug* hmd_config_debug_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfigDebug>("floater_hmd_config_debug");
         if (hmd_config_debug_settings && hmd_config_debug_settings->getVisible())
@@ -649,13 +642,7 @@ void LLFloaterPreference::cancel()
 	// hide spellchecker settings folder
 	LLFloaterReg::hideInstance("prefs_spellchecker");
 
-    // hide hmd config floater(s)
-    //LLFloaterHMDConfig* hmd_config_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfig>("floater_hmd_config");
-    //if (hmd_config_settings && hmd_config_settings->getVisible())
-    //{
-    //    hmd_config_settings->onClickCancel();
-    //}
-    //else
+    // hide hmd config floater
     {
         LLFloaterHMDConfigDebug* hmd_config_debug_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfigDebug>("floater_hmd_config_debug");
         if (hmd_config_debug_settings && hmd_config_debug_settings->getVisible())
@@ -1726,14 +1713,7 @@ void LLFloaterPreference::onClickSpellChecker()
 
 void LLFloaterPreference::onClickOpenHMDConfig()
 {
-    //if (gHMD.isAdvancedMode())
-    //{
-        LLFloaterReg::showInstance("floater_hmd_config_debug");
-    //}
-    //else
-    //{
-    //    LLFloaterReg::showInstance("floater_hmd_config");
-    //}
+    LLFloaterReg::showInstance("floater_hmd_config_debug");
 }
 
 void LLFloaterPreference::onClickActionChange()

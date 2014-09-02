@@ -847,19 +847,6 @@ public:
 				}
 			}
 		}
-
-		if (gHMD.isPostDetectionInitialized() && gHMD.isHMDSensorConnected() && gSavedSettings.getBOOL("HMDDebugShowOrientation"))
-		{
-            //// for debugging: put text in center of screen
-            //xpos = llmax((mWindow->getWorldViewWidthScaled() / 2) - 200, 0);
-            //ypos = (mWindow->getWorldViewHeightScaled() / 2) - (y_inc / 2);
-			//addText(xpos, ypos, llformat("HMD Cursor UI: %s, World: %s", (gHMD.cursorIntersectsUI() ? "TRUE" : "FALSE"), (gHMD.cursorIntersectsWorld() ? "TRUE" : "FALSE")));
-			//ypos += y_inc;
-            F32 roll, pitch, yaw;
-            gHMD.getHMDRollPitchYaw(roll, pitch, yaw);
-			addText(xpos, ypos, llformat("HMD Orient Euler: [roll=%f, pitch=%f, yaw=%f]", roll, pitch, yaw));
-			ypos += y_inc;
-        }
 	}
 
 	void draw()
