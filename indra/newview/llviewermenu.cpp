@@ -4134,11 +4134,6 @@ class LLViewCycleDisplay : public view_listener_t
 		            LLNotificationsUtil::add("HMDModeErrorNoDevice");
                     hmdModePossible = FALSE;
                 }
-                else if (!gHMD.isHMDSensorConnected())
-                {
-		            LLNotificationsUtil::add("HMDModeErrorNoSensor");
-                    hmdModePossible = FALSE;
-                }
                 else if (!gHMD.isPostDetectionInitialized())
                 {
 		            LLNotificationsUtil::add("HMDModeErrorNoWindow");

@@ -81,7 +81,7 @@ public:
         kFlag_AdvancedMode              = 1 << 7,
         kFlag_ChangingRenderContext     = 1 << 8,
         kFlag_HMDAllowed                = 1 << 9,
-        kFlag_HMDSensorConnected        = 1 << 10,
+        kFlag_MainIsMaximized           = 1 << 10,
         kFlag_HMDMirror                 = 1 << 11,
         kFlag_SavingSettings            = 1 << 12,
         kFlag_UsingDebugHMD             = 1 << 13,
@@ -159,6 +159,8 @@ public:
     void isHMDConnected(BOOL b) { if (b) { mFlags |= kFlag_HMDConnected; } else { mFlags &= ~kFlag_HMDConnected; } }
     BOOL isMainFullScreen() const { return ((mFlags & kFlag_MainIsFullScreen) != 0) ? TRUE : FALSE; }
     void isMainFullScreen(BOOL b) { if (b) { mFlags |= kFlag_MainIsFullScreen; } else { mFlags &= ~kFlag_MainIsFullScreen; } }
+    BOOL isMainMaximized() const { return ((mFlags & kFlag_MainIsMaximized) != 0) ? TRUE : FALSE; }
+    void isMainMaximized(BOOL b) { if (b) { mFlags |= kFlag_MainIsMaximized; } else { mFlags &= ~kFlag_MainIsMaximized; } }
     BOOL cursorIntersectsWorld() const { return ((mFlags & kFlag_CursorIntersectsWorld) != 0) ? TRUE : FALSE; }
     void cursorIntersectsWorld(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsWorld; } else { mFlags &= ~kFlag_CursorIntersectsWorld; } }
     BOOL cursorIntersectsUI() const { return ((mFlags & kFlag_CursorIntersectsUI) != 0) ? TRUE : FALSE; }
@@ -169,8 +171,6 @@ public:
     void isChangingRenderContext(BOOL b) { if (b) { mFlags |= kFlag_ChangingRenderContext; } else { mFlags &= ~kFlag_ChangingRenderContext; } }
     BOOL isHMDAllowed() const { return ((mFlags & kFlag_HMDAllowed) != 0) ? TRUE : FALSE; }
     void isHMDAllowed(BOOL b) { if (b) { mFlags |= kFlag_HMDAllowed; } else { mFlags &= ~kFlag_HMDAllowed; } }
-    BOOL isHMDSensorConnected() const { return ((mFlags & kFlag_HMDSensorConnected) != 0) ? TRUE : FALSE; }
-    void isHMDSensorConnected(BOOL b) { if (b) { mFlags |= kFlag_HMDSensorConnected; } else { mFlags &= ~kFlag_HMDSensorConnected; } }
     BOOL isHMDMirror() const { return ((mFlags & kFlag_HMDMirror) != 0) ? TRUE : FALSE; }
     void isHMDMirror(BOOL b) { if (b) { mFlags |= kFlag_HMDMirror; } else { mFlags &= ~kFlag_HMDMirror; } }
     BOOL isSavingSettings() const { return ((mFlags & kFlag_SavingSettings) != 0) ? TRUE : FALSE; }

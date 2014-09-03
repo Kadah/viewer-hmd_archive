@@ -156,7 +156,6 @@ void LLHMDImplOculus::removeHMDDevice()
     gHMD.isPostDetectionInitialized(FALSE);
     gHMD.isUsingDebugHMD(FALSE);
     gHMD.isHMDConnected(FALSE);
-    gHMD.isHMDSensorConnected(FALSE);
     gHMD.isHMDMirror(FALSE);
     gHMD.isHMDDisplayEnabled(FALSE);
     gHMD.isUsingAppWindow(FALSE);
@@ -274,21 +273,10 @@ void LLHMDImplOculus::onIdle()
     if (mHMD)
     {
         bool wasHMDConnected = gHMD.isHMDConnected();
-        //bool wasHMDSensorConnected = gHMD.isHMDSensorConnected();
         gHMD.isHMDConnected(mHMD && (mHMD->HmdCaps & ovrHmdCap_Present) != 0);
-        //gHMD.isHMDSensorConnected(mHMD && (mHMD->HmdCaps & (ovrHmdCap_Available | ovrHmdCap_Captured)) != 0);
         // ovrHmdCap_Available and ovrHmdCap_Captured don't seem to be getting set by the SDK, ignoring for now
-        gHMD.isHMDSensorConnected(gHMD.isHMDConnected());
         gHMD.isHMDDisplayEnabled(mHMD && mHMD->ProductName && mHMD->ProductName[0] != 0);
-        //if ((!wasHMDConnected && gHMD.isHMDConnected()) || (!wasHMDSensorConnected && gHMD.isHMDSensorConnected()))
-        //{
-        //    LL_INFOS("HMD") << "HMD Device Added" << LL_ENDL;
-        //    initHMDDevice();
-        //}
-        //else
-        if ((wasHMDConnected && !gHMD.isHMDConnected())
-            //|| (wasHMDSensorConnected && !gHMD.isHMDSensorConnected())
-            )
+        if (wasHMDConnected && !gHMD.isHMDConnected())
         {
             LL_INFOS("HMD") << "HMD Device Not Detected" << LL_ENDL;
             if (gHMD.isHMDMode())
@@ -487,7 +475,7 @@ BOOL LLHMDImplOculus::beginFrame()
     gHMD.isFrameInProgress( mHMD &&
                             gHMD.isPreDetectionInitialized() &&
                             gHMD.isPostDetectionInitialized() &&
-                            (gHMD.isUsingDebugHMD() || (gHMD.isHMDConnected() && gHMD.isHMDSensorConnected() && gHMD.isHMDDisplayEnabled())));
+                            (gHMD.isUsingDebugHMD() || (gHMD.isHMDConnected() && gHMD.isHMDDisplayEnabled())));
     if (gHMD.isFrameInProgress())
     {
         double curTime = ovr_GetTimeInSeconds();

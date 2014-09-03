@@ -634,7 +634,7 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
     if (!gDisconnected)
     {
         U32 render_mode = gHMD.getRenderMode();
-        BOOL hmd_ready = gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected();
+        BOOL hmd_ready = gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected();
         BOOL render_ok = TRUE;
 
         if (((S32)LLFrameTimer::getFrameCount() % 30) == 0)

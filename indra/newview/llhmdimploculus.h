@@ -55,7 +55,7 @@ public:
     virtual BOOL postDetectionInit();
     BOOL initHMDDevice();
     void removeHMDDevice();
-    bool isReady() { return mHMD && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected() && gHMD.isHMDDisplayEnabled(); }
+    bool isReady() { return mHMD && gHMD.isHMDConnected() && gHMD.isHMDDisplayEnabled(); }
     virtual void shutdown();
     virtual void onIdle();
     virtual U32 getCurrentEye() const { return mCurrentEye; }

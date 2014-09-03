@@ -517,7 +517,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
     if (newRenderMode != mRenderMode)
     {
         LLWindow* windowp = gViewerWindow->getWindow();
-        if (!windowp || (newRenderMode == RenderMode_HMD && (!isPostDetectionInitialized() || !isHMDConnected() || !isHMDSensorConnected())))
+        if (!windowp || (newRenderMode == RenderMode_HMD && (!isPostDetectionInitialized() || !isHMDConnected())))
         {
             return;
         }
@@ -538,7 +538,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     {
                         // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
                         // the HMD is still connected, etc.
-                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected() || !gHMD.isHMDSensorConnected())
+                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
                         {
                             // can't render to the HMD window, so abort
                             mRenderMode = RenderMode_ScreenStereo;
@@ -616,6 +616,10 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             windowp->setSize(mMainWindowSize);
 #endif
                             windowp->setPosition(mMainWindowPos);
+                            if (gHMD.isMainMaximized())
+                            {
+                                windowp->maximize();
+                            }
                         }
                         if (oldMode == RenderMode_HMD)
                         {
@@ -642,6 +646,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 mMainWindowFOV = gSavedSettings.getF32("CameraAngle");
                 mMainWindowAspect = pCamera->getAspect();
                 isMainFullScreen(windowp->getFullscreen());
+                isMainMaximized(windowp->getMaximized());
                 renderUnusedMainWindow();
 
                 // snapshots are disabled in HMD mode due to problems with always rendering UI and sometimes
@@ -656,7 +661,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                     {
                         // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
                         // the HMD is still connected, etc.
-                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected() || !gHMD.isHMDSensorConnected())
+                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
                         {
                             // can't render to the HMD window, so abort
                             mRenderMode = RenderMode_None;
@@ -724,7 +729,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 setFocusWindowMain();
             }
         }
-        if (mImpl && isPostDetectionInitialized() && isHMDConnected() && isHMDSensorConnected() && isHMDMode())
+        if (mImpl && isPostDetectionInitialized() && isHMDConnected() && isHMDMode())
         {
             mImpl->resetOrientation();
         }
@@ -905,7 +910,6 @@ void LLHMD::renderUnusedHMDWindow()
 #if LL_HMD_SUPPORTED
     if (gHMD.isPostDetectionInitialized()
         && gHMD.isHMDConnected()
-        && gHMD.isHMDSensorConnected()
         && gHMD.getRenderMode() != LLHMD::RenderMode_HMD
         && !gHMD.isUsingAppWindow()
         && gViewerWindow
