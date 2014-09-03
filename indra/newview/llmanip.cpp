@@ -451,58 +451,92 @@ void LLManip::renderGuidelines(BOOL draw_x, BOOL draw_y, BOOL draw_z)
 void LLManip::renderXYZ(const LLVector3 &vec) 
 {
 	const S32 PAD = 10;
-	std::string feedback_string;
 	LLVector3 camera_pos = LLViewerCamera::getInstance()->getOrigin() + LLViewerCamera::getInstance()->getAtAxis();
-	S32 window_center_x = gViewerWindow->getWorldViewRectScaled().getWidth() / 2;
-	S32 window_center_y = gViewerWindow->getWorldViewRectScaled().getHeight() / 2;
-	S32 vertical_offset = window_center_y - VERTICAL_OFFSET;
-
-
-	gGL.pushMatrix();
-	{
-		LLUIImagePtr imagep = LLUI::getUIImage("Rounded_Square");
-		gViewerWindow->setup2DRender();
-		const LLVector2& display_scale = gViewerWindow->getDisplayScale();
-		gGL.scalef(display_scale.mV[VX], display_scale.mV[VY], 1.f);
-		gGL.color4f(0.f, 0.f, 0.f, 0.7f);
-
-		imagep->draw(
-			window_center_x - 115, 
-			window_center_y + vertical_offset - PAD, 
-			235,
-			PAD * 2 + 10, 
-			LLColor4(0.f, 0.f, 0.f, 0.7f) );
-	}
-	gGL.popMatrix();
-
-	gViewerWindow->setup3DRender();
+    S32 window_center_y = gViewerWindow->getWorldViewRectScaled().getHeight() / 2;
+    LLFontGL* font = LLFontGL::getFontSansSerif();
 
 	{
-		LLFontGL* font = LLFontGL::getFontSansSerif();
-		LLLocale locale(LLLocale::USER_LOCALE);
-		LLGLDepthTest gls_depth(GL_FALSE);
-		// render drop shadowed text
-		feedback_string = llformat("X: %.3f", vec.mV[VX]);
-		hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -102.f + 1.f, (F32)vertical_offset - 1.f, LLColor4::black, FALSE);
+        LLLocale locale(LLLocale::USER_LOCALE);
 
-		feedback_string = llformat("Y: %.3f", vec.mV[VY]);
-		hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -27.f + 1.f, (F32)vertical_offset - 1.f, LLColor4::black, FALSE);
-		
-		feedback_string = llformat("Z: %.3f", vec.mV[VZ]);
-		hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 48.f + 1.f, (F32)vertical_offset - 1.f, LLColor4::black, FALSE);
+        if (gHMD.isHMDMode())
+        {
+            gViewerWindow->setup3DRender();
+            LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
+            LLGLState gls_blend(GL_BLEND, TRUE);
+            LLGLState gls_alpha(GL_ALPHA_TEST, TRUE);
 
-		// render text on top
-		feedback_string = llformat("X: %.3f", vec.mV[VX]);
-		hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -102.f, (F32)vertical_offset, LLColor4(1.f, 0.5f, 0.5f, 1.f), FALSE);
+            S32 vertical_offset = window_center_y / 3;
+            S32 w = 235, h = (PAD * 2) + 10;
+            LLVector3 x_pixel_vec, y_pixel_vec;
+            LLViewerCamera::getInstance()->getPixelVectors(camera_pos, y_pixel_vec, x_pixel_vec);
+            LLVector3 render_position = camera_pos + (x_pixel_vec * 1.0f) + (y_pixel_vec * (F32)vertical_offset);
 
-		gGL.diffuseColor3f(0.5f, 1.f, 0.5f);
-		feedback_string = llformat("Y: %.3f", vec.mV[VY]);
-		hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -27.f, (F32)vertical_offset, LLColor4(0.5f, 1.f, 0.5f, 1.f), FALSE);
-		
-		gGL.diffuseColor3f(0.5f, 0.5f, 1.f);
-		feedback_string = llformat("Z: %.3f", vec.mV[VZ]);
-		hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 48.f, (F32)vertical_offset, LLColor4(0.5f, 0.5f, 1.f, 1.f), FALSE);
+            LLRect screen_rect;
+            screen_rect.setCenterAndSize(0, -h / 2, w, h);
+            LLUIImagePtr imagep = LLUI::getUIImage("Rounded_Square");
+            imagep->draw3D(render_position, x_pixel_vec, y_pixel_vec, screen_rect, LLColor4(0.f, 0.f, 0.f, 0.7f));
+            renderXYZText(TRUE, vec, render_position, font, -(h + 10) / 2);
+        }
+        else
+        {
+            S32 window_center_x = gViewerWindow->getWorldViewRectScaled().getWidth() / 2;
+            S32 vertical_offset = window_center_y - VERTICAL_OFFSET;
+
+            gGL.pushMatrix();
+            {
+                LLUIImagePtr imagep = LLUI::getUIImage("Rounded_Square");
+                gViewerWindow->setup2DRender();
+                const LLVector2& display_scale = gViewerWindow->getDisplayScale();
+                gGL.scalef(display_scale.mV[VX], display_scale.mV[VY], 1.f);
+                gGL.color4f(0.f, 0.f, 0.f, 0.7f);
+
+                imagep->draw(
+                    window_center_x - 115, 
+                    window_center_y + vertical_offset - PAD, 
+                    235,
+                    PAD * 2 + 10, 
+                    LLColor4(0.f, 0.f, 0.f, 0.7f) );
+            }
+            gGL.popMatrix();
+
+            gViewerWindow->setup3DRender();
+
+            LLGLDepthTest gls_depth(GL_FALSE);
+            renderXYZText(TRUE, vec, camera_pos, font, vertical_offset);
+        }
 	}
+}
+
+void LLManip::renderXYZText(BOOL render_drop_shadow, const LLVector3& vec, const LLVector3& camera_pos, LLFontGL* font, F32 vertical_offset)
+{
+    std::string feedback_string;
+
+    if (render_drop_shadow)
+    {
+        // render drop shadowed text
+        feedback_string = llformat("X: %.3f", vec.mV[VX]);
+        hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -102.f + 1.f, (F32)vertical_offset - 1.f, LLColor4::black, FALSE);
+
+        feedback_string = llformat("Y: %.3f", vec.mV[VY]);
+        hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -27.f + 1.f, (F32)vertical_offset - 1.f, LLColor4::black, FALSE);
+
+        feedback_string = llformat("Z: %.3f", vec.mV[VZ]);
+        hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 48.f + 1.f, (F32)vertical_offset - 1.f, LLColor4::black, FALSE);
+    }
+
+    // render text on top
+    feedback_string = llformat("X: %.3f", vec.mV[VX]);
+    hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -102.f, (F32)vertical_offset, LLColor4(1.0f, 0.5f, 0.5f, 1.0f), FALSE);
+
+    gGL.diffuseColor3f(0.5f, 1.f, 0.5f);
+    feedback_string = llformat("Y: %.3f", vec.mV[VY]);
+    hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -27.f, (F32)vertical_offset, LLColor4(0.5f, 1.0f, 0.5f, 1.0f), FALSE);
+
+    gGL.diffuseColor3f(0.5f, 0.5f, 1.f);
+    feedback_string = llformat("Z: %.3f", vec.mV[VZ]);
+    hud_render_text(utf8str_to_wstring(feedback_string), camera_pos, *font, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 48.f, (F32)vertical_offset, LLColor4(0.5f, 0.5f, 1.0f, 1.0f), FALSE);
+
+
 }
 
 void LLManip::renderTickText(const LLVector3& pos, const std::string& text, const LLColor4 &color)
@@ -522,16 +556,23 @@ void LLManip::renderTickText(const LLVector3& pos, const std::string& text, cons
 		gGL.scalef(inv_zoom_amt, inv_zoom_amt, inv_zoom_amt);
 	}
 
-	// render shadow first
-	LLColor4 shadow_color = LLColor4::black;
-	shadow_color.mV[VALPHA] = color.mV[VALPHA] * 0.5f;
-    // note: hud_render_text does it's own setup3DViewport, ignoring this one.  Thus all we're doing is wasting CPU
-    // by rendering text twice.  If we want this effect, use the x_offset and y_offset that are passed in to
-    // hud_render_text
-	//gViewerWindow->setup3DViewport(1, -1);
-	hud_render_utf8text(text, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW,  -0.5f * big_fontp->getWidthF32(text) + 1.0f, 3.f - 1.0f, shadow_color, mObjectSelection->getSelectType() == SELECT_TYPE_HUD);
-	//gViewerWindow->setup3DViewport();
-	hud_render_utf8text(text, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(text), 3.f, color, mObjectSelection->getSelectType() == SELECT_TYPE_HUD);
+    // render shadow first
+    LLColor4 shadow_color = LLColor4::black;
+    shadow_color.mV[VALPHA] = color.mV[VALPHA] * 0.5f;
+    if (gHMD.isHMDMode())
+    {
+        LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
+        LLGLState gls_blend(GL_BLEND, TRUE);
+        LLGLState gls_alpha(GL_ALPHA_TEST, TRUE);
+
+        hud_render_utf8text(text, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW,  -0.5f * big_fontp->getWidthF32(text) + 1.0f, 3.f - 1.0f, shadow_color, mObjectSelection->getSelectType() == SELECT_TYPE_HUD, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+        hud_render_utf8text(text, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(text), 3.f, color, mObjectSelection->getSelectType() == SELECT_TYPE_HUD, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+    }
+    else
+    {
+        hud_render_utf8text(text, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW,  -0.5f * big_fontp->getWidthF32(text) + 1.0f, 3.f - 1.0f, shadow_color, mObjectSelection->getSelectType() == SELECT_TYPE_HUD);
+        hud_render_utf8text(text, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(text), 3.f, color, mObjectSelection->getSelectType() == SELECT_TYPE_HUD);
+    }
 
 	gGL.popMatrix();
 }
@@ -586,23 +627,43 @@ void LLManip::renderTickValue(const LLVector3& pos, F32 value, const std::string
 	LLColor4 shadow_color = LLColor4::black;
 	shadow_color.mV[VALPHA] = color.mV[VALPHA] * 0.5f;
 
-    // note: hud_render_text does it's own setup3DViewport, ignoring any that were set before it is called.  
-    // Thus all we're doing is wasting CPU by rendering text twice.  If we want this effect, use the x_offset
-    // and y_offset that are passed in to hud_render_text
-	if (fractional_portion != 0)
-	{
-		fraction_string = llformat("%c%02d%s", LLResMgr::getInstance()->getDecimalPoint(), fractional_portion, suffix.c_str());
-	    hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -1.f * big_fontp->getWidthF32(val_string) + 1.0f, 3.f - 1.0f, shadow_color, hud_selection, gHMD.isHMDMode() && !gHMD.allowTextRoll());
-	    hud_render_utf8text(fraction_string, render_pos, *small_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 1.f + 1.0f, 3.f - 1.0f, shadow_color, hud_selection, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+    if (gHMD.isHMDMode())
+    {
+        LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
+        LLGLState gls_blend(GL_BLEND, TRUE);
+        LLGLState gls_alpha(GL_ALPHA_TEST, TRUE);
+	    if (fractional_portion != 0)
+	    {
+		    fraction_string = llformat("%c%02d%s", LLResMgr::getInstance()->getDecimalPoint(), fractional_portion, suffix.c_str());
+	        hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -1.f * big_fontp->getWidthF32(val_string) + 1.0f, 3.f - 1.0f, shadow_color, hud_selection, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+	        hud_render_utf8text(fraction_string, render_pos, *small_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 1.f + 1.0f, 3.f - 1.0f, shadow_color, hud_selection, gHMD.isHMDMode() && !gHMD.allowTextRoll());
 
-		hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -1.f * big_fontp->getWidthF32(val_string), 3.f, color, hud_selection, gHMD.isHMDMode() && !gHMD.allowTextRoll());
-		hud_render_utf8text(fraction_string, render_pos, *small_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 1.f, 3.f, color, hud_selection, gHMD.isHMDMode() && !gHMD.allowTextRoll());
-	}
-	else
-	{
-	    hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(val_string) + 1.0f, 3.f - 1.0f, shadow_color, hud_selection, gHMD.isHMDMode() && !gHMD.allowTextRoll());
-		hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(val_string), 3.f, color, hud_selection, gHMD.isHMDMode() && !gHMD.allowTextRoll());
-	}
+		    hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -1.f * big_fontp->getWidthF32(val_string), 3.f, color, hud_selection, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+		    hud_render_utf8text(fraction_string, render_pos, *small_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 1.f, 3.f, color, hud_selection, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+	    }
+	    else
+	    {
+	        hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(val_string) + 1.0f, 3.f - 1.0f, shadow_color, hud_selection);
+		    hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(val_string), 3.f, color, hud_selection);
+	    }
+    }
+    else
+    {
+        if (fractional_portion != 0)
+        {
+            fraction_string = llformat("%c%02d%s", LLResMgr::getInstance()->getDecimalPoint(), fractional_portion, suffix.c_str());
+            hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -1.f * big_fontp->getWidthF32(val_string) + 1.0f, 3.f - 1.0f, shadow_color, hud_selection);
+            hud_render_utf8text(fraction_string, render_pos, *small_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 1.f + 1.0f, 3.f - 1.0f, shadow_color, hud_selection);
+
+            hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -1.f * big_fontp->getWidthF32(val_string), 3.f, color, hud_selection);
+            hud_render_utf8text(fraction_string, render_pos, *small_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, 1.f, 3.f, color, hud_selection);
+        }
+        else
+        {
+            hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(val_string) + 1.0f, 3.f - 1.0f, shadow_color, hud_selection);
+            hud_render_utf8text(val_string, render_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(val_string), 3.f, color, hud_selection);
+        }
+    }
 	gGL.popMatrix();
 }
 

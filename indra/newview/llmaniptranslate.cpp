@@ -1081,10 +1081,7 @@ void LLManipTranslate::render()
 	}
 	{
 		renderTranslationHandles();
-        if (!gHMD.isHMDMode())
-        {
-		    renderSnapGuides();
-        }
+		renderSnapGuides();
 	}
 	gGL.popMatrix();
 
@@ -1457,13 +1454,30 @@ void LLManipTranslate::renderSnapGuides()
 				LLVector3 help_text_pos = selection_center_start + (snap_offset_meters_up * 3.f * mSnapOffsetAxis);
 				const LLFontGL* big_fontp = LLFontGL::getFontSansSerif();
 
-				std::string help_text = LLTrans::getString("manip_hint1");
-				LLColor4 help_text_color = LLColor4::white;
-				help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
-				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
-				help_text = LLTrans::getString("manip_hint2");
-				help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapOffsetMeters * 0.2f;
-				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+                if (gHMD.isHMDMode())
+                {
+                    LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
+                    LLGLState gls_blend(GL_BLEND, TRUE);
+                    LLGLState gls_alpha(GL_ALPHA_TEST, TRUE);
+
+                    std::string help_text = LLTrans::getString("manip_hint1");
+                    LLColor4 help_text_color = LLColor4::white;
+                    help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+                    help_text = LLTrans::getString("manip_hint2");
+                    help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapOffsetMeters * 0.2f;
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+                }
+                else
+                {
+                    std::string help_text = LLTrans::getString("manip_hint1");
+                    LLColor4 help_text_color = LLColor4::white;
+                    help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+                    help_text = LLTrans::getString("manip_hint2");
+                    help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapOffsetMeters * 0.2f;
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+                }
 			}
 		}
 	}
@@ -1545,8 +1559,8 @@ void LLManipTranslate::renderSnapGuides()
 		{
 			//draw grid behind objects
 			LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
+            LLGLState gls_blend(GL_BLEND, TRUE);
 
-			//if (!gHMD.isHMDMode())
             {
 				LLGLDisable stencil(GL_STENCIL_TEST);
 				{

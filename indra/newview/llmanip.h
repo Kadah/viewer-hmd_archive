@@ -36,6 +36,7 @@ class LLViewerObject;
 class LLToolComposite;
 class LLVector3;
 class LLObjectSelection;
+class LLFontGL;
 
 const S32 MIN_DIVISION_PIXEL_WIDTH = 9;
 
@@ -150,6 +151,8 @@ protected:
 	BOOL				getMousePointOnPlaneAgent(LLVector3& point, S32 x, S32 y, LLVector3 origin, LLVector3 normal);
 	BOOL				nearestPointOnLineFromMouse( S32 x, S32 y, const LLVector3& b1, const LLVector3& b2, F32 &a_param, F32 &b_param );
 	LLColor4			setupSnapGuideRenderPass(S32 pass);
+    static void         renderXYZText(BOOL render_drop_shadow, const LLVector3& vec, const LLVector3& camera_pos, LLFontGL* font, F32 vertical_offset);
+
 protected:
 	LLFrameTimer		mHelpTextTimer;
 	BOOL				mInSnapRegime;
