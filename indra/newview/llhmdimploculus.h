@@ -35,9 +35,12 @@
 #include "llviewertexture.h"
 
 #include "OVR.h"
+#if LL_DARWIN
+    // hack around an SDK warning that becomes an error with our compilation settings
+    #define __gl_h_
+    #define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
+#endif
 #include "OVR_CAPI_GL.h"
-#include "OVR_Stereo.h"
-#include "Util/Util_Render_Stereo.h"
 
 class LLRenderTarget;
 
@@ -57,7 +60,7 @@ public:
     void onIdle();
     U32 getCurrentEye() const { return mCurrentEye; }
     U32 getCurrentOVREye() const { return mCurrentEye == LLHMD::RIGHT_EYE ? 1 : 0; }
-    void setCurrentEye(U32 eye) { mCurrentEye = llclamp(eye, (U32)OVR::StereoEye_Center, (U32)OVR::StereoEye_Right); }
+    void setCurrentEye(U32 eye) { mCurrentEye = llclamp(eye, (U32)LLHMD::CENTER_EYE, (U32)LLHMD::RIGHT_EYE); }
     virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h) const;
     virtual void getViewportInfo(S32 vp[4]) const;
     virtual S32 getViewportWidth() const;
@@ -88,7 +91,7 @@ public:
 
     void resetOrientation();
 
-    F32 getOrthoPixelOffset() const { return gHMD.isPostDetectionInitialized() ? mOrthoPixelOffset[mCurrentEye] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)OVR::StereoEye_Left ? 1.0f : -1.0f)); }
+    F32 getOrthoPixelOffset() const { return gHMD.isPostDetectionInitialized() ? mOrthoPixelOffset[mCurrentEye] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)LLHMD::LEFT_EYE ? 1.0f : -1.0f)); }
 
     // DK2
     virtual BOOL beginFrame();
