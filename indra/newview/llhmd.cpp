@@ -61,6 +61,8 @@
 // external methods
 void drawBox(const LLVector3& c, const LLVector3& r);
 
+const S32 LLHMDImpl::kDefaultHResolution = 1280;
+const S32 LLHMDImpl::kDefaultVResolution = 800;
 const F32 LLHMDImpl::kDefaultHScreenSize = 0.14976f;
 const F32 LLHMDImpl::kDefaultVScreenSize = 0.0936f;
 const F32 LLHMDImpl::kDefaultInterpupillaryOffset = 0.064f;
@@ -1049,9 +1051,6 @@ F32 LLHMD::getAspect() { return mImpl ? mImpl->getAspect() : 0.0f; }
 BOOL LLHMD::useMotionPrediction() const { return mImpl ? mImpl->useMotionPrediction() : FALSE; }
 void LLHMD::useMotionPrediction(BOOL b) { if (mImpl) { mImpl->useMotionPrediction(b); } }
 BOOL LLHMD::useMotionPredictionDefault() const { return mImpl ? mImpl->useMotionPredictionDefault() : FALSE; }
-F32 LLHMD::getMotionPredictionDelta() const { return mImpl ? mImpl->getMotionPredictionDelta() : 0.0f; }
-F32 LLHMD::getMotionPredictionDeltaDefault() const { return mImpl ? mImpl->getMotionPredictionDeltaDefault() : 0.0f; }
-void LLHMD::setMotionPredictionDelta(F32 f) { if (mImpl) { mImpl->setMotionPredictionDelta(f); } }
 F32 LLHMD::getOrthoPixelOffset() const { return mImpl ? mImpl->getOrthoPixelOffset() : 0.0f; }
 
 

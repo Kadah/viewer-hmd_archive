@@ -252,9 +252,6 @@ public:
     BOOL useMotionPrediction() const;
     BOOL useMotionPredictionDefault() const;
     void useMotionPrediction(BOOL b);
-    F32 getMotionPredictionDelta() const;
-    F32 getMotionPredictionDeltaDefault() const;
-    void setMotionPredictionDelta(F32 f);
 
     // Get the current HMD orientation
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
@@ -471,8 +468,8 @@ extern LLHMD gHMD;
 class LLHMDImpl
 {
 public:
-    static const S32 kDefaultHResolution = 1280;
-    static const S32 kDefaultVResolution = 800;
+    static const S32 kDefaultHResolution;
+    static const S32 kDefaultVResolution;
     static const F32 kDefaultHScreenSize;
     static const F32 kDefaultVScreenSize;
     static const F32 kDefaultInterpupillaryOffset;
@@ -521,9 +518,6 @@ public:
     virtual BOOL useMotionPrediction() { return FALSE; }
     virtual BOOL useMotionPredictionDefault() const { return FALSE; }
     virtual void useMotionPrediction(BOOL b) {}
-    virtual F32 getMotionPredictionDelta() { return 0.0f; }
-    virtual F32 getMotionPredictionDeltaDefault() const { return 0.03f; }
-    virtual void setMotionPredictionDelta(F32 f) {}
 
     virtual F32 getRoll() const { return 0.0f; }
     virtual F32 getPitch() const { return 0.0f; }

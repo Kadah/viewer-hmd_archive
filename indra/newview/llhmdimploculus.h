@@ -51,47 +51,44 @@ public:
     LLHMDImplOculus();
     ~LLHMDImplOculus();
 
-    BOOL preInit();
-    BOOL postDetectionInit();
+    virtual BOOL preInit();
+    virtual BOOL postDetectionInit();
     BOOL initHMDDevice();
     void removeHMDDevice();
     bool isReady() { return mHMD && gHMD.isHMDConnected() && gHMD.isHMDSensorConnected() && gHMD.isHMDDisplayEnabled(); }
-    void shutdown();
-    void onIdle();
-    U32 getCurrentEye() const { return mCurrentEye; }
+    virtual void shutdown();
+    virtual void onIdle();
+    virtual U32 getCurrentEye() const { return mCurrentEye; }
     U32 getCurrentOVREye() const { return mCurrentEye == LLHMD::RIGHT_EYE ? 1 : 0; }
-    void setCurrentEye(U32 eye) { mCurrentEye = llclamp(eye, (U32)LLHMD::CENTER_EYE, (U32)LLHMD::RIGHT_EYE); }
+    virtual void setCurrentEye(U32 eye) { mCurrentEye = llclamp(eye, (U32)LLHMD::CENTER_EYE, (U32)LLHMD::RIGHT_EYE); }
     virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h) const;
     virtual void getViewportInfo(S32 vp[4]) const;
     virtual S32 getViewportWidth() const;
     virtual S32 getViewportHeight() const;
-    S32 getHMDWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w : kDefaultHResolution; }
-    S32 getHMDEyeWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w / 2.0f : (kDefaultHResolution / 2); }
-    S32 getHMDHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
-    S32 getHMDUIWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w : kDefaultHResolution; }
-    S32 getHMDUIHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
-    F32 getInterpupillaryOffset() const { return gHMD.isPostDetectionInitialized() ? mInterpupillaryDistance : getInterpupillaryOffsetDefault(); }
-    void setInterpupillaryOffset(F32 f) { if (gHMD.isPostDetectionInitialized()) { mInterpupillaryDistance = f; } }
-    F32 getEyeToScreenDistance() const { return gHMD.isPostDetectionInitialized() ? mEyeToScreenDistance : getEyeToScreenDistanceDefault(); }
-    F32 getVerticalFOV() { return gHMD.isPostDetectionInitialized() ? mFOVRadians.h : kDefaultVerticalFOVRadians; }
+    virtual S32 getHMDWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w : kDefaultHResolution; }
+    virtual S32 getHMDEyeWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w / 2 : (kDefaultHResolution / 2); }
+    virtual S32 getHMDHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
+    virtual S32 getHMDUIWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w : kDefaultHResolution; }
+    virtual S32 getHMDUIHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
+    virtual F32 getInterpupillaryOffset() const { return gHMD.isPostDetectionInitialized() ? mInterpupillaryDistance : getInterpupillaryOffsetDefault(); }
+    virtual void setInterpupillaryOffset(F32 f) { if (gHMD.isPostDetectionInitialized()) { mInterpupillaryDistance = f; } }
+    virtual F32 getEyeToScreenDistance() const { return gHMD.isPostDetectionInitialized() ? mEyeToScreenDistance : getEyeToScreenDistanceDefault(); }
+    virtual F32 getVerticalFOV() { return gHMD.isPostDetectionInitialized() ? mFOVRadians.h : kDefaultVerticalFOVRadians; }
     virtual F32 getAspect() const;
 
-    BOOL useMotionPrediction() { return useMotionPredictionDefault(); } // gHMD.isPostDetectionInitialized() ? mSensorFusion->IsPredictionEnabled() : useMotionPredictionDefault(); }
-    BOOL useMotionPredictionDefault() const { return TRUE; }
-    void useMotionPrediction(BOOL b) {} //  if (gHMD.isPostDetectionInitialized()) { mSensorFusion->SetPredictionEnabled(b); } }
-    F32 getMotionPredictionDelta() { return getMotionPredictionDeltaDefault(); } // gHMD.isPostDetectionInitialized() ? mSensorFusion->GetPredictionDelta() : getMotionPredictionDeltaDefault(); }
-    F32 getMotionPredictionDeltaDefault() const { return 0.03f; }
-    void setMotionPredictionDelta(F32 f) {} //  if (gHMD.isPostDetectionInitialized()) { mSensorFusion->SetPrediction(f); } }
+    virtual BOOL useMotionPrediction() { return useMotionPredictionDefault(); }
+    virtual BOOL useMotionPredictionDefault() const { return TRUE; }
+    virtual void useMotionPrediction(BOOL b) {}
 
-    F32 getRoll() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::ROLL] : 0.0f; }
-    F32 getPitch() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::PITCH] : 0.0f; }
-    F32 getYaw() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::YAW] : 0.0f; }
-    void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
-    LLQuaternion getHMDRotation() const { return mEyeRotation; }
+    virtual F32 getRoll() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::ROLL] : 0.0f; }
+    virtual F32 getPitch() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::PITCH] : 0.0f; }
+    virtual F32 getYaw() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::YAW] : 0.0f; }
+    virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
+    virtual LLQuaternion getHMDRotation() const { return mEyeRotation; }
 
-    void resetOrientation();
+    virtual void resetOrientation();
 
-    F32 getOrthoPixelOffset() const { return gHMD.isPostDetectionInitialized() ? mOrthoPixelOffset[mCurrentEye] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)LLHMD::LEFT_EYE ? 1.0f : -1.0f)); }
+    virtual F32 getOrthoPixelOffset() const { return gHMD.isPostDetectionInitialized() ? mOrthoPixelOffset[mCurrentEye] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)LLHMD::LEFT_EYE ? 1.0f : -1.0f)); }
 
     // DK2
     virtual BOOL beginFrame();
