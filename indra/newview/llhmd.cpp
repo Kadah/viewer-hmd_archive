@@ -1049,6 +1049,7 @@ F32 LLHMD::getHMDLastYaw() const { return mLastRollPitchYaw[VZ]; }
 F32 LLHMD::getHMDDeltaYaw() const { if (mImpl) { return mImpl->getYaw() - mLastRollPitchYaw[VZ]; } else { return 0.0f; } }
 LLVector3 LLHMD::getHeadPosition() const { if (mImpl) { return mImpl->getHeadPosition(); } else { return LLVector3::zero; } }
 BOOL LLHMD::detectHMDDevice(BOOL force) { if (mImpl) { return mImpl->detectHMDDevice(force); } else { return FALSE; } }
+void LLHMD::removeHMDDevice() { if (mImpl) { mImpl->removeHMDDevice(); } }
 
 F32 LLHMD::getVerticalFOV() const { return mImpl ? mImpl->getVerticalFOV() : 0.0f; }
 F32 LLHMD::getAspect() { return mImpl ? mImpl->getAspect() : 0.0f; }

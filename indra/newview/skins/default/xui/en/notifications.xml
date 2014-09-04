@@ -10364,6 +10364,14 @@ New HMD hardware connection detected.  Since it takes a bit for the hardware to 
 
   <notification
    icon="alertmodal.tga"
+   name="HMDModeDirectModeNotSupported"
+   type="alertmodal">
+    <tag>confirm</tag>
+The current Oculus SDK does not support Direct Mode for openGL.  Please change your Rift to Extended Mode and retry.
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
    name="FloaterTypeDisabled"
    type="alertmodal">
    <tag>fail</tag>
