@@ -324,7 +324,15 @@ BOOL LLHMD::init()
 }
 
 
-void LLHMD::onChangeHMDAdvancedMode() { gHMD.isAdvancedMode(gSavedSettings.getBOOL("HMDAdvancedMode")); }
+void LLHMD::onChangeHMDAdvancedMode()
+{
+    gHMD.isAdvancedMode(gSavedSettings.getBOOL("HMDAdvancedMode"));
+    if (!gHMD.isAdvancedMode() && gHMD.isUsingDebugHMD())
+    {
+        gHMD.removeHMDDevice();
+    }
+}
+
 void LLHMD::onChangeUIMagnification() { if (!gHMD.isSavingSettings()) { gHMD.setUIMagnification(gSavedSettings.getF32("HMDUIMagnification")); } }
 
 
