@@ -389,6 +389,7 @@ public:
     void showHSW(BOOL show);
     LLVector3 getHeadPosition() const;
     const LLQuaternion& getAgentRotation() const { return mAgentRot; }
+    BOOL detectHMDDevice(BOOL force);
 
     static void onChangeHMDAdvancedMode();
     static void onChangeInterpupillaryDistance();
@@ -540,6 +541,7 @@ public:
     virtual LLRenderTarget* getEyeRT(U32 eye) { return NULL; }
     virtual void onViewChange(S32 oldMode) {}
     virtual void showHSW(BOOL show) {}
+    virtual BOOL detectHMDDevice(BOOL force) { return FALSE; }
 };
 
 #endif // LL_LLHMD_H

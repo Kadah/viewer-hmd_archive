@@ -55,6 +55,7 @@ public:
     virtual BOOL postDetectionInit();
     BOOL initHMDDevice();
     void removeHMDDevice();
+    virtual BOOL detectHMDDevice(BOOL force);
     bool isReady() { return mHMD && gHMD.isHMDConnected() && gHMD.isHMDDisplayEnabled(); }
     virtual void shutdown();
     virtual void onIdle();

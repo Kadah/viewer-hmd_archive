@@ -39,6 +39,8 @@
 #include "llviewerdisplay.h"
 #include "pipeline.h"
 #include "llrendertarget.h"
+#include "llnotificationsutil.h"
+#include "lltimer.h"
 #if LL_WINDOWS
     #include "llwindowwin32.h"
 #elif LL_DARWIN
@@ -114,23 +116,42 @@ BOOL LLHMDImplOculus::initHMDDevice()
             }
         }
     }
-    BOOL hmdConnected = mHMD && (mHMD->HmdCaps & ovrHmdCap_Present) != 0;
-    gHMD.isHMDConnected(hmdConnected);
-    //BOOL hmdSensor
-    //gHMD.isHMDSensorConnected(mHMD && (mHMD->HmdCaps & (ovrHmdCap_Available | ovrHmdCap_Captured)) != 0);
-    BOOL hmdDisplayEnabled = mHMD && mHMD->ProductName && mHMD->ProductName[0] != 0;
-    gHMD.isHMDDisplayEnabled(hmdDisplayEnabled);
-    BOOL hmdUsingAppWindow = mHMD && (mHMD->HmdCaps & ovrHmdCap_ExtendDesktop) == 0;
-    gHMD.isUsingAppWindow(hmdUsingAppWindow);
-    // if mHMD is gone and we've already created a HMDWindow, then destroy it.
-    if (!mHMD && gHMD.isPostDetectionInitialized())
+
+    if (mHMD)
     {
-        removeHMDDevice();
-    }
-    else if (mHMD)
-    {
+        mTrackingCaps = ovrTrackingCap_Orientation | ovrTrackingCap_MagYawCorrection;
+        mTrackingCaps |= (gSavedSettings.getBOOL("HMDEnablePositionalTracking") && (mHMD->TrackingCaps & ovrTrackingCap_Position) != 0) ? ovrTrackingCap_Position : 0;
+        // must be called every time an HMD is initialized, or in some cases, orientation/position tracking will not be possible.
+        ovrHmd_ConfigureTracking(mHMD, mTrackingCaps, 0);
+
+        // Note: (mHMD->HmdCaps & ovrHmdCap_Present) is ALWAYS true as of OVR SDK 0.4.1b.  sigh.   The only reliable way to truly tell if a Rift is connected is by using the tracking state
+        //BOOL hmdConnected = mHMD && (mHMD->HmdCaps & ovrHmdCap_Present) != 0;
+        //gHMD.isHMDConnected(hmdConnected);
+        mTrackingState = ovrHmd_GetTrackingState(mHMD, 0.0);
+        BOOL isHMDConnected = (mTrackingState.StatusFlags & ovrStatus_HmdConnected) != 0;
+        gHMD.isHMDConnected(gHMD.isUsingDebugHMD() || isHMDConnected);
+        gHMD.isPositionTrackingEnabled((mTrackingState.StatusFlags & (ovrStatus_PositionConnected | ovrStatus_PositionTracked)) == (ovrStatus_PositionConnected | ovrStatus_PositionTracked));
+
+        // as of OVR SDK 0.4.1b, ovrHmdCap_Available and ovrHmdCap_Captured do not seem to ever be set to valid values.
+        //BOOL hmdSensor
+        //gHMD.isHMDSensorConnected(mHMD && (mHMD->HmdCaps & (ovrHmdCap_Available | ovrHmdCap_Captured)) != 0);
+
+        BOOL hmdDisplayEnabled = mHMD && mHMD->ProductName && mHMD->ProductName[0] != 0;
+        gHMD.isHMDDisplayEnabled(hmdDisplayEnabled);
+        BOOL hmdUsingAppWindow = mHMD && (mHMD->HmdCaps & ovrHmdCap_ExtendDesktop) == 0;
+        gHMD.isUsingAppWindow(hmdUsingAppWindow);
+
         gHMD.renderSettingsChanged(TRUE);
     }
+    else
+    {
+        // if mHMD is gone and we've already created a HMDWindow, then destroy it.
+        if (gHMD.isPostDetectionInitialized())
+        {
+            removeHMDDevice();
+        }
+    }
+
     BOOL res = mHMD != NULL; //  && !gHMD.isUsingDebugHMD();
     mCurrentHMDCount = res ? 1 : 0;
     return res;
@@ -148,7 +169,7 @@ void LLHMDImplOculus::removeHMDDevice()
         ovrHmd_Destroy(mHMD);
         mHMD = NULL;
     }
-    if (gHMD.isPostDetectionInitialized() && !gHMD.isUsingAppWindow())
+    if (gHMD.isPostDetectionInitialized() && !gHMD.isUsingAppWindow() && !gHMD.useMirrorHack())
     {
         gViewerWindow->getWindow()->destroyHMDWindow();
     }
@@ -190,6 +211,7 @@ BOOL LLHMDImplOculus::postDetectionInit()
 #endif
     {
         LL_INFOS("HMD") << "HMD Window init failed!" << LL_ENDL;
+        LLNotificationsUtil::add("HMDModeErrorNoWindow");
         return FALSE;
     }
 
@@ -218,6 +240,7 @@ BOOL LLHMDImplOculus::postDetectionInit()
     else
     {
         LL_INFOS("HMD") << "HMD Post-Detection attach to window failed!" << LL_ENDL;
+        LLNotificationsUtil::add("HMDModeErrorNoWindow");
     }
     return attach;
 }
@@ -238,6 +261,36 @@ void LLHMDImplOculus::shutdown()
 }
 
 
+BOOL LLHMDImplOculus::detectHMDDevice(BOOL force)
+{
+    // for some unknown reason, Oculus completely got rid of their Message system that would notify when a device was attached or not, so now we have to poll
+    // every frame to see if the status has changed.  WTF?
+    // Polling is not really a good option because ovrHmd_Detect() causes huge lag spikes when no Rift is connected, thus ensuring a bad user experience for those
+    // without Rift hardware attached.
+    // Thus, the only feasible option is to force a manual detection when the user requests it (which could be implicit when attempting to enter HMD mode).
+    // Grrrr.  WHY, Oculus, WHYYYYYY???
+
+    // clamp value to [0,1] as we only care about the first HMD connected
+    S32 numHMD = llmax(llmin(ovrHmd_Detect(), 0), 1);
+    if (force || numHMD != mCurrentHMDCount)
+    {
+        removeHMDDevice();
+        if ((numHMD > 0 || gHMD.isAdvancedMode()))
+        {
+            if (initHMDDevice())
+            {
+                //// We need to give the Oculus camera time to initialize or it will not feed us orientation/positional data.  Sigh.
+                //ms_sleep(1500);
+                // Need to make sure post-detection init is run properly so that setRenderMode can change immediately after this call.
+                gHMD.onIdle();
+                gHMD.onIdle();
+            }
+        }
+    }
+    return mCurrentHMDCount > 0 && isReady();
+}
+
+
 void LLHMDImplOculus::onIdle()
 {
     if (!gHMD.isPreDetectionInitialized())
@@ -245,43 +298,19 @@ void LLHMDImplOculus::onIdle()
         return;
     }
 
-    //if (!mHMD || gHMD.isUsingDebugHMD())
-    {
-        // for some unknown reason, Oculus completely got rid of their Message system that would notify when a device was attached or not, so now we have to poll
-        // every frame to see if the status has changed.  WTF?
-        // Since trying to actually create an HMD device is the only way to actually test whether anything is connected, and I'm pretty sure that's too slow to just
-        // call every frame, we're basically forced to restart the viewer to detect an HMD or re-detect only when the user tells us to.  Grrrr.  WHY, Oculus, WHYYYYYY???
-        // TODO: as a temporary hack, every second or so, call ovrHmd_Detect() and compare the result against the previous.  If they differ, then an HMD has been
-        //       attached/detached and we then call ovrHmd_Create or ovrHmdDestroy
-        // Note2: this ends up being VERY slow and jerky as the detect/init takes a long time.  Need to add a way for user to manually tell us when to search for a
-        // HMD
-        static const U32 kFramePollInterval = 100;
-        if (gFrameCount > 0 && (gFrameCount % kFramePollInterval) == 0)
-        {
-            // clamp value to [0,1] as we only care about the first HMD connected
-            S32 numHMD = llmax(llmin(ovrHmd_Detect(), 0), 1);
-            if (numHMD != mCurrentHMDCount)
-            {
-                removeHMDDevice();
-                if (numHMD > 0)
-                {
-                    initHMDDevice();
-                }
-            }
-        }
-    }
     if (mHMD)
     {
+        ovrTrackingState ss = ovrHmd_GetTrackingState(mHMD, 0.0);
         bool wasHMDConnected = gHMD.isHMDConnected();
-        gHMD.isHMDConnected(mHMD && (mHMD->HmdCaps & ovrHmdCap_Present) != 0);
-        // ovrHmdCap_Available and ovrHmdCap_Captured don't seem to be getting set by the SDK, ignoring for now
-        gHMD.isHMDDisplayEnabled(mHMD && mHMD->ProductName && mHMD->ProductName[0] != 0);
+        BOOL isHMDConnected = (ss.StatusFlags & ovrStatus_HmdConnected) != 0;
+        gHMD.isHMDConnected(gHMD.isUsingDebugHMD() || isHMDConnected);
+        gHMD.isPositionTrackingEnabled((ss.StatusFlags & (ovrStatus_PositionConnected | ovrStatus_PositionTracked)) == (ovrStatus_PositionConnected | ovrStatus_PositionTracked));
         if (wasHMDConnected && !gHMD.isHMDConnected())
         {
             LL_INFOS("HMD") << "HMD Device Not Detected" << LL_ENDL;
             if (gHMD.isHMDMode())
             {
-                gHMD.setRenderMode(LLHMD::RenderMode_None);
+                removeHMDDevice();
             }
         }
     }
@@ -310,10 +339,10 @@ void LLHMDImplOculus::onIdle()
     if (gHMD.isHMDMode())
     {
         // This is a weird place to call this, but unfortunately, with the new OVR SDK, you cannot call the tracking functions
-        // unless you've called ovrHmd_BeginFrame.   Since the orientation values are used for camera positioning, etc, we have
-        // to call beginFrame before we do that even though this probably messes up the OVR frame timer a bit and makes frames
-        // seem to be taking longer to render than they actually are.  Ideally, this should be at the top of
-        // LLViewerDisplay::display() to get correct timing.  Oh well.
+        // and get accurate predicted pose info unless you've called ovrHmd_BeginFrame.   Since the orientation values are used
+        // for camera positioning, etc, we have to call beginFrame before we do that even though this probably messes up the
+        // OVR frame timer a bit and makes frames seem to be taking longer to render than they actually are.  Ideally, this
+        // should be at the top of LLViewerDisplay::display() to get correct timing.  Oh well.
         gHMD.beginFrame();
     }
 }
@@ -472,18 +501,13 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
 
 BOOL LLHMDImplOculus::beginFrame()
 {
-    gHMD.isFrameInProgress( mHMD &&
-                            gHMD.isPreDetectionInitialized() &&
-                            gHMD.isPostDetectionInitialized() &&
-                            (gHMD.isUsingDebugHMD() || (gHMD.isHMDConnected() && gHMD.isHMDDisplayEnabled())));
+    gHMD.isFrameInProgress(isReady() && gHMD.isPostDetectionInitialized());
     if (gHMD.isFrameInProgress())
     {
-        double curTime = ovr_GetTimeInSeconds();
-
         mFrameTiming = ovrHmd_BeginFrame(mHMD, 0);
+        double curTime = ovr_GetTimeInSeconds();
         mTrackingState = ovrHmd_GetTrackingState(mHMD, mFrameTiming.ScanoutMidpointSeconds);
-        gHMD.isPositionTrackingEnabled((mTrackingState.StatusFlags & (ovrStatus_PositionConnected | ovrStatus_PositionTracked)) == (ovrStatus_PositionConnected | ovrStatus_PositionTracked));
-        
+
         //mFrameCounter++;
         //mTotalFrameCounter++;
         //if (mLastFpsUpdate == 0.0f)

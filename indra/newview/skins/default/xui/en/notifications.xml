@@ -10332,10 +10332,10 @@ Internal Problem: Cannot enter HMD mode because pre-initialization of the HMD de
 
   <notification
    icon="alertmodal.tga"
-   name="HMDModeErrorALM"
+   name="HMDModeErrorAllowed"
    type="alertmodal">
    <tag>fail</tag>
-Cannot enter HMD mode because Advanced Lighting Model is not enabled.  Advanced Lighting Model is required for proper rendering in HMD mode.
+Cannot enter HMD mode because your graphics card does not support the minimum requirements.  Vertext Shaders are required for proper rendering in HMD mode.
   </notification>
     
   <notification
@@ -10343,23 +10343,23 @@ Cannot enter HMD mode because Advanced Lighting Model is not enabled.  Advanced 
    name="HMDModeErrorNoDevice"
    type="alertmodal">
    <tag>fail</tag>
-Cannot enter HMD mode because there is no HMD hardware detected.  Check your HMD's monitor cable to make sure it is secure.
+Cannot enter HMD mode because there is no HMD hardware detected.  Check your HMD's monitor cable and USB connections to make sure they are all secure.
   </notification>
 
-  <notification
-   icon="alertmodal.tga"
-   name="HMDModeErrorNoSensor"
-   type="alertmodal">
-   <tag>fail</tag>
-Cannot enter HMD mode because there is no HMD Sensor hardware detected.  Check that your HMD device has power and the USB cable is securely connected.
-  </notification>
-    
   <notification
    icon="alertmodal.tga"
    name="HMDModeErrorNoWindow"
    type="alertmodal">
    <tag>fail</tag>
 Internal Problem: Cannot enter HMD mode because the HMD rendering window could not be created.   Restarting the client will probably fix this.
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="HMDModeConnectWait"
+   type="alertmodal">
+    <tag>confirm</tag>
+New HMD hardware connection detected.  Since it takes a bit for the hardware to initialize, please wait a few seconds and re-try entering HMD mode.
   </notification>
 
   <notification

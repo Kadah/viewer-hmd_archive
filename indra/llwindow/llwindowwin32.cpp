@@ -43,6 +43,7 @@
 #include "llstring.h"
 #include "lldir.h"
 #include "llglslshader.h"
+#include "stringize.h"
 
 // System includes
 #include <commdlg.h>
@@ -120,6 +121,34 @@ BOOL CALLBACK monitor_enum_proc(HMONITOR hMonitor, HDC, LPRECT, LPARAM dwData)
     monitorSet->MonitorCount++;
     return TRUE;
 };
+
+/// GetLastError()/FormatMessage() boilerplate
+static std::string WindowsErrorString(const std::string& operation)
+{
+    int result = GetLastError();
+
+    LPTSTR error_str = 0;
+    if (FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+        NULL,
+        result,
+        0,
+        (LPTSTR)&error_str,
+        0,
+        NULL)
+        != 0) 
+    {
+        // convert from wide-char string to multi-byte string
+        char message[256];
+        wcstombs(message, error_str, sizeof(message));
+        message[sizeof(message)-1] = 0;
+        LocalFree(error_str);
+        // convert to std::string to trim trailing whitespace
+        std::string mbsstr(message);
+        mbsstr.erase(mbsstr.find_last_not_of(" \t\r\n"));
+        return STRINGIZE(operation << " failed (" << result << "): " << mbsstr);
+    }
+    return STRINGIZE(operation << " failed (" << result << "), but FormatMessage() did not explain");
+}
 
 //static
 BOOL LLWindowWin32::sIsClassRegistered = FALSE;
@@ -4033,24 +4062,6 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL
     mHMDWidth = width;
     mHMDHeight = height;
 
-    WNDCLASS wc;
-    memset(&wc, 0, sizeof(wc));
-    wc.lpszClassName    = L"HMDWindow";
-    wc.style            = CS_OWNDC | CS_DBLCLKS;
-    wc.lpfnWndProc      = (WNDPROC)mainWindowProc;
-    wc.cbClsExtra       = 0;
-    wc.cbWndExtra       = 0;
-    wc.hInstance        = mhInstance;
-    wc.hIcon            = LoadIcon(mhInstance, mIconResource);
-    wc.hCursor          = NULL;
-    wc.hbrBackground    = (HBRUSH)NULL;
-    wc.lpszMenuName     = NULL;
-    if (!RegisterClass(&wc))
-    {
-        OSMessageBox(mCallbacks->translateString("MBRegClassFailed"), mCallbacks->translateString("MBError"), OSMB_OK);
-        return FALSE;
-    }
-
     LL_DEBUGS("Window") << "Destroying Window" << LL_ENDL;
     if (mWindowHandle[1] && mhDC[1] && !ReleaseDC(mWindowHandle[1], mhDC[1]))
     {
@@ -4080,6 +4091,26 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL
     }
 
     // create window
+    WNDCLASS wc;
+    memset(&wc, 0, sizeof(wc));
+    wc.lpszClassName    = L"HMDWindow";
+    wc.style            = CS_OWNDC | CS_DBLCLKS;
+    wc.lpfnWndProc      = (WNDPROC)mainWindowProc;
+    wc.cbClsExtra       = 0;
+    wc.cbWndExtra       = 0;
+    wc.hInstance        = mhInstance;
+    wc.hIcon            = LoadIcon(mhInstance, mIconResource);
+    wc.hCursor          = NULL;
+    wc.hbrBackground    = (HBRUSH)NULL;
+    wc.lpszMenuName     = NULL;
+    if (!RegisterClass(&wc))
+    {
+        std::string s = WindowsErrorString("LLWindowWin32::InitHMDWindow::RegisterClass");
+        LL_WARNS("Window") << s << LL_ENDL;
+        //OSMessageBox(mCallbacks->translateString("MBRegClassFailed"), mCallbacks->translateString("MBError"), OSMB_OK);
+        return FALSE;
+    }
+
     mWindowHandle[1] = CreateWindowEx(  mDwExStyle[1],
                                         L"HMDWindow",
                                         L"AppHMDWindow",

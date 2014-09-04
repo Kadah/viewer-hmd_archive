@@ -4126,17 +4126,20 @@ class LLViewCycleDisplay : public view_listener_t
                 }
                 else if (!gHMD.isHMDAllowed())
                 {
-		            LLNotificationsUtil::add("HMDModeErrorALM");
+		            LLNotificationsUtil::add("HMDModeErrorAllowed");
                     return true;
                 }
-                else if (!gHMD.isHMDConnected())
+                if (gHMD.isUsingDebugHMD() || !gHMD.isHMDConnected())
                 {
-		            LLNotificationsUtil::add("HMDModeErrorNoDevice");
-                    hmdModePossible = FALSE;
+                    if (!gHMD.detectHMDDevice(TRUE))
+                    {
+		                LLNotificationsUtil::add("HMDModeErrorNoDevice");
+                        hmdModePossible = FALSE;
+                    }
                 }
-                else if (!gHMD.isPostDetectionInitialized())
+                if (hmdModePossible && !gHMD.isPostDetectionInitialized())
                 {
-		            LLNotificationsUtil::add("HMDModeErrorNoWindow");
+                    LLNotificationsUtil::add("HMDModeErrorNoDevice");
                     hmdModePossible = FALSE;
                 }
                 if (hmdModePossible)
@@ -4149,10 +4152,6 @@ class LLViewCycleDisplay : public view_listener_t
                     {
                         nextRenderMode = LLHMD::RenderMode_HMD;
                     }
-                }
-                else if (gHMD.isAdvancedMode())
-                {
-                    nextRenderMode = LLHMD::RenderMode_ScreenStereo;
                 }
             }
             break;
