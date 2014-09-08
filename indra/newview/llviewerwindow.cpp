@@ -4604,6 +4604,7 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 					// Required for showing the GUI in snapshots and performing bloom composite overlay
 					// Call even if show_ui is FALSE
 					LLViewerDisplay::render_ui(scale_factor, subfield);
+                    LLViewerDisplay::swap(LLViewerDisplay::gDisplaySwapBuffers, TRUE);
 				}
 				
 				for (U32 out_y = 0; out_y < read_height ; out_y++)

@@ -591,6 +591,7 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
 	{
 		LLAppViewer::instance()->pingMainloopTimeout("Display:Disconnected");
 		render_ui();
+        swap(gDisplaySwapBuffers, TRUE);
 	}
 	
 	//////////////////////////
@@ -678,7 +679,10 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
                 render_frame(rebuild);
             }
         }
-        swap(gDisplaySwapBuffers, TRUE);
+        if (!for_snapshot)
+        {
+            swap(gDisplaySwapBuffers, TRUE);
+        }
     }
 
     // this prevents forced shutdown while in HMD mode showing only a black screen
