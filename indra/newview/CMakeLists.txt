@@ -1774,7 +1774,6 @@ if (WINDOWS)
       media_plugin_webkit
       winmm_shim
       windows-crash-logger
-      windows-updater
       )
 
     if (FMODEX)
@@ -1820,7 +1819,6 @@ if (WINDOWS)
 
     add_dependencies(${VIEWER_BINARY_NAME}
       SLPlugin
-      windows-updater
       windows-crash-logger
       )
 
