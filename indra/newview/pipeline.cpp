@@ -1266,10 +1266,10 @@ void LLPipeline::createGLBuffers()
 		}
 		else
 		{
-		mWaterRef.allocate(res,res,GL_RGBA,TRUE,FALSE);
-		//always use FBO for mWaterDis so it can be used for avatar texture bakes
-		mWaterDis.allocate(res,res,GL_RGBA,TRUE,FALSE,LLTexUnit::TT_TEXTURE, true);
-	}
+		    mWaterRef.allocate(res,res,GL_RGBA,TRUE,FALSE);
+		    //always use FBO for mWaterDis so it can be used for avatar texture bakes
+		    mWaterDis.allocate(res,res,GL_RGBA,TRUE,FALSE,LLTexUnit::TT_TEXTURE, true);
+	    }
 	}
 
 	mHighlight.allocate(256,256,GL_RGBA, FALSE, FALSE);

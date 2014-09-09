@@ -4784,6 +4784,17 @@
       <key>Value</key>
       <integer>1</integer>
     </map>
+    <key>HMDUseSRGBDistortion</key>
+    <map>
+      <key>Comment</key>
+      <string>Use SRGB texture/buffer format for HMD rendering.  Attempts to get better chromatic aberration, but can also cause things to appear faded or washed-out.  Note that due to SDK issues, if you start the viewer with this off and then turn it on, you'll need to toggle the DK1 legacy support checkbox in the Oculus Tool (in the Rift Display Mode panel) to get the brightness correct.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
     <key>HMDWorldCursorSizeMult</key>
     <map>
       <key>Comment</key>

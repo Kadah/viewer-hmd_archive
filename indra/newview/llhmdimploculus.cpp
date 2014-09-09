@@ -404,7 +404,8 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
             {
                 mEyeRT[i]->release();
             }
-            if (!mEyeRT[i]->allocate(w, h, GL_RGBA, true, false, LLTexUnit::TT_TEXTURE, true))
+            U32 colorFormat = (gHMD.useSRGBDistortion() || gHMD.isUsingAppWindow()) ? GL_SRGB_ALPHA : GL_RGBA;
+            if (!mEyeRT[i]->allocate(w, h, colorFormat, true, false, LLTexUnit::TT_TEXTURE, true))
             {
                 LL_WARNS() << "could not allocate Eye RenderTarget for HMD" << LL_ENDL;
                 removeHMDDevice();
@@ -434,7 +435,7 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
 #endif
 
     U32 distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_Vignette | ovrDistortionCap_NoRestore;
-    distortionCaps |= gHMD.isUsingAppWindow() ? ovrDistortionCap_SRGB : 0;
+    distortionCaps |= (gHMD.useSRGBDistortion() || gHMD.isUsingAppWindow()) ? ovrDistortionCap_SRGB : 0;
     distortionCaps |= gHMD.usePixelLuminanceOverdrive() ? ovrDistortionCap_Overdrive : 0;
     distortionCaps |= gHMD.isTimewarpEnabled() ? ovrDistortionCap_TimeWarp : 0;
     distortionCaps |= gHMD.isTimewarpEnabled() && gSavedSettings.getBOOL("HMDTimewarpNoJit") ? ovrDistortionCap_ProfileNoTimewarpSpinWaits : 0;

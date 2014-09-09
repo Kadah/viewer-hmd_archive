@@ -148,6 +148,7 @@ BOOL LLHMD::init()
     gSavedSettings.getControl("HMDTimewarpNoJit")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDEnablePositionalTracking")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDPixelDensity")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
+    gSavedSettings.getControl("HMDUseSRGBDistortion")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     onChangeRenderSettings();
     gSavedSettings.getControl("HMDDynamicResolutionScaling")->getSignal()->connect(boost::bind(&onChangeDynamicResolutionScaling));
     onChangeDynamicResolutionScaling();
@@ -463,6 +464,7 @@ void LLHMD::onChangeRenderSettings()
         gHMD.isTimewarpEnabled(gSavedSettings.getBOOL("HMDTimewarp"));
         gHMD.setTimewarpIntervalSeconds(gSavedSettings.getF32("HMDTimewarpIntervalSeconds"));
         gHMD.useDynamicResolutionScaling(gSavedSettings.getBOOL("HMDDynamicResolutionScaling"));
+        gHMD.useSRGBDistortion(gSavedSettings.getBOOL("HMDUseSRGBDistortion"));
         gHMD.renderSettingsChanged(TRUE);
     }
 }
@@ -1270,6 +1272,7 @@ void LLHMD::saveSettings()
     gSavedSettings.setBOOL("HMDTimewarp", gHMD.isTimewarpEnabled());
     gSavedSettings.setF32("HMDTimewarpIntervalSeconds", gHMD.getTimewarpIntervalSeconds());
     gSavedSettings.setBOOL("HMDDynamicResolutionScaling", gHMD.useDynamicResolutionScaling());
+    gSavedSettings.setBOOL("HMDUseSRGBDistortion", gHMD.useSRGBDistortion());
 
     //gSavedSettings.setBOOL("HMDAdvancedMode", gHMD.isAdvancedMode());
     //gSavedSettings.setBOOL("HMDEnablePositionalTracking", gHMD.isPositionTrackingEnabled());

@@ -99,6 +99,7 @@ public:
         kFlag_UseLowPersistence         = 1 << 25,
         kFlag_UsePixelLuminanceOverdrive= 1 << 26,
         kFlag_FBOError                  = 1 << 27,
+        kFlag_UseSRGBDistortion         = 1 << 28,
     };
 
     enum eUIPresetType
@@ -206,6 +207,8 @@ public:
     void usePixelLuminanceOverdrive(BOOL b) { if (b) { mFlags |= kFlag_UsePixelLuminanceOverdrive; } else { mFlags &= ~kFlag_UsePixelLuminanceOverdrive; } }
     BOOL isFBOError() const { return ((mFlags & kFlag_FBOError) != 0) ? TRUE : FALSE; }
     void isFBOError(BOOL b) { if (b) { mFlags |= kFlag_FBOError; } else { mFlags &= ~kFlag_FBOError; } }
+    BOOL useSRGBDistortion() const { return ((mFlags & kFlag_UseSRGBDistortion) != 0) ? TRUE : FALSE; }
+    void useSRGBDistortion(BOOL b) { if (b) { mFlags |= kFlag_UseSRGBDistortion; } else { mFlags &= ~kFlag_UseSRGBDistortion; } }
 
     // True if render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }

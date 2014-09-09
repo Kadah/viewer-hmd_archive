@@ -84,6 +84,8 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     , mTimewarpIntervalOriginal(0.01f)
     , mDynamicResolutionScalingCheckBoxCtrl(NULL)
     , mDynamicResolutionScalingCheckedOriginal(TRUE)
+    , mUseSRGBDistortionCheckBoxCtrl(NULL)
+    , mUseSRGBDistortionCheckedOriginal(TRUE)
     , mDirty(FALSE)
 {
     sInstance = this;
@@ -113,6 +115,7 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     mCommitCallbackRegistrar.add("HMDConfigDebug.CheckTimewarp", boost::bind(&LLFloaterHMDConfigDebug::onCheckTimewarp, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetTimewarpInterval", boost::bind(&LLFloaterHMDConfigDebug::onSetTimewarpInterval, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.CheckDynamicResolutionScaling", boost::bind(&LLFloaterHMDConfigDebug::onCheckDynamicResolutionScaling, this));
+    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckUseSRGBDistortion", boost::bind(&LLFloaterHMDConfigDebug::onCheckUseSRGBDistortion, this));
 }
 
 LLFloaterHMDConfigDebug::~LLFloaterHMDConfigDebug()
@@ -163,6 +166,7 @@ BOOL LLFloaterHMDConfigDebug::postBuild()
     mTimewarpIntervalSliderCtrl = getChild<LLSlider>("hmd_config_debug_timewarp_interval_slider");
     mTimewarpIntervalAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_timewarp_interval_slider_amount");
     mDynamicResolutionScalingCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_dynamic_resolution_scaling");
+    mUseSRGBDistortionCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_use_srgb_distortion");
 
     return LLFloater::postBuild();
 }
@@ -274,6 +278,11 @@ void LLFloaterHMDConfigDebug::onOpen(const LLSD& key)
         pPanel->mDynamicResolutionScalingCheckedOriginal = gHMD.useDynamicResolutionScaling();
         pPanel->mDynamicResolutionScalingCheckBoxCtrl->setValue(pPanel->mDynamicResolutionScalingCheckedOriginal);
     }
+    if (pPanel->mUseSRGBDistortionCheckBoxCtrl)
+    {
+        pPanel->mUseSRGBDistortionCheckedOriginal = gHMD.useSRGBDistortion();
+        pPanel->mUseSRGBDistortionCheckBoxCtrl->setValue(pPanel->mUseSRGBDistortionCheckedOriginal);
+    }
 
     mDirty = FALSE;
 }
@@ -357,6 +366,8 @@ void LLFloaterHMDConfigDebug::onClickCancel()
     onSetTimewarpInterval();
     mDynamicResolutionScalingCheckBoxCtrl->setValue(mDynamicResolutionScalingCheckedOriginal);
     onCheckDynamicResolutionScaling();
+    mUseSRGBDistortionCheckBoxCtrl->setValue(mUseSRGBDistortionCheckedOriginal);
+    onCheckUseSRGBDistortion();
     mDirty = FALSE;
 
 	closeFloater(false);
@@ -646,6 +657,14 @@ void LLFloaterHMDConfigDebug::onCheckDynamicResolutionScaling()
     updateDirty();
 }
 
+void LLFloaterHMDConfigDebug::onCheckUseSRGBDistortion()
+{
+    BOOL checked = mUseSRGBDistortionCheckBoxCtrl->get();
+    gHMD.useSRGBDistortion(checked);
+    gHMD.renderSettingsChanged(TRUE);
+    updateDirty();
+}
+
 void LLFloaterHMDConfigDebug::updateDirty()
 {
     LLVector2 cur[] = 
@@ -675,4 +694,5 @@ void LLFloaterHMDConfigDebug::updateDirty()
     mDirty = mDirty || (mMotionPredictionCheckBoxCtrl->get() != mMotionPredictionCheckedOriginal);
     mDirty = mDirty || (mTimewarpCheckBoxCtrl->get() != mTimewarpCheckedOriginal);
     mDirty = mDirty || (mDynamicResolutionScalingCheckBoxCtrl->get() != mDynamicResolutionScalingCheckedOriginal);
+    mDirty = mDirty || (mUseSRGBDistortionCheckBoxCtrl->get() != mUseSRGBDistortionCheckedOriginal);
 }

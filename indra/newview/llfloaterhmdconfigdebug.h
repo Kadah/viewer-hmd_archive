@@ -85,6 +85,7 @@ protected:
     void onSetTimewarpInterval();
     void updateTimewarpIntervalLabel();
     void onCheckDynamicResolutionScaling();
+    void onCheckUseSRGBDistortion();
 
     void updateDirty();
 
@@ -135,6 +136,8 @@ protected:
     F32 mTimewarpIntervalOriginal;
     LLCheckBoxCtrl* mDynamicResolutionScalingCheckBoxCtrl;
     BOOL mDynamicResolutionScalingCheckedOriginal;
+    LLCheckBoxCtrl* mUseSRGBDistortionCheckBoxCtrl;
+    BOOL mUseSRGBDistortionCheckedOriginal;
 
     BOOL mDirty;
 
