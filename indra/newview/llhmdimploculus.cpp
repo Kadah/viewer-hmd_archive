@@ -433,7 +433,7 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     config.OGL.DC = NULL;
 #endif
 
-    U32 distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_Vignette;
+    U32 distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_Vignette | ovrDistortionCap_NoRestore;
     distortionCaps |= gHMD.isUsingAppWindow() ? ovrDistortionCap_SRGB : 0;
     distortionCaps |= gHMD.usePixelLuminanceOverdrive() ? ovrDistortionCap_Overdrive : 0;
     distortionCaps |= gHMD.isTimewarpEnabled() ? ovrDistortionCap_TimeWarp : 0;

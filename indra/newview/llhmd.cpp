@@ -486,6 +486,13 @@ void LLHMD::onIdle()
 {
     if (mImpl)
     {
+        if (gHMD.isHMDMode() && gHMD.isFBOError())
+        {
+            U32 curMode = gHMD.getRenderMode();
+            gHMD.setRenderMode(RenderMode_None);
+            gHMD.setRenderMode(curMode);
+            gHMD.isFBOError(FALSE);
+        }
         mLastRollPitchYaw.setVec(mImpl->getRoll(), mImpl->getPitch(), mImpl->getYaw());
         mImpl->onIdle();
         if (isHMDMode() && gAgentCamera.cameraMouselook() && getMouselookControlMode() == (S32)kMouselookControl_Linked)
@@ -736,7 +743,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 setFocusWindowMain();
             }
         }
-        if (mImpl && isPostDetectionInitialized() && isHMDConnected() && isHMDMode())
+        if (mImpl && isPostDetectionInitialized() && isHMDConnected() && isHMDMode() && !gHMD.isFBOError())
         {
             mImpl->resetOrientation();
         }
@@ -775,7 +782,7 @@ void LLHMD::setFocusWindowMain()
             // in this case, appFocusGained is not called because we're not changing windows,
             // so just call manually
             onAppFocusGained();
-            if (useMirrorHack() && !gViewerWindow->isMouseInWindow())
+            if (useMirrorHack() /* && !gViewerWindow->isMouseInWindow() */)
             {
                 gViewerWindow->moveCursorToCenter();
             }
@@ -793,7 +800,7 @@ void LLHMD::setFocusWindowMain()
                 //// this is handled by the appfocuslost message in windows, but since that doesn't get called on Mac, we have to
                 //// handle the critical parts here instead.
                 //gViewerWindow->showCursor();
-                if (useMirrorHack() && !gViewerWindow->isMouseInWindow())
+                if (useMirrorHack() /* && !gViewerWindow->isMouseInWindow() */)
                 {
                     gViewerWindow->moveCursorToCenter();
                 }
@@ -1885,6 +1892,11 @@ void LLHMD::postRender2DUI()
         gPipeline.mUIScreen.flush();
         if (LLRenderTarget::sUseFBO)
         {
+            // check to see if we somehow got in a bad rendering state and have to reset to normal render mode
+            if (gHMD.isHMDMode() && LLRenderTarget::sBoundTarget && LLRenderTarget::sBoundTarget != &gPipeline.mScreen && (!LLRenderTarget::sBoundTarget->getFBO() || !gPipeline.mScreen.getFBO()))
+            {
+                gHMD.isFBOError(TRUE);
+            }
             //copy depth buffer from mScreen to framebuffer
             LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
                 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);

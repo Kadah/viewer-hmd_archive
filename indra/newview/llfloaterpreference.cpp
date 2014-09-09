@@ -1221,6 +1221,11 @@ void LLFloaterPreference::refreshEnabledState()
 
 	// Cannot have floater active until caps have been received
 	getChild<LLButton>("default_creation_permissions")->setEnabled(LLStartUp::getStartupState() < STATE_STARTED ? false : true);
+
+    if (gHMD.isHMDMode())
+    {
+        gHMD.renderSettingsChanged(TRUE);
+    }
 }
 
 void LLFloaterPreference::disableUnavailableSettings()

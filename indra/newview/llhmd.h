@@ -98,6 +98,7 @@ public:
         kFlag_AllowTextRoll             = 1 << 24,
         kFlag_UseLowPersistence         = 1 << 25,
         kFlag_UsePixelLuminanceOverdrive= 1 << 26,
+        kFlag_FBOError                  = 1 << 27,
     };
 
     enum eUIPresetType
@@ -203,6 +204,8 @@ public:
     void useLowPersistence(BOOL b) { if (b) { mFlags |= kFlag_UseLowPersistence; } else { mFlags &= ~kFlag_UseLowPersistence; } }
     BOOL usePixelLuminanceOverdrive() const { return ((mFlags & kFlag_UsePixelLuminanceOverdrive) != 0) ? TRUE : FALSE; }
     void usePixelLuminanceOverdrive(BOOL b) { if (b) { mFlags |= kFlag_UsePixelLuminanceOverdrive; } else { mFlags &= ~kFlag_UsePixelLuminanceOverdrive; } }
+    BOOL isFBOError() const { return ((mFlags & kFlag_FBOError) != 0) ? TRUE : FALSE; }
+    void isFBOError(BOOL b) { if (b) { mFlags |= kFlag_FBOError; } else { mFlags &= ~kFlag_FBOError; } }
 
     // True if render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }

@@ -142,6 +142,9 @@ public:
 	bool isComplete() const;
 
     void copyFramebuffer();
+
+    U32 getFBO() const { return mFBO; }
+
 protected:
 	U32 mResX;
 	U32 mResY;
@@ -158,7 +161,8 @@ protected:
 	bool mUseDepth;
 	bool mRenderDepth;
 	LLTexUnit::eTextureType mUsage;
-	
+
+public:
 	static LLRenderTarget* sBoundTarget;
 };
 

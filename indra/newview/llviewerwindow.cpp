@@ -2886,8 +2886,8 @@ void LLViewerWindow::moveCursorToCenter()
 {
 	if (! gSavedSettings.getBOOL("DisableMouseWarp"))
 	{
-		S32 x = getWorldViewWidthScaled() / 2;
-		S32 y = getWorldViewHeightScaled() / 2;
+		S32 x = (gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : getWorldViewWidthScaled()) / 2;
+		S32 y = (gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : getWorldViewHeightScaled()) / 2;
 	
 		//on a forced move, all deltas get zeroed out to prevent jumping
 		mCurrentMousePoint.set(x,y);

@@ -4666,6 +4666,30 @@
                     <real>-0.75</real>
                 </array>
             </map>
+            <map>
+                <key>PresetType</key>
+                <string>Default</string>
+                <key>ToroidRadiusWidth</key>
+                <real>2.7</real>
+                <key>ToroidRadiusDepth</key>
+                <real>1.4</real>
+                <key>ToroidCSRadiusWidth</key>
+                <real>0.8</real>
+                <key>ToroidCSRadiusHeight</key>
+                <real>3.6</real>
+                <key>ArcHorizontal</key>
+                <real>1.539380</real>
+                <key>ArcVertical</key>
+                <real>0.785398</real>
+                <key>UIMagnification</key>
+                <real>600.0</real>
+                <key>Offsets</key>
+                <array>
+                    <real>0.0</real>
+                    <real>0.0</real>
+                    <real>0.0</real>
+                </array>
+            </map>
         </array>
     </map>
     <key>HMDUISurfaceArcHorizontal</key>

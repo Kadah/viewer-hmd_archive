@@ -39,6 +39,7 @@
 #include "lltextbox.h"
 #include "llcombobox.h"
 #include "pipeline.h"
+#include "llhmd.h"
 
 // Linden library includes
 #include "llradiogroup.h"
@@ -142,6 +143,10 @@ void LLFloaterHardwareSettings::refreshEnabledState()
 			fsaa_restart->setVisible(FALSE);
 		}
 	}
+    if (gHMD.isHMDMode())
+    {
+        gHMD.renderSettingsChanged(TRUE);
+    }
 }
 
 //============================================================================
