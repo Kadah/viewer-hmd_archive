@@ -492,9 +492,8 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
         pCamera->setDefaultFOV(getVerticalFOV());
         gSavedSettings.setF32("CameraAngle", getVerticalFOV());
     }
-    // this is a bit of a mislabeled function as it does a lot of calculations for the UI, many of which are based on the values calculated here,
-    // so while the preset didn't actually change here, the UI calculations based on the current preset very well might have.
-    gHMD.onChangeUIShapePreset();
+    gHMD.calculateUIEyeDepth();
+    gHMD.onChangeUISurfaceShape();
 
     gHMD.renderSettingsChanged(FALSE);
     return TRUE;

@@ -254,6 +254,7 @@ public:
     F32 getUIEyeDepth() const { return mUIEyeDepth; }
     F32 getUIMagnification() { return mUIShape.mUIMagnification; }
     void setUIMagnification(F32 f);
+    void calculateUIEyeDepth();
 
     // Get the current HMD orientation
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
@@ -416,7 +417,6 @@ public:
     static void onChangeAllowTextRoll();
 
 private:
-    void calculateUIEyeDepth();
     void setUISurfaceParam(F32* p, F32 f);
     void renderCursor2D();
     void renderCursor3D();
