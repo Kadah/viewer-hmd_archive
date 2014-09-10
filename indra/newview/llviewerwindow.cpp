@@ -4064,7 +4064,15 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
     if (gHMD.isHMDMode())
     {
         //get dir from viewpoint to mouse_world
-	    LLVector3 viewPoint = camera->getOrigin() + (camera->getAtAxis() * gHMD.getUIEyeDepth());
+	    LLVector3 viewPoint = camera->getOrigin();
+        if (gAgentCamera.cameraMouselook())
+        {
+            viewPoint += (camera->getAtAxis() * camera->getNear());
+        }
+        else
+        {
+            viewPoint += (camera->getAtAxis() * gHMD.getUIEyeDepth());
+        }
 	    mouse_vector = gHMD.getMouseWorld() - viewPoint;
         mouse_vector.normalize();
     }
