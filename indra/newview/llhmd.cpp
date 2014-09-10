@@ -150,8 +150,6 @@ BOOL LLHMD::init()
     gSavedSettings.getControl("HMDPixelDensity")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDUseSRGBDistortion")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     onChangeRenderSettings();
-    gSavedSettings.getControl("HMDDynamicResolutionScaling")->getSignal()->connect(boost::bind(&onChangeDynamicResolutionScaling));
-    onChangeDynamicResolutionScaling();
     gSavedSettings.getControl("HMDUISurfaceArcHorizontal")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
     gSavedSettings.getControl("HMDUISurfaceArcVertical")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
     gSavedSettings.getControl("HMDUISurfaceToroidWidth")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
@@ -436,7 +434,6 @@ void LLHMD::onChangePresetValues()
 void LLHMD::onChangeUIShapePreset() { if (!gHMD.isSavingSettings()) { gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset")); } }
 void LLHMD::onChangeWorldCursorSizeMult() { if (!gHMD.isSavingSettings()) { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); } }
 void LLHMD::onChangeMouselookControlMode() { if (!gHMD.isSavingSettings()) { gHMD.setMouselookControlMode(gSavedSettings.getS32("HMDMouselookControlMode")); } }
-void LLHMD::onChangeDynamicResolutionScaling() { if (!gHMD.isSavingSettings()) { gHMD.useDynamicResolutionScaling(gSavedSettings.getBOOL("HMDDynamicResolutionScaling")); } }
 void LLHMD::onChangeAllowTextRoll() { if (!gHMD.isSavingSettings()) { gHMD.allowTextRoll(gSavedSettings.getBOOL("HMDAllowTextRoll")); } }
 
 
@@ -463,7 +460,6 @@ void LLHMD::onChangeRenderSettings()
         gHMD.useMotionPrediction(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
         gHMD.isTimewarpEnabled(gSavedSettings.getBOOL("HMDTimewarp"));
         gHMD.setTimewarpIntervalSeconds(gSavedSettings.getF32("HMDTimewarpIntervalSeconds"));
-        gHMD.useDynamicResolutionScaling(gSavedSettings.getBOOL("HMDDynamicResolutionScaling"));
         gHMD.useSRGBDistortion(gSavedSettings.getBOOL("HMDUseSRGBDistortion"));
         gHMD.renderSettingsChanged(TRUE);
     }
@@ -581,7 +577,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             }
                         }
                         windowp->enableVSync(TRUE);
-                        windowp->setHMDMode(TRUE, gHMD.isUsingAppWindow(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        windowp->setHMDMode(TRUE, gHMD.isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         onViewChange(oldMode);
                     }
                     break;
@@ -611,7 +607,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                         {
                             setRenderWindowMain();
                         }
-                        windowp->setHMDMode(FALSE, isHMDMirror(), isMainFullScreen(), gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
+                        windowp->setHMDMode(FALSE, (isHMDMirror() && !gHMD.isUsingDebugHMD()), isMainFullScreen(), gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
 #if LL_DARWIN
                         if (isHMDMirror())
                         {
@@ -704,7 +700,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                             }
                         }
                         windowp->enableVSync(TRUE);
-                        windowp->setHMDMode(TRUE, gHMD.isUsingAppWindow(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        windowp->setHMDMode(TRUE, gHMD.isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         pCamera->setAspect(gHMD.getAspect());
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
@@ -714,11 +710,11 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 case RenderMode_ScreenStereo:
                     // switching from Normal to ScreenStereo
                     {
-                        windowp->setHMDMode(TRUE, isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        windowp->setHMDMode(TRUE, (isHMDMirror() && !gHMD.isUsingDebugHMD()), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         pCamera->setAspect(gHMD.getAspect());
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
-                        if (isMainFullScreen() || isHMDMirror())
+                        if (!gHMD.isUsingDebugHMD() && (isMainFullScreen() || isHMDMirror()))
                         {
                             onViewChange(oldMode);
                         }
@@ -758,7 +754,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 
 BOOL LLHMD::setRenderWindowMain()
 {
-    return gHMD.isUsingAppWindow() || gViewerWindow->getWindow()->setRenderWindow(0, gHMD.isMainFullScreen());
+    return gViewerWindow->getWindow()->setRenderWindow(0, gHMD.isMainFullScreen());
 }
 
 
@@ -766,7 +762,7 @@ BOOL LLHMD::setRenderWindowHMD()
 {
     BOOL res = FALSE;
 #if LL_HMD_SUPPORTED
-    res = gHMD.isUsingAppWindow() || gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
+    res = gHMD.isHMDDirectMode() || gHMD.useMirrorHack() || gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
 #endif // LL_HMD_SUPPORTED
     return res;
 }
@@ -927,7 +923,8 @@ void LLHMD::renderUnusedHMDWindow()
     if (gHMD.isPostDetectionInitialized()
         && gHMD.isHMDConnected()
         && gHMD.getRenderMode() != LLHMD::RenderMode_HMD
-        && !gHMD.isUsingAppWindow()
+        && !gHMD.isHMDDirectMode()
+        && !gHMD.useMirrorHack()
         && gViewerWindow
         && gViewerWindow->getWindow())
     {
@@ -1070,9 +1067,6 @@ void LLHMD::removeHMDDevice() { if (mImpl) { mImpl->removeHMDDevice(); } }
 
 F32 LLHMD::getVerticalFOV() const { return mImpl ? mImpl->getVerticalFOV() : 0.0f; }
 F32 LLHMD::getAspect() { return mImpl ? mImpl->getAspect() : 0.0f; }
-BOOL LLHMD::useMotionPrediction() const { return mImpl ? mImpl->useMotionPrediction() : FALSE; }
-void LLHMD::useMotionPrediction(BOOL b) { if (mImpl) { mImpl->useMotionPrediction(b); } }
-BOOL LLHMD::useMotionPredictionDefault() const { return mImpl ? mImpl->useMotionPredictionDefault() : FALSE; }
 F32 LLHMD::getOrthoPixelOffset() const { return mImpl ? mImpl->getOrthoPixelOffset() : 0.0f; }
 
 
@@ -1271,7 +1265,6 @@ void LLHMD::saveSettings()
     gSavedSettings.setBOOL("HMDUseMotionPrediction", gHMD.useMotionPrediction());
     gSavedSettings.setBOOL("HMDTimewarp", gHMD.isTimewarpEnabled());
     gSavedSettings.setF32("HMDTimewarpIntervalSeconds", gHMD.getTimewarpIntervalSeconds());
-    gSavedSettings.setBOOL("HMDDynamicResolutionScaling", gHMD.useDynamicResolutionScaling());
     gSavedSettings.setBOOL("HMDUseSRGBDistortion", gHMD.useSRGBDistortion());
 
     //gSavedSettings.setBOOL("HMDAdvancedMode", gHMD.isAdvancedMode());

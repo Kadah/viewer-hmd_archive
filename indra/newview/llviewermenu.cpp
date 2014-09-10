@@ -4142,7 +4142,7 @@ class LLViewCycleDisplay : public view_listener_t
                     LLNotificationsUtil::add("HMDModeErrorNoDevice");
                     hmdModePossible = FALSE;
                 }
-                if (hmdModePossible && !gHMD.isUsingDebugHMD() && gHMD.isUsingAppWindow())
+                if (hmdModePossible && !gHMD.isUsingDebugHMD() && gHMD.isHMDDirectMode())
                 {
                     LLNotificationsUtil::add("HMDModeDirectModeNotSupported");
                     hmdModePossible = FALSE;

@@ -77,10 +77,6 @@ public:
     virtual F32 getVerticalFOV() { return gHMD.isPostDetectionInitialized() ? mFOVRadians.h : kDefaultVerticalFOVRadians; }
     virtual F32 getAspect() const;
 
-    virtual BOOL useMotionPrediction() { return useMotionPredictionDefault(); }
-    virtual BOOL useMotionPredictionDefault() const { return TRUE; }
-    virtual void useMotionPrediction(BOOL b) {}
-
     virtual F32 getRoll() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::ROLL] : 0.0f; }
     virtual F32 getPitch() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::PITCH] : 0.0f; }
     virtual F32 getYaw() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::YAW] : 0.0f; }
@@ -107,7 +103,6 @@ public:
 
 private:
     BOOL calculateViewportSettings();
-    void applyDynamicResolutionScaling(double curTime);
 
 private:
     ovrHmd mHMD;
@@ -123,11 +118,6 @@ private:
     //OVR::Matrix4f mOrthoProjection[ovrEye_Count];      // TODO: needed?
     //OVR::Matrix4f mConvOculusToLL;  // convert from OGL to LL (RH, Row-Major, X Forward, Z Up, Y Left)
     //OVR::Matrix4f mConvLLToOculus;  // convert from LL to OGL
-    //F32 mFPS;               // TODO: needed?
-    //F32 mSecondsPerFrame;   // TODO: needed?
-    //S32 mFrameCounter;      // TODO: needed?
-    //S32 mTotalFrameCounter; // TODO: needed?
-    //double mLastFpsUpdate;
     double mLastTimewarpUpdate;
     F32 mInterpupillaryDistance;
     F32 mEyeToScreenDistance;

@@ -54,11 +54,6 @@
 LLHMDImplOculus::LLHMDImplOculus()
     : mHMD(NULL)
     , mTrackingCaps(0)
-    //, mFPS(0.0f)
-    //, mSecondsPerFrame(0.0f)
-    //, mFrameCounter(0)
-    //, mTotalFrameCounter(0)
-    //, mLastFpsUpdate(0.0)
     , mLastTimewarpUpdate(0.0)
     , mCurrentHMDCount(0)
     , mCurrentEye(LLHMD::CENTER_EYE)
@@ -139,7 +134,7 @@ BOOL LLHMDImplOculus::initHMDDevice()
         BOOL hmdDisplayEnabled = mHMD && mHMD->ProductName && mHMD->ProductName[0] != 0;
         gHMD.isHMDDisplayEnabled(hmdDisplayEnabled);
         BOOL hmdUsingAppWindow = mHMD && (mHMD->HmdCaps & ovrHmdCap_ExtendDesktop) == 0;
-        gHMD.isUsingAppWindow(hmdUsingAppWindow);
+        gHMD.isHMDDirectMode(hmdUsingAppWindow);
 
         gHMD.renderSettingsChanged(TRUE);
     }
@@ -169,7 +164,7 @@ void LLHMDImplOculus::removeHMDDevice()
         ovrHmd_Destroy(mHMD);
         mHMD = NULL;
     }
-    if (gHMD.isPostDetectionInitialized() && !gHMD.isUsingAppWindow() && !gHMD.useMirrorHack())
+    if (gHMD.isPostDetectionInitialized() && !gHMD.isHMDDirectMode() && !gHMD.useMirrorHack())
     {
         gViewerWindow->getWindow()->destroyHMDWindow();
     }
@@ -179,7 +174,7 @@ void LLHMDImplOculus::removeHMDDevice()
     gHMD.isHMDConnected(FALSE);
     gHMD.isHMDMirror(FALSE);
     gHMD.isHMDDisplayEnabled(FALSE);
-    gHMD.isUsingAppWindow(FALSE);
+    gHMD.isHMDDirectMode(FALSE);
     gHMD.isPositionTrackingEnabled(FALSE);
     mCurrentHMDCount = 0;
 }
@@ -328,16 +323,16 @@ void LLHMDImplOculus::onIdle()
         return;
     }
 
-    if (gHMD.renderSettingsChanged())
-    {
-        if (!calculateViewportSettings())
-        {
-            return;
-        }
-    }
-
     if (gHMD.isHMDMode())
     {
+        if (gHMD.renderSettingsChanged())
+        {
+            if (!calculateViewportSettings())
+            {
+                return;
+            }
+        }
+
         // This is a weird place to call this, but unfortunately, with the new OVR SDK, you cannot call the tracking functions
         // and get accurate predicted pose info unless you've called ovrHmd_BeginFrame.   Since the orientation values are used
         // for camera positioning, etc, we have to call beginFrame before we do that even though this probably messes up the
@@ -379,12 +374,14 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     // Store texture pointers and viewports that will be passed for rendering.
     mEyeTexture[ovrEye_Left].OGL.Header.API            = ovrRenderAPI_OpenGL;
     mEyeTexture[ovrEye_Left].OGL.Header.TextureSize    = tex0Size;
-    mEyeTexture[ovrEye_Left].OGL.Header.RenderViewport = OVR::Recti(mEyeRenderSize[0]);
     mEyeTexture[ovrEye_Left].OGL.TexId = 0;
     mEyeTexture[ovrEye_Right].OGL.Header.API            = ovrRenderAPI_OpenGL;
     mEyeTexture[ovrEye_Right].OGL.Header.TextureSize    = tex1Size;
-    mEyeTexture[ovrEye_Right].OGL.Header.RenderViewport = OVR::Recti(mEyeRenderSize[1]);
     mEyeTexture[ovrEye_Right].OGL.TexId = 0;
+    mEyeTexture[ovrEye_Left].OGL.Header.RenderViewport = OVR::Recti(OVR::Sizei(mEyeRenderSize[ovrEye_Left].w, mEyeRenderSize[ovrEye_Left].h));
+    mEyeTexture[ovrEye_Right].OGL.Header.RenderViewport = OVR::Recti(OVR::Sizei(mEyeRenderSize[ovrEye_Right].w, mEyeRenderSize[ovrEye_Right].h));
+
+    BOOL useSRGB = (gHMD.useSRGBDistortion() || gHMD.isHMDDirectMode()) ? GL_SRGB_ALPHA : GL_RGBA;
 
     for (S32 i = (S32)LLHMD::LEFT_EYE; i <= (S32)LLHMD::RIGHT_EYE; ++i)
     {
@@ -404,7 +401,7 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
             {
                 mEyeRT[i]->release();
             }
-            U32 colorFormat = (gHMD.useSRGBDistortion() || gHMD.isUsingAppWindow()) ? GL_SRGB_ALPHA : GL_RGBA;
+            U32 colorFormat = useSRGB ? GL_SRGB_ALPHA : GL_RGBA;
             if (!mEyeRT[i]->allocate(w, h, colorFormat, true, false, LLTexUnit::TT_TEXTURE, true))
             {
                 LL_WARNS() << "could not allocate Eye RenderTarget for HMD" << LL_ENDL;
@@ -421,21 +418,25 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     hmdCaps |= gHMD.useLowPersistence() ? ovrHmdCap_LowPersistence : 0;
     hmdCaps |= gHMD.useMotionPrediction() ? ovrHmdCap_DynamicPrediction : 0;
     hmdCaps |= gHMD.isHMDDisplayEnabled() ? 0 : ovrHmdCap_DisplayOff;
-    hmdCaps |= (gHMD.isUsingAppWindow() && !gHMD.isHMDMirror()) ? ovrHmdCap_NoMirrorToWindow : 0;
+    hmdCaps |= (gHMD.isHMDDirectMode() && !gHMD.isHMDMirror()) ? ovrHmdCap_NoMirrorToWindow : 0;
     ovrHmd_SetEnabledCaps(mHMD, hmdCaps);
 
     ovrGLConfig config;
     config.OGL.Header.API = ovrRenderAPI_OpenGL;
-    config.OGL.Header.RTSize.w = gHMD.isUsingAppWindow() ? gViewerWindow->getWindowWidthRaw() : mHMD->Resolution.w;
-    config.OGL.Header.RTSize.h = gHMD.isUsingAppWindow() ? gViewerWindow->getWindowHeightRaw() : mHMD->Resolution.h;
+    config.OGL.Header.RTSize.w = (gHMD.isHMDDirectMode() && !gHMD.isUsingDebugHMD()) ? gViewerWindow->getWindowWidthRaw() : mHMD->Resolution.w;
+    config.OGL.Header.RTSize.h = (gHMD.isHMDDirectMode() && !gHMD.isUsingDebugHMD()) ? gViewerWindow->getWindowHeightRaw() : mHMD->Resolution.h;
     config.OGL.Header.Multisample = gGLManager.mHasTextureMultisample;
 #if LL_WINDOWS
-    config.OGL.Window = (HWND)gViewerWindow->getWindow()->getPlatformWindow((!gHMD.isHMDMirror() && !gHMD.isUsingAppWindow()) ? 1 : 0);
+    // undocumented, but necessary to get Windows rendering working even in extended mode.  If this is not done, rendering will still sometimes
+    // work, but it depends on a windows command to get the "main" window - which sometimes returns NULL and thus rendering won't work because
+    // there's no attached window (at least according to the SDK).   This is actually something of a Windows issue, but since the SDK can easily
+    // work around it, it seems like this fix should be documented somewhere in the SDK docs or examples.  Oh well.
+    config.OGL.Window = (HWND)gViewerWindow->getWindow()->getPlatformWindow((!gHMD.isHMDMirror() && !gHMD.isHMDDirectMode()) ? 1 : 0);
     config.OGL.DC = NULL;
 #endif
 
     U32 distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_Vignette | ovrDistortionCap_NoRestore;
-    distortionCaps |= (gHMD.useSRGBDistortion() || gHMD.isUsingAppWindow()) ? ovrDistortionCap_SRGB : 0;
+    distortionCaps |= useSRGB ? ovrDistortionCap_SRGB : 0;
     distortionCaps |= gHMD.usePixelLuminanceOverdrive() ? ovrDistortionCap_Overdrive : 0;
     distortionCaps |= gHMD.isTimewarpEnabled() ? ovrDistortionCap_TimeWarp : 0;
     distortionCaps |= gHMD.isTimewarpEnabled() && gSavedSettings.getBOOL("HMDTimewarpNoJit") ? ovrDistortionCap_ProfileNoTimewarpSpinWaits : 0;
@@ -509,21 +510,6 @@ BOOL LLHMDImplOculus::beginFrame()
         double curTime = ovr_GetTimeInSeconds();
         mTrackingState = ovrHmd_GetTrackingState(mHMD, mFrameTiming.ScanoutMidpointSeconds);
 
-        //mFrameCounter++;
-        //mTotalFrameCounter++;
-        //if (mLastFpsUpdate == 0.0f)
-        //{
-        //    mLastFpsUpdate = curTime;
-        //}
-        //float dtFPS = (float)(curTime - mLastFpsUpdate);
-        //if (dtFPS >= 1.0f)
-        //{
-        //    mSecondsPerFrame = (float)(curTime - mLastFpsUpdate) / (float)mFrameCounter;
-        //    mFPS = 1.0f / mSecondsPerFrame;
-        //    mLastFpsUpdate = curTime;
-        //    mFrameCounter = 0;
-        //}
-
         gHMD.isFrameTimewarped(FALSE);
         if (gHMD.isTimewarpEnabled())
         {
@@ -545,7 +531,6 @@ BOOL LLHMDImplOculus::beginFrame()
         }
         if (!gHMD.isFrameTimewarped())
         {
-            applyDynamicResolutionScaling(curTime);
             for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++)
             {
                 ovrEyeType eye = mHMD->EyeRenderOrder[eyeIndex];
@@ -591,57 +576,6 @@ BOOL LLHMDImplOculus::endFrame()
     }
     gHMD.isFrameInProgress(FALSE);
     return res;
-}
-
-
-void LLHMDImplOculus::applyDynamicResolutionScaling(double curTime)
-{
-    if (!gHMD.useDynamicResolutionScaling())
-    {
-        // Restore viewport rectangle in case dynamic res scaling was enabled before.
-        mEyeTexture[ovrEye_Left].OGL.Header.RenderViewport.Size = mEyeRenderSize[ovrEye_Left];
-        mEyeTexture[ovrEye_Right].OGL.Header.RenderViewport.Size = mEyeRenderSize[ovrEye_Right];
-        return;
-    }
-
-    // Demonstrate dynamic-resolution rendering.
-    // This demo is too simple to actually have a framerate that varies that much, so we'll
-    // just pretend this is trying to cope with highly dynamic rendering load.
-    float dynamicRezScale = 1.0f;
-
-    {
-        // Hacky stuff to make up a scaling...
-        // This produces value oscillating as follows: 0 -> 1 -> 0.        
-        static double dynamicRezStartTime = curTime;
-        float dynamicRezPhase = (float)(curTime - dynamicRezStartTime);
-        const float dynamicRezTimeScale = 4.0f;
-
-        dynamicRezPhase /= dynamicRezTimeScale;
-        if (dynamicRezPhase < 1.0f)
-        {
-            dynamicRezScale = dynamicRezPhase;
-        }
-        else if (dynamicRezPhase < 2.0f)
-        {
-            dynamicRezScale = 2.0f - dynamicRezPhase;
-        }
-        else
-        {
-            // Reset it to prevent creep.
-            dynamicRezStartTime = curTime;
-            dynamicRezScale = 0.0f;
-        }
-
-        // Map oscillation: 0.5 -> 1.0 -> 0.5
-        dynamicRezScale = dynamicRezScale * 0.5f + 0.5f;
-    }
-
-    OVR::Sizei sizeLeft  = mEyeRenderSize[ovrEye_Left];
-    OVR::Sizei sizeRight = mEyeRenderSize[ovrEye_Right];
-
-    // This viewport is used for rendering and passed into ovrHmd_EndEyeRender.
-    mEyeTexture[ovrEye_Left].OGL.Header.RenderViewport.Size = OVR::Sizei(int(sizeLeft.w  * dynamicRezScale), int(sizeLeft.h  * dynamicRezScale));
-    mEyeTexture[ovrEye_Right].OGL.Header.RenderViewport.Size = OVR::Sizei(int(sizeRight.w * dynamicRezScale), int(sizeRight.h * dynamicRezScale));
 }
 
 
@@ -793,7 +727,7 @@ LLRenderTarget* LLHMDImplOculus::getEyeRT(U32 eye)
 
 void LLHMDImplOculus::onViewChange(S32 oldMode)
 {
-    if (mHMD && !gHMD.isUsingAppWindow() && gHMD.isHMDMirror() && gHMD.useMirrorHack())
+    if (mHMD && !gHMD.isHMDDirectMode() && gHMD.isHMDMirror() && gHMD.useMirrorHack())
     {
         LLWindow* windowp = gViewerWindow ? gViewerWindow->getWindow() : NULL;
         if (!windowp)

@@ -86,20 +86,20 @@ public:
         kFlag_SavingSettings            = 1 << 12,
         kFlag_UsingDebugHMD             = 1 << 13,
         kFlag_HMDDisplayEnabled         = 1 << 14,
-        kFlag_UsingAppWindow            = 1 << 15,
+        kFlag_HMDDirectMode             = 1 << 15,
         kFlag_PositionTrackingEnabled   = 1 << 16,
         kFlag_FrameInProgress           = 1 << 17,
         kFlag_SettingsChanged           = 1 << 18,
         kFlag_TimewarpEnabled           = 1 << 19,
         kFlag_FrameTimewarped           = 1 << 20,
-        kFlag_DynamicResolutionScaling  = 1 << 21,
-        kFlag_HSWShowing                = 1 << 22,
-        kFlag_MirrorHack                = 1 << 23,  // temp until SDK supports attaching to a secondary window
-        kFlag_AllowTextRoll             = 1 << 24,
-        kFlag_UseLowPersistence         = 1 << 25,
-        kFlag_UsePixelLuminanceOverdrive= 1 << 26,
-        kFlag_FBOError                  = 1 << 27,
-        kFlag_UseSRGBDistortion         = 1 << 28,
+        kFlag_HSWShowing                = 1 << 21,
+        kFlag_MirrorHack                = 1 << 22,  // temp until SDK supports attaching to a secondary window
+        kFlag_AllowTextRoll             = 1 << 23,
+        kFlag_UseLowPersistence         = 1 << 24,
+        kFlag_UsePixelLuminanceOverdrive= 1 << 25,
+        kFlag_FBOError                  = 1 << 26,
+        kFlag_UseSRGBDistortion         = 1 << 27,
+        kFlag_UseMotionPrediction       = 1 << 28,
     };
 
     enum eUIPresetType
@@ -181,8 +181,8 @@ public:
     void isUsingDebugHMD(BOOL b) { if (b) { mFlags |= kFlag_UsingDebugHMD; } else { mFlags &= ~kFlag_UsingDebugHMD; } }
     BOOL isHMDDisplayEnabled() const { return ((mFlags & kFlag_HMDDisplayEnabled) != 0) ? TRUE : FALSE; }
     void isHMDDisplayEnabled(BOOL b) { if (b) { mFlags |= kFlag_HMDDisplayEnabled; } else { mFlags &= ~kFlag_HMDDisplayEnabled; } }
-    BOOL isUsingAppWindow() const { return ((mFlags & kFlag_UsingAppWindow) != 0) ? TRUE : FALSE; }
-    void isUsingAppWindow(BOOL b) { if (b) { mFlags |= kFlag_UsingAppWindow; } else { mFlags &= ~kFlag_UsingAppWindow; } }
+    BOOL isHMDDirectMode() const { return ((mFlags & kFlag_HMDDirectMode) != 0) ? TRUE : FALSE; }
+    void isHMDDirectMode(BOOL b) { if (b) { mFlags |= kFlag_HMDDirectMode; } else { mFlags &= ~kFlag_HMDDirectMode; } }
     BOOL isPositionTrackingEnabled() const { return ((mFlags & kFlag_PositionTrackingEnabled) != 0) ? TRUE : FALSE; }
     void isPositionTrackingEnabled(BOOL b) { if (b) { mFlags |= kFlag_PositionTrackingEnabled; } else { mFlags &= ~kFlag_PositionTrackingEnabled; } }
     BOOL isFrameInProgress() const { return ((mFlags & kFlag_FrameInProgress) != 0) ? TRUE : FALSE; }
@@ -193,8 +193,6 @@ public:
     void isTimewarpEnabled(BOOL b) { if (b) { mFlags |= kFlag_TimewarpEnabled; } else { mFlags &= ~kFlag_TimewarpEnabled; } }
     BOOL isFrameTimewarped() const { return ((mFlags & kFlag_FrameTimewarped) != 0) ? TRUE : FALSE; }
     void isFrameTimewarped(BOOL b) { if (b) { mFlags |= kFlag_FrameTimewarped; } else { mFlags &= ~kFlag_FrameTimewarped; } }
-    BOOL useDynamicResolutionScaling() const { return ((mFlags & kFlag_DynamicResolutionScaling) != 0) ? TRUE : FALSE; }
-    void useDynamicResolutionScaling(BOOL b) { if (b) { mFlags |= kFlag_DynamicResolutionScaling; } else { mFlags &= ~kFlag_DynamicResolutionScaling; } }
     BOOL isHSWShowing() const { return ((mFlags & kFlag_HSWShowing) != 0) ? TRUE : FALSE; }
     void isHSWShowing(BOOL b) { if (b) { mFlags |= kFlag_HSWShowing; } else { mFlags &= ~kFlag_HSWShowing; } }
     BOOL useMirrorHack() const { return ((mFlags & kFlag_MirrorHack) != 0) ? TRUE : FALSE; }
@@ -209,6 +207,8 @@ public:
     void isFBOError(BOOL b) { if (b) { mFlags |= kFlag_FBOError; } else { mFlags &= ~kFlag_FBOError; } }
     BOOL useSRGBDistortion() const { return ((mFlags & kFlag_UseSRGBDistortion) != 0) ? TRUE : FALSE; }
     void useSRGBDistortion(BOOL b) { if (b) { mFlags |= kFlag_UseSRGBDistortion; } else { mFlags &= ~kFlag_UseSRGBDistortion; } }
+    BOOL useMotionPrediction() const { return ((mFlags & kFlag_UseMotionPrediction) != 0) ? TRUE : FALSE; }
+    void useMotionPrediction(BOOL b) { if (b) { mFlags |= kFlag_UseMotionPrediction; } else { mFlags &= ~kFlag_UseMotionPrediction; } }
 
     // True if render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
@@ -254,10 +254,6 @@ public:
     F32 getUIEyeDepth() const { return mUIEyeDepth; }
     F32 getUIMagnification() { return mUIShape.mUIMagnification; }
     void setUIMagnification(F32 f);
-
-    BOOL useMotionPrediction() const;
-    BOOL useMotionPredictionDefault() const;
-    void useMotionPrediction(BOOL b);
 
     // Get the current HMD orientation
     void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
@@ -327,7 +323,6 @@ public:
     U32 getUIShapePresetTypeIndex() const { return mUIShape.mPresetTypeIndex; }
     S32 getUIShapePresetIndex() const { return mUIShapePreset; }
     void setUIShapePresetIndex(S32 idx);
-    S32 getUIShapePresetIndexDefault() const { return 1; }
     LLHMD::UISurfaceShapeSettings getUIShapePreset(S32 idx);
     S32 getNumUIShapePresets() const { return (S32)mUIPresetValues.size(); }
     BOOL addPreset();
@@ -384,6 +379,15 @@ public:
     void prerender2DUI();
     void postRender2DUI();
 
+    // defaults
+    S32 getUIShapePresetIndexDefault() const { return 1; }
+    BOOL useLowPersistenceDefault() const { return FALSE; }
+    BOOL usePixelLuminanceOverdriveDefault() const { return TRUE; }
+    BOOL useMotionPredictionDefault() const { return TRUE; }
+    BOOL isTimewarpEnabledDefault() const { return TRUE; }
+    F32 getTimewarpIntervalSecondsDefault() const { return 0.015; }
+    BOOL useSRGBDistortionDefault() const { return TRUE; }
+
     // DK2
     BOOL beginFrame();
     BOOL endFrame();
@@ -409,7 +413,6 @@ public:
     static void onChangeMouselookSettings();
     static void onChangeMouselookControlMode();
     static void onChangeRenderSettings();
-    static void onChangeDynamicResolutionScaling();
     static void onChangeAllowTextRoll();
 
 private:
@@ -522,10 +525,6 @@ public:
     virtual void setEyeToScreenDistance(F32 f) {}
     virtual F32 getVerticalFOV() { return kDefaultVerticalFOVRadians; }
     virtual F32 getAspect() const { return kDefaultAspect; }
-
-    virtual BOOL useMotionPrediction() { return FALSE; }
-    virtual BOOL useMotionPredictionDefault() const { return FALSE; }
-    virtual void useMotionPrediction(BOOL b) {}
 
     virtual F32 getRoll() const { return 0.0f; }
     virtual F32 getPitch() const { return 0.0f; }

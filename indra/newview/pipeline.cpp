@@ -4101,7 +4101,7 @@ void LLPipeline::renderHighlights()
 	LLGLEnable color_mat(GL_COLOR_MATERIAL);
 	disableLights();
 
-	if (!hasRenderType(LLPipeline::RENDER_TYPE_HUD) && !mHighlightSet.empty())
+	if (!hasRenderType(LLPipeline::RENDER_TYPE_HUD) && !mHighlightSet.empty() && (!LLGLSLShader::sNoFixedFunction || LLGLSLShader::sCurBoundShaderPtr != NULL))
 	{ //draw blurry highlight image over screen
 		LLGLEnable blend(GL_BLEND);
 		LLGLDepthTest depth(GL_TRUE, GL_FALSE, GL_ALWAYS);
@@ -10391,7 +10391,7 @@ BOOL LLPipeline::getVisiblePointCloud(LLCamera& camera, LLVector3& min, LLVector
 
 void LLPipeline::renderHighlight(const LLViewerObject* obj, F32 fade)
 {
-	if (obj && obj->getVolume())
+	if (obj && obj->getVolume() && (!LLGLSLShader::sNoFixedFunction || LLGLSLShader::sCurBoundShaderPtr != NULL))
 	{
 		for (LLViewerObject::child_list_t::const_iterator iter = obj->getChildren().begin(); iter != obj->getChildren().end(); ++iter)
 		{

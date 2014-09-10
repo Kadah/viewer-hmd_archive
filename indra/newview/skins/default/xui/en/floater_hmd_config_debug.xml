@@ -158,7 +158,7 @@
       <layout_stack
         layout="topleft" follows="top|left|right" orientation="vertical"
         border_size="0" 
-        left="0" top="0" width="200" height ="280">
+        left="0" top="0" width="200" height ="240">
 
         <layout_panel follows="top|left|right" width="200" height="40">
           <check_box name="hmd_config_debug_low_persistence"
@@ -210,16 +210,6 @@
             left="5" top="18" right="-5" height="22" follows="top|left|right">
             <slider_bar.commit_callback function="HMDConfigDebug.SetTimewarpInterval" />
           </slider_bar>
-        </layout_panel>
-
-        <layout_panel follows="top|left|right" width="200" height="40">
-          <check_box name="hmd_config_debug_dynamic_resolution_scaling"
-            initial_value="false"
-            left="0" top="12" width="32" height="16" valign="center"
-            label="Dynamic Resolution Scaling" label_text.valign="center" label_text.v_pad="-1"
-            tool_tip="Changes the rendering resolution to increase framerate at the cost of more jagged/pixelated edges and lower rendering quality">
-            <check_box.commit_callback function="HMDConfigDebug.CheckDynamicResolutionScaling" />
-          </check_box>
         </layout_panel>
 
         <layout_panel follows="top|left|right" width="200" height="40">

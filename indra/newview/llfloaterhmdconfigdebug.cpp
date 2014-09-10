@@ -82,8 +82,6 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     , mTimewarpIntervalSliderCtrl(NULL)
     , mTimewarpIntervalAmountCtrl(NULL)
     , mTimewarpIntervalOriginal(0.01f)
-    , mDynamicResolutionScalingCheckBoxCtrl(NULL)
-    , mDynamicResolutionScalingCheckedOriginal(TRUE)
     , mUseSRGBDistortionCheckBoxCtrl(NULL)
     , mUseSRGBDistortionCheckedOriginal(TRUE)
     , mDirty(FALSE)
@@ -114,7 +112,6 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     mCommitCallbackRegistrar.add("HMDConfigDebug.CheckMotionPrediction", boost::bind(&LLFloaterHMDConfigDebug::onCheckMotionPrediction, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.CheckTimewarp", boost::bind(&LLFloaterHMDConfigDebug::onCheckTimewarp, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetTimewarpInterval", boost::bind(&LLFloaterHMDConfigDebug::onSetTimewarpInterval, this));
-    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckDynamicResolutionScaling", boost::bind(&LLFloaterHMDConfigDebug::onCheckDynamicResolutionScaling, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.CheckUseSRGBDistortion", boost::bind(&LLFloaterHMDConfigDebug::onCheckUseSRGBDistortion, this));
 }
 
@@ -165,7 +162,6 @@ BOOL LLFloaterHMDConfigDebug::postBuild()
     mTimewarpCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_timewarp");
     mTimewarpIntervalSliderCtrl = getChild<LLSlider>("hmd_config_debug_timewarp_interval_slider");
     mTimewarpIntervalAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_timewarp_interval_slider_amount");
-    mDynamicResolutionScalingCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_dynamic_resolution_scaling");
     mUseSRGBDistortionCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_use_srgb_distortion");
 
     return LLFloater::postBuild();
@@ -273,11 +269,6 @@ void LLFloaterHMDConfigDebug::onOpen(const LLSD& key)
         pPanel->mTimewarpIntervalSliderCtrl->setValue(pPanel->mTimewarpCheckedOriginal);
         pPanel->updateTimewarpIntervalLabel();
     }
-    if (pPanel->mDynamicResolutionScalingCheckBoxCtrl)
-    {
-        pPanel->mDynamicResolutionScalingCheckedOriginal = gHMD.useDynamicResolutionScaling();
-        pPanel->mDynamicResolutionScalingCheckBoxCtrl->setValue(pPanel->mDynamicResolutionScalingCheckedOriginal);
-    }
     if (pPanel->mUseSRGBDistortionCheckBoxCtrl)
     {
         pPanel->mUseSRGBDistortionCheckedOriginal = gHMD.useSRGBDistortion();
@@ -323,10 +314,20 @@ void LLFloaterHMDConfigDebug::onClickRemovePreset()
 
 void LLFloaterHMDConfigDebug::onClickResetValues()
 {
-    mMotionPredictionCheckBoxCtrl->setValue(gHMD.useMotionPredictionDefault());
-    onCheckMotionPrediction();
     mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndexDefault());
     onSetUIShapePreset();
+    mLowPersistenceCheckBoxCtrl->setValue(gHMD.useLowPersistenceDefault());
+    onCheckLowPersistence();
+    mPLOCheckBoxCtrl->setValue(gHMD.usePixelLuminanceOverdriveDefault());
+    onCheckPixelLuminanceOverdrive();
+    mMotionPredictionCheckBoxCtrl->setValue(gHMD.useMotionPredictionDefault());
+    onCheckMotionPrediction();
+    mTimewarpCheckBoxCtrl->setValue(gHMD.isTimewarpEnabledDefault());
+    onCheckTimewarp();
+    mTimewarpIntervalSliderCtrl->setValue(gHMD.getTimewarpIntervalSecondsDefault());
+    void onSetTimewarpInterval();
+    mUseSRGBDistortionCheckBoxCtrl->setValue(gHMD.useSRGBDistortionDefault());
+    onCheckUseSRGBDistortion();
 }
 
 void LLFloaterHMDConfigDebug::onClickCancel()
@@ -364,8 +365,6 @@ void LLFloaterHMDConfigDebug::onClickCancel()
     onCheckTimewarp();
     mTimewarpIntervalSliderCtrl->setValue(mTimewarpIntervalOriginal);
     onSetTimewarpInterval();
-    mDynamicResolutionScalingCheckBoxCtrl->setValue(mDynamicResolutionScalingCheckedOriginal);
-    onCheckDynamicResolutionScaling();
     mUseSRGBDistortionCheckBoxCtrl->setValue(mUseSRGBDistortionCheckedOriginal);
     onCheckUseSRGBDistortion();
     mDirty = FALSE;
@@ -649,14 +648,6 @@ void LLFloaterHMDConfigDebug::updateTimewarpIntervalLabel()
     mTimewarpIntervalAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsMilliseconds", args));
 }
 
-void LLFloaterHMDConfigDebug::onCheckDynamicResolutionScaling()
-{
-    BOOL checked = mDynamicResolutionScalingCheckBoxCtrl->get();
-    gHMD.useDynamicResolutionScaling(checked);
-    gHMD.renderSettingsChanged(TRUE);
-    updateDirty();
-}
-
 void LLFloaterHMDConfigDebug::onCheckUseSRGBDistortion()
 {
     BOOL checked = mUseSRGBDistortionCheckBoxCtrl->get();
@@ -693,6 +684,5 @@ void LLFloaterHMDConfigDebug::updateDirty()
     mDirty = mDirty || (mPLOCheckBoxCtrl->get() != mPLOCheckedOriginal);
     mDirty = mDirty || (mMotionPredictionCheckBoxCtrl->get() != mMotionPredictionCheckedOriginal);
     mDirty = mDirty || (mTimewarpCheckBoxCtrl->get() != mTimewarpCheckedOriginal);
-    mDirty = mDirty || (mDynamicResolutionScalingCheckBoxCtrl->get() != mDynamicResolutionScalingCheckedOriginal);
     mDirty = mDirty || (mUseSRGBDistortionCheckBoxCtrl->get() != mUseSRGBDistortionCheckedOriginal);
 }
