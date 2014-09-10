@@ -1225,9 +1225,7 @@ BOOL LLHMD::removePreset(S32 idx)
     mUIPresetValues.erase(mUIPresetValues.begin() + idx);
     if (mUIShapePreset == idx)
     {
-        mUIShapePreset = 0;
-        mUIShape.mPresetType = (U32)LLHMD::kCustom;
-        mUIShape.mPresetTypeIndex = 1;
+        setUIShapePresetIndex(getUIShapePresetIndexDefault());
     }
     return TRUE;
 }

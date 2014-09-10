@@ -530,22 +530,18 @@ BOOL LLHMDImplOculus::beginFrame()
         }
         if (!gHMD.isFrameTimewarped())
         {
-            for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++)
-            {
-                ovrEyeType eye = mHMD->EyeRenderOrder[eyeIndex];
-                mEyeRenderPose[eye] = ovrHmd_GetEyePose(mHMD, eye);
-                //OVR::Matrix4f rpy = OVR::Matrix4f(mEyeRenderPose[eye].Orientation);
-                //OVR::Vector3f up = rpy.Transform(OVR::Vector3f(0.0f, 1.0f, 0.0f));
-                //OVR::Vector3f fwd = rpy.Transform(OVR::Vector3f(0.0f, 0.0f, -1.0f));
-                //OVR::Vector3f pos = rpy.Transform(mEyeRenderPose[eye].Position);
-                //OVR::Matrix4f v = OVR::Matrix4f::LookAtRH(pos, pos + fwd, up);
-                //mView[eye] = OVR::Matrix4f::Translation(mEyeRenderDesc[eye].ViewAdjust) * v;
-            }
             OVR::Posef pose = mTrackingState.HeadPose.ThePose;
 
             // OpenGL coord system of -Z forward, X right, Y up. 
             mEyeRotation.set(pose.Rotation.x, pose.Rotation.y, pose.Rotation.z, pose.Rotation.w);
-            mHeadPos.set(pose.Translation.x, pose.Translation.y, pose.Translation.z);
+            if (gHMD.isPositionTrackingEnabled())
+            {
+                mHeadPos.set(pose.Translation.x, pose.Translation.y, pose.Translation.z);
+            }
+            else
+            {
+                mHeadPos = LLVector3::zero;
+            }
 
             // These need to be in LL (CFR) coord system
             // Note that the LL coord system uses X forward, Y left, and Z up whereas the Oculus SDK uses the
@@ -571,6 +567,11 @@ BOOL LLHMDImplOculus::endFrame()
     if (res)
     {
         ovrTexture* t = const_cast<ovrTexture*>(reinterpret_cast<const ovrTexture*>(mEyeTexture));
+        for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++)
+        {
+            ovrEyeType eye = mHMD->EyeRenderOrder[eyeIndex];
+            mEyeRenderPose[eye] = ovrHmd_GetEyePose(mHMD, eye);
+        }
         ovrHmd_EndFrame(mHMD, mEyeRenderPose, t);
     }
     gHMD.isFrameInProgress(FALSE);

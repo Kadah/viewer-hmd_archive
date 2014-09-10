@@ -995,12 +995,14 @@ void LLViewerJoystick::moveFlycam(bool reset)
         m1 *= m2;
         mat = m1.getMat3();
 
-        //nudge origin by tracked head position
-        LLVector3 headPos = gHMD.getHeadPosition();
-        headPos = headPos * cfr;
-        //headPos.set(-headPos[VZ], -headPos[VX], headPos[VY]);
-        headPos *= ~sFlycamRotation;
-        deltaPos = headPos;
+        if (gHMD.isPositionTrackingEnabled())
+        {
+            //nudge origin by tracked head position
+            LLVector3 headPos = gHMD.getHeadPosition();
+            headPos = headPos * cfr;
+            headPos *= ~sFlycamRotation;
+            deltaPos = headPos;
+        }
 	}
 
 	camera->setOrigin(sFlycamPosition + deltaPos);
