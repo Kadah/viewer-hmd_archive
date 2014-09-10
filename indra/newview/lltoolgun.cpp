@@ -103,15 +103,18 @@ BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask)
 		
 		if (dx != 0 || dy != 0)
 		{
-			// ...actually moved off center
-			if (gSavedSettings.getBOOL("InvertMouse"))
-			{
-				gAgent.pitch(mouse_sensitivity * -dy);
-			}
-			else
-			{
-				gAgent.pitch(mouse_sensitivity * dy);
-			}
+            if (!gHMD.isHMDMode() || !gHMD.isMouselookYawOnly())
+            {
+			    // ...actually moved off center
+			    if (gSavedSettings.getBOOL("InvertMouse"))
+			    {
+				    gAgent.pitch(mouse_sensitivity * -dy);
+			    }
+			    else
+			    {
+				    gAgent.pitch(mouse_sensitivity * dy);
+			    }
+            }
 			LLVector3 skyward = gAgent.getReferenceUpVector();
 			gAgent.rotate(mouse_sensitivity * dx, skyward.mV[VX], skyward.mV[VY], skyward.mV[VZ]);
 

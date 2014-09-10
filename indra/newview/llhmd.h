@@ -100,6 +100,7 @@ public:
         kFlag_FBOError                  = 1 << 26,
         kFlag_UseSRGBDistortion         = 1 << 27,
         kFlag_UseMotionPrediction       = 1 << 28,
+        kFlag_MouselookYawOnly          = 1 << 29,
     };
 
     enum eUIPresetType
@@ -209,6 +210,8 @@ public:
     void useSRGBDistortion(BOOL b) { if (b) { mFlags |= kFlag_UseSRGBDistortion; } else { mFlags &= ~kFlag_UseSRGBDistortion; } }
     BOOL useMotionPrediction() const { return ((mFlags & kFlag_UseMotionPrediction) != 0) ? TRUE : FALSE; }
     void useMotionPrediction(BOOL b) { if (b) { mFlags |= kFlag_UseMotionPrediction; } else { mFlags &= ~kFlag_UseMotionPrediction; } }
+    BOOL isMouselookYawOnly() const { return ((mFlags & kFlag_MouselookYawOnly) != 0) ? TRUE : FALSE; }
+    void isMouselookYawOnly(BOOL b) { if (b) { mFlags |= kFlag_MouselookYawOnly; } else { mFlags &= ~kFlag_MouselookYawOnly; } }
 
     // True if render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
@@ -388,6 +391,7 @@ public:
     BOOL isTimewarpEnabledDefault() const { return TRUE; }
     F32 getTimewarpIntervalSecondsDefault() const { return 0.015; }
     BOOL useSRGBDistortionDefault() const { return TRUE; }
+    BOOL isMouselookYawOnlyDefault() const { return TRUE; }
 
     // DK2
     BOOL beginFrame();

@@ -169,6 +169,7 @@ BOOL LLHMD::init()
     gSavedSettings.getControl("HMDMouselookRotThreshold")->getSignal()->connect(boost::bind(&onChangeMouselookSettings));
     gSavedSettings.getControl("HMDMouselookRotMax")->getSignal()->connect(boost::bind(&onChangeMouselookSettings));
     gSavedSettings.getControl("HMDMouselookTurnSpeedMax")->getSignal()->connect(boost::bind(&onChangeMouselookSettings));
+    gSavedSettings.getControl("HMDMouselookYawOnly")->getSignal()->connect(boost::bind(&onChangeMouselookSettings));
     onChangeMouselookSettings();
     gSavedSettings.getControl("HMDMouselookControlMode")->getSignal()->connect(boost::bind(&onChangeMouselookControlMode));
     onChangeMouselookControlMode();
@@ -444,6 +445,7 @@ void LLHMD::onChangeMouselookSettings()
         gHMD.mMouselookRotThreshold = llclamp(gSavedSettings.getF32("HMDMouselookRotThreshold") * DEG_TO_RAD, (10.0f * DEG_TO_RAD), (80.0f * DEG_TO_RAD));
         gHMD.mMouselookRotMax = llclamp(gSavedSettings.getF32("HMDMouselookRotMax") * DEG_TO_RAD, (1.0f * DEG_TO_RAD), (90.0f * DEG_TO_RAD));
         gHMD.mMouselookTurnSpeedMax = llclamp(gSavedSettings.getF32("HMDMouselookTurnSpeedMax"), 0.01f, 0.5f);
+        gHMD.isMouselookYawOnly(gSavedSettings.getBOOL("HMDMouselookYawOnly"));
     }
 }
 
@@ -500,7 +502,10 @@ void LLHMD::onIdle()
             atLeveled.normalize();
             gAgent.resetAxes(atLeveled);
 
-            gAgent.pitch(mImpl->getPitch());
+            if (!gHMD.isMouselookYawOnly())
+            {
+                gAgent.pitch(mImpl->getPitch());
+            }
 
             LLVector3 skyward = gAgent.getReferenceUpVector();
             F32 yaw = mImpl->getYaw();
@@ -1264,6 +1269,7 @@ void LLHMD::saveSettings()
     gSavedSettings.setBOOL("HMDTimewarp", gHMD.isTimewarpEnabled());
     gSavedSettings.setF32("HMDTimewarpIntervalSeconds", gHMD.getTimewarpIntervalSeconds());
     gSavedSettings.setBOOL("HMDUseSRGBDistortion", gHMD.useSRGBDistortion());
+    gSavedSettings.setBOOL("HMDMouselookYawOnly", gHMD.isMouselookYawOnly());
 
     //gSavedSettings.setBOOL("HMDAdvancedMode", gHMD.isAdvancedMode());
     //gSavedSettings.setBOOL("HMDEnablePositionalTracking", gHMD.isPositionTrackingEnabled());

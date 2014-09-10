@@ -85,6 +85,7 @@ protected:
     void onSetTimewarpInterval();
     void updateTimewarpIntervalLabel();
     void onCheckUseSRGBDistortion();
+    void onCheckMouselookYawOnly();
 
     void updateDirty();
 
@@ -135,6 +136,8 @@ protected:
     F32 mTimewarpIntervalOriginal;
     LLCheckBoxCtrl* mUseSRGBDistortionCheckBoxCtrl;
     BOOL mUseSRGBDistortionCheckedOriginal;
+    LLCheckBoxCtrl* mMouselookYawOnlyCheckBoxCtrl;
+    BOOL mMouselookYawOnlyCheckedOriginal;
 
     BOOL mDirty;
 

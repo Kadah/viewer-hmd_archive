@@ -84,6 +84,8 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     , mTimewarpIntervalOriginal(0.01f)
     , mUseSRGBDistortionCheckBoxCtrl(NULL)
     , mUseSRGBDistortionCheckedOriginal(TRUE)
+    , mMouselookYawOnlyCheckBoxCtrl(NULL)
+    , mMouselookYawOnlyCheckedOriginal(TRUE)
     , mDirty(FALSE)
 {
     sInstance = this;
@@ -113,6 +115,7 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     mCommitCallbackRegistrar.add("HMDConfigDebug.CheckTimewarp", boost::bind(&LLFloaterHMDConfigDebug::onCheckTimewarp, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetTimewarpInterval", boost::bind(&LLFloaterHMDConfigDebug::onSetTimewarpInterval, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.CheckUseSRGBDistortion", boost::bind(&LLFloaterHMDConfigDebug::onCheckUseSRGBDistortion, this));
+    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckMouselookYawOnly", boost::bind(&LLFloaterHMDConfigDebug::onCheckMouselookYawOnly, this));
 }
 
 LLFloaterHMDConfigDebug::~LLFloaterHMDConfigDebug()
@@ -163,6 +166,7 @@ BOOL LLFloaterHMDConfigDebug::postBuild()
     mTimewarpIntervalSliderCtrl = getChild<LLSlider>("hmd_config_debug_timewarp_interval_slider");
     mTimewarpIntervalAmountCtrl = getChild<LLUICtrl>("hmd_config_debug_timewarp_interval_slider_amount");
     mUseSRGBDistortionCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_use_srgb_distortion");
+    mMouselookYawOnlyCheckBoxCtrl = getChild<LLCheckBoxCtrl>("hmd_config_debug_mouselook_yaw_only");
 
     return LLFloater::postBuild();
 }
@@ -274,6 +278,11 @@ void LLFloaterHMDConfigDebug::onOpen(const LLSD& key)
         pPanel->mUseSRGBDistortionCheckedOriginal = gHMD.useSRGBDistortion();
         pPanel->mUseSRGBDistortionCheckBoxCtrl->setValue(pPanel->mUseSRGBDistortionCheckedOriginal);
     }
+    if (pPanel->mMouselookYawOnlyCheckBoxCtrl)
+    {
+        pPanel->mMouselookYawOnlyCheckedOriginal = gHMD.isMouselookYawOnly();
+        pPanel->mMouselookYawOnlyCheckBoxCtrl->setValue(pPanel->mMouselookYawOnlyCheckedOriginal);
+    }
 
     mDirty = FALSE;
 }
@@ -328,6 +337,8 @@ void LLFloaterHMDConfigDebug::onClickResetValues()
     void onSetTimewarpInterval();
     mUseSRGBDistortionCheckBoxCtrl->setValue(gHMD.useSRGBDistortionDefault());
     onCheckUseSRGBDistortion();
+    mMouselookYawOnlyCheckBoxCtrl->setValue(gHMD.isMouselookYawOnlyDefault());
+    onCheckMouselookYawOnly();
 }
 
 void LLFloaterHMDConfigDebug::onClickCancel()
@@ -367,6 +378,8 @@ void LLFloaterHMDConfigDebug::onClickCancel()
     onSetTimewarpInterval();
     mUseSRGBDistortionCheckBoxCtrl->setValue(mUseSRGBDistortionCheckedOriginal);
     onCheckUseSRGBDistortion();
+    mMouselookYawOnlyCheckBoxCtrl->setValue(mMouselookYawOnlyCheckedOriginal);
+    onCheckMouselookYawOnly();
     mDirty = FALSE;
 
 	closeFloater(false);
@@ -656,6 +669,13 @@ void LLFloaterHMDConfigDebug::onCheckUseSRGBDistortion()
     updateDirty();
 }
 
+void LLFloaterHMDConfigDebug::onCheckMouselookYawOnly()
+{
+    BOOL checked = mMouselookYawOnlyCheckBoxCtrl->get();
+    gHMD.isMouselookYawOnly(checked);
+    updateDirty();
+}
+
 void LLFloaterHMDConfigDebug::updateDirty()
 {
     LLVector2 cur[] = 
@@ -685,4 +705,5 @@ void LLFloaterHMDConfigDebug::updateDirty()
     mDirty = mDirty || (mMotionPredictionCheckBoxCtrl->get() != mMotionPredictionCheckedOriginal);
     mDirty = mDirty || (mTimewarpCheckBoxCtrl->get() != mTimewarpCheckedOriginal);
     mDirty = mDirty || (mUseSRGBDistortionCheckBoxCtrl->get() != mUseSRGBDistortionCheckedOriginal);
+    mDirty = mDirty || (mMouselookYawOnlyCheckBoxCtrl->get() != mMouselookYawOnlyCheckedOriginal);
 }

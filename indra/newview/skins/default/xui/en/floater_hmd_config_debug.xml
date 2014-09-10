@@ -158,7 +158,7 @@
       <layout_stack
         layout="topleft" follows="top|left|right" orientation="vertical"
         border_size="0" 
-        left="0" top="0" width="200" height ="240">
+        left="0" top="0" width="200" height ="280">
 
         <layout_panel follows="top|left|right" width="200" height="40">
           <check_box name="hmd_config_debug_low_persistence"
@@ -219,6 +219,16 @@
             label="SRGB Distortion" label_text.valign="center" label_text.v_pad="-1"
             tool_tip="Use SRGB texture/buffer format for HMD rendering.  Attempts to get better chromatic aberration, but can also cause things to appear faded or washed-out.  Note that due to SDK issues, if you start the viewer with this off and then turn it on, you'll need to toggle the DK1 legacy support checkbox in the Oculus Tool (in the Rift Display Mode panel) to get the brightness correct.">
             <check_box.commit_callback function="HMDConfigDebug.CheckUseSRGBDistortion" />
+          </check_box>
+        </layout_panel>
+
+        <layout_panel follows="top|left|right" width="200" height="40">
+          <check_box name="hmd_config_debug_mouselook_yaw_only"
+            initial_value="true"
+            left="0" top="12" width="32" height="16" valign="center"
+            label="HMD Mouselook Horizontal Only" label_text.valign="center" label_text.v_pad="-1" 
+            tool_tip="If this is enabled, mouse movement in mouselook while in HMD mode will only affect horizontal movement (yaw).  Only head movement will allow the view to move horizontally.">
+            <check_box.commit_callback function="HMDConfigDebug.CheckMouselookYawOnly" />
           </check_box>
         </layout_panel>
 

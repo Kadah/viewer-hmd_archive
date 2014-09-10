@@ -4555,6 +4555,17 @@
         <key>Value</key>
         <real>0.1</real>
     </map>
+    <key>HMDMouselookYawOnly</key>
+    <map>
+        <key>Comment</key>
+        <string>If this is enabled, mouse movement in mouselook while in HMD mode will only affect horizontal movement (yaw).  Only head movement will allow the view to move horizontally.</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>1</integer>
+    </map>
     <key>HMDPixelDensity</key>
     <map>
       <key>Comment</key>
