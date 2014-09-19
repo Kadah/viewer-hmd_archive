@@ -197,13 +197,7 @@ BOOL LLHMDImplOculus::postDetectionInit()
     gHMD.useMirrorHack(TRUE);
     //gHMD.useMirrorHack(gHMD.isUsingAppWindow());
     BOOL isMirror = FALSE;
-#if LL_WINDOWS
     if (!pWin->initHMDWindow(mHMD->WindowsPos.x, mHMD->WindowsPos.y, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
-#elif LL_DARWIN
-    if (!pWin->initHMDWindow(mHMD->DisplayId, 0, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
-#else
-    if (FALSE)
-#endif
     {
         LL_INFOS("HMD") << "HMD Window init failed!" << LL_ENDL;
         LLNotificationsUtil::add("HMDModeErrorNoWindow");
