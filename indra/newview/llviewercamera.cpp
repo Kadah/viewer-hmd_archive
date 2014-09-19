@@ -814,23 +814,21 @@ void LLViewerCamera::getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, 
 {
 	LLVector3 to_vec = pos_agent - getOrigin();
 	F32 at_dist = to_vec * getAtAxis();
-	F32 height_meters = at_dist* (F32)tan(getView()/2.f);
-	F32 height_pixels = getViewHeightInPixels()/2.f;
+	F32 height_meters = at_dist * (F32)tan(getView()/2.f);
+	F32 height_pixels = (F32)(gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : getViewHeightInPixels()) / 2.0f;
 	F32 pixel_aspect = gViewerWindow->getWindow()->getPixelAspectRatio();
 	F32 meters_per_pixel = height_meters / height_pixels;
 
-    LLVector3 up_axis, left_axis;
+    LLVector3 up_axis = keepLevel ? LLVector3::z_axis : getUpAxis();
+    LLVector3 left_axis = getLeftAxis();
     if (keepLevel)
     {
-        up_axis.set(0.0f, 0.0f, 1.0f);
-        left_axis = getLeftAxis();
-        left_axis[VZ] = 0.0f;
-        left_axis.normalize();
-    }
-    else
-    {
-        up_axis = getUpAxis();
-        left_axis = getLeftAxis();
+        LLVector3 leveledAt = getAtAxis();
+        leveledAt[VZ] = 0.0f;
+        leveledAt.normalize();
+        LLCoordFrame f;
+        f.lookDir(leveledAt);
+        left_axis = f.getLeftAxis();
     }
 
 	up = up_axis * meters_per_pixel * gViewerWindow->getDisplayScale().mV[VY];

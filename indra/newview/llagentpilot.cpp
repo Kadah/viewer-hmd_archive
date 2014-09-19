@@ -37,6 +37,7 @@
 #include "llviewercamera.h"
 #include "llsdserialize.h"
 #include "llsdutil_math.h"
+#include "llhmd.h"
 
 LLAgentPilot gAgentPilot;
 
@@ -319,12 +320,39 @@ void LLAgentPilot::moveCamera()
 		LLQuaternion end_quat(end.mCameraXAxis, end.mCameraYAxis, end.mCameraZAxis);
 		LLQuaternion quat = nlerp(t, start_quat, end_quat);
 		LLMatrix3 mat(quat);
-	
-		LLViewerCamera::getInstance()->setView(view);
-		LLViewerCamera::getInstance()->setOrigin(origin);
-		LLViewerCamera::getInstance()->mXAxis = LLVector3(mat.mMatrix[0]);
-		LLViewerCamera::getInstance()->mYAxis = LLVector3(mat.mMatrix[1]);
-		LLViewerCamera::getInstance()->mZAxis = LLVector3(mat.mMatrix[2]);
+        LLViewerCamera* camera = LLViewerCamera::getInstance();
+        camera->setView(view);
+        camera->setOrigin(origin);
+        camera->mXAxis = LLVector3(mat.mMatrix[0]);
+        camera->mYAxis = LLVector3(mat.mMatrix[1]);
+        camera->mZAxis = LLVector3(mat.mMatrix[2]);
+
+        if (gHMD.isHMDMode())
+        {
+            gHMD.setUIModelView((F32*)(camera->getModelview().mMatrix));
+
+            LLMatrix4 m1(camera->getQuaternion());
+            LLMatrix4 m2(~gHMD.getHMDRotation());
+            LLMatrix4 cfr(OGL_TO_CFR_ROTATION);
+            m2 *= cfr;
+            m1 *= m2;
+            mat = m1.getMat3();
+            LLVector3 deltaPos(LLVector3::zero);
+
+            if (gHMD.isPositionTrackingEnabled())
+            {
+                //nudge origin by tracked head position
+                LLVector3 headPos = gHMD.getHeadPosition();
+                headPos = headPos * cfr;
+                headPos *= ~camera->getQuaternion();
+                deltaPos = headPos;
+            }
+
+            camera->setOrigin(origin + deltaPos);
+            camera->mXAxis = LLVector3(mat.mMatrix[0]);
+            camera->mYAxis = LLVector3(mat.mMatrix[1]);
+            camera->mZAxis = LLVector3(mat.mMatrix[2]);
+        }
 	}
 }
 
