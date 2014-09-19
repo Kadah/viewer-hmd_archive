@@ -907,10 +907,18 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 	x = llround((F32)x / mDisplayScale.mV[VX]);
 	y = llround((F32)y / mDisplayScale.mV[VY]);
 
-	// only send mouse clicks to UI if UI is visible
+    // If we got this far on a down-click, it wasn't handled.
+    // Up-clicks, though, are always handled as far as the OS is concerned.
+    BOOL r = !down;
+
+    if (gHMD.isHMDMode())
+    {
+        gHMD.reshapeUI(TRUE);
+    }
+
+    // only send mouse clicks to UI if UI is visible
 	if(gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
 	{	
-
 		if (down)
 		{
 			buttonstatestr = "down" ;
@@ -970,6 +978,7 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 			mWindow->setMouseClipping(down);
 		}
 
+        BOOL handled = FALSE;
 		LLMouseHandler* mouse_captor = gFocusMgr.getMouseCapture();
 		if( mouse_captor )
 		{
@@ -981,61 +990,76 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
 				LL_INFOS() << buttonname << " Mouse " << buttonstatestr << " handled by captor " << mouse_captor->getName() << LL_ENDL;
 			}
 
-			BOOL r = mouse_captor->handleAnyMouseClick(local_x, local_y, mask, clicktype, down); 
+			r = mouse_captor->handleAnyMouseClick(local_x, local_y, mask, clicktype, down); 
 			if (r)
 			{
 				LL_DEBUGS() << "LLViewerWindow::handleAnyMouseClick viewer with mousecaptor calling updatemouseeventinfo - local_x|global x  "<< local_x << " " << x  << "local/global y " << local_y << " " << y << LL_ENDL;
 				LLViewerEventRecorder::instance().setMouseGlobalCoords(x,y);
 				LLViewerEventRecorder::instance().logMouseEvent(std::string(buttonstatestr),std::string(buttonname)); 
 			}
-			return r;
+
+            handled = true;
+			//return r;
 		}
+        else
+        {
+		    // Mark the click as handled and return if we aren't within the root view to avoid spurious bugs
+		    if( !mRootView->pointInView(x, y) )
+		    {
+                handled = r = TRUE;
+		    }
+            else
+            {
+		        // Give the UI views a chance to process the click
 
-		// Mark the click as handled and return if we aren't within the root view to avoid spurious bugs
-		if( !mRootView->pointInView(x, y) )
-		{
-			return TRUE;
-		}
-		// Give the UI views a chance to process the click
+		        r = mRootView->handleAnyMouseClick(x, y, mask, clicktype, down) ;
+		        if (r) 
+		        {
 
-		BOOL r= mRootView->handleAnyMouseClick(x, y, mask, clicktype, down) ;
-		if (r) 
-		{
+			        LL_DEBUGS() << "LLViewerWindow::handleAnyMouseClick calling updatemouseeventinfo - global x  "<< " " << x	<< "global y " << y	 << "buttonstate: " << buttonstatestr << " buttonname " << buttonname << LL_ENDL;
 
-			LL_DEBUGS() << "LLViewerWindow::handleAnyMouseClick calling updatemouseeventinfo - global x  "<< " " << x	<< "global y " << y	 << "buttonstate: " << buttonstatestr << " buttonname " << buttonname << LL_ENDL;
+			        LLViewerEventRecorder::instance().setMouseGlobalCoords(x,y);
 
-			LLViewerEventRecorder::instance().setMouseGlobalCoords(x,y);
+			        // Clear local coords - this was a click on root window so these are not needed
+			        // By not including them, this allows the test skeleton generation tool to be smarter when generating code
+			        // the code generator can be smarter because when local coords are present it can try the xui path with local coords
+			        // and fallback to global coordinates only if needed. 
+			        // The drawback to this approach is sometimes a valid xui path will appear to work fine, but NOT interact with the UI element
+			        // (VITA support not implemented yet or not visible to VITA due to widget further up xui path not being visible to VITA)
+			        // For this reason it's best to provide hints where possible here by leaving out local coordinates
+			        LLViewerEventRecorder::instance().setMouseLocalCoords(-1,-1);
+			        LLViewerEventRecorder::instance().logMouseEvent(buttonstatestr,buttonname); 
 
-			// Clear local coords - this was a click on root window so these are not needed
-			// By not including them, this allows the test skeleton generation tool to be smarter when generating code
-			// the code generator can be smarter because when local coords are present it can try the xui path with local coords
-			// and fallback to global coordinates only if needed. 
-			// The drawback to this approach is sometimes a valid xui path will appear to work fine, but NOT interact with the UI element
-			// (VITA support not implemented yet or not visible to VITA due to widget further up xui path not being visible to VITA)
-			// For this reason it's best to provide hints where possible here by leaving out local coordinates
-			LLViewerEventRecorder::instance().setMouseLocalCoords(-1,-1);
-			LLViewerEventRecorder::instance().logMouseEvent(buttonstatestr,buttonname); 
+			        if (LLView::sDebugMouseHandling)
+			        {
+				        LL_INFOS() << buttonname << " Mouse " << buttonstatestr << " " << LLViewerEventRecorder::instance().get_xui()	<< LL_ENDL;
+			        } 
 
-			if (LLView::sDebugMouseHandling)
-			{
-				LL_INFOS() << buttonname << " Mouse " << buttonstatestr << " " << LLViewerEventRecorder::instance().get_xui()	<< LL_ENDL;
-			} 
-			return TRUE;
-		} else if (LLView::sDebugMouseHandling)
-			{
-				LL_INFOS() << buttonname << " Mouse " << buttonstatestr << " not handled by view" << LL_ENDL;
-			}
-	}
+			        handled = TRUE;
+		        }
+                else if (LLView::sDebugMouseHandling)
+		        {
+			        LL_INFOS() << buttonname << " Mouse " << buttonstatestr << " not handled by view" << LL_ENDL;
+		        }
+            }
+	    }
 
-	// Do not allow tool manager to handle mouseclicks if we have disconnected	
-	if(!gDisconnected && LLToolMgr::getInstance()->getCurrentTool()->handleAnyMouseClick( x, y, mask, clicktype, down ) )
-	{
-		LLViewerEventRecorder::instance().clear_xui(); 
-		return TRUE;
-	}
+	    // Do not allow tool manager to handle mouseclicks if we have disconnected	
+	    if(!handled && !gDisconnected && LLToolMgr::getInstance()->getCurrentTool()->handleAnyMouseClick( x, y, mask, clicktype, down ) )
+	    {
+		    LLViewerEventRecorder::instance().clear_xui();
+            handled = r = TRUE;
+	    }
 
-	
-	// If we got this far on a down-click, it wasn't handled.
+        if (gHMD.isHMDMode())
+        {
+            gHMD.reshapeUI(FALSE);
+        }
+        
+        return r;
+    }
+
+    // If we got this far on a down-click, it wasn't handled.
 	// Up-clicks, though, are always handled as far as the OS is concerned.
 	BOOL default_rtn = !down;
 	return default_rtn;
@@ -2962,13 +2986,13 @@ void LLViewerWindow::updateUI()
 	LLLayoutStack::updateClass();
 
 	// use full window for world view when not rendering UI
-	bool world_view_uses_full_window = gAgentCamera.cameraMouselook() || !gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI);
     if (gHMD.isHMDMode())
     {
-        gViewerWindow->reshape(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), TRUE);
+        gHMD.reshapeUI(TRUE);
     }
     else
     {
+        bool world_view_uses_full_window = gAgentCamera.cameraMouselook() || !gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI);
 	    updateWorldViewRect(world_view_uses_full_window);
     }
 
@@ -2984,14 +3008,14 @@ void LLViewerWindow::updateUI()
 	if (gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_RAYCAST) || gHMD.isHMDMode())
 	{
 		gDebugRaycastFaceHit = -1;
-		gDebugRaycastObject = cursorIntersect(-1, -1, 512.f, NULL, -1, FALSE,
-											  &gDebugRaycastFaceHit,
-											  &gDebugRaycastIntersection,
-											  &gDebugRaycastTexCoord,
-											  &gDebugRaycastNormal,
-											  &gDebugRaycastTangent,
-											  &gDebugRaycastStart,
-											  &gDebugRaycastEnd);
+		gDebugRaycastObject = cursorIntersect(  -1, -1, 512.f, NULL, -1, FALSE,
+											    &gDebugRaycastFaceHit,
+											    &gDebugRaycastIntersection,
+											    &gDebugRaycastTexCoord,
+											    &gDebugRaycastNormal,
+											    &gDebugRaycastTangent,
+											    &gDebugRaycastStart,
+											    &gDebugRaycastEnd);
         if (gHMD.isHMDMode())
         {
             gHMD.updateMouseRaycast(gDebugRaycastEnd);
@@ -3365,7 +3389,7 @@ void LLViewerWindow::updateUI()
 
     if (gHMD.isHMDMode())
     {
-        gViewerWindow->reshape(gHMD.getHMDViewportWidth(), gHMD.getHMDViewportHeight(), TRUE);
+        gHMD.reshapeUI(FALSE);
     }
 }
 
@@ -4054,7 +4078,7 @@ LLViewerObject* LLViewerWindow::cursorIntersect(S32 mouse_x, S32 mouse_y, F32 de
 	return found;
 }
 
-// Returns unit vector relative to camera
+// Returns unit vector relative to  camera
 // indicating direction of point on screen x,y
 LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
 {
@@ -4064,15 +4088,7 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
     if (gHMD.isHMDMode())
     {
         //get dir from viewpoint to mouse_world
-	    LLVector3 viewPoint = camera->getOrigin();
-        if (gAgentCamera.cameraMouselook())
-        {
-            viewPoint += (camera->getAtAxis() * camera->getNear());
-        }
-        else
-        {
-            viewPoint += (camera->getAtAxis() * gHMD.getUIEyeDepth());
-        }
+	    LLVector3 viewPoint = camera->getOrigin() + (camera->getAtAxis() * camera->getNear());
 	    mouse_vector = gHMD.getMouseWorld() - viewPoint;
         mouse_vector.normalize();
     }

@@ -406,6 +406,7 @@ public:
     const LLQuaternion& getAgentRotation() const { return mAgentRot; }
     BOOL detectHMDDevice(BOOL force);
     void removeHMDDevice();
+    void reshapeUI(BOOL useUIViewPort);
 
     static void onChangeHMDAdvancedMode();
     static void onChangeInterpupillaryDistance();

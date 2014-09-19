@@ -77,8 +77,8 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	LLVector3 up_axis;
 	if (orthographic)
 	{
-		right_axis.setVec(0.f, -1.f / gViewerWindow->getWorldViewHeightScaled(), 0.f);
-		up_axis.setVec(0.f, 0.f, 1.f / gViewerWindow->getWorldViewHeightScaled());
+		right_axis.setVec(0.f, -1.f / (F32)(gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled()), 0.f);
+		up_axis.setVec(0.f, 0.f, 1.f / (F32)(gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled()));
 	}
 	else
 	{
@@ -123,7 +123,7 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	gGL.loadIdentity();
 
     LLVector4 uit((F32) winX*1.0f/LLFontGL::sScaleX, (F32) winY*1.0f/(LLFontGL::sScaleY), -(((F32) winZ*2.f)-1.f), 1.0f);
-    if (keepLevel && gHMD.isHMDMode())
+    if (!orthographic && keepLevel && gHMD.isHMDMode())
     {
         LLMatrix4 mat_neg_roll(0.0f, 0.0f, gHMD.getHMDRoll());
         LLMatrix4 mat_roll(0.0f, 0.0f, -gHMD.getHMDRoll());

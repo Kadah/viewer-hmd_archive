@@ -1861,6 +1861,22 @@ void LLHMD::render3DUI()
 }
 
 
+void LLHMD::reshapeUI(BOOL useUIViewPort)
+{
+    if (!gAgentCamera.cameraMouselook())
+    {
+        if (useUIViewPort)
+        {
+            gViewerWindow->reshape(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), TRUE);
+        }
+        else
+        {
+            gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight(), TRUE);
+        }
+    }
+}
+
+
 void LLHMD::prerender2DUI()
 {
     if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
@@ -1874,7 +1890,7 @@ void LLHMD::prerender2DUI()
         // this is necessary even though it theoretically already is using that blend type due to
         // setting the DestIsRenderTarget flag
         gGL.setSceneBlendType(LLRender::BT_ALPHA);
-        gViewerWindow->reshape(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), TRUE);
+        reshapeUI(TRUE);
     }
 }
 
@@ -1902,7 +1918,7 @@ void LLHMD::postRender2DUI()
                 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
         }
         LLUI::setDestIsRenderTarget(FALSE);
-        gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight(), TRUE);
+        reshapeUI(FALSE);
     }
 }
 

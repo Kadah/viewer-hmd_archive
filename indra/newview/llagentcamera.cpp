@@ -1125,14 +1125,7 @@ void LLAgentCamera::updateLookAt(const S32 mouse_x, const S32 mouse_y)
 		if (cameraMouselook() || cameraFirstPerson())
 		{
 			lookAtType = LOOKAT_TARGET_MOUSELOOK;
-            if (gHMD.isHMDMode())
-            {
-                headLookAxis.set(LLVector3::x_axis * gHMD.getHMDPitch() * gHMD.getHMDYaw() * gHMD.getAgentRotation());
-            }
-            else
-            {
-                headLookAxis = frameCamera.getAtAxis();
-            }
+            headLookAxis = frameCamera.getAtAxis();
 		}
 		else if (cameraThirdPerson())
 		{

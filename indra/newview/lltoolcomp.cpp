@@ -51,6 +51,7 @@
 #include "llagentcamera.h"
 #include "llfloatertools.h"
 #include "llviewercontrol.h"
+#include "llhmd.h"
 
 const S32 BUTTON_HEIGHT = 16;
 const S32 BUTTON_WIDTH_SMALL = 32;
@@ -352,7 +353,13 @@ void LLToolCompScale::pickCallback(const LLPickInfo& pick_info)
 {
 	LLViewerObject* hit_obj = pick_info.getObject();
 
-	LLToolCompScale::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+    if (!gHMD.isHMDMode())
+    {
+        // for some odd reason, scale handles don't handle calling highlightManipulators on a click in HMD mode.  Not really sure why,
+        // but the mouse position of the click seems to be in the wrong position.   However, since calling this is pretty redundant
+        // anyway and not calling it fixes the issue...
+	    LLToolCompScale::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+    }
 	if (!LLToolCompScale::getInstance()->mMouseDown)
 	{
 		// fast click on object, but mouse is already up...just do select

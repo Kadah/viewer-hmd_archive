@@ -260,8 +260,9 @@ void LLManipScale::render()
 
 				if (range_squared > 0.001f * 0.001f)
 				{
-					// range != zero
-					F32 fraction_of_fov = BOX_HANDLE_BASE_SIZE / (F32) LLViewerCamera::getInstance()->getViewHeightInPixels();
+                    // range != zero
+                    S32 h = gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels();
+					F32 fraction_of_fov = BOX_HANDLE_BASE_SIZE / (F32)h;
 					F32 apparent_angle = fraction_of_fov * LLViewerCamera::getInstance()->getView();  // radians
 					mBoxHandleSize[i] = (F32) sqrtf(range_squared) * tan(apparent_angle) * BOX_HANDLE_BASE_FACTOR;
 				}
@@ -341,7 +342,13 @@ BOOL LLManipScale::handleMouseDownOnPart( S32 x, S32 y, MASK mask )
 		return FALSE;
 	}
 
-	highlightManipulators(x, y);
+    if (!gHMD.isHMDMode())
+    {
+        // for some odd reason, scale handles don't handle calling highlightManipulators on a click in HMD mode.  Not really sure why,
+        // but the mouse position of the click seems to be in the wrong position.   However, since calling this is pretty redundant
+        // anyway and not calling it fixes the issue...
+	    highlightManipulators(x, y);
+    }
 	S32 hit_part = mHighlightedPart;
 
 	LLSelectMgr::getInstance()->enableSilhouette(FALSE);

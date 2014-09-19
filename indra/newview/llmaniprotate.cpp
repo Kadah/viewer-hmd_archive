@@ -1222,7 +1222,7 @@ BOOL LLManipRotate::updateVisiblity()
 			
 			if (mCenterToCamMag > 0.001f)
 			{
-				F32 fraction_of_fov = RADIUS_PIXELS / (F32) LLViewerCamera::getInstance()->getViewHeightInPixels();
+                F32 fraction_of_fov = RADIUS_PIXELS / (F32)(gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels());
 				F32 apparent_angle = fraction_of_fov * LLViewerCamera::getInstance()->getView();  // radians
 				mRadiusMeters = z_dist * tan(apparent_angle);
 
@@ -1802,7 +1802,8 @@ void LLManipRotate::highlightManipulators( S32 x, S32 y )
 	F32 dist_y = mouse_dir_y.normVec();
 	F32 dist_z = mouse_dir_z.normVec();
 
-	F32 distance_threshold = (MAX_MANIP_SELECT_DISTANCE * mRadiusMeters) / gViewerWindow->getWorldViewHeightScaled();
+    F32 h = gHMD.isHMDMode() ? (F32)gHMD.getHMDViewportHeight() : (F32)gViewerWindow->getWorldViewHeightScaled();
+	F32 distance_threshold = (MAX_MANIP_SELECT_DISTANCE * mRadiusMeters) / h;
 
 	if (llabs(dist_x - mRadiusMeters) * llmax(0.05f, proj_rot_x_axis) < distance_threshold)
 	{

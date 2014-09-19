@@ -1245,7 +1245,8 @@ void LLManipTranslate::renderSnapGuides()
 			F32 current_range = cam_to_selection.normVec();
 			guide_size_meters = SNAP_GUIDE_SCREEN_SIZE * gViewerWindow->getWorldViewHeightRaw() * current_range / LLViewerCamera::getInstance()->getPixelMeterRatio();
 	
-			F32 fraction_of_fov = mAxisArrowLength / (F32) LLViewerCamera::getInstance()->getViewHeightInPixels();
+            S32 h = gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels();
+			F32 fraction_of_fov = mAxisArrowLength / (F32)h;
 			F32 apparent_angle = fraction_of_fov * LLViewerCamera::getInstance()->getView();  // radians
 			F32 offset_at_camera = tan(apparent_angle) * 1.5f;
 			F32 range = dist_vec(gAgent.getPosAgentFromGlobal(first_node->mSavedPositionGlobal), LLViewerCamera::getInstance()->getOrigin());
@@ -1905,8 +1906,9 @@ void LLManipTranslate::renderTranslationHandles()
 
 		if (range > 0.001f)
 		{
-			// range != zero
-			F32 fraction_of_fov = mAxisArrowLength / (F32) LLViewerCamera::getInstance()->getViewHeightInPixels();
+            // range != zero
+            S32 h = gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels();
+			F32 fraction_of_fov = mAxisArrowLength / (F32)h;
 			F32 apparent_angle = fraction_of_fov * LLViewerCamera::getInstance()->getView();  // radians
 			mArrowLengthMeters = range * tan(apparent_angle);
 		}

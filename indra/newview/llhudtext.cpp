@@ -179,8 +179,8 @@ void LLHUDText::renderText()
 	
 	if (mOnHUDAttachment)
 	{
-		x_pixel_vec = LLVector3::y_axis / (F32)gViewerWindow->getWorldViewWidthRaw();
-		y_pixel_vec = LLVector3::z_axis / (F32)gViewerWindow->getWorldViewHeightRaw();
+		x_pixel_vec = LLVector3::y_axis / (F32)(gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : gViewerWindow->getWorldViewWidthRaw());
+		y_pixel_vec = LLVector3::z_axis / (F32)(gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightRaw());
 	}
 	else
 	{
