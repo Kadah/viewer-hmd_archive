@@ -1897,11 +1897,6 @@ void LLHMD::prerender2DUI()
 
 void LLHMD::postRender2DUI()
 {
-    //if (getCurrentEye() == LLHMD::LEFT_EYE && LLViewerDisplay::gDisplaySwapBuffers)
-    //{
-    //    LLViewerDisplay::gDisplaySwapBuffers = FALSE;
-    //}
-    //else 
     if (getCurrentEye() == LLHMD::RIGHT_EYE)
     {
         gHMD.renderCursor2D();

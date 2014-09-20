@@ -533,6 +533,11 @@ void LLHUDText::renderAllHUD()
 		
 		VisibleTextObjectIterator text_it;
 
+        if (gHMD.isHMDMode())
+        {
+            gGL.setColorMask(true, true);
+        }
+
 		for (text_it = sVisibleHUDTextObjects.begin(); text_it != sVisibleHUDTextObjects.end(); ++text_it)
 		{
 			(*text_it)->renderText();
