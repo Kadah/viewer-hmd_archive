@@ -104,7 +104,8 @@ LLManip::LLManip( const std::string& name, LLToolComposite* composite )
 	mInSnapRegime(FALSE),
 	mHighlightedPart(LL_NO_PART),
 	mManipPart(LL_NO_PART),
-    mMousePointGlobal()
+    mMousePointGlobal(),
+    mHandlingMouseClick(FALSE)
 {
 }
 
@@ -282,12 +283,13 @@ BOOL LLManip::getMousePointOnPlaneAgent(LLVector3& point, S32 x, S32 y, LLVector
 
 BOOL LLManip::getMousePointOnPlaneGlobal(LLVector3d& point, S32 x, S32 y, LLVector3d origin, LLVector3 normal) const
 {
+    LLViewerCamera* camera = LLViewerCamera::getInstance();
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
 		BOOL result = FALSE;
         S32 w = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : gViewerWindow->getWorldViewWidthScaled();
         S32 h = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled();
-		F32 mouse_x = ((F32)x / w - 0.5f) * LLViewerCamera::getInstance()->getUIAspect() / gAgentCamera.mHUDCurZoom;
+		F32 mouse_x = ((F32)x / w - 0.5f) * camera->getUIAspect() / gAgentCamera.mHUDCurZoom;
 		F32 mouse_y = ((F32)y / h - 0.5f) / gAgentCamera.mHUDCurZoom;
 
 		LLVector3 origin_agent = gAgent.getPosAgentFromGlobal(origin);
@@ -307,7 +309,37 @@ BOOL LLManip::getMousePointOnPlaneGlobal(LLVector3d& point, S32 x, S32 y, LLVect
 		point = gAgent.getPosGlobalFromAgent(mouse_pos);
 		return result;
 	}
-	else
+	else if (gHMD.isHMDMode() && !gAgentCamera.cameraMouselook())
+    {
+        F32 vpd = mHandlingMouseClick ? camera->getNear() : gHMD.getUIEyeDepth();
+        //F32 vpd = gHMD.getUIEyeDepth();
+	    LLVector3 viewPoint = camera->getOrigin() + (camera->getAtAxis() * vpd);
+	    LLVector3 mouse_vector = gHMD.getMouseWorld() - viewPoint;
+        mouse_vector.normalize();
+	    LLVector3d	mouse_direction_global_d;
+	    mouse_direction_global_d.setVec(mouse_vector);
+	    LLVector3d	plane_normal_global_d;
+	    plane_normal_global_d.setVec(normal);
+	    F64 plane_mouse_dot = (plane_normal_global_d * mouse_direction_global_d);
+	    LLVector3d plane_origin_camera_rel = origin - gAgentCamera.getCameraPositionGlobal();
+	    F64	mouse_look_at_scale = (plane_normal_global_d * plane_origin_camera_rel)
+								    / plane_mouse_dot;
+	    if (llabs(plane_mouse_dot) < 0.00001)
+	    {
+		    // if mouse is parallel to plane, return closest point on line through plane origin
+		    // that is parallel to camera plane by scaling mouse direction vector
+		    // by distance to plane origin, modulated by deviation of mouse direction from plane origin
+		    LLVector3d plane_origin_dir = plane_origin_camera_rel;
+		    plane_origin_dir.normVec();
+		
+		    mouse_look_at_scale = plane_origin_camera_rel.magVec() / (plane_origin_dir * mouse_direction_global_d);
+	    }
+
+	    point = gAgentCamera.getCameraPositionGlobal() + mouse_look_at_scale * mouse_direction_global_d;
+
+	    return mouse_look_at_scale > 0.0;
+    }
+    else
 	{
 		return gViewerWindow->mousePointOnPlaneGlobal(point, x, y, origin, normal);
 	}
@@ -323,12 +355,13 @@ BOOL LLManip::nearestPointOnLineFromMouse( S32 x, S32 y, const LLVector3& b1, co
 	LLVector3 a1;
 	LLVector3 a2;
 
+    LLViewerCamera* camera = LLViewerCamera::getInstance();
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
         S32 w = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : gViewerWindow->getWorldViewWidthScaled();
         S32 h = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled();
 
-		F32 mouse_x = (((F32)x / w) - 0.5f) * LLViewerCamera::getInstance()->getUIAspect() / gAgentCamera.mHUDCurZoom;
+		F32 mouse_x = (((F32)x / w) - 0.5f) * camera->getUIAspect() / gAgentCamera.mHUDCurZoom;
 		F32 mouse_y = (((F32)y / h) - 0.5f) / gAgentCamera.mHUDCurZoom;
 		a1 = LLVector3(llmin(b1.mV[VX] - 0.1f, b2.mV[VX] - 0.1f, 0.f), -mouse_x, mouse_y);
 		a2 = a1 + LLVector3(1.f, 0.f, 0.f);
@@ -336,7 +369,21 @@ BOOL LLManip::nearestPointOnLineFromMouse( S32 x, S32 y, const LLVector3& b1, co
 	else
 	{
 		a1 = gAgentCamera.getCameraPositionAgent();
-		a2 = gAgentCamera.getCameraPositionAgent() + LLVector3(gViewerWindow->mouseDirectionGlobal(x, y));
+		a2 = a1; // gAgentCamera.getCameraPositionAgent()
+        if (gHMD.isHMDMode() && !gAgentCamera.cameraMouselook())
+        {
+            F32 vpd = mHandlingMouseClick ? camera->getNear() : gHMD.getUIEyeDepth();
+            //F32 vpd = gHMD.getUIEyeDepth();
+	        LLVector3 viewPoint = camera->getOrigin() + (camera->getAtAxis() * vpd);
+	        LLVector3 mouse_vector = gHMD.getMouseWorld() - viewPoint;
+            mouse_vector.normalize();
+            a2 += mouse_vector;
+        }
+        else
+        {
+            a2 += LLVector3(gViewerWindow->mouseDirectionGlobal(x, y));
+        }
+        
 	}
 
 	BOOL parallel = TRUE;

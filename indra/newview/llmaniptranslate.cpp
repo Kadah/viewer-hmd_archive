@@ -315,7 +315,9 @@ BOOL LLManipTranslate::handleMouseDown(S32 x, S32 y, MASK mask)
 		 mHighlightedPart == LL_XZ_PLANE ||
 		 mHighlightedPart == LL_XY_PLANE ) )
 	{
+        mHandlingMouseClick = TRUE;
 		handled = handleMouseDownOnPart( x, y, mask );
+        mHandlingMouseClick = FALSE;
 	}
 
 	return handled;
@@ -330,7 +332,10 @@ BOOL LLManipTranslate::handleMouseDownOnPart( S32 x, S32 y, MASK mask )
 		return FALSE;
 	}
 
-	highlightManipulators(x, y);
+    if (!gHMD.isHMDMode())
+    {
+	    highlightManipulators(x, y);
+    }
 	S32 hit_part = mHighlightedPart;
 
 	if( (hit_part != LL_X_ARROW) && 
@@ -802,9 +807,10 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
 	}
 	
     BOOL use3D = gHMD.isHMDMode() && !isMouseIntersectInUISpace();
+    LLViewerCamera* camera = LLViewerCamera::getInstance();
 
-    LLMatrix4 projMatrix = LLViewerCamera::getInstance()->getProjection();
-	LLMatrix4 modelView = LLViewerCamera::getInstance()->getModelview();
+    LLMatrix4 projMatrix = camera->getProjection();
+	LLMatrix4 modelView = camera->getModelview();
 
 	LLVector3 object_position = getPivotPoint();
 	
@@ -827,14 +833,14 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
 		transform *= cfr;
 		LLMatrix4 window_scale;
 		F32 zoom_level = 2.f * gAgentCamera.mHUDCurZoom;
-		window_scale.initAll(LLVector3(zoom_level / LLViewerCamera::getInstance()->getUIAspect(), zoom_level, 0.f),
+		window_scale.initAll(LLVector3(zoom_level / camera->getUIAspect(), zoom_level, 0.f),
 			LLQuaternion::DEFAULT,
 			LLVector3::zero);
 		transform *= window_scale;
 	}
 	else
 	{
-		relative_camera_dir = (object_position - LLViewerCamera::getInstance()->getOrigin()) * ~grid_rotation;
+		relative_camera_dir = (object_position - camera->getOrigin()) * ~grid_rotation;
 		relative_camera_dir.normVec();
 		transform *= modelView;
 		transform *= projMatrix;
@@ -939,7 +945,7 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
 	    // Keep order consistent with insertion via stable_sort
 	    std::stable_sort( projected_manipulators.begin(), projected_manipulators.end(), ClosestToCamera3D() );
 
-        const LLVector3& mouse_world = LLViewerCamera::getInstance()->getOrigin();
+        const LLVector3& mouse_world = camera->getOrigin() + (camera->getAtAxis() * camera->getNear());
         LLVector3 dir = LLVector3(gHMD.getMouseWorldEnd().getF32ptr()) - mouse_world;
         dir.normalize();
 	    for (std::vector<ManipulatorHandle>::iterator it = projected_manipulators.begin(), itEnd = projected_manipulators.end(); it != itEnd; ++it)

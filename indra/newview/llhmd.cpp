@@ -100,6 +100,7 @@ LLHMD::LLHMD()
     , mStereoCullCameraFOV(0.0f)
     , mStereoCullCameraAspect(0.0f)
     , mTimewarpIntervalSeconds(0.0001f)
+    , mLastHUDColorRebuildFrame(0)
 {
     memset(&mUIShape, 0, sizeof(UISurfaceShapeSettings));
     mUIShape.mPresetType = (U32)LLHMD::kCustom;
@@ -176,7 +177,6 @@ BOOL LLHMD::init()
     gSavedSettings.getControl("HMDAllowTextRoll")->getSignal()->connect(boost::bind(&onChangeAllowTextRoll));
     onChangeAllowTextRoll();
 
-    
     preInitResult = mImpl->preInit();
     if (preInitResult)
     {
@@ -523,6 +523,10 @@ void LLHMD::onIdle()
             }
             gAgent.rotate(dy, skyward[VX], skyward[VY], skyward[VZ]);
         }
+        if (gHMD.isForceHUDColorRebuild() && (gFrameCount > (mLastHUDColorRebuildFrame + 10)))
+        {
+            gHMD.isForceHUDColorRebuild(FALSE);
+        }
     }
 }
 
@@ -750,6 +754,9 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
         {
             mImpl->resetOrientation();
         }
+
+        gHMD.isForceHUDColorRebuild(TRUE);
+        mLastHUDColorRebuildFrame = gFrameCount;
     }
 #else
     mRenderMode = RenderMode_None;

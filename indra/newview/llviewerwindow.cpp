@@ -911,10 +911,10 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
     // Up-clicks, though, are always handled as far as the OS is concerned.
     BOOL r = !down;
 
-    if (gHMD.isHMDMode())
-    {
-        gHMD.reshapeUI(TRUE);
-    }
+    //if (gHMD.isHMDMode())
+    //{
+    //    gHMD.reshapeUI(TRUE);
+    //}
 
     // only send mouse clicks to UI if UI is visible
 	if(gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
@@ -1051,10 +1051,10 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
             handled = r = TRUE;
 	    }
 
-        if (gHMD.isHMDMode())
-        {
-            gHMD.reshapeUI(FALSE);
-        }
+        //if (gHMD.isHMDMode())
+        //{
+        //    gHMD.reshapeUI(FALSE);
+        //}
         
         return r;
     }
@@ -1312,7 +1312,7 @@ void LLViewerWindow::handleMouseMove(LLWindow *window,  LLCoordGL pos, MASK mask
 		LLUI::resetMouseIdleTimer();
 	}
 
-	saveLastMouse(mouse_point);
+	saveLastMouse(mouse_point, TRUE);// FALSE);
 
 	mWindow->showCursorFromMouseMove();
 
@@ -3374,7 +3374,7 @@ void LLViewerWindow::updateUI()
 
 	updateLayout();
 
-	saveLastMouse(mCurrentMousePoint);
+	saveLastMouse(mCurrentMousePoint, TRUE);
 
 	// cleanup unused selections when no modal dialogs are open
 	if (LLModalDialog::activeCount() == 0)
@@ -3618,7 +3618,7 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 	}
 }
 
-void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
+void LLViewerWindow::saveLastMouse(const LLCoordGL &point, BOOL updateHMDMouse)
 {
 	// Store last mouse location.
 	// If mouse leaves window, pretend last point was on edge of window
@@ -3652,7 +3652,7 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 		mCurrentMousePoint.mY = point.mY;
 	}
 
-    if (gHMD.isHMDMode())
+    if (gHMD.isHMDMode() && updateHMDMouse)
     {
         gHMD.updateHMDMouseInfo();
     }
@@ -4088,7 +4088,15 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
     if (gHMD.isHMDMode())
     {
         //get dir from viewpoint to mouse_world
-	    LLVector3 viewPoint = camera->getOrigin() + (camera->getAtAxis() * camera->getNear());
+	    LLVector3 viewPoint = camera->getOrigin(); //  + (camera->getAtAxis() * camera->getNear());
+        if (gAgentCamera.cameraMouselook())
+        {
+            viewPoint += (camera->getAtAxis() * camera->getNear());
+        }
+        else
+        {
+            viewPoint += (camera->getAtAxis() * gHMD.getUIEyeDepth());
+        }
 	    mouse_vector = gHMD.getMouseWorld() - viewPoint;
         mouse_vector.normalize();
     }

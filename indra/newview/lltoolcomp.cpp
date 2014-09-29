@@ -229,7 +229,10 @@ void LLToolCompTranslate::pickCallback(const LLPickInfo& pick_info)
 {
 	LLViewerObject* hit_obj = pick_info.getObject();
 
-	LLToolCompTranslate::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+    if (!gHMD.isHMDMode())
+    {
+    	LLToolCompTranslate::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+    }
 	if (!LLToolCompTranslate::getInstance()->mMouseDown)
 	{
 		// fast click on object, but mouse is already up...just do select
@@ -559,7 +562,13 @@ void LLToolCompRotate::pickCallback(const LLPickInfo& pick_info)
 {
 	LLViewerObject* hit_obj = pick_info.getObject();
 
-	LLToolCompRotate::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+    if (!gHMD.isHMDMode())
+    {
+        // for some odd reason, rotation handles don't handle calling highlightManipulators on a click in HMD mode.  Not really sure why,
+        // but the mouse position of the click seems to be in the wrong position.   However, since calling this is pretty redundant
+        // anyway and not calling it fixes the issue...
+    	LLToolCompRotate::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+    }
 	if (!LLToolCompRotate::getInstance()->mMouseDown)
 	{
 		// fast click on object, but mouse is already up...just do select

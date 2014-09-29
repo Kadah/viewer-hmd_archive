@@ -115,7 +115,6 @@ void LLDrawPoolAlpha::beginPostDeferredPass(S32 pass)
 		fullbright_shader->bind();
 		fullbright_shader->uniform1f(LLShaderMgr::TEXTURE_GAMMA, 2.2f); 
 		fullbright_shader->uniform1f(LLShaderMgr::DISPLAY_GAMMA, (gamma > 0.1f) ? 1.0f / gamma : (1.0f/2.2f));
-        fullbright_shader->uniform1f(LLShaderMgr::ALPHA_OFFSET, 0.0f);
 		fullbright_shader->unbind();
 
 		//prime simple shader (loads shadow relevant uniforms)
@@ -592,11 +591,11 @@ void LLDrawPoolAlpha::renderAlpha(U32 mask, S32 pass)
 
 				{
 					LL_RECORD_BLOCK_TIME(FTM_RENDER_ALPHA_PUSH);
-    gGL.blendFunc((LLRender::eBlendFactor) params.mBlendFuncSrc, (LLRender::eBlendFactor) params.mBlendFuncDst, mAlphaSFactor, mAlphaDFactor);					
-				params.mVertexBuffer->setBuffer(mask & ~(params.mFullbright ? (LLVertexBuffer::MAP_TANGENT | LLVertexBuffer::MAP_TEXCOORD1 | LLVertexBuffer::MAP_TEXCOORD2) : 0));
+                    gGL.blendFunc((LLRender::eBlendFactor) params.mBlendFuncSrc, (LLRender::eBlendFactor) params.mBlendFuncDst, mAlphaSFactor, mAlphaDFactor);					
+				    params.mVertexBuffer->setBuffer(mask & ~(params.mFullbright ? (LLVertexBuffer::MAP_TANGENT | LLVertexBuffer::MAP_TEXCOORD1 | LLVertexBuffer::MAP_TEXCOORD2) : 0));
                 
-				params.mVertexBuffer->drawRange(params.mDrawMode, params.mStart, params.mEnd, params.mCount, params.mOffset);
-				gPipeline.addTrianglesDrawn(params.mCount, params.mDrawMode);
+				    params.mVertexBuffer->drawRange(params.mDrawMode, params.mStart, params.mEnd, params.mCount, params.mOffset);
+				    gPipeline.addTrianglesDrawn(params.mCount, params.mDrawMode);
 				}
 				
 				// If this alpha mesh has glow, then draw it a second time to add the destination-alpha (=glow).  Interleaving these state-changing calls could be expensive, but glow must be drawn Z-sorted with alpha.

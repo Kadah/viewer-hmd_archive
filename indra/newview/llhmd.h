@@ -101,6 +101,7 @@ public:
         kFlag_UseSRGBDistortion         = 1 << 27,
         kFlag_UseMotionPrediction       = 1 << 28,
         kFlag_MouselookYawOnly          = 1 << 29,
+        kFlag_ForceHUDColorRebuild      = 1 << 30,
     };
 
     enum eUIPresetType
@@ -212,6 +213,8 @@ public:
     void useMotionPrediction(BOOL b) { if (b) { mFlags |= kFlag_UseMotionPrediction; } else { mFlags &= ~kFlag_UseMotionPrediction; } }
     BOOL isMouselookYawOnly() const { return ((mFlags & kFlag_MouselookYawOnly) != 0) ? TRUE : FALSE; }
     void isMouselookYawOnly(BOOL b) { if (b) { mFlags |= kFlag_MouselookYawOnly; } else { mFlags &= ~kFlag_MouselookYawOnly; } }
+    BOOL isForceHUDColorRebuild() const { return ((mFlags & kFlag_ForceHUDColorRebuild) != 0) ? TRUE : FALSE; }
+    void isForceHUDColorRebuild(BOOL b) { if (b) { mFlags |= kFlag_ForceHUDColorRebuild; } else { mFlags &= ~kFlag_ForceHUDColorRebuild; } }
 
     // True if render mode != RenderMode_None
     BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
@@ -474,6 +477,7 @@ private:
 
     // DK2
     float mTimewarpIntervalSeconds;
+    U32 mLastHUDColorRebuildFrame;
 };
 
 extern LLHMD gHMD;

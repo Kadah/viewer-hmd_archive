@@ -53,6 +53,7 @@
 #include "llviewershadermgr.h"
 #include "llviewertexture.h"
 #include "llvoavatar.h"
+#include "llhmd.h"
 
 #if LL_LINUX
 // Work-around spurious used before init warning on Vector4a
@@ -1247,7 +1248,9 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 		scale = mVObjp->getScale();
 	}
 	
+    bool isHudAttachment = mVObjp->isHUDAttachment();
 	bool rebuild_pos = full_rebuild || mDrawablep->isState(LLDrawable::REBUILD_POSITION);
+    bool rebuild_hud_color = isHudAttachment && (gHMD.isHMDMode() || gHMD.isForceHUDColorRebuild());
 	bool rebuild_color = full_rebuild || mDrawablep->isState(LLDrawable::REBUILD_COLOR);
 	bool rebuild_emissive = rebuild_color && mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_EMISSIVE);
 	bool rebuild_tcoord = full_rebuild || mDrawablep->isState(LLDrawable::REBUILD_TCOORD);
@@ -1274,46 +1277,50 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 
 	LLColor4U color = tep->getColor();
 
-	if (rebuild_color)
-	{ //decide if shiny goes in alpha channel of color
-		if (tep && 
-			getPoolType() != LLDrawPool::POOL_ALPHA)  // <--- alpha channel MUST contain transparency, not shiny
-	{
-			LLMaterial* mat = tep->getMaterialParams().get();
-						
-			bool shiny_in_alpha = false;
-			
-			if (LLPipeline::sRenderDeferred)
-			{ //store shiny in alpha if we don't have a specular map
-				if  (!mat || mat->getSpecularID().isNull())
-				{
-					shiny_in_alpha = true;
-				}
-			}
-			else
-			{
-				if (!mat || mat->getDiffuseAlphaMode() != LLMaterial::DIFFUSE_ALPHA_MODE_MASK)
-				{
-					shiny_in_alpha = true;
-				}
-			}
+    // decide if shiny goes in alpha channel of color
+    // alpha channel MUST contain transparency, not shiny
+    if (rebuild_color && getPoolType() != LLDrawPool::POOL_ALPHA)
+    {
+        LLMaterial* mat = tep->getMaterialParams().get();
+        bool shiny_in_alpha = false;
 
-			if (shiny_in_alpha)
-		{
+        if (LLPipeline::sRenderDeferred)
+        { //store shiny in alpha if we don't have a specular map
+            if  (!mat || mat->getSpecularID().isNull())
+            {
+                shiny_in_alpha = true;
+            }
+        }
+        else
+        {
+            if (!mat || mat->getDiffuseAlphaMode() != LLMaterial::DIFFUSE_ALPHA_MODE_MASK)
+            {
+                shiny_in_alpha = true;
+            }
+        }
 
-			GLfloat alpha[4] =
-			{
-				0.00f,
-				0.25f,
-				0.5f,
-				0.75f
-			};
-			
-				llassert(tep->getShiny() <= 3);
-				color.mV[3] = U8 (alpha[tep->getShiny()] * 255);
-			}
-		}
-	}
+        if (shiny_in_alpha)
+        {
+            GLfloat alpha[4] = { 0.00f, 0.25f, 0.5f, 0.75f };
+            llassert(tep->getShiny() <= 3);
+            color.mV[3] = U8 (alpha[tep->getShiny()] * 255);
+        }
+    }
+
+    if (rebuild_hud_color && getPoolType() != LLDrawPool::POOL_ALPHA && gHMD.isHMDMode())
+    {
+        LLMaterial* mat = tep->getMaterialParams().get();
+        U8 mode = mat ? mat->getDiffuseAlphaMode() : LLMaterial::DIFFUSE_ALPHA_MODE_NONE;
+        if (mode == LLMaterial::DIFFUSE_ALPHA_MODE_NONE || mode == LLMaterial::DIFFUSE_ALPHA_MODE_EMISSIVE)
+        {
+            // RIFT-71: HACK!  HMD mode HUD rendering causes conflicts with shiny using the
+            // alpha channel and normally opaque textures using alpha modes of "none" or "emissive"
+            // are not rendered.  The only solution I've been able to figure out is to basically
+            // disable shiny for HUDs at this very low level.  I really dislike this hack, but it's
+            // the only solution I've found that works.
+            color.mV[3] = 255;
+        }
+    }
 
 	// INDICES
 	if (full_rebuild)
@@ -1438,7 +1445,7 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 			glEndTransformFeedback();
 		}
 
-		if (rebuild_color)
+		if (rebuild_hud_color || rebuild_color)
 		{
 			LL_RECORD_BLOCK_TIME(FTM_FACE_GEOM_FEEDBACK_COLOR);
 			gTransformColorProgram.bind();
@@ -2092,7 +2099,7 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 			}
 		}
 
-		if (rebuild_color && mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_COLOR) )
+		if ((rebuild_hud_color || rebuild_color) && mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_COLOR) )
 		{
 			LL_RECORD_BLOCK_TIME(FTM_FACE_GEOM_COLOR);
 			mVertexBuffer->getColorStrider(colors, mGeomIndex, mGeomCount, map_range);

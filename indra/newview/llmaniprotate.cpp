@@ -385,7 +385,9 @@ BOOL LLManipRotate::handleMouseDown(S32 x, S32 y, MASK mask)
 	{
 		if( mHighlightedPart != LL_NO_PART )
 		{
-			handled = handleMouseDownOnPart( x, y, mask );
+            mHandlingMouseClick = TRUE;
+		    handled = handleMouseDownOnPart( x, y, mask );
+            mHandlingMouseClick = FALSE;
 		}
 	}
 
@@ -401,7 +403,13 @@ BOOL LLManipRotate::handleMouseDownOnPart( S32 x, S32 y, MASK mask )
 		return FALSE;
 	}
 
-	highlightManipulators(x, y);
+    if (!gHMD.isHMDMode())
+    {
+        // for some odd reason, rotation handles don't handle calling highlightManipulators on a click in HMD mode.  Not really sure why,
+        // but the mouse position of the click seems to be in the wrong position.   However, since calling this is pretty redundant
+        // anyway and not calling it fixes the issue...
+	    highlightManipulators(x, y);
+    }
 	S32 hit_part = mHighlightedPart;
 	// we just started a drag, so save initial object positions
 	LLSelectMgr::getInstance()->saveSelectedObjectTransform(SELECT_ACTION_TYPE_ROTATE);

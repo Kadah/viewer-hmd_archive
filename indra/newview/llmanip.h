@@ -156,6 +156,7 @@ protected:
 protected:
 	LLFrameTimer		mHelpTextTimer;
 	BOOL				mInSnapRegime;
+    BOOL                mHandlingMouseClick;
 	LLSafeHandle<LLObjectSelection> mObjectSelection;
 	EManipPart			mHighlightedPart;
 	EManipPart			mManipPart;

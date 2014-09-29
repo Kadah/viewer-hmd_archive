@@ -327,7 +327,9 @@ BOOL LLManipScale::handleMouseDown(S32 x, S32 y, MASK mask)
 
 	if(mHighlightedPart != LL_NO_PART)
 	{
+        mHandlingMouseClick = TRUE;
 		handled = handleMouseDownOnPart( x, y, mask );
+        mHandlingMouseClick = FALSE;
 	}
 
 	return handled;
@@ -452,6 +454,7 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 	if( canAffectSelection() )
 	{
         BOOL use3D = gHMD.isHMDMode() && !isMouseIntersectInUISpace();
+        LLViewerCamera* camera = LLViewerCamera::getInstance();
 
 		LLVector4 translation(bbox.getPositionAgent());
         LLQuaternion rot = bbox.getRotation();
@@ -463,15 +466,15 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 			transform *= cfr;
 			LLMatrix4 window_scale;
 			F32 zoom_level = 2.f * gAgentCamera.mHUDCurZoom;
-			window_scale.initAll(LLVector3(zoom_level / LLViewerCamera::getInstance()->getUIAspect(), zoom_level, 0.f),
+			window_scale.initAll(LLVector3(zoom_level / camera->getUIAspect(), zoom_level, 0.f),
 				LLQuaternion::DEFAULT,
 				LLVector3::zero);
 			transform *= window_scale;
 		}
 		else
 		{
-			LLMatrix4 projMatrix = LLViewerCamera::getInstance()->getProjection();
-			LLMatrix4 modelView = LLViewerCamera::getInstance()->getModelview();
+			LLMatrix4 projMatrix = camera->getProjection();
+			LLMatrix4 modelView = camera->getModelview();
 			transform.initAll(LLVector3(1.f, 1.f, 1.f), bbox.getRotation(), bbox.getPositionAgent());
 
 			transform *= modelView;
@@ -529,7 +532,7 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
         if (use3D)
         {
             mMousePointGlobal.setZero();
-            const LLVector3& mouse_world = LLViewerCamera::getInstance()->getOrigin();
+            const LLVector3& mouse_world = camera->getOrigin() + (camera->getAtAxis() * camera->getNear());
             LLVector3 dir = LLVector3(gHMD.getMouseWorldEnd().getF32ptr()) - mouse_world;
             dir.normalize();
             F32 r2 = (mScaledBoxHandleSize * mScaledBoxHandleSize) * (0.5f * 0.5f);
