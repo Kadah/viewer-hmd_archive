@@ -1,17 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <menu name="Avatar Icon Menu">
 	<menu_item_call label="Ver perfil" name="Show Profile"/>
-	<menu_item_call label="MI" name="Send IM"/>
-	<menu_item_call label="Oferecer teletransporte" name="Offer Teleport"/>
-	<menu_item_call label="Chamada de voz" name="Voice Call"/>
-	<menu_item_call label="Histórico de bate-papo..." name="Chat History"/>
-	<menu_item_call label="Adicionar amigo" name="Add Friend"/>
-	<menu_item_call label="Remover amigo" name="Remove Friend"/>
-	<menu_item_call label="Convidar para entrar no grupo..." name="Invite Group"/>
-	<menu_item_call label="Mais zoom" name="Zoom In"/>
-	<menu_item_call label="Mapa" name="Map"/>
-	<menu_item_call label="Compartilhar" name="Share"/>
-	<menu_item_call label="Pagar" name="Pay"/>
-	<menu_item_check label="Bloquear voz" name="Block Unblock"/>
-	<menu_item_check label="Bloquear texto" name="Mute Text"/>
+	<menu_item_call label="Enviar MI..." name="Send IM"/>
+	<menu_item_call label="Solicitar teletransporte" name="Request Teleport"/>
+	<menu_item_call label="Adicionar amigo..." name="Add Friend"/>
+	<menu_item_call label="Remover amigo..." name="Remove Friend"/>
 </menu>
