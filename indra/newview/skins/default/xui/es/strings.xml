@@ -326,23 +326,74 @@ Intenta iniciar sesión de nuevo en unos instantes.
 	<string name="TestingDisconnect">
 		Probando la desconexión del visor
 	</string>
-	<string name="SocialFacebookConnecting">
-		Conectando con Facebook...
+	<string name="SocialFlickrConnecting">
+		Conectándose a Flickr...
 	</string>
-	<string name="SocialFacebookPosting">
+	<string name="SocialFlickrPosting">
 		Publicando...
 	</string>
-	<string name="SocialFacebookDisconnecting">
-		Desconectando de Facebook...
+	<string name="SocialFlickrDisconnecting">
+		Desconectándose de Flickr...
 	</string>
-	<string name="SocialFacebookErrorConnecting">
-		Problema al conectar con Facebook
+	<string name="SocialFlickrErrorConnecting">
+		Problema con la conexión a Flickr
 	</string>
-	<string name="SocialFacebookErrorPosting">
-		Problema al publicar en Facebook
+	<string name="SocialFlickrErrorPosting">
+		Problema al publicar en Flickr
 	</string>
-	<string name="SocialFacebookErrorDisconnecting">
-		Problema al desconectar de Facebook
+	<string name="SocialFlickrErrorDisconnecting">
+		Problema con la desconexión de Flickr
+	</string>
+	<string name="SocialTwitterConnecting">
+		Conectándose a Twitter...
+	</string>
+	<string name="SocialTwitterPosting">
+		Publicando...
+	</string>
+	<string name="SocialTwitterDisconnecting">
+		Desconectándose de Twitter...
+	</string>
+	<string name="SocialTwitterErrorConnecting">
+		Problema con la conexión a Twitter
+	</string>
+	<string name="SocialTwitterErrorPosting">
+		Problema al publicar en Twitter
+	</string>
+	<string name="SocialTwitterErrorDisconnecting">
+		Problema con la desconexión de Twitter
+	</string>
+	<string name="BlackAndWhite">
+		Blanco y negro
+	</string>
+	<string name="Colors1970">
+		Colores de los 70
+	</string>
+	<string name="Intense">
+		Intenso
+	</string>
+	<string name="Newspaper">
+		Periódico
+	</string>
+	<string name="Sepia">
+		Sepia
+	</string>
+	<string name="Spotlight">
+		Foco
+	</string>
+	<string name="Video">
+		Vídeo
+	</string>
+	<string name="Autocontrast">
+		Contraste automático
+	</string>
+	<string name="LensFlare">
+		Destello de lente
+	</string>
+	<string name="Miniature">
+		Miniatura
+	</string>
+	<string name="Toycamera">
+		Cámara de juguete
 	</string>
 	<string name="TooltipPerson">
 		Persona
@@ -888,6 +939,12 @@ Intenta iniciar sesión de nuevo en unos instantes.
 	</string>
 	<string name="use_texture">
 		Usar textura
+	</string>
+	<string name="manip_hint1">
+		Pasa el cursor del ratón sobre la regla
+	</string>
+	<string name="manip_hint2">
+		para ajustar a la cuadrícula
 	</string>
 	<string name="texture_loading">
 		Cargando...
@@ -4047,8 +4104,11 @@ Si sigues recibiendo este mensaje, contacta con [SUPPORT_SITE].
 	<string name="share_alert">
 		Arrastra los ítems desde el invenbtario hasta aquí
 	</string>
-	<string name="facebook_post_success">
-		Has publicado en Facebook.
+	<string name="flickr_post_success">
+		Has publicado en Flickr.
+	</string>
+	<string name="twitter_post_success">
+		Has publicado en Twitter.
 	</string>
 	<string name="no_session_message">
 		(La sesión de MI no existe)
@@ -4506,6 +4566,9 @@ Denuncia de infracción
 	<string name="LocalEstimateUSD">
 		[AMOUNT] US$
 	</string>
+	<string name="Group Ban">
+		Expulsión de grupo
+	</string>
 	<string name="Membership">
 		Membresía
 	</string>
@@ -4928,6 +4991,12 @@ Inténtalo incluyendo la ruta de acceso al editor entre comillas
 	<string name="Command_Destinations_Label">
 		Destinos
 	</string>
+	<string name="Command_Facebook_Label">
+		Facebook
+	</string>
+	<string name="Command_Flickr_Label">
+		Flickr
+	</string>
 	<string name="Command_Gestures_Label">
 		Gestos
 	</string>
@@ -4982,6 +5051,9 @@ Inténtalo incluyendo la ruta de acceso al editor entre comillas
 	<string name="Command_Speak_Label">
 		Hablar
 	</string>
+	<string name="Command_Twitter_Label">
+		Twitter
+	</string>
 	<string name="Command_View_Label">
 		Controles de la cámara
 	</string>
@@ -5011,6 +5083,12 @@ Inténtalo incluyendo la ruta de acceso al editor entre comillas
 	</string>
 	<string name="Command_Destinations_Tooltip">
 		Destinos de interés
+	</string>
+	<string name="Command_Facebook_Tooltip">
+		Publicar en Facebook
+	</string>
+	<string name="Command_Flickr_Tooltip">
+		Subir a Flickr
 	</string>
 	<string name="Command_Gestures_Tooltip">
 		Gestos para tu avatar
@@ -5065,6 +5143,9 @@ Inténtalo incluyendo la ruta de acceso al editor entre comillas
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Utiliza el micrófono para hablar con las personas próximas
+	</string>
+	<string name="Command_Twitter_Tooltip">
+		Twitter
 	</string>
 	<string name="Command_View_Tooltip">
 		Cambiando el ángulo de la cámara
