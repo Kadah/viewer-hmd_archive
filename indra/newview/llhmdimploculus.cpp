@@ -273,6 +273,7 @@ BOOL LLHMDImplOculus::detectHMDDevice(BOOL force)
                 // Need to make sure post-detection init is run properly so that setRenderMode can change immediately after this call.
                 gHMD.onIdle();
                 gHMD.onIdle();
+                mTrackingState = ovrHmd_GetTrackingState(mHMD, 0.0);
             }
         }
     }
@@ -289,11 +290,13 @@ void LLHMDImplOculus::onIdle()
 
     if (mHMD)
     {
-        ovrTrackingState ss = ovrHmd_GetTrackingState(mHMD, 0.0);
+        // RIFT-158: The camera jitters a lot when you move the camera with the HMD
+        // Apparently, calling ovrHmd_GetTrackingState with a second param of 0 causes a lot of jitter.   Weird.
+        //mTrackingState = ovrHmd_GetTrackingState(mHMD, 0.0);
         bool wasHMDConnected = gHMD.isHMDConnected();
-        BOOL isHMDConnected = (ss.StatusFlags & ovrStatus_HmdConnected) != 0;
+        BOOL isHMDConnected = (mTrackingState.StatusFlags & ovrStatus_HmdConnected) != 0;
         gHMD.isHMDConnected(gHMD.isUsingDebugHMD() || isHMDConnected);
-        gHMD.isPositionTrackingEnabled((ss.StatusFlags & (ovrStatus_PositionConnected | ovrStatus_PositionTracked)) == (ovrStatus_PositionConnected | ovrStatus_PositionTracked));
+        gHMD.isPositionTrackingEnabled((mTrackingState.StatusFlags & (ovrStatus_PositionConnected | ovrStatus_PositionTracked)) == (ovrStatus_PositionConnected | ovrStatus_PositionTracked));
         if (wasHMDConnected && !gHMD.isHMDConnected())
         {
             LL_INFOS("HMD") << "HMD Device Not Detected" << LL_ENDL;

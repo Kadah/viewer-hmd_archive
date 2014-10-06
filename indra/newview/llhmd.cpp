@@ -309,7 +309,7 @@ BOOL LLHMD::init()
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/llno.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
         mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
 
-        gHMD.isHMDAllowed(gPipeline.getUseVertexShaders());
+        gHMD.isHMDAllowed(gPipeline.getUseVertexShaders() && gGLManager.mHasVertexBufferObject);
     }
     else
 #endif
@@ -1322,6 +1322,7 @@ void LLHMD::onViewChange(S32 oldMode)
     if (gHMD.isHMDMode())
     {
         gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight());
+        gPipeline.resetVertexBuffers();
     }
 }
 

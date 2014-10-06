@@ -310,36 +310,37 @@ BOOL LLManip::getMousePointOnPlaneGlobal(LLVector3d& point, S32 x, S32 y, LLVect
 		point = gAgent.getPosGlobalFromAgent(mouse_pos);
 		return result;
 	}
-	else if (gHMD.isHMDMode() && !gAgentCamera.cameraMouselook())
-    {
-        F32 vpd = mHandlingMouseClick ? camera->getNear() : gHMD.getUIEyeDepth();
-        //F32 vpd = gHMD.getUIEyeDepth();
-	    LLVector3 viewPoint = camera->getOrigin() + (camera->getAtAxis() * vpd);
-	    LLVector3 mouse_vector = gHMD.getMouseWorld() - viewPoint;
-        mouse_vector.normalize();
-	    LLVector3d	mouse_direction_global_d;
-	    mouse_direction_global_d.setVec(mouse_vector);
-	    LLVector3d	plane_normal_global_d;
-	    plane_normal_global_d.setVec(normal);
-	    F64 plane_mouse_dot = (plane_normal_global_d * mouse_direction_global_d);
-	    LLVector3d plane_origin_camera_rel = origin - gAgentCamera.getCameraPositionGlobal();
-	    F64	mouse_look_at_scale = (plane_normal_global_d * plane_origin_camera_rel)
-								    / plane_mouse_dot;
-	    if (llabs(plane_mouse_dot) < 0.00001)
-	    {
-		    // if mouse is parallel to plane, return closest point on line through plane origin
-		    // that is parallel to camera plane by scaling mouse direction vector
-		    // by distance to plane origin, modulated by deviation of mouse direction from plane origin
-		    LLVector3d plane_origin_dir = plane_origin_camera_rel;
-		    plane_origin_dir.normVec();
-		
-		    mouse_look_at_scale = plane_origin_camera_rel.magVec() / (plane_origin_dir * mouse_direction_global_d);
-	    }
+	//else if (gHMD.isHMDMode() && !gAgentCamera.cameraMouselook())
+ //   {
+ //       F32 vpd = mHandlingMouseClick ? camera->getNear() : gHMD.getUIEyeDepth();
+ //       //F32 vpd = gHMD.getUIEyeDepth();
+ //       //F32 vpd = camera->getNear();
+	//    LLVector3 viewPoint = camera->getOrigin() + (camera->getAtAxis() * vpd);
+	//    LLVector3 mouse_vector = gHMD.getMouseWorld() - viewPoint;
+ //       mouse_vector.normalize();
+	//    LLVector3d	mouse_direction_global_d;
+	//    mouse_direction_global_d.setVec(mouse_vector);
+	//    LLVector3d	plane_normal_global_d;
+	//    plane_normal_global_d.setVec(normal);
+	//    F64 plane_mouse_dot = (plane_normal_global_d * mouse_direction_global_d);
+	//    LLVector3d plane_origin_camera_rel = origin - gAgentCamera.getCameraPositionGlobal();
+	//    F64	mouse_look_at_scale = (plane_normal_global_d * plane_origin_camera_rel)
+	//							    / plane_mouse_dot;
+	//    if (llabs(plane_mouse_dot) < 0.00001)
+	//    {
+	//	    // if mouse is parallel to plane, return closest point on line through plane origin
+	//	    // that is parallel to camera plane by scaling mouse direction vector
+	//	    // by distance to plane origin, modulated by deviation of mouse direction from plane origin
+	//	    LLVector3d plane_origin_dir = plane_origin_camera_rel;
+	//	    plane_origin_dir.normVec();
+	//	
+	//	    mouse_look_at_scale = plane_origin_camera_rel.magVec() / (plane_origin_dir * mouse_direction_global_d);
+	//    }
 
-	    point = gAgentCamera.getCameraPositionGlobal() + mouse_look_at_scale * mouse_direction_global_d;
+	//    point = gAgentCamera.getCameraPositionGlobal() + mouse_look_at_scale * mouse_direction_global_d;
 
-	    return mouse_look_at_scale > 0.0;
-    }
+	//    return mouse_look_at_scale > 0.0;
+ //   }
     else
 	{
 		return gViewerWindow->mousePointOnPlaneGlobal(point, x, y, origin, normal);
@@ -371,16 +372,16 @@ BOOL LLManip::nearestPointOnLineFromMouse( S32 x, S32 y, const LLVector3& b1, co
 	{
 		a1 = gAgentCamera.getCameraPositionAgent();
 		a2 = a1; // gAgentCamera.getCameraPositionAgent()
-        if (gHMD.isHMDMode() && !gAgentCamera.cameraMouselook())
-        {
-            F32 vpd = mHandlingMouseClick ? camera->getNear() : gHMD.getUIEyeDepth();
-            //F32 vpd = gHMD.getUIEyeDepth();
-	        LLVector3 viewPoint = camera->getOrigin() + (camera->getAtAxis() * vpd);
-	        LLVector3 mouse_vector = gHMD.getMouseWorld() - viewPoint;
-            mouse_vector.normalize();
-            a2 += mouse_vector;
-        }
-        else
+        //if (gHMD.isHMDMode() && !gAgentCamera.cameraMouselook())
+        //{
+        //    F32 vpd = mHandlingMouseClick ? camera->getNear() : gHMD.getUIEyeDepth();
+        //    //F32 vpd = gHMD.getUIEyeDepth();
+	       // LLVector3 viewPoint = camera->getOrigin() + (camera->getAtAxis() * vpd);
+	       // LLVector3 mouse_vector = gHMD.getMouseWorld() - viewPoint;
+        //    mouse_vector.normalize();
+        //    a2 += mouse_vector;
+        //}
+        //else
         {
             a2 += LLVector3(gViewerWindow->mouseDirectionGlobal(x, y));
         }
