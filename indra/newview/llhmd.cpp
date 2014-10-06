@@ -1432,19 +1432,8 @@ void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
 
     if (gAgentCamera.cameraMouselook())
     {
-        GLdouble x, y, z;
-        F64 mdlv[16], proj[16];
-        S32 vp[4];
-        gViewerWindow->getWorldViewportRaw(vp);
-        for (U32 i = 0; i < 16; i++)
-        {
-            mdlv[i] = (F64)mBaseModelView[i];
-            proj[i] = (F64)mBaseProjection[i];
-        }
-        gluUnProject(   GLdouble(mouse_x), GLdouble(mouse_y), 0.0,
-                        mdlv, proj, (GLint*)gGLViewport,
-                        &x, &y, &z);
-        world.set((F32)x, (F32)y, (F32)z);
+        LLViewerCamera* camera = LLViewerCamera::getInstance();
+        world.set(camera->getOrigin() + (camera->getAtAxis() * camera->getNear()));
     }
     else
     {

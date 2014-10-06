@@ -4096,18 +4096,17 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
 
     if (gHMD.isHMDMode())
     {
-        //get dir from viewpoint to mouse_world
-	    LLVector3 viewPoint = camera->getOrigin(); //  + (camera->getAtAxis() * camera->getNear());
         if (gAgentCamera.cameraMouselook())
         {
-            viewPoint += (camera->getAtAxis() * camera->getNear());
+            // in HMD mouselook mode, just use the camera forward direction
+            mouse_vector = camera->getAtAxis();
         }
         else
         {
-            viewPoint += (camera->getAtAxis() * gHMD.getUIEyeDepth());
+            // get dir from viewpoint to mouse_world
+            LLVector3 viewPoint = camera->getOrigin() + (camera->getAtAxis() * gHMD.getUIEyeDepth());
+            mouse_vector = gHMD.getMouseWorld() - viewPoint;
         }
-	    mouse_vector = gHMD.getMouseWorld() - viewPoint;
-        mouse_vector.normalize();
     }
     else
     {
@@ -4129,9 +4128,8 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
 	    mouse_vector =	distance * camera->getAtAxis()
 						- click_x * camera->getLeftAxis()
 						+ click_y * camera->getUpAxis();
-
-	    mouse_vector.normVec();
     }
+    mouse_vector.normalize();
 
 	return mouse_vector;
 }
