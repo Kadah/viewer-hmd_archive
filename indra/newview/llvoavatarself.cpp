@@ -299,7 +299,7 @@ BOOL LLVOAvatarSelf::buildSkeletonSelf(const LLAvatarSkeletonInfo *info)
 	mScreenp = new LLViewerJoint("mScreen", NULL);
 	// for now, put screen at origin, as it is only used during special
 	// HUD rendering mode
-	F32 aspect = LLViewerCamera::getInstance()->getAspect();
+	F32 aspect = LLViewerCamera::getInstance()->getUIAspect();
 	LLVector3 scale(1.f, aspect, 1.f);
 	mScreenp->setScale(scale);
 	mScreenp->setWorldPosition(LLVector3::zero);
@@ -623,7 +623,7 @@ BOOL LLVOAvatarSelf::updateCharacter(LLAgent &agent)
 	// update screen joint size
 	if (mScreenp)
 	{
-		F32 aspect = LLViewerCamera::getInstance()->getAspect();
+		F32 aspect = LLViewerCamera::getInstance()->getUIAspect();
 		LLVector3 scale(1.f, aspect, 1.f);
 		mScreenp->setScale(scale);
 		mScreenp->updateWorldMatrixChildren();
