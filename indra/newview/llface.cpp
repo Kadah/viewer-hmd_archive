@@ -1307,7 +1307,7 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
         }
     }
 
-    if (rebuild_hud_color && getPoolType() != LLDrawPool::POOL_ALPHA && gHMD.isHMDMode())
+    if (rebuild_hud_color && getPoolType() != LLDrawPool::POOL_ALPHA && gHMD.isHMDMode() && LLPipeline::sRenderDeferred)
     {
         LLMaterial* mat = tep->getMaterialParams().get();
         U8 mode = mat ? mat->getDiffuseAlphaMode() : LLMaterial::DIFFUSE_ALPHA_MODE_NONE;
