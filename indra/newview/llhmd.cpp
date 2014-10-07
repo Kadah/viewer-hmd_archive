@@ -146,7 +146,6 @@ BOOL LLHMD::init()
     gSavedSettings.getControl("HMDUseMotionPrediction")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDTimewarp")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDTimewarpIntervalSeconds")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
-    gSavedSettings.getControl("HMDTimewarpNoJit")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDEnablePositionalTracking")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDPixelDensity")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDUseSRGBDistortion")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
@@ -1286,7 +1285,6 @@ void LLHMD::saveSettings()
     //gSavedSettings.setF32("HMDMouselookRotThreshold", mMouselookRotThreshold);
     //gSavedSettings.setF32("HMDMouselookRotMax", mMouselookRotMax);
     //gSavedSettings.setF32("HMDMouselookTurnSpeedMax", mMouselookTurnSpeedMax);
-    //gSavedSettings.setBOOL("HMDTimewarpNoJit", gHMD.useMotionPrediction());
     //gSavedSettings.setF32("HMDPixelDensity", gHMD.useMotionPrediction());
 
     isSavingSettings(FALSE);

@@ -434,8 +434,7 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     U32 distortionCaps = ovrDistortionCap_Chromatic | ovrDistortionCap_Vignette | ovrDistortionCap_NoRestore;
     distortionCaps |= useSRGB ? ovrDistortionCap_SRGB : 0;
     distortionCaps |= gHMD.usePixelLuminanceOverdrive() ? ovrDistortionCap_Overdrive : 0;
-    distortionCaps |= gHMD.isTimewarpEnabled() ? ovrDistortionCap_TimeWarp : 0;
-    distortionCaps |= gHMD.isTimewarpEnabled() && gSavedSettings.getBOOL("HMDTimewarpNoJit") ? ovrDistortionCap_ProfileNoTimewarpSpinWaits : 0;
+    distortionCaps |= gHMD.isTimewarpEnabled() ? (ovrDistortionCap_TimeWarp | ovrDistortionCap_ProfileNoTimewarpSpinWaits) : 0;
 
     if (!ovrHmd_ConfigureRendering(mHMD, reinterpret_cast<ovrRenderAPIConfig*>(&config), distortionCaps, eyeFov, mEyeRenderDesc))
     {
