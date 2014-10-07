@@ -273,7 +273,6 @@ BOOL LLHMDImplOculus::detectHMDDevice(BOOL force)
                 // Need to make sure post-detection init is run properly so that setRenderMode can change immediately after this call.
                 gHMD.onIdle();
                 gHMD.onIdle();
-                mTrackingState = ovrHmd_GetTrackingState(mHMD, 0.0);
             }
         }
     }
@@ -540,6 +539,12 @@ BOOL LLHMDImplOculus::beginFrame()
                 mHeadPos = LLVector3::zero;
             }
 
+            for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++)
+            {
+                ovrEyeType eye = mHMD->EyeRenderOrder[eyeIndex];
+                mEyeRenderPose[eye] = ovrHmd_GetEyePose(mHMD, eye);
+            }
+
             // These need to be in LL (CFR) coord system
             // Note that the LL coord system uses X forward, Y left, and Z up whereas the Oculus SDK uses the
             // OpenGL coord system of -Z forward, X right, Y up.  To compensate, we retrieve the angles in the Oculus
@@ -564,11 +569,6 @@ BOOL LLHMDImplOculus::endFrame()
     if (res)
     {
         ovrTexture* t = const_cast<ovrTexture*>(reinterpret_cast<const ovrTexture*>(mEyeTexture));
-        for (int eyeIndex = 0; eyeIndex < ovrEye_Count; eyeIndex++)
-        {
-            ovrEyeType eye = mHMD->EyeRenderOrder[eyeIndex];
-            mEyeRenderPose[eye] = ovrHmd_GetEyePose(mHMD, eye);
-        }
         ovrHmd_EndFrame(mHMD, mEyeRenderPose, t);
     }
     gHMD.isFrameInProgress(FALSE);

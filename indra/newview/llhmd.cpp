@@ -1860,16 +1860,13 @@ void LLHMD::render3DUI()
 
 void LLHMD::reshapeUI(BOOL useUIViewPort)
 {
-    if (!gAgentCamera.cameraMouselook())
+    if (useUIViewPort)
     {
-        if (useUIViewPort)
-        {
-            gViewerWindow->reshape(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), TRUE);
-        }
-        else
-        {
-            gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight(), TRUE);
-        }
+        gViewerWindow->reshape(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), TRUE);
+    }
+    else
+    {
+        gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight(), TRUE);
     }
 }
 
