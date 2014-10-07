@@ -522,6 +522,14 @@ BOOL LLHMDImplOculus::beginFrame()
             {
                 gHMD.isFrameTimewarped(TRUE);
             }
+
+            //LL_INFOS("HMD") << std::setprecision(6)
+            //    << "[" << gFrameCount << ": " << mFrameTiming.ThisFrameSeconds << " (" << mFrameTiming.DeltaSeconds << ")] TW:" 
+            //    << (gHMD.isFrameTimewarped() ? "T" : "F")
+            //    << ", dtTimewarp: " << std::setprecision(10) << dtTimewarp
+            //    //<< ", Rot: {" << mEyeRPY[VX] << "," << mEyeRPY[VY] << "," << mEyeRPY[VZ] << "}" 
+            //    //<< ", Pos: {" << -mHeadPos[VZ] << "," << -mHeadPos[VX] << "," << mHeadPos[VY] << "}"
+            //    << LL_ENDL;
         }
         if (!gHMD.isFrameTimewarped())
         {
