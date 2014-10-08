@@ -71,8 +71,7 @@ void LLDrawPoolGlow::renderPostDeferred(S32 pass)
 		pushBatches(LLRenderPass::PASS_GLOW, getVertexDataMask() | LLVertexBuffer::MAP_TEXTURE_INDEX, TRUE, TRUE);
 	}
 	
-    gGL.setColorMask(true, gHMD.isHMDMode() ? true : false);
-	//gGL.setColorMask(true, false);
+	gGL.setColorMask(true, false);
 	gGL.setSceneBlendType(LLRender::BT_ALPHA);	
 }
 
@@ -126,8 +125,7 @@ void LLDrawPoolGlow::render(S32 pass)
 
 	pushBatches(LLRenderPass::PASS_GLOW, getVertexDataMask() | LLVertexBuffer::MAP_TEXTURE_INDEX, TRUE, TRUE);
 	
-    gGL.setColorMask(true, gHMD.isHMDMode() ? true : false);
-	//gGL.setColorMask(true, false);
+	gGL.setColorMask(true, false);
 	gGL.setSceneBlendType(LLRender::BT_ALPHA);
 	
 	if (shader_level > 0 && fullbright_shader)
@@ -620,7 +618,6 @@ void LLDrawPoolFullbright::render(S32 pass)
 
 	if (mVertexShaderLevel > 0)
 	{
-        gGL.setColorMask(true, gHMD.isHMDMode() ? true : false);
 		fullbright_shader->bind();
 		fullbright_shader->uniform1f(LLViewerShaderMgr::FULLBRIGHT, 1.f);
 		fullbright_shader->uniform1f(LLViewerShaderMgr::TEXTURE_GAMMA, 1.f);
