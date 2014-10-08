@@ -308,7 +308,7 @@ BOOL LLHMD::init()
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/llno.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
         mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
 
-        gHMD.isHMDAllowed(gPipeline.getUseVertexShaders() && gGLManager.mHasVertexBufferObject);
+        gHMD.isHMDAllowed(gPipeline.getUseVertexShaders() && LLVertexBuffer::sEnableVBOs);
     }
     else
 #endif

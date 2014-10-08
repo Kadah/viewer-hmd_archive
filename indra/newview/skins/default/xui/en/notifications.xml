@@ -10403,7 +10403,7 @@ Internal Problem: Cannot enter HMD mode because pre-initialization of the HMD de
    name="HMDModeErrorAllowed"
    type="alertmodal">
    <tag>fail</tag>
-Cannot enter HMD mode because your graphics card does not support the minimum requirements.  Vertext Shaders are required for proper rendering in HMD mode.
+Cannot enter HMD mode because your graphics card does not support the minimum requirements.  Vertext Shaders and Vertex Buffer Objects are required for proper rendering in HMD mode.
   </notification>
     
   <notification

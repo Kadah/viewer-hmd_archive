@@ -143,9 +143,18 @@ void LLFloaterHardwareSettings::refreshEnabledState()
 			fsaa_restart->setVisible(FALSE);
 		}
 	}
-    if (gHMD.isHMDMode())
+    if (gHMD.isPreDetectionInitialized())
     {
-        gHMD.renderSettingsChanged(TRUE);
+        gHMD.isHMDAllowed(gPipeline.getUseVertexShaders() && LLVertexBuffer::sEnableVBOs);
+        if (gHMD.isHMDMode())
+        {
+            gHMD.renderSettingsChanged(TRUE);
+            if (!gHMD.isHMDAllowed())
+            {
+                // if we're in HMD mode and vbo is turned off, go back to normal rendering mode
+                gHMD.setRenderMode(LLHMD::RenderMode_None);
+            }
+        }
     }
 }
 

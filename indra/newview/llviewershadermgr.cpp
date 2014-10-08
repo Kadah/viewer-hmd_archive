@@ -687,7 +687,7 @@ void LLViewerShaderMgr::setShaders()
 
     if (gHMD.isPreDetectionInitialized())
     {
-        gHMD.isHMDAllowed(gPipeline.getUseVertexShaders() && gGLManager.mHasVertexBufferObject);
+        gHMD.isHMDAllowed(gPipeline.getUseVertexShaders() && LLVertexBuffer::sEnableVBOs);
         if (gHMD.isHMDMode() && !gHMD.isHMDAllowed())
         {
             // if we're in HMD mode and basic shaders or Advanced Lighting Model are turned off,
