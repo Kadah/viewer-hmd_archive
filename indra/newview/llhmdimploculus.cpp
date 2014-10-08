@@ -197,10 +197,10 @@ BOOL LLHMDImplOculus::postDetectionInit()
     gHMD.useMirrorHack(TRUE);
     //gHMD.useMirrorHack(gHMD.isUsingAppWindow());
     BOOL isMirror = FALSE;
-#if LL_WINDOWS
-    if (!pWin->initHMDWindow(mHMD->WindowsPos.x, mHMD->WindowsPos.y, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
-#else
+#if LL_DARWIN
     if (!pWin->initHMDWindow(mHMD->DisplayId, 0, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
+#else
+    if (!pWin->initHMDWindow(mHMD->WindowsPos.x, mHMD->WindowsPos.y, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
 #endif
     {
         LL_INFOS("HMD") << "HMD Window init failed!" << LL_ENDL;
@@ -208,7 +208,6 @@ BOOL LLHMDImplOculus::postDetectionInit()
         return FALSE;
     }
 
-#if defined(LL_WINDOWS) || defined(LL_DARWIN)
     BOOL attach = FALSE;
     if (isMirror)
     {
@@ -218,7 +217,6 @@ BOOL LLHMDImplOculus::postDetectionInit()
     {
         attach = (BOOL)ovrHmd_AttachToWindow(mHMD, pWin->getPlatformWindow(1), NULL, NULL);
     }
-#endif
     if (attach)
     {
         gHMD.isPostDetectionInitialized(TRUE);

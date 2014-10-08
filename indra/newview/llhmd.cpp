@@ -475,14 +475,13 @@ void LLHMD::shutdown()
         mImpl = NULL;
     }
     mCursorTextures.clear();
-    isPreDetectionInitialized(FALSE);
-    isPostDetectionInitialized(FALSE);
-    failedInit(FALSE);
+    mFlags = 0;
 }
 
 
 void LLHMD::onIdle()
 {
+#if LL_HMD_SUPPORTED
     if (mImpl)
     {
         if (gHMD.isHMDMode() && gHMD.isFBOError())
@@ -527,6 +526,7 @@ void LLHMD::onIdle()
             gHMD.isForceHUDColorRebuild(FALSE);
         }
     }
+#endif
 }
 
 
