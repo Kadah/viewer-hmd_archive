@@ -190,14 +190,18 @@ BOOL LLHMDImplOculus::postDetectionInit()
         gHMD.isMainFullScreen(mainFullScreen);
     }
 
-    // NOTE:  as of OVR SDK 0.4.1b:
+    // NOTE:  as of OVR SDK 0.4.2b:
     //   - direct mode is detected, but will not render to the HMD with opengl
     //   - extended mode cannot render to a secondary window
     //   Thus, the only way things work is in extended mode and to render to the main window (i.e. mirroring) and then move the window to the HMD.  *sigh*
     gHMD.useMirrorHack(TRUE);
     //gHMD.useMirrorHack(gHMD.isUsingAppWindow());
     BOOL isMirror = FALSE;
+#if LL_WINDOWS
     if (!pWin->initHMDWindow(mHMD->WindowsPos.x, mHMD->WindowsPos.y, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
+#else
+    if (!pWin->initHMDWindow(mHMD->DisplayId, 0, mHMD->Resolution.w, mHMD->Resolution.h, gHMD.useMirrorHack(), isMirror))
+#endif
     {
         LL_INFOS("HMD") << "HMD Window init failed!" << LL_ENDL;
         LLNotificationsUtil::add("HMDModeErrorNoWindow");

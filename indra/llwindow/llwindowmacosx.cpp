@@ -2072,31 +2072,32 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOO
     mHMDSize[0] = width;
     mHMDSize[1] = height;
 
+    isMirror = forceMirror || left < 0 || CGDisplayIsInMirrorSet((CGDirectDisplayID)left);
+    if (isMirror)
+    {
+        // don't create a window in this case since we just want to use the main window
+        return TRUE;
+    }
+
+    S32 hmd_screen_id = -1;
     S32 screen_count = getDisplayCount();
     for (S32 screen_id = 0; screen_id < screen_count; screen_id++)
     {
         if (getDisplayId(screen_id) == (long)left)
         {
-            mHMDScreenId = screen_id;
+            hmd_screen_id = screen_id;
             break;
         }
     }
-    if (mHMDScreenId < 0)
+    if (hmd_screen_id < 0)
     {
         // Not found -> exit with error
         LL_INFOS("Window") << "Failed to create HMD window - could not find display id " << left << LL_ENDL;
         return FALSE;
     }
 
-    isMirror = forceMirror || CGDisplayIsInMirrorSet((CGDirectDisplayID)left);
-    if (isMirror)
-    {
-        // don't create a window in this case since we just want to use the "advanced" HMD mode in this case
-        return TRUE;
-    }
-
-    LL_INFOS("Window") << "Creating the HMD window on screen " << mHMDScreenId << LL_ENDL;
-    mWindow[1] = createFullScreenWindow(mHMDScreenId, FALSE);
+    LL_INFOS("Window") << "Creating the HMD window on screen " << hmd_screen_id << LL_ENDL;
+    mWindow[1] = createFullScreenWindow(hmd_screen_id, FALSE);
     if (mWindow[1] != NULL)
     {
         LL_INFOS("Window") << "Creating the HMD GL view" << LL_ENDL;
@@ -2139,8 +2140,6 @@ BOOL LLWindowMacOSX::destroyHMDWindow()
         mWindow[1] = NULL;
         closeWindow(dead_window);
     }
-
-    mHMDScreenId = -1;
 
     return TRUE;
 }

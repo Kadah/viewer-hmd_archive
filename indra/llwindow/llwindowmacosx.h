@@ -243,7 +243,6 @@ protected:
 	BOOL		mForceRebuild;
     S32	        mDragOverrideCursor;
     BOOL        mHMDMode;
-    S32         mHMDScreenId;
     S32         mHMDSize[2];
     F32         mHMDScale[2];
 
