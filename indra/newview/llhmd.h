@@ -49,8 +49,8 @@ public:
     enum eRenderMode
     {
         RenderMode_None = 0,        // Do not render to HMD
-        RenderMode_HMD,             // render to HMD
-        RenderMode_ScreenStereo,    // render to screen in stereoscopic mode (with distortion).  Useful for debugging.
+        RenderMode_HMD,             // render to HMD  (Direct Mode)
+        RenderMode_ScreenStereo,    // render to main window in stereoscopic mode (Debugging or Extended Mode)
         RenderMode_Last = RenderMode_ScreenStereo,
     };
 
@@ -521,6 +521,7 @@ public:
     virtual void getViewportInfo(S32 vp[4]) const { vp[0] = vp[1] = vp[2] = vp[3] = 0; }
     virtual S32 getViewportWidth() const { return 0; }
     virtual S32 getViewportHeight() const { return 0; }
+    virtual LLCoordScreen getHMDScreenPos() const { return LLCoordScreen(0,0); }
 
     virtual S32 getHMDWidth() const { return kDefaultHResolution; }
     virtual S32 getHMDEyeWidth() const { return (kDefaultHResolution / 2); }
@@ -558,6 +559,7 @@ public:
     virtual void showHSW(BOOL show) {}
     virtual BOOL detectHMDDevice(BOOL force) { return FALSE; }
     virtual void removeHMDDevice() {}
+    virtual BOOL calculateViewportSettings() { return FALSE; }
 };
 
 #endif // LL_LLHMD_H

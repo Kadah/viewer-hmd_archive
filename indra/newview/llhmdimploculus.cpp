@@ -209,7 +209,7 @@ BOOL LLHMDImplOculus::postDetectionInit()
     }
 
     BOOL attach = FALSE;
-    if (isMirror)
+    if (gHMD.isHMDDirectMode() || isMirror || gHMD.useMirrorHack())
     {
         attach = (BOOL)ovrHmd_AttachToWindow(mHMD, pWin->getPlatformWindow(0), NULL, NULL);
     }
@@ -416,7 +416,7 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     hmdCaps |= gHMD.useLowPersistence() ? ovrHmdCap_LowPersistence : 0;
     hmdCaps |= gHMD.useMotionPrediction() ? ovrHmdCap_DynamicPrediction : 0;
     hmdCaps |= gHMD.isHMDDisplayEnabled() ? 0 : ovrHmdCap_DisplayOff;
-    hmdCaps |= (gHMD.isHMDDirectMode() && !gHMD.isHMDMirror()) ? ovrHmdCap_NoMirrorToWindow : 0;
+    //hmdCaps |= (gHMD.isHMDDirectMode() && gHMD.isHMDMirror()) ? ovrHmdCap_NoMirrorToWindow : 0;
     ovrHmd_SetEnabledCaps(mHMD, hmdCaps);
 
     ovrGLConfig config;
@@ -429,7 +429,7 @@ BOOL LLHMDImplOculus::calculateViewportSettings()
     // work, but it depends on a windows command to get the "main" window - which sometimes returns NULL and thus rendering won't work because
     // there's no attached window (at least according to the SDK).   This is actually something of a Windows issue, but since the SDK can easily
     // work around it, it seems like this fix should be documented somewhere in the SDK docs or examples.  Oh well.
-    config.OGL.Window = (HWND)gViewerWindow->getWindow()->getPlatformWindow((!gHMD.isHMDMirror() && !gHMD.isHMDDirectMode()) ? 1 : 0);
+    config.OGL.Window = (HWND)gViewerWindow->getWindow()->getPlatformWindow((!gHMD.isHMDMirror() && !gHMD.isHMDDirectMode() && !gHMD.useMirrorHack()) ? 1 : 0);
     config.OGL.DC = NULL;
 #endif
 
@@ -680,6 +680,12 @@ S32 LLHMDImplOculus::getViewportHeight() const
 }
 
 
+LLCoordScreen LLHMDImplOculus::getHMDScreenPos() const
+{
+    return LLCoordScreen(mHMD->WindowsPos.x, mHMD->WindowsPos.y);
+}
+
+
 LLVector3 LLHMDImplOculus::getCurrentEyeCameraOffset() const
 {
     if (gHMD.isPostDetectionInitialized() && mCurrentEye != (U32)LLHMD::CENTER_EYE)
@@ -733,27 +739,27 @@ LLRenderTarget* LLHMDImplOculus::getEyeRT(U32 eye)
 
 void LLHMDImplOculus::onViewChange(S32 oldMode)
 {
-    if (mHMD && !gHMD.isHMDDirectMode() && gHMD.isHMDMirror() && gHMD.useMirrorHack())
-    {
-        LLWindow* windowp = gViewerWindow ? gViewerWindow->getWindow() : NULL;
-        if (!windowp)
-        {
-            return;
-        }
-        if (gHMD.isHMDMode())
-        {
-            // HACK!  Move main window to HMD
-            windowp->setBorderStyle(FALSE, 0);  // remove title bar
-            LLCoordScreen c(mHMD->WindowsPos.x, mHMD->WindowsPos.y);
-            windowp->setPosition(c);
-            windowp->maximize();
-            calculateViewportSettings();
-        }
-        else
-        {
-            windowp->setBorderStyle(TRUE, 0);   // re-add title bar
-        }
-    }
+    //if (mHMD && !gHMD.isHMDDirectMode() && gHMD.isHMDMirror() && gHMD.useMirrorHack())
+    //{
+    //    LLWindow* windowp = gViewerWindow ? gViewerWindow->getWindow() : NULL;
+    //    if (!windowp)
+    //    {
+    //        return;
+    //    }
+    //    if (gHMD.isHMDMode())
+    //    {
+    //        // HACK!  Move main window to HMD
+    //        windowp->setBorderStyle(FALSE, 0);  // remove title bar
+    //        LLCoordScreen c(mHMD->WindowsPos.x, mHMD->WindowsPos.y);
+    //        windowp->setPosition(c);
+    //        windowp->maximize();
+    //        calculateViewportSettings();
+    //    }
+    //    else
+    //    {
+    //        windowp->setBorderStyle(TRUE, 0);   // re-add title bar
+    //    }
+    //}
 }
 
 

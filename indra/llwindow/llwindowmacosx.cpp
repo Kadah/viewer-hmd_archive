@@ -2072,8 +2072,8 @@ BOOL LLWindowMacOSX::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOO
     mHMDSize[0] = width;
     mHMDSize[1] = height;
 
-    isMirror = forceMirror || left < 0 || CGDisplayIsInMirrorSet((CGDirectDisplayID)left);
-    if (isMirror)
+    isMirror = left < 0 || CGDisplayIsInMirrorSet((CGDirectDisplayID)left);
+    if (forceMirror || isMirror)
     {
         // don't create a window in this case since we just want to use the main window
         return TRUE;
@@ -2184,33 +2184,35 @@ BOOL LLWindowMacOSX::setFocusWindow(S32 idx)
     return TRUE;
 }
 
-void LLWindowMacOSX::setHMDMode(BOOL mode, BOOL mirrored, BOOL mainFullScreen, U32 min_width, U32 min_height)
+void LLWindowMacOSX::scaleBackSurface(BOOL scale)
+{
+    if (mCurRCIdx != 0 || !mContext)
+    {
+        return;
+    }
+    if (scale)
+    {
+        CGLSetParameter(mContext, kCGLCPSurfaceBackingSize, mHMDSize);
+        CGLEnable(mContext, kCGLCESurfaceBackingSize);
+    }
+    else
+    {
+        CGLDisable(mContext, kCGLCESurfaceBackingSize);
+    }
+}
+
+
+void LLWindowMacOSX::setHMDMode(BOOL mode, U32 min_width, U32 min_height)
 {
     BOOL oldHMDMode = mHMDMode;
     mHMDMode = mode;
-    if (mHMDMode && !oldHMDMode)
+    if (!mCursorHidden)
     {
-        if (mirrored && mCurRCIdx == 0 && mContext)
-        {
-            if (!mainFullScreen)
-            {
-                enterFullScreen();
-            }
-            CGLSetParameter(mContext, kCGLCPSurfaceBackingSize, mHMDSize);
-            CGLEnable(mContext, kCGLCESurfaceBackingSize);
-        }
-        if (!mCursorHidden)
+        if (mHMDMode && !oldHMDMode)
         {
             hideNSCursor();
         }
-    }
-    else if (oldHMDMode && !mHMDMode)
-    {
-        if (mirrored && mCurRCIdx == 0 && mContext)
-        {
-            CGLDisable(mContext, kCGLCESurfaceBackingSize);
-        }
-        if (!mCursorHidden)
+        else if (oldHMDMode && !mHMDMode)
         {
             showNSCursor();
         }

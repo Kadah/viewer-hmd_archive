@@ -52,6 +52,8 @@
 #include "llwindow.h"
 #if LL_DARWIN
     #include "llwindowmacosx.h"
+#elif LL_WINDOWS
+    #include "llwindowwin32.h"
 #endif
 #include "llviewerdisplay.h"
 #include "pipeline.h"
@@ -537,7 +539,13 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
     if (newRenderMode != mRenderMode)
     {
         LLWindow* windowp = gViewerWindow->getWindow();
-        if (!windowp || (newRenderMode == RenderMode_HMD && (!isPostDetectionInitialized() || !isHMDConnected())))
+#if LL_DARWIN
+        LLWindowMacOSX* platformWindow = windowp ? dynamic_cast<LLWindowMacOSX*>(windowp) : NULL;
+#elif LL_WINDOWS
+        LLWindowWin32* platformWindow = windowp ? dynamic_cast<LLWindowWin32*>(windowp) : NULL;
+#endif
+
+        if (!windowp || !platformWindow || !mImpl || (newRenderMode == RenderMode_HMD && (!isPostDetectionInitialized() || !isHMDConnected())))
         {
             return;
         }
@@ -555,95 +563,113 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 case RenderMode_HMD:
                     // switching from ScreenStereo to HMD
                     // not currently possible, but could change, so might as well handle it
-                    {
-                        // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
-                        // the HMD is still connected, etc.
-                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
-                        {
-                            // can't render to the HMD window, so abort
-                            mRenderMode = RenderMode_ScreenStereo;
-                            return;
-                        }
-#if LL_DARWIN
-                        // resize main window to be the size of the HMD
-                        // to handle cursor positioning in HMD mode
-                        if (!isMainFullScreen())
-                        {
-                            windowp->setSize(getHMDClientSize());
-                        }
-#endif
-                        if (!setRenderWindowHMD())
-                        {
-                            // Somehow, we've lost the HMD window, so just recreate it
-                            setRenderWindowMain();
-                            gHMD.isPostDetectionInitialized(FALSE);
-                            if (!mImpl->postDetectionInit() || !setRenderWindowHMD())
-                            {
-                                // still can't create the window - abort
-                                setRenderMode(RenderMode_ScreenStereo, setFocusWindow);
-                                return;
-                            }
-                        }
-                        windowp->enableVSync(TRUE);
-                        windowp->setHMDMode(TRUE, gHMD.isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-                        onViewChange(oldMode);
-                    }
+//                    {
+//                        // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
+//                        // the HMD is still connected, etc.
+//                        if (!gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
+//                        {
+//                            // can't render to the HMD window, so abort
+//                            mRenderMode = RenderMode_ScreenStereo;
+//                            return;
+//                        }
+//#if LL_DARWIN
+//                        // resize main window to be the size of the HMD
+//                        // to handle cursor positioning in HMD mode
+//                        if (!gHMD.isMainFullScreen())
+//                        {
+//                            windowp->setSize(getHMDClientSize());
+//                        }
+//#endif
+//                        if (!setRenderWindowHMD())
+//                        {
+//                            // Somehow, we've lost the HMD window, so just recreate it
+//                            setRenderWindowMain();
+//                            gHMD.isPostDetectionInitialized(FALSE);
+//                            if (!mImpl->postDetectionInit() || !setRenderWindowHMD())
+//                            {
+//                                // still can't create the window - abort
+//                                setRenderMode(RenderMode_ScreenStereo, setFocusWindow);
+//                                return;
+//                            }
+//                        }
+//                        windowp->enableVSync(TRUE);
+//                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+//                        onViewChange(oldMode);
+//                    }
                     break;
                 case RenderMode_ScreenStereo:
                     // switching from HMD to ScreenStereo
                     // not much to do here except resize the main window
-                    {
-                        setRenderWindowMain();
-                        windowp->setHMDMode(TRUE, isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-                        if (isMainFullScreen())
-                        {
-                            onViewChange(oldMode);
-                        }
-                        else
-                        {
-                            windowp->setSize(getHMDClientSize());
-                            windowp->setPosition(mMainWindowPos);
-                        }
-                        windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
-                    }
+                    // UNUSED TRANSITION until openGL Direct Mode support is available for Oculus SDK
+                    //{
+                    //    setRenderWindowMain();
+                    //    windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                    //    if (isMainFullScreen())
+                    //    {
+                    //        onViewChange(oldMode);
+                    //    }
+                    //    else
+                    //    {
+                    //        windowp->setSize(getHMDClientSize());
+                    //        windowp->setPosition(mMainWindowPos);
+                    //    }
+                    //    windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
+                    //}
                     break;
                 case RenderMode_None:
                 default:
                     // switching from isHMDMode() to !isHMDMode()
                     {
-                        if (oldMode == RenderMode_HMD)
+                        //if (oldMode == RenderMode_HMD)
+                        //{
+                        //    setRenderWindowMain();
+                        //}
+                        windowp->setHMDMode(FALSE, gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
+                        if (oldMode == RenderMode_ScreenStereo)
                         {
-                            setRenderWindowMain();
-                        }
-                        windowp->setHMDMode(FALSE, (isHMDMirror() && !gHMD.isUsingDebugHMD()), isMainFullScreen(), gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
 #if LL_DARWIN
-                        if (isHMDMirror())
-                        {
-                            LLWindowMacOSX* w = dynamic_cast<LLWindowMacOSX*>(windowp);
-                            if (w)
-                            {
-                                w->exitFullScreen(mMainWindowPos, mMainClientSize);
-                            }
-                        }
-                        else
+                            platformWindow->scaleBackSurface(FALSE);
 #endif
-                        if (!isMainFullScreen())
-                        {
-                            onViewChange(oldMode);
+                            if (!gHMD.isHMDMirror() && !gHMD.isUsingDebugHMD())
+                            {
 #if LL_DARWIN
-                            windowp->setSize(mMainClientSize);
+                                // Mac: exit fullscreen on HMD
+                                if (windowp->getFullscreen())
+                                {
+                                    platformWindow->exitFullScreen(mMainWindowPos, mMainClientSize);
+                                }
+                                else
+#endif
+                                // Windows: restore on HMD
+                                if (windowp->getMaximized())
+                                {
+                                    windowp->restore();
+                                }
+                                windowp->setBorderStyle(TRUE, 0);   // re-add title bar
+                                windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
+                            }
+#if LL_DARWIN
+                            if (gHMD.isMainFullScreen() && !windowp->getFullscreen())
+                            {
+                                platformWindow->enterFullScreen();
+                            }
+                            else
+#endif
+                            {
+                                if ((!gHMD.isHMDMirror() && !gHMD.isUsingDebugHMD()) || !gHMD.isMainMaximized())
+                                {
+#if LL_DARWIN
+                                    windowp->setSize(mMainClientSize);
 #else
-                            windowp->setSize(mMainWindowSize);
+                                    windowp->setSize(mMainWindowSize);
 #endif
-                            windowp->setPosition(mMainWindowPos);
-                            if (gHMD.isMainMaximized())
-                            {
-                                windowp->maximize();
+                                    windowp->setPosition(mMainWindowPos);
+                                }
+                                if (gHMD.isMainMaximized() && !windowp->getMaximized())
+                                {
+                                    windowp->maximize();
+                                }
                             }
-                        }
-                        if (oldMode == RenderMode_HMD)
-                        {
-                            windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
                         }
                         LLFloaterCamera::onHMDChange();
                         LLFloaterReg::setBlockInstance(false, "snapshot");
@@ -676,62 +702,94 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
                 LLFloaterReg::setBlockInstance(true, "snapshot");
                 switch (mRenderMode)
                 {
-                case RenderMode_HMD:
-                    // switching from Normal to HMD
-                    {
-                        // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
-                        // the HMD is still connected, etc.
-                        if (!mImpl || !gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
-                        {
-                            // can't render to the HMD window, so abort
-                            mRenderMode = RenderMode_None;
-                            return;
-                        }
-#if LL_DARWIN
-                        // resize main window to be the size of the HMD
-                        // to handle cursor positioning in HMD mode
-                        if (!isMainFullScreen())
-                        {
-                            windowp->setSize(getHMDClientSize(), TRUE);
-                        }
-#endif
-                        if (!setRenderWindowHMD())
-                        {
-                            // Somehow, we've lost the HMD window, so just recreate it
-                            setRenderWindowMain(); 
-                            gHMD.isPostDetectionInitialized(FALSE);
-                            if (!mImpl->postDetectionInit() || !setRenderWindowHMD())
-                            {
-                                // still can't create the window - abort
-                                setRenderMode(RenderMode_ScreenStereo, setFocusWindow);
-                                return;
-                            }
-                        }
-                        windowp->enableVSync(TRUE);
-                        windowp->setHMDMode(TRUE, gHMD.isHMDMirror(), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-                        pCamera->setAspect(gHMD.getAspect());
-                        pCamera->setDefaultFOV(gHMD.getVerticalFOV());
-                        gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
-                        onViewChange(oldMode);
-                    }
-                    break;
                 case RenderMode_ScreenStereo:
                     // switching from Normal to ScreenStereo
                     {
-                        windowp->setHMDMode(TRUE, (isHMDMirror() && !gHMD.isUsingDebugHMD()), isMainFullScreen(), (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
                         pCamera->setAspect(gHMD.getAspect());
                         pCamera->setDefaultFOV(gHMD.getVerticalFOV());
                         gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
-                        if (!gHMD.isUsingDebugHMD() && (isMainFullScreen() || isHMDMirror()))
+
+                        if (!gHMD.isHMDMirror() && !gHMD.isUsingDebugHMD())
                         {
-                            onViewChange(oldMode);
-                        }
-                        else
-                        {
+                            // put main window in moveable state
+#if LL_DARWIN
+                            if (gHMD.isMainFullScreen() && windowp->getFullscreen())
+                            {
+                                // exit full screen on main monitor
+                                platformWindow->exitFullScreen(mMainWindowPos, mMainClientSize);
+                            }
+                            else 
+#endif
+                            if (gHMD.isMainMaximized() && windowp->getMaximized())
+                            {
+                                windowp->restore();
+                            }
+
+                            // move main window to HMD and position at top
+                            windowp->setBorderStyle(FALSE, 0);  // remove title bar (no effect on Mac)
                             windowp->setSize(getHMDClientSize(), TRUE);
-                            windowp->setPosition(mMainWindowPos);
+                            windowp->setPosition(mImpl->getHMDScreenPos());
+
+                            // enable vsync
+                            windowp->enableVSync(TRUE);
                         }
+#if LL_DARWIN
+                        if (!windowp->getFullscreen())
+                        {
+                            platformWindow->enterFullScreen();
+                        }
+                        platformWindow->scaleBackSurface(TRUE);
+#elif LL_WINDOWS
+                        if (!windowp->getMaximized())
+                        {
+                            windowp->maximize();
+                        }
+#endif
+                        mImpl->calculateViewportSettings();
+                        gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight());
+                        gPipeline.resetVertexBuffers();
                     }
+                    break;
+                case RenderMode_HMD:
+                    // switching from Normal to HMD
+                    // UNUSED TRANSITION until openGL Direct Mode support is available for Oculus SDK
+//                    {
+//                        // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
+//                        // the HMD is still connected, etc.
+//                        if (!gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
+//                        {
+//                            // can't render to the HMD window, so abort
+//                            mRenderMode = RenderMode_None;
+//                            return;
+//                        }
+//#if LL_DARWIN
+//                        // resize main window to be the size of the HMD
+//                        // to handle cursor positioning in HMD mode
+//                        if (!gHMD.isMainFullScreen())
+//                        {
+//                            windowp->setSize(getHMDClientSize(), TRUE);
+//                        }
+//#endif
+//                        if (!setRenderWindowHMD())
+//                        {
+//                            // Somehow, we've lost the HMD window, so just recreate it
+//                            setRenderWindowMain(); 
+//                            gHMD.isPostDetectionInitialized(FALSE);
+//                            if (!mImpl->postDetectionInit() || !setRenderWindowHMD())
+//                            {
+//                                // still can't create the window - abort
+//                                setRenderMode(RenderMode_ScreenStereo, setFocusWindow);
+//                                return;
+//                            }
+//                        }
+//                        windowp->enableVSync(TRUE);
+//                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
+//                        pCamera->setAspect(gHMD.getAspect());
+//                        pCamera->setDefaultFOV(gHMD.getVerticalFOV());
+//                        gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
+//                        onViewChange(oldMode);
+//                    }
                     break;
                 }
                 LLFloaterCamera::onHMDChange();
@@ -783,33 +841,31 @@ void LLHMD::setFocusWindowMain()
 {
 #if LL_HMD_SUPPORTED
     isChangingRenderContext(TRUE);
+    BOOL curIsFullScreen = FALSE;
+    S32 curRenderWindow = gViewerWindow->getWindow()->getRenderWindow(curIsFullScreen);
     BOOL res = gViewerWindow->getWindow()->setFocusWindow(0);
     if (res)
     {
-        if (isHMDMode() && isHMDMirror())
+        if (gHMD.isHMDMode() && curRenderWindow == 0)
         {
-            // in this case, appFocusGained is not called because we're not changing windows,
-            // so just call manually
+            // in this case, appFocusGained is not called because we're not changing windows, so just call manually
             onAppFocusGained();
-            if (useMirrorHack() /* && !gViewerWindow->isMouseInWindow() */)
+            if ((!gHMD.isHMDMirror() && !gHMD.isHMDDirectMode()) || gHMD.isUsingDebugHMD())
             {
                 gViewerWindow->moveCursorToCenter();
             }
         }
-        else if (!isHMDMode())
+        else if (!gHMD.isHMDMode())
         {
 #if !LL_DARWIN
             // setFocusWindow on Mac does not call FocusGained or FocusLost.  In order to make things behave,
             // we always need to call them directly here, whether the display is mirrored or not.  On non-Mac platforms
             // we only need to call onAppFocusGained directly if we're in Mirroring mode.
-            if (isHMDMirror())
+            if (curRenderWindow == 0)
 #endif // LL_DARWIN
             {
                 onAppFocusGained();
-                //// this is handled by the appfocuslost message in windows, but since that doesn't get called on Mac, we have to
-                //// handle the critical parts here instead.
-                //gViewerWindow->showCursor();
-                if (useMirrorHack() /* && !gViewerWindow->isMouseInWindow() */)
+                if ((!gHMD.isHMDMirror() && !gHMD.isHMDDirectMode()) || gHMD.isUsingDebugHMD())
                 {
                     gViewerWindow->moveCursorToCenter();
                 }
@@ -892,12 +948,20 @@ void LLHMD::onAppFocusGained()
 void LLHMD::onAppFocusLost()
 {
 #if LL_HMD_SUPPORTED
-    if (!isChangingRenderContext() && mRenderMode == (U32)RenderMode_HMD)
+    if (gHMD.isHMDMode() && !isChangingRenderContext())
     {
-        // Make sure we change the render window to main so that we avoid BSOD in the graphics drivers when
-        // it tries to render to a (now) invalid renderContext.
-        setRenderWindowMain();
-        setRenderMode(RenderMode_None, false);
+#if LL_DARWIN
+        BOOL exitHMDMode = TRUE;
+#elif LL_WINDOWS
+        BOOL exitHMDMode = (mRenderMode == (U32)RenderMode_ScreenStereo && !gHMD.isHMDMirror() && !gHMD.isUsingDebugHMD());
+#endif
+        if (exitHMDMode)
+        {
+            // Make sure we change the render window to main so that we avoid BSOD in the graphics drivers when
+            // it tries to render to a (now) invalid renderContext.
+            setRenderWindowMain();
+            setRenderMode(RenderMode_None, false);
+        }
     }
 #endif // LL_HMD_SUPPORTED
 }

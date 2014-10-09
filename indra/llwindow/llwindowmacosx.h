@@ -134,7 +134,7 @@ public:
     /*virtual*/ BOOL destroyHMDWindow();
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
     /*virtual*/ BOOL setFocusWindow(S32 idx);
-    /*virtual*/ void setHMDMode(BOOL mode, BOOL mirrored, BOOL mainFullScreen, U32 min_width = 0, U32 min_height = 0);
+    /*virtual*/ void setHMDMode(BOOL mode, U32 min_width = 0, U32 min_height = 0);
     /*virtual*/ S32 getDisplayCount();
     /*virtual*/ void enableVSync(BOOL b);
     
@@ -159,6 +159,7 @@ public:
     void adjustPosForHMDScaling(LLCoordGL& pt);
     void enterFullScreen();
     void exitFullScreen(LLCoordScreen pos, LLCoordWindow size);
+    void scaleBackSurface(BOOL scale);
 
 protected:
 	LLWindowMacOSX(LLWindowCallbacks* callbacks,

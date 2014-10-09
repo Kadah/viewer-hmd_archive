@@ -4083,8 +4083,8 @@ BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL
         mPostQuit = TRUE;
     }
 
-    mHMDMirrored = isMirror = forceMirror || testMainDisplayIsMirrored(left, top, width, height);
-    if (isMirror)
+    mHMDMirrored = isMirror = testMainDisplayIsMirrored(left, top, width, height);
+    if (forceMirror || isMirror)
     {
         // don't create a window in this case since we just want to use the "advanced" HMD mode in this case
         return TRUE;
@@ -4224,27 +4224,16 @@ BOOL LLWindowWin32::setFocusWindow(S32 idx)
 }
 
 
-void LLWindowWin32::setHMDMode(BOOL mode, BOOL mirrored, BOOL mainFullScreen, U32 min_width, U32 min_height)
+void LLWindowWin32::setHMDMode(BOOL mode, U32 min_width, U32 min_height)
 {
     mHMDMode = mode;
     if (mHMDMode)
     {
-        if (mirrored && mCurRCIdx == 0 && !mainFullScreen && !getMaximized())
-        {
-            maximize();
-        }
         while (ShowCursor(FALSE) >= 0) {}
     }
-    else
+    else if (!isCursorHidden())
     {
-        if (mirrored && mCurRCIdx == 0 && !mainFullScreen && getMaximized())
-        {
-            restore();
-        }
-        if (!isCursorHidden())
-        {
-            showCursor();
-        }
+        showCursor();
     }
     setMinSize(min_width, min_height, false);
 }

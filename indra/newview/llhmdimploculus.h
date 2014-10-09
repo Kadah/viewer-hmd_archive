@@ -66,6 +66,8 @@ public:
     virtual void getViewportInfo(S32 vp[4]) const;
     virtual S32 getViewportWidth() const;
     virtual S32 getViewportHeight() const;
+    virtual LLCoordScreen getHMDScreenPos() const;
+
     virtual S32 getHMDWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w : kDefaultHResolution; }
     virtual S32 getHMDEyeWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w / 2 : (kDefaultHResolution / 2); }
     virtual S32 getHMDHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
@@ -100,9 +102,7 @@ public:
     virtual LLRenderTarget* getEyeRT(U32 eye);
     virtual void onViewChange(S32 oldMode);
     virtual void showHSW(BOOL show);
-
-private:
-    BOOL calculateViewportSettings();
+    virtual BOOL calculateViewportSettings();
 
 private:
     ovrHmd mHMD;
