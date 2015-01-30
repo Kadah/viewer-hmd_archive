@@ -80,6 +80,7 @@
 @interface LLNonInlineTextView : NSTextView
 {
 	LLOpenGLView *glview;
+    unichar mKeyPressed;
 }
 
 - (void) setGLView:(LLOpenGLView*)view;
