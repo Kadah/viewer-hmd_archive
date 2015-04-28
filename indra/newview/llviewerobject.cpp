@@ -3010,7 +3010,7 @@ void LLViewerObject::processTaskInvFile(void** user_data, S32 error_code, LLExtS
 BOOL LLViewerObject::loadTaskInvFile(const std::string& filename)
 {
 	std::string filename_and_local_path = gDirUtilp->getExpandedFilename(LL_PATH_CACHE, filename);
-	llifstream ifs(filename_and_local_path);
+	llifstream ifs(filename_and_local_path.c_str());
 	if(ifs.good())
 	{
 		char buffer[MAX_STRING];	/* Flawfinder: ignore */
@@ -3383,8 +3383,17 @@ void LLViewerObject::setLinksetCost(F32 cost)
 {
 	mLinksetCost = cost;
 	mCostStale = false;
-	
-	if (isSelected())
+
+	BOOL needs_refresh = isSelected();
+	child_list_t::iterator iter = mChildList.begin();
+	while(iter != mChildList.end() && !needs_refresh)
+	{
+		LLViewerObject* child = *iter;
+		needs_refresh = child->isSelected();
+		iter++;
+	}
+
+	if (needs_refresh)
 	{
 		gFloaterTools->dirty();
 	}
@@ -5214,7 +5223,6 @@ void LLViewerObject::setAttachedSound(const LLUUID &audio_uuid, const LLUUID& ow
 {
 	if (!gAudiop)
 	{
-		LL_WARNS("AudioEngine") << "LLAudioEngine instance doesn't exist!" << LL_ENDL;
 		return;
 	}
 	

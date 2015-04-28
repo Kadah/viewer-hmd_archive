@@ -54,7 +54,6 @@
 const F32 MIN_INTERPOLATE_DISTANCE_SQUARED = 0.001f * 0.001f;
 const F32 MAX_INTERPOLATE_DISTANCE_SQUARED = 10.f * 10.f;
 const F32 OBJECT_DAMPING_TIME_CONSTANT = 0.06f;
-const F32 MIN_SHADOW_CASTER_RADIUS = 2.0f;
 
 static LLTrace::BlockTimerStatHandle FTM_CULL_REBOUND("Cull Rebound");
 
@@ -874,7 +873,7 @@ void LLDrawable::updateDistance(LLCamera& camera, bool force_update)
 		}
 
 		pos -= camera.getOrigin();	
-		mDistanceWRTCamera = llround(pos.magVec(), 0.01f);
+		mDistanceWRTCamera = ll_round(pos.magVec(), 0.01f);
 		mVObjp->updateLOD();
 	}
 }
@@ -1117,7 +1116,14 @@ LLSpatialPartition* LLDrawable::getSpatialPartition()
 		retval = gPipeline.getSpatialPartition((LLViewerObject*) mVObjp);
 	}
 	else if (isRoot())
-	{	//must be an active volume
+	{
+		if (mSpatialBridge && (mSpatialBridge->asPartition()->mPartitionType == LLViewerRegion::PARTITION_HUD) != mVObjp->isHUDAttachment())
+		{
+			// remove obsolete bridge
+			mSpatialBridge->markDead();
+			setSpatialBridge(NULL);
+		}
+		//must be an active volume
 		if (!mSpatialBridge)
 		{
 			if (mVObjp->isHUDAttachment())

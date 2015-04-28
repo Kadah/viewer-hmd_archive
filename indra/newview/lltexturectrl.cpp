@@ -72,12 +72,6 @@
 #include "llfloaterreg.h"
 #include "lllocalbitmaps.h"
 
-static const S32 HPAD = 4;
-static const S32 VPAD = 4;
-static const S32 LINE = 16;
-static const S32 FOOTER_HEIGHT = 100;
-static const S32 BORDER_PAD = HPAD;
-static const S32 TEXTURE_INVENTORY_PADDING = 30;
 static const F32 CONTEXT_CONE_IN_ALPHA = 0.0f;
 static const F32 CONTEXT_CONE_OUT_ALPHA = 1.f;
 static const F32 CONTEXT_FADE_TIME = 0.08f;
@@ -586,9 +580,9 @@ void LLFloaterTexturePicker::draw()
 			mTentativeLabel->setVisible( FALSE  );
 		}
 
-		getChildView("Default")->setEnabled(mImageAssetID != mOwner->getDefaultImageAssetID());
-		getChildView("Blank")->setEnabled(mImageAssetID != mOwner->getBlankImageAssetID());
-		getChildView("None")->setEnabled(mOwner->getAllowNoTexture() && !mImageAssetID.isNull() );
+		getChildView("Default")->setEnabled(mImageAssetID != mOwner->getDefaultImageAssetID() || mOwner->getTentative());
+		getChildView("Blank")->setEnabled(mImageAssetID != mOwner->getBlankImageAssetID() || mOwner->getTentative());
+		getChildView("None")->setEnabled(mOwner->getAllowNoTexture() && (!mImageAssetID.isNull() || mOwner->getTentative()));
 
 		LLFloater::draw();
 
@@ -1511,8 +1505,8 @@ void LLTextureCtrl::draw()
 		gl_draw_x( interior, LLColor4::black );
 	}
 
-	mTentativeLabel->setVisible( !mTexturep.isNull() && getTentative() );
-	
+	mTentativeLabel->setVisible( getTentative() );
+
 	// Show "Loading..." string on the top left corner while this texture is loading.
 	// Using the discard level, do not show the string if the texture is almost but not 
 	// fully loaded.

@@ -54,7 +54,7 @@ bool LLRender::sGLCoreProfile = false;
 static const U32 LL_NUM_TEXTURE_LAYERS = 32; 
 static const U32 LL_NUM_LIGHT_UNITS = 8;
 
-static GLenum sGLTextureType[] =
+static const GLenum sGLTextureType[] =
 {
 	GL_TEXTURE_2D,
 	GL_TEXTURE_RECTANGLE_ARB,
@@ -62,14 +62,14 @@ static GLenum sGLTextureType[] =
 	GL_TEXTURE_2D_MULTISAMPLE
 };
 
-static GLint sGLAddressMode[] =
+static const GLint sGLAddressMode[] =
 {	
 	GL_REPEAT,
 	GL_MIRRORED_REPEAT,
 	GL_CLAMP_TO_EDGE
 };
 
-static GLenum sGLCompareFunc[] =
+static const GLenum sGLCompareFunc[] =
 {
 	GL_NEVER,
 	GL_ALWAYS,
@@ -83,7 +83,7 @@ static GLenum sGLCompareFunc[] =
 
 const U32 immediate_mask = LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_COLOR | LLVertexBuffer::MAP_TEXCOORD0;
 
-static GLenum sGLBlendFactor[] =
+static const GLenum sGLBlendFactor[] =
 {
 	GL_ONE,
 	GL_ZERO,
@@ -100,12 +100,12 @@ static GLenum sGLBlendFactor[] =
 };
 
 LLTexUnit::LLTexUnit(S32 index)
-: mCurrTexType(TT_NONE), mCurrBlendType(TB_MULT), 
-mCurrColorOp(TBO_MULT), mCurrAlphaOp(TBO_MULT),
-mCurrColorSrc1(TBS_TEX_COLOR), mCurrColorSrc2(TBS_PREV_COLOR),
-mCurrAlphaSrc1(TBS_TEX_ALPHA), mCurrAlphaSrc2(TBS_PREV_ALPHA),
-mCurrColorScale(1), mCurrAlphaScale(1), mCurrTexture(0),
-mHasMipMaps(false)
+	: mCurrTexType(TT_NONE), mCurrBlendType(TB_MULT), 
+	mCurrColorOp(TBO_MULT), mCurrAlphaOp(TBO_MULT),
+	mCurrColorSrc1(TBS_TEX_COLOR), mCurrColorSrc2(TBS_PREV_COLOR),
+	mCurrAlphaSrc1(TBS_TEX_ALPHA), mCurrAlphaSrc2(TBS_PREV_ALPHA),
+	mCurrColorScale(1), mCurrAlphaScale(1), mCurrTexture(0),
+	mHasMipMaps(false)
 {
 	llassert_always(index < (S32)LL_NUM_TEXTURE_LAYERS);
 	mIndex = index;
@@ -1190,7 +1190,7 @@ void LLRender::syncMatrices()
 
 	if (shader)
 	{
-		llassert(shader);
+		//llassert(shader);
 
 		bool mvp_done = false;
 
@@ -1289,7 +1289,7 @@ void LLRender::syncMatrices()
 	}
 	else if (!LLGLSLShader::sNoFixedFunction)
 	{
-		GLenum mode[] = 
+		static const GLenum mode[] = 
 		{
 			GL_MODELVIEW,
 			GL_PROJECTION,

@@ -208,11 +208,11 @@ void LLWindowMacOSX::adjustPosForHMDScaling(LLCoordGL& pt)
     {
         if (mHMDScale[0] != 0.0f)
         {
-            pt.mX = llround((F32)pt.mX / mHMDScale[0]);
+            pt.mX = ll_round((F32)pt.mX / mHMDScale[0]);
         }
         if (mHMDScale[1] != 0.0f)
         {
-            pt.mY = llround((F32)pt.mY / mHMDScale[1]);
+            pt.mY = ll_round((F32)pt.mY / mHMDScale[1]);
         }
     }
 }
@@ -264,8 +264,8 @@ void callRightMouseDown(float *pos, MASK mask)
     }
     
 	LLCoordGL		outCoords;
-	outCoords.mX = llround(pos[0]);
-	outCoords.mY = llround(pos[1]);
+	outCoords.mX = ll_round(pos[0]);
+	outCoords.mY = ll_round(pos[1]);
     gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleRightMouseDown(gWindowImplementation, outCoords, gKeyboard->currentMask(TRUE));
 }
@@ -278,8 +278,8 @@ void callRightMouseUp(float *pos, MASK mask)
     }
     
 	LLCoordGL		outCoords;
-	outCoords.mX = llround(pos[0]);
-	outCoords.mY = llround(pos[1]);
+	outCoords.mX = ll_round(pos[0]);
+	outCoords.mY = ll_round(pos[1]);
     gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleRightMouseUp(gWindowImplementation, outCoords, gKeyboard->currentMask(TRUE));
 }
@@ -292,8 +292,8 @@ void callLeftMouseDown(float *pos, MASK mask)
     }
     
 	LLCoordGL		outCoords;
-	outCoords.mX = llround(pos[0]);
-	outCoords.mY = llround(pos[1]);
+	outCoords.mX = ll_round(pos[0]);
+	outCoords.mY = ll_round(pos[1]);
     gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleMouseDown(gWindowImplementation, outCoords, gKeyboard->currentMask(TRUE));
 }
@@ -306,8 +306,8 @@ void callLeftMouseUp(float *pos, MASK mask)
     }
     
 	LLCoordGL		outCoords;
-	outCoords.mX = llround(pos[0]);
-	outCoords.mY = llround(pos[1]);
+	outCoords.mX = ll_round(pos[0]);
+	outCoords.mY = ll_round(pos[1]);
     gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleMouseUp(gWindowImplementation, outCoords, gKeyboard->currentMask(TRUE));
 	
@@ -321,8 +321,8 @@ void callDoubleClick(float *pos, MASK mask)
     }
     
 	LLCoordGL	outCoords;
-	outCoords.mX = llround(pos[0]);
-	outCoords.mY = llround(pos[1]);
+	outCoords.mX = ll_round(pos[0]);
+	outCoords.mY = ll_round(pos[1]);
     gWindowImplementation->adjustPosForHMDScaling(outCoords);
 	gWindowImplementation->getCallbacks()->handleDoubleClick(gWindowImplementation, outCoords, gKeyboard->currentMask(TRUE));
 }
@@ -338,8 +338,8 @@ void callResize(unsigned int width, unsigned int height)
 void callMouseMoved(float *pos, MASK mask)
 {
 	LLCoordGL		outCoords;
-	outCoords.mX = llround(pos[0]);
-	outCoords.mY = llround(pos[1]);
+	outCoords.mX = ll_round(pos[0]);
+	outCoords.mY = ll_round(pos[1]);
 	float deltas[2];
 	gWindowImplementation->getMouseDeltas(deltas);
 	outCoords.mX += deltas[0];
@@ -402,8 +402,8 @@ void callDeltaUpdate(float *delta, MASK mask)
 void callMiddleMouseDown(float *pos, MASK mask)
 {
 	LLCoordGL		outCoords;
-	outCoords.mX = llround(pos[0]);
-	outCoords.mY = llround(pos[1]);
+	outCoords.mX = ll_round(pos[0]);
+	outCoords.mY = ll_round(pos[1]);
 	float deltas[2];
 	gWindowImplementation->getMouseDeltas(deltas);
 	outCoords.mX += deltas[0];
@@ -415,8 +415,8 @@ void callMiddleMouseDown(float *pos, MASK mask)
 void callMiddleMouseUp(float *pos, MASK mask)
 {
 	LLCoordGL outCoords;
-	outCoords.mX = llround(pos[0]);
-	outCoords.mY = llround(pos[1]);
+	outCoords.mX = ll_round(pos[0]);
+	outCoords.mY = ll_round(pos[1]);
 	float deltas[2];
 	gWindowImplementation->getMouseDeltas(deltas);
 	outCoords.mX += deltas[0];
@@ -553,8 +553,8 @@ void LLWindowMacOSX::updateMouseDeltas(float* deltas)
 {
 	if (mCursorDecoupled)
 	{
-		mCursorLastEventDeltaX = llround(deltas[0]);
-		mCursorLastEventDeltaY = llround(-deltas[1]);
+		mCursorLastEventDeltaX = ll_round(deltas[0]);
+		mCursorLastEventDeltaY = ll_round(-deltas[1]);
 		
 		if (mCursorIgnoreNextDelta)
 		{
@@ -826,8 +826,8 @@ BOOL LLWindowMacOSX::getFramePos(LLCoordScreen* pos)
         {
             float rect[4];
             getWindowSize(mWindow[mCurRCIdx], rect);
-            pos->mX = llround(rect[0]);
-            pos->mY = llround(rect[1]);
+            pos->mX = ll_round(rect[0]);
+            pos->mY = ll_round(rect[1]);
             return TRUE;
         }
     }
@@ -848,7 +848,7 @@ BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
     {
         float rect[4];
 		getContentViewBounds(mWindow[mCurRCIdx], rect);
-        S32 sz[2] = { llround(rect[2]), llround(rect[3]) };
+        S32 sz[2] = { ll_round(rect[2]), ll_round(rect[3]) };
         if (mHMDMode)
         {
             size->mX = llmin(sz[0], mHMDSize[0]);
@@ -883,7 +883,7 @@ BOOL LLWindowMacOSX::getSize(LLCoordWindow *size)
     {
         float rect[4];
 		getContentViewBounds(mWindow[mCurRCIdx], rect);
-        S32 sz[2] = { llround(rect[2]), llround(rect[3]) };
+        S32 sz[2] = { ll_round(rect[2]), ll_round(rect[3]) };
         if (mHMDMode)
         {
             size->mX = llmin(sz[0], mHMDSize[0]);
@@ -969,8 +969,8 @@ void LLWindowMacOSX::adjustWindowToFitScreen(LLCoordWindow& size)
         {
             setWindowPos(mWindow[mCurRCIdx], winBounds);
         }
-        size.mX = llround(winBounds[2]);
-        size.mY = llround(winBounds[3]);
+        size.mX = ll_round(winBounds[2]);
+        size.mY = ll_round(winBounds[3]);
     }
 }
 
@@ -1331,6 +1331,8 @@ void LLWindowMacOSX::beforeDialog()
 
 void LLWindowMacOSX::afterDialog()
 {
+    //For fix problem with Core Flow view on OSX
+    restoreGLContext();
 }
 
 

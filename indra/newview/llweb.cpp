@@ -50,6 +50,8 @@
 #include "llviewerwindow.h"
 #include "llnotificationsutil.h"
 #include "llhmd.h"
+#include "lluriparser.h"
+#include "uriparser/Uri.h"
 
 #include <boost/regex.hpp>
 
@@ -189,10 +191,10 @@ std::string LLWeb::expandURLSubstitutions(const std::string &url,
 {
 	LLSD substitution = default_subs;
 	substitution["VERSION"] = LLVersionInfo::getVersion();
-	substitution["VERSION_MAJOR"] = (S32)(LLVersionInfo::getMajor());
-	substitution["VERSION_MINOR"] = (S32)(LLVersionInfo::getMinor());
-	substitution["VERSION_PATCH"] = (S32)(LLVersionInfo::getPatch());
-	substitution["VERSION_BUILD"] = (S32)(LLVersionInfo::getBuild());
+	substitution["VERSION_MAJOR"] = LLVersionInfo::getMajor();
+	substitution["VERSION_MINOR"] = LLVersionInfo::getMinor();
+	substitution["VERSION_PATCH"] = LLVersionInfo::getPatch();
+	substitution["VERSION_BUILD"] = LLVersionInfo::getBuild();
 	substitution["CHANNEL"] = LLVersionInfo::getChannel();
 	substitution["GRID"] = LLGridManager::getInstance()->getGridId();
 	substitution["GRID_LOWERCASE"] = utf8str_tolower(LLGridManager::getInstance()->getGridId());
@@ -244,9 +246,14 @@ bool LLWeb::useExternalBrowser(const std::string &url)
 	}
 	else if (gSavedSettings.getU32("PreferredBrowserBehavior") == BROWSER_INT_LL_EXT_OTHERS)
 	{
-		boost::regex pattern = boost::regex("\\b(lindenlab.com|secondlife.com)\\b", boost::regex::perl|boost::regex::icase);
+		LLUriParser up(url);
+		up.normalize();
+		up.extractParts();
+		std::string uri_string = up.host();
+
+		boost::regex pattern = boost::regex("\\b(lindenlab.com|secondlife.com)$", boost::regex::perl|boost::regex::icase);
 		boost::match_results<std::string::const_iterator> matches;
-		return !(boost::regex_search(url, matches, pattern));	
+		return !(boost::regex_search(uri_string, matches, pattern));
 	}
 	return false;
 }

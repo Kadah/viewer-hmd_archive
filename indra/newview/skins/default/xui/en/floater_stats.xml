@@ -37,9 +37,11 @@
        <stat_bar name="bandwidth"
                   label="UDP Data Received"
                   stat="activemessagedatareceived"
+                  decimal_digits="0"
                   show_bar="true"/>
         <stat_bar name="packet_loss"
                   label="Packet Loss"
+                  decimal_digits="1"
                   stat="packetslostpercentstat"/>
         <stat_bar name="ping"
                   label="Ping Sim"

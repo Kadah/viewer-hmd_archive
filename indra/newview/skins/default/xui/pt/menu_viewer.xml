@@ -2,7 +2,6 @@
 <menu_bar name="Main Menu">
 	<menu label="Eu" name="Me">
 		<menu_item_call label="Perfil..." name="Profile"/>
-		<menu_item_call label="Publicar no Facebook..." name="PostToFacebook"/>
 		<menu_item_call label="Aparência..." name="ChangeOutfit"/>
 		<menu_item_call label="Selecione um avatar..." name="Avatar Picker"/>
 		<menu_item_check label="Inventário..." name="Inventory"/>
@@ -13,7 +12,6 @@
 		<menu label="Movimentos" name="Movement">
 			<menu_item_call label="Sentar" name="Sit Down Here"/>
 			<menu_item_check label="Voar" name="Fly"/>
-			<menu_item_call label="Parar de voar" name="Stop flying"/>
 			<menu_item_check label="Correr sempre" name="Always Run"/>
 			<menu_item_call label="Parar minha animação" name="Stop Animating My Avatar"/>
 			<menu_item_call label="Andar/correr/voar..." name="Walk / run / fly"/>
@@ -180,6 +178,7 @@
 		<menu_item_call label="Blogs do [SECOND_LIFE]" name="Second Life Blogs"/>
 		<menu_item_call label="Denunciar abuso" name="Report Abuse"/>
 		<menu_item_call label="Relatar bug" name="Report Bug"/>
+		<menu_item_call label="Empurrões, trombadas e tapas" name="Bumps, Pushes &amp;amp; Hits"/>
 		<menu_item_call label="Sobre [APP_NAME]" name="About Second Life"/>
 	</menu>
 	<menu label="Avançado" name="Advanced">
@@ -346,7 +345,6 @@
 		<menu label="Interface" name="UI">
 			<menu_item_call label="Teste de mídia do navegador" name="Web Browser Test"/>
 			<menu_item_call label="Navegador de conteúdo web" name="Web Content Browser"/>
-			<menu_item_call label="Teste do FB Connect" name="FB Connect Test"/>
 			<menu_item_call label="Print Selected Object Info" name="Print Selected Object Info"/>
 			<menu_item_check label="Debug Clicks" name="Debug Clicks"/>
 			<menu_item_check label="Debug Mouse Events" name="Debug Mouse Events"/>

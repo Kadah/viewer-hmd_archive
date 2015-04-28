@@ -35,6 +35,7 @@
 #include "llfloaterreg.h"
 #include "llhudmanager.h"
 #include "lljoystickbutton.h"
+#include "llmorphview.h"
 #include "llmoveview.h"
 #include "llselectmgr.h"
 #include "llsmoothstep.h"
@@ -893,7 +894,6 @@ void LLAgentCamera::cameraZoomIn(const F32 fraction)
 	}
 
 
-	LLVector3d	camera_offset(mCameraFocusOffsetTarget);
 	LLVector3d	camera_offset_unit(mCameraFocusOffsetTarget);
 	F32 min_zoom = LAND_MIN_ZOOM;
 	F32 current_distance = (F32)camera_offset_unit.normalize();
@@ -972,7 +972,6 @@ void LLAgentCamera::cameraOrbitIn(const F32 meters)
 	}
 	else
 	{
-		LLVector3d	camera_offset(mCameraFocusOffsetTarget);
 		LLVector3d	camera_offset_unit(mCameraFocusOffsetTarget);
 		F32 current_distance = (F32)camera_offset_unit.normalize();
 		F32 new_distance = current_distance - meters;
@@ -2363,7 +2362,10 @@ void LLAgentCamera::changeCameraToCustomizeAvatar()
 
 		gFocusMgr.setKeyboardFocus( NULL );
 		gFocusMgr.setMouseCapture( NULL );
-
+		if( gMorphView )
+		{
+			gMorphView->setVisible( TRUE );
+		}
 		// Remove any pitch or rotation from the avatar
 		LLVector3 at = gAgent.getAtAxis();
 		at.mV[VZ] = 0.f;

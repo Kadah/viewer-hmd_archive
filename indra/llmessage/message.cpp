@@ -787,7 +787,7 @@ S32	LLMessageSystem::getReceiveBytes() const
 }
 
 
-void LLMessageSystem::processAcks()
+void LLMessageSystem::processAcks(F32 collect_time)
 {
 	F64Seconds mt_sec = getMessageTimeSeconds();
 	{
@@ -813,7 +813,7 @@ void LLMessageSystem::processAcks()
 		mCircuitInfo.resendUnackedPackets(mUnackedListDepth, mUnackedListSize);
 
 		//cycle through ack list for each host we need to send acks to
-		mCircuitInfo.sendAcks();
+		mCircuitInfo.sendAcks(collect_time);
 
 		if (!mDenyTrustedCircuitSet.empty())
 		{
@@ -2752,7 +2752,7 @@ void LLMessageSystem::dumpReceiveCounts()
 			if (mt->mReceiveCount > 0)
 			{
 				LL_INFOS("Messaging") << "Num: " << std::setw(3) << mt->mReceiveCount << " Bytes: " << std::setw(6) << mt->mReceiveBytes
-						<< " Invalid: " << std::setw(3) << mt->mReceiveInvalid << " " << mt->mName << " " << llround(100 * mt->mDecodeTimeThisFrame / mReceiveTime.value()) << "%" << LL_ENDL;
+						<< " Invalid: " << std::setw(3) << mt->mReceiveInvalid << " " << mt->mName << " " << ll_round(100 * mt->mDecodeTimeThisFrame / mReceiveTime.value()) << "%" << LL_ENDL;
 			}
 		}
 	}

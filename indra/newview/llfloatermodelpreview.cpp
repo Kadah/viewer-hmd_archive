@@ -121,12 +121,6 @@ S32 LLFloaterModelPreview::sUploadAmount = 10;
 LLFloaterModelPreview* LLFloaterModelPreview::sInstance = NULL;
 std::list<LLModelLoader*> LLModelLoader::sActiveLoaderList;
 
-const S32 PREVIEW_BORDER_WIDTH = 2;
-const S32 PREVIEW_RESIZE_HANDLE_SIZE = S32(RESIZE_HANDLE_WIDTH * OO_SQRT2) + PREVIEW_BORDER_WIDTH;
-const S32 PREVIEW_HPAD = PREVIEW_RESIZE_HANDLE_SIZE;
-const S32 PREF_BUTTON_HEIGHT = 16 + 7 + 16;
-const S32 PREVIEW_TEXTURE_HEIGHT = 300;
-
 // "Retain%" decomp parameter has values from 0.0 to 1.0 by 0.01
 // But according to the UI spec for upload model floater, this parameter
 // should be represented by Retain spinner with values from 1 to 100 by 1.
@@ -738,6 +732,11 @@ void LLFloaterModelPreview::toggleGenarateNormals()
 {
 	bool enabled = childGetValue("gen_normals").asBoolean();
 	childSetEnabled("crease_angle", enabled);
+	if(enabled) {
+		mModelPreview->generateNormals();
+	} else {
+		mModelPreview->restoreNormals();
+	}
 }
 
 //static
@@ -2161,7 +2160,7 @@ bool LLModelLoader::loadFromSLM(const std::string& filename)
 
 	S32 file_size = (S32) stat.st_size;
 	
-	llifstream ifstream(filename, std::ifstream::in | std::ifstream::binary);
+	llifstream ifstream(filename.c_str(), std::ifstream::in | std::ifstream::binary);
 	LLSD data;
 	LLSDSerialize::fromBinary(data, ifstream, file_size);
 	ifstream.close();
@@ -3519,7 +3518,7 @@ void LLModelPreview::saveUploadData(const std::string& filename, bool save_skinw
 		data["instance"][i] = instance.asLLSD();
 	}
 
-	llofstream out(filename, std::ios_base::out | std::ios_base::binary);
+	llofstream out(filename.c_str(), std::ios_base::out | std::ios_base::binary);
 	LLSDSerialize::toBinary(data, out);
 	out.flush();
 	out.close();
@@ -3840,7 +3839,6 @@ void LLModelPreview::generateNormals()
 
 	S32 which_lod = mPreviewLOD;
 
-
 	if (which_lod > 4 || which_lod < 0 ||
 		mModel[which_lod].empty())
 	{
@@ -3855,19 +3853,81 @@ void LLModelPreview::generateNormals()
 
 	if (which_lod == 3 && !mBaseModel.empty())
 	{
-		for (LLModelLoader::model_list::iterator iter = mBaseModel.begin(); iter != mBaseModel.end(); ++iter)
+		if(mBaseModelFacesCopy.empty())
 		{
-			(*iter)->generateNormals(angle_cutoff);
+			mBaseModelFacesCopy.reserve(mBaseModel.size());
+			for (LLModelLoader::model_list::iterator it = mBaseModel.begin(), itE = mBaseModel.end(); it != itE; ++it)
+			{
+				v_LLVolumeFace_t faces;
+				(*it)->copyFacesTo(faces);
+				mBaseModelFacesCopy.push_back(faces);
+			}
+		}
+
+		for (LLModelLoader::model_list::iterator it = mBaseModel.begin(), itE = mBaseModel.end(); it != itE; ++it)
+		{
+			(*it)->generateNormals(angle_cutoff);
 		}
 
 		mVertexBuffer[5].clear();
 	}
 
-	for (LLModelLoader::model_list::iterator iter = mModel[which_lod].begin(); iter != mModel[which_lod].end(); ++iter)
-	{
-		(*iter)->generateNormals(angle_cutoff);
+	bool perform_copy = mModelFacesCopy[which_lod].empty();
+	if(perform_copy) {
+		mModelFacesCopy[which_lod].reserve(mModel[which_lod].size());
 	}
 
+	for (LLModelLoader::model_list::iterator it = mModel[which_lod].begin(), itE = mModel[which_lod].end(); it != itE; ++it)
+	{
+		if(perform_copy)
+		{
+			v_LLVolumeFace_t faces;
+			(*it)->copyFacesTo(faces);
+			mModelFacesCopy[which_lod].push_back(faces);
+		}
+
+		(*it)->generateNormals(angle_cutoff);
+	}
+
+	mVertexBuffer[which_lod].clear();
+	refresh();
+	updateStatusMessages();
+}
+
+void LLModelPreview::restoreNormals()
+{
+	S32 which_lod = mPreviewLOD;
+
+	if (which_lod > 4 || which_lod < 0 ||
+		mModel[which_lod].empty())
+	{
+		return;
+	}
+
+	if(!mBaseModelFacesCopy.empty())
+	{
+		llassert(mBaseModelFacesCopy.size() == mBaseModel.size());
+
+		vv_LLVolumeFace_t::const_iterator itF = mBaseModelFacesCopy.begin();
+		for (LLModelLoader::model_list::iterator it = mBaseModel.begin(), itE = mBaseModel.end(); it != itE; ++it, ++itF)
+		{
+			(*it)->copyFacesFrom((*itF));
+		}
+
+		mBaseModelFacesCopy.clear();
+	}
+	
+	if(!mModelFacesCopy[which_lod].empty())
+	{
+		vv_LLVolumeFace_t::const_iterator itF = mModelFacesCopy[which_lod].begin();
+		for (LLModelLoader::model_list::iterator it = mModel[which_lod].begin(), itE = mModel[which_lod].end(); it != itE; ++it, ++itF)
+		{
+			(*it)->copyFacesFrom((*itF));
+		}
+
+		mModelFacesCopy[which_lod].clear();
+	}
+	
 	mVertexBuffer[which_lod].clear();
 	refresh();
 	updateStatusMessages();

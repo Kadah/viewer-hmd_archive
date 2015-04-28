@@ -56,8 +56,6 @@
 #define DEBUG_SILHOUETTE_NORMALS 0 // TomY: Use this to display normals using the silhouette
 #define DEBUG_SILHOUETTE_EDGE_MAP 0 // DaveP: Use this to display edge map using the silhouette
 
-const F32 CUT_MIN = 0.f;
-const F32 CUT_MAX = 1.f;
 const F32 MIN_CUT_DELTA = 0.02f;
 
 const F32 HOLLOW_MIN = 0.f;
@@ -560,7 +558,7 @@ void LLProfile::genNGon(const LLProfileParams& params, S32 sides, F32 offset, F3
 
 	// Scale to have size "match" scale.  Compensates to get object to generally fill bounding box.
 
-	S32 total_sides = llround(sides / ang_scale);	// Total number of sides all around
+	S32 total_sides = ll_round(sides / ang_scale);	// Total number of sides all around
 
 	if (total_sides < 8)
 	{
@@ -2077,7 +2075,7 @@ LLVolume::LLVolume(const LLVolumeParams &params, const F32 detail, const BOOL ge
 
 	generate();
 	
-	if (mParams.getSculptID().isNull() && mParams.getSculptType() == LL_SCULPT_TYPE_NONE || mParams.getSculptType() == LL_SCULPT_TYPE_MESH)
+	if ((mParams.getSculptID().isNull() && mParams.getSculptType() == LL_SCULPT_TYPE_NONE) || mParams.getSculptType() == LL_SCULPT_TYPE_MESH)
 	{
 		createVolumeFaces();
 	}
@@ -2690,6 +2688,17 @@ BOOL LLVolume::isMeshAssetLoaded()
 void LLVolume::setMeshAssetLoaded(BOOL loaded)
 {
 	mIsMeshAssetLoaded = loaded;
+}
+
+void LLVolume::copyFacesTo(std::vector<LLVolumeFace> &faces) const 
+{
+	faces = mVolumeFaces;
+}
+
+void LLVolume::copyFacesFrom(const std::vector<LLVolumeFace> &faces)
+{
+	mVolumeFaces = faces;
+	mSculptLevel = 0;
 }
 
 void LLVolume::copyVolumeFaces(const LLVolume* volume)
@@ -4034,7 +4043,6 @@ LLVertexIndexPair::LLVertexIndexPair(const LLVector3 &vertex, const S32 index)
 }
 
 const F32 VERTEX_SLOP = 0.00001f;
-const F32 VERTEX_SLOP_SQRD = VERTEX_SLOP * VERTEX_SLOP;
 
 struct lessVertex
 {
@@ -4921,9 +4929,7 @@ F64 find_vertex_score(LLVCacheVertexData& data)
 {
 	F64 score = -1.0;
 
-	if (data.mActiveTriangles >= 0)
-	{ 
-		score = 0.0;
+	score = 0.0;
 
 	S32 cache_idx = data.mCacheTag;
 
@@ -4945,9 +4951,8 @@ F64 find_vertex_score(LLVCacheVertexData& data)
 	}
 
 	//bonus points for having low valence
-		F64 valence_boost = pow((F64)data.mActiveTriangles, -FindVertexScore_ValenceBoostPower);
+	F64 valence_boost = pow((F64)data.mActiveTriangles, -FindVertexScore_ValenceBoostPower);
 	score += FindVertexScore_ValenceBoostScale * valence_boost;
-	}
 
 	return score;
 }
@@ -5977,7 +5982,10 @@ BOOL LLVolumeFace::createCap(LLVolume* volume, BOOL partial_build)
 	}
 	else
 	{ //degenerate, make up a value
-		normal.set(0,0,1);
+		if(normal.getF32ptr()[2] >= 0)
+			normal.set(0.f,0.f,1.f);
+		else
+			normal.set(0.f,0.f,-1.f);
 	}
 
 	llassert(llfinite(normal.getF32ptr()[0]));
@@ -6290,6 +6298,8 @@ BOOL LLVolumeFace::createSide(LLVolume* volume, BOOL partial_build)
 
 	num_vertices = mNumS*mNumT;
 	num_indices = (mNumS-1)*(mNumT-1)*6;
+
+	partial_build = (num_vertices > mNumVertices || num_indices > mNumIndices) ? FALSE : partial_build;
 
 	if (!partial_build)
 	{

@@ -60,6 +60,7 @@
 #include "v2math.h"
 #include <set>
 #include <boost/tokenizer.hpp>
+#include <boost/foreach.hpp>
 
 // static
 LLMenuHolderGL *LLMenuGL::sMenuContainer = NULL;
@@ -100,17 +101,10 @@ const std::string LLMenuGL::ARROW_DOWN("vvvvvvv");
 
 const F32 MAX_MOUSE_SLOPE_SUB_MENU = 0.9f;
 
-const S32 PIE_GESTURE_ACTIVATE_DISTANCE = 10;
-
 BOOL LLMenuGL::sKeyboardMode = FALSE;
 
 LLHandle<LLView> LLMenuHolderGL::sItemLastSelectedHandle;
 LLFrameTimer LLMenuHolderGL::sItemActivationTimer;
-//LLColor4 LLMenuGL::sBackgroundColor( 0.8f, 0.8f, 0.0f, 1.0f );
-
-const S32 PIE_CENTER_SIZE = 20;		// pixels, radius of center hole
-const F32 PIE_SCALE_FACTOR = 1.7f; // scale factor for pie menu when mouse is initially down
-const F32 PIE_SHRINK_TIME = 0.2f; // time of transition between unbounded and bounded display of pie menu
 
 const F32 ACTIVATE_HIGHLIGHT_TIME = 0.3f;
 
@@ -1588,7 +1582,7 @@ void LLMenuItemBranchDownGL::draw( void )
 		std::string::size_type offset = upper_case_label.find(getJumpKey());
 		if (offset != std::string::npos)
 		{
-			S32 x_offset = llround((F32)getRect().getWidth() / 2.f - getFont()->getWidthF32(mLabel.getString(), 0, S32_MAX) / 2.f);
+			S32 x_offset = ll_round((F32)getRect().getWidth() / 2.f - getFont()->getWidthF32(mLabel.getString(), 0, S32_MAX) / 2.f);
 			S32 x_begin = x_offset + getFont()->getWidth(mLabel, 0, offset);
 			S32 x_end = x_offset + getFont()->getWidth(mLabel, 0, offset + 1);
 			gl_line_2d(x_begin, LABEL_BOTTOM_PAD_PIXELS, x_end, LABEL_BOTTOM_PAD_PIXELS);
@@ -2038,15 +2032,7 @@ void LLMenuGL::arrange( void )
 
 		// torn off menus are not constrained to the size of the screen
 		U32 max_width = getTornOff() ? U32_MAX : menu_region_rect.getWidth();
-		U32 max_height = U32_MAX;
-		if (!getTornOff())
-		{
-			max_height = getRect().mTop - menu_region_rect.mBottom;
-			if (menu_region_rect.mTop - getRect().mTop > (S32)max_height)
-			{
-				max_height = menu_region_rect.mTop - getRect().mTop;
-			}
-		}
+		U32 max_height = getTornOff() ? U32_MAX: menu_region_rect.getHeight();
 
 		// *FIX: create the item first and then ask for its dimensions?
 		S32 spillover_item_width = PLAIN_PAD_PIXELS + LLFontGL::getFontSansSerif()->getWidth( std::string("More") ); // *TODO: Translate
@@ -2104,13 +2090,15 @@ void LLMenuGL::arrange( void )
 		}
 		else
 		{
+			BOOST_FOREACH(LLMenuItemGL* itemp, mItems)
+			{
+				// do first so LLMenuGLItemCall can call on_visible to determine if visible
+				itemp->buildDrawLabel();
+			}
 			item_list_t::iterator item_iter;
 
 			for (item_iter = mItems.begin(); item_iter != mItems.end(); ++item_iter)
 			{
-				// do first so LLMenuGLItemCall can call on_visible to determine if visible
-				(*item_iter)->buildDrawLabel();
-		
 				if ((*item_iter)->getVisible())
 				{
 					if (!getTornOff() 
@@ -2118,33 +2106,42 @@ void LLMenuGL::arrange( void )
 						&& *item_iter != mSpilloverBranch
 						&& height + (*item_iter)->getNominalHeight() > max_height - spillover_item_height)
 					{
-						// no room for any more items
-						createSpilloverBranch();
-
-						std::vector<LLMenuItemGL*> items_to_remove;
-						std::copy(item_iter, mItems.end(), std::back_inserter(items_to_remove));
-						std::vector<LLMenuItemGL*>::iterator spillover_iter;
-						for (spillover_iter= items_to_remove.begin(); spillover_iter != items_to_remove.end(); ++spillover_iter)
+						// don't show only one item
+						int visible_items = 0;
+						item_list_t::iterator count_iter;
+						for (count_iter = item_iter; count_iter != mItems.end(); ++count_iter)
 						{
-							LLMenuItemGL* itemp = (*spillover_iter);
-							removeChild(itemp);
-							mSpilloverMenu->addChild(itemp);
+							if((*count_iter)->getVisible())
+								visible_items++;
 						}
+						if (visible_items>1)
+						{
+							// no room for any more items
+							createSpilloverBranch();
+
+							std::vector<LLMenuItemGL*> items_to_remove;
+							std::copy(item_iter, mItems.end(), std::back_inserter(items_to_remove));
+							std::vector<LLMenuItemGL*>::iterator spillover_iter;
+							for (spillover_iter= items_to_remove.begin(); spillover_iter != items_to_remove.end(); ++spillover_iter)
+							{
+								LLMenuItemGL* itemp = (*spillover_iter);
+								removeChild(itemp);
+								mSpilloverMenu->addChild(itemp);
+							}
 
 
-						addChild(mSpilloverBranch);
+							addChild(mSpilloverBranch);
 
-						height += mSpilloverBranch->getNominalHeight();
-						width = llmax( width, mSpilloverBranch->getNominalWidth() );
+							height += mSpilloverBranch->getNominalHeight();
+							width = llmax( width, mSpilloverBranch->getNominalWidth() );
 
-						break;
+							break;
+						}
 					}
-					else
-					{
-						// track our rect
-						height += (*item_iter)->getNominalHeight();
-						width = llmax( width, (*item_iter)->getNominalWidth() );
-					}
+
+					// track our rect
+					height += (*item_iter)->getNominalHeight();
+					width = llmax( width, (*item_iter)->getNominalWidth() );
 
 					if (mScrollable)
 					{
@@ -2369,7 +2366,9 @@ void LLMenuGL::createSpilloverBranch()
 		branch_params.label = label;
 		branch_params.branch = mSpilloverMenu;
 		branch_params.font.style = "italic";
-
+		branch_params.highlight_bg_color=LLUIColorTable::instance().getColor("MenuItemHighlightBgColor");
+		branch_params.highlight_fg_color=LLUIColorTable::instance().getColor("MenuItemHighlightFgColor");
+		branch_params.enabled_color=LLUIColorTable::instance().getColor("MenuItemEnabledColor");
 
 		mSpilloverBranch = LLUICtrlFactory::create<LLMenuItemBranchGL>(branch_params);
 	}
@@ -3020,8 +3019,8 @@ BOOL LLMenuGL::handleHover( S32 x, S32 y, MASK mask )
 	LLVector2 mouse_avg_dir((F32)mMouseVelX, (F32)mMouseVelY);
 	mouse_avg_dir.normVec();
 	F32 interp = 0.5f * (llclamp(mouse_dir * mouse_avg_dir, 0.f, 1.f));
-	mMouseVelX = llround(lerp((F32)mouse_delta_x, (F32)mMouseVelX, interp));
-	mMouseVelY = llround(lerp((F32)mouse_delta_y, (F32)mMouseVelY, interp));
+	mMouseVelX = ll_round(lerp((F32)mouse_delta_x, (F32)mMouseVelX, interp));
+	mMouseVelY = ll_round(lerp((F32)mouse_delta_y, (F32)mMouseVelY, interp));
 	mLastMouseX = x;
 	mLastMouseY = y;
 
@@ -3690,7 +3689,7 @@ BOOL LLMenuHolderGL::handleKey(KEY key, MASK mask, BOOL called_from_parent)
 			{
 				handled = pMenu->handleKey(key, mask, TRUE);
 			}
-			else
+			else if (mask == MASK_NONE || (key >= KEY_LEFT && key <= KEY_DOWN))
 			{
 				//highlight first enabled one
 				if(pMenu->highlightNextItem(NULL))

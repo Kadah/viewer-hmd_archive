@@ -37,6 +37,7 @@
 #include "message.h"
 #include "llfloaterautoreplacesettings.h"
 #include "llagent.h"
+#include "llagentcamera.h"
 #include "llcheckboxctrl.h"
 #include "llcolorswatch.h"
 #include "llcombobox.h"
@@ -74,6 +75,7 @@
 #include "llviewermessage.h"
 #include "llviewershadermgr.h"
 #include "llviewerthrottle.h"
+#include "llvoavatarself.h"
 #include "llvotree.h"
 #include "llvosky.h"
 #include "llfloaterpathfindingconsole.h"
@@ -112,13 +114,9 @@
 #include "lllogininstance.h"        // to check if logged in yet
 #include "llsdserialize.h"
 
-const F32 MAX_USER_FAR_CLIP = 512.f;
-const F32 MIN_USER_FAR_CLIP = 64.f;
 const F32 BANDWIDTH_UPDATER_TIMEOUT = 0.5f;
 char const* const VISIBILITY_DEFAULT = "default";
 char const* const VISIBILITY_HIDDEN = "hidden";
-char const* const VISIBILITY_VISIBLE = "visible";
-char const* const VISIBILITY_INVISIBLE = "invisible";
 
 //control value for middle mouse as talk2push button
 const static std::string MIDDLE_MOUSE_CV = "MiddleMouse";
@@ -254,6 +252,14 @@ void handleDisplayNamesOptionChanged(const LLSD& newvalue)
 	LLVOAvatar::invalidateNameTags();
 }
 
+void handleAppearanceCameraMovementChanged(const LLSD& newvalue)
+{
+	if(!newvalue.asBoolean() && gAgentCamera.getCameraMode() == CAMERA_MODE_CUSTOMIZE_AVATAR)
+	{
+		gAgentCamera.changeCameraToDefault();
+		gAgentCamera.resetView();
+	}
+}
 
 /*bool callback_skip_dialogs(const LLSD& notification, const LLSD& response, LLFloaterPreference* floater)
 {
@@ -294,8 +300,8 @@ void fractionFromDecimal(F32 decimal_val, S32& numerator, S32& denominator)
 	{
 		if (fmodf((decimal_val * test_denominator) + 0.01f, 1.f) < 0.02f)
 		{
-			numerator = llround(decimal_val * test_denominator);
-			denominator = llround(test_denominator);
+			numerator = ll_round(decimal_val * test_denominator);
+			denominator = ll_round(test_denominator);
 			break;
 		}
 	}
@@ -365,6 +371,8 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	gSavedSettings.getControl("NameTagShowFriends")->getCommitSignal()->connect(boost::bind(&handleNameTagOptionChanged,  _2));	
 	gSavedSettings.getControl("UseDisplayNames")->getCommitSignal()->connect(boost::bind(&handleDisplayNamesOptionChanged,  _2));
 	
+	gSavedSettings.getControl("AppearanceCameraMovement")->getCommitSignal()->connect(boost::bind(&handleAppearanceCameraMovementChanged,  _2));
+
 	LLAvatarPropertiesProcessor::getInstance()->addObserver( gAgent.getID(), this );
 
 	mCommitCallbackRegistrar.add("Pref.ClearLog",				boost::bind(&LLConversationLog::onClearLog, &LLConversationLog::instance()));
@@ -723,13 +731,13 @@ void LLFloaterPreference::onOpen(const LLSD& key)
 				maturity_list->deleteItems(LLSD(SIM_ACCESS_ADULT));
 			}
 		}
-		getChildView("maturity_desired_combobox")->setVisible( true);
+		getChildView("maturity_desired_combobox")->setEnabled( true);
 		getChildView("maturity_desired_textbox")->setVisible( false);
 	}
 	else
 	{
 		getChild<LLUICtrl>("maturity_desired_textbox")->setValue(maturity_combo->getSelectedItemLabel());
-		getChildView("maturity_desired_combobox")->setVisible( false);
+		getChildView("maturity_desired_combobox")->setEnabled( false);
 	}
 
 	// Forget previous language changes.
@@ -2047,6 +2055,12 @@ void LLPanelPreference::cancel()
 	{
 		LLControlVariable* control = iter->first;
 		LLSD ctrl_value = iter->second;
+
+		if((control->getName() == "InstantMessageLogPath") && (ctrl_value.asString() == ""))
+		{
+			continue;
+		}
+
 		control->set(ctrl_value);
 	}
 

@@ -1696,8 +1696,8 @@ void LLHMD::renderCursor2D()
             if (pCursorTexture)
             {
                 const LLVector2& curoff = getCursorHotspotOffset(cursorType);
-                S32 offx = llround(-32.0f * curoff[VX]);
-                S32 offy = -32 + llround(32.0f * curoff[VY]);
+                S32 offx = ll_round(-32.0f * curoff[VX]);
+                S32 offy = -32 + ll_round(32.0f * curoff[VY]);
                 gl_draw_scaled_image(mx + offx, my + offy, 32, 32, pCursorTexture);
             }
             else

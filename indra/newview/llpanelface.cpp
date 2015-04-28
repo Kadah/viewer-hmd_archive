@@ -77,8 +77,6 @@ const S32 MATMEDIA_MEDIA = 1;		// Media
 const S32 MATTYPE_DIFFUSE = 0;		// Diffuse material texture
 const S32 MATTYPE_NORMAL = 1;		// Normal map
 const S32 MATTYPE_SPECULAR = 2;		// Specular map
-const S32 ALPHAMODE_NONE = 0;		// No alpha mask applied
-const S32 ALPHAMODE_BLEND = 1;		// Alpha blending mode
 const S32 ALPHAMODE_MASK = 2;		// Alpha masking mode
 const S32 BUMPY_TEXTURE = 18;		// use supplied normal map
 const S32 SHINY_TEXTURE = 4;		// use supplied specular map
@@ -242,6 +240,8 @@ BOOL	LLPanelFace::postBuild()
 	if(mShinyColorSwatch)
 	{
 		mShinyColorSwatch->setCommitCallback(boost::bind(&LLPanelFace::onCommitShinyColor, this, _2));
+		mShinyColorSwatch->setOnCancelCallback(boost::bind(&LLPanelFace::onCancelShinyColor, this, _2));
+		mShinyColorSwatch->setOnSelectCallback(boost::bind(&LLPanelFace::onSelectShinyColor, this, _2));
 		mShinyColorSwatch->setFollowsTop();
 		mShinyColorSwatch->setFollowsLeft();
 		mShinyColorSwatch->setCanApplyImmediately(TRUE);
@@ -900,52 +900,22 @@ void LLPanelFace::updateUI()
 					getChildView("label maskcutoff")->setEnabled(editable && mIsAlpha);
 				}
 			}
-            
-         if (shinytexture_ctrl)
-         {
-				if (identical_spec && (shiny == SHINY_TEXTURE))
-				{
-					shinytexture_ctrl->setTentative( FALSE );
-					shinytexture_ctrl->setEnabled( editable );
-					shinytexture_ctrl->setImageAssetID( specmap_id );
-					}
-            else if (specmap_id.isNull())
-				{
-               shinytexture_ctrl->setTentative( FALSE );
-               shinytexture_ctrl->setEnabled( editable );
-					shinytexture_ctrl->setImageAssetID( LLUUID::null );
-				}
-            else
-            {
-					shinytexture_ctrl->setTentative( TRUE );
-					shinytexture_ctrl->setEnabled( editable );
-					shinytexture_ctrl->setImageAssetID( specmap_id );
+
+			if (shinytexture_ctrl)
+			{
+				shinytexture_ctrl->setTentative( !identical_spec );
+				shinytexture_ctrl->setEnabled( editable );
+				shinytexture_ctrl->setImageAssetID( specmap_id );
+			}
+
+			if (bumpytexture_ctrl)
+			{
+				bumpytexture_ctrl->setTentative( !identical_norm );
+				bumpytexture_ctrl->setEnabled( editable );
+				bumpytexture_ctrl->setImageAssetID( normmap_id );
 			}
 		}
 
-         if (bumpytexture_ctrl)
-         {
-				if (identical_norm && (bumpy == BUMPY_TEXTURE))
-				{
-					bumpytexture_ctrl->setTentative( FALSE );
-					bumpytexture_ctrl->setEnabled( editable );
-					bumpytexture_ctrl->setImageAssetID( normmap_id );
-				}
-				else if (normmap_id.isNull())
-				{
-					bumpytexture_ctrl->setTentative( FALSE );
-					bumpytexture_ctrl->setEnabled( editable );
-					bumpytexture_ctrl->setImageAssetID( LLUUID::null );
-				}
-            else
-            {
-					bumpytexture_ctrl->setTentative( TRUE );
-					bumpytexture_ctrl->setEnabled( editable );
-					bumpytexture_ctrl->setImageAssetID( normmap_id );
-				}
-			}
-		}
-		
 		// planar align
 		bool align_planar = false;
 		bool identical_planar_aligned = false;
@@ -1463,10 +1433,21 @@ void LLPanelFace::onCancelColor(const LLSD& data)
 	LLSelectMgr::getInstance()->selectionRevertColors();
 }
 
+void LLPanelFace::onCancelShinyColor(const LLSD& data)
+{
+	LLSelectMgr::getInstance()->selectionRevertShinyColors();
+}
+
 void LLPanelFace::onSelectColor(const LLSD& data)
 {
 	LLSelectMgr::getInstance()->saveSelectedObjectColors();
 	sendColor();
+}
+
+void LLPanelFace::onSelectShinyColor(const LLSD& data)
+{
+	LLSelectedTEMaterial::setSpecularLightColor(this, getChild<LLColorSwatchCtrl>("shinycolorswatch")->get());
+	LLSelectMgr::getInstance()->saveSelectedShinyColors();
 }
 
 // static

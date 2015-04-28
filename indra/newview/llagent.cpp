@@ -399,6 +399,8 @@ LLAgent::LLAgent() :
 	mAutoPilotFinishedCallback(NULL),
 	mAutoPilotCallbackData(NULL),
 	
+	mMovementKeysLocked(FALSE),
+
 	mEffectColor(new LLUIColor(LLColor4(0.f, 1.f, 1.f, 1.f))),
 
 	mHaveHomePosition(FALSE),
@@ -409,10 +411,8 @@ LLAgent::LLAgent() :
 	mCurrentFidget(0),
 	mFirstLogin(FALSE),
 	mOutfitChosen(FALSE),
-	
-	mVoiceConnected(false),
 
-	mAppearanceSerialNum(0),
+	mVoiceConnected(false),
 
 	mMouselookModeInSignal(NULL),
 	mMouselookModeOutSignal(NULL)
@@ -2263,8 +2263,6 @@ void LLAgent::heardChat(const LLUUID& id)
 	mLastChatterID = id;
 	mChatTimer.reset();
 }
-
-const F32 SIT_POINT_EXTENTS = 0.2f;
 
 LLSD ll_sdmap_from_vector3(const LLVector3& vec)
 {

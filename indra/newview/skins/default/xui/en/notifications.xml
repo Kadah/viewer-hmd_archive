@@ -34,6 +34,12 @@
     </form>
   </template>
 
+  <template name="notifyignore">
+    <form>
+      <ignore text="$ignoretext"/>
+    </form>
+  </template>
+
   <template name="okcancelbuttons">
     <form>
       <button
@@ -1187,6 +1193,18 @@ Save Changes?
      name="yesnocancelbuttons"
      notext="Don&apos;t Save"
      yestext="Save"/>
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="DeleteNotecard"
+   type="alertmodal">
+Delete Notecard?
+    <tag>confirm</tag>
+    <usetemplate
+     name="okcancelbuttons"
+     notext="Cancel"
+     yestext="OK"/>
   </notification>
 
   <notification
@@ -5255,6 +5273,17 @@ Warning: The &apos;Pay object&apos; click action has been set, but it will only 
      name="okcancelignore"
      notext="Cancel"
      yestext="Pay"/>
+  </notification>
+
+  <notification
+   icon="alertmodal.tga"
+   name="PayObjectFailed"
+   type="alertmodal">
+    Payment failed: object was not found.
+    <tag>fail</tag>
+    <usetemplate
+     name="okbutton"
+     yestext="OK"/>
   </notification>
 
   <notification
@@ -9490,6 +9519,9 @@ You have been teleported home by the object '[OBJECT_NAME]'
    type="notify">
    <tag>fail</tag>
 You have been teleported by an attachment on [ITEM_ID]
+   <usetemplate
+    ignoretext="Teleport: You have been teleported by an attachment"
+    name="notifyignore"/>
   </notification>
 
   <notification
@@ -9498,6 +9530,9 @@ You have been teleported by an attachment on [ITEM_ID]
    type="notify">
    <tag>fail</tag>
 You have been teleported by the object '[OBJECT_NAME]' on the parcel '[PARCEL_NAME]'
+   <usetemplate
+    ignoretext="Teleport: You have been teleported by an object on a parcel"
+    name="notifyignore"/>
   </notification>
 
   <notification
@@ -10386,7 +10421,7 @@ Cannot create large prims that intersect other players.  Please re-try when othe
    icon="alertmodal.tga"
    name="DefaultObjectPermissions"
    type="alert">
-	There was a problem saving the default permissions due to the following reason: [REASON].  Please try setting the default permissions later.
+	There was a problem saving the default object permissions: [REASON].  Please try setting the default permissions later.
 	<tag>fail</tag>
    <usetemplate
      name="okbutton"

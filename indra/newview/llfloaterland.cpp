@@ -1224,7 +1224,7 @@ void LLPanelLandObjects::refresh()
 	{
 		S32 sw_max = parcel->getSimWideMaxPrimCapacity();
 		S32 sw_total = parcel->getSimWidePrimCount();
-		S32 max = llround(parcel->getMaxPrimCapacity() * parcel->getParcelPrimBonus());
+		S32 max = ll_round(parcel->getMaxPrimCapacity() * parcel->getParcelPrimBonus());
 		S32 total = parcel->getPrimCount();
 		S32 owned = parcel->getOwnerPrimCount();
 		S32 group = parcel->getGroupPrimCount();
@@ -1983,6 +1983,7 @@ void LLPanelLandOptions::refresh()
 	else
 	{
 		// something selected, hooray!
+		LLViewerRegion* regionp = LLViewerParcelMgr::getInstance()->getSelectionRegion();
 
 		// Display options
 		BOOL can_change_options = LLViewerParcelMgr::isParcelModifiableByAgent(parcel, GP_LAND_OPTIONS);
@@ -1998,8 +1999,9 @@ void LLPanelLandOptions::refresh()
 		mCheckGroupObjectEntry	->set( parcel->getAllowGroupObjectEntry() ||  parcel->getAllowAllObjectEntry());
 		mCheckGroupObjectEntry	->setEnabled( can_change_options && !parcel->getAllowAllObjectEntry() );
 		
+		BOOL region_damage = regionp ? regionp->getAllowDamage() : FALSE;
 		mCheckSafe			->set( !parcel->getAllowDamage() );
-		mCheckSafe			->setEnabled( can_change_options );
+		mCheckSafe			->setEnabled( can_change_options && region_damage );
 
 		mCheckFly			->set( parcel->getAllowFly() );
 		mCheckFly			->setEnabled( can_change_options );
@@ -2049,9 +2051,9 @@ void LLPanelLandOptions::refresh()
 		else
 		{
 			mLocationText->setTextArg("[LANDING]",llformat("%d, %d, %d (%d\xC2\xB0)",
-														   llround(pos.mV[VX]),
-														   llround(pos.mV[VY]),
-		   												   llround(pos.mV[VZ]),
+														   ll_round(pos.mV[VX]),
+														   ll_round(pos.mV[VY]),
+		   												   ll_round(pos.mV[VZ]),
 														   user_look_at_angle));
 		}
 
@@ -2079,7 +2081,6 @@ void LLPanelLandOptions::refresh()
 			
 			// they can see the checkbox, but its disposition depends on the 
 			// state of the region
-			LLViewerRegion* regionp = LLViewerParcelMgr::getInstance()->getSelectionRegion();
 			if (regionp)
 			{
 				if (regionp->getSimAccess() == SIM_ACCESS_PG)

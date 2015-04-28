@@ -63,6 +63,7 @@
 #include "llviewerregion.h"
 #include "llviewerstats.h"
 #include "llviewertexture.h"
+#include "llviewerwindow.h"
 #include "llworldmap.h"
 #include "llworldmapmessage.h"
 #include "llworldmapview.h"
@@ -659,9 +660,9 @@ void LLFloaterWorldMap::trackLocation(const LLVector3d& pos_global)
 	F32 region_y = (F32)fmod( pos_global.mdV[VY], (F64)REGION_WIDTH_METERS );
 	std::string full_name = llformat("%s (%d, %d, %d)", 
 									 sim_name.c_str(), 
-									 llround(region_x), 
-									 llround(region_y),
-									 llround((F32)pos_global.mdV[VZ]));
+									 ll_round(region_x), 
+									 ll_round(region_y),
+									 ll_round((F32)pos_global.mdV[VZ]));
 	
 	std::string tooltip("");
 	mTrackedStatus = LLTracker::TRACKING_LOCATION;
@@ -890,7 +891,7 @@ void LLFloaterWorldMap::buildAvatarIDList()
 	end = collector.mMappable.end();
 	for( ; it != end; ++it)
 	{
-		list->addSimpleElement((*it).first, ADD_BOTTOM, (*it).second);
+		list->addSimpleElement((*it).second, ADD_BOTTOM, (*it).first);
 	}
 	
 	list->setCurrentByID( LLAvatarTracker::instance().getAvatarID() );
@@ -1633,4 +1634,11 @@ void LLFloaterWorldMap::onChangeMaturity()
 	{
 		gSavedSettings.setBOOL("ShowAdultEvents", FALSE);
 	}
+}
+
+void LLFloaterWorldMap::onFocusLost()
+{
+	gViewerWindow->showCursor();
+	LLWorldMapView* map_panel = (LLWorldMapView*)gFloaterWorldMap->mPanel;
+	map_panel->mPanning = FALSE;
 }

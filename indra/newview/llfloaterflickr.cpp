@@ -51,11 +51,10 @@
 #include "lltabcontainer.h"
 #include "llviewerparcelmgr.h"
 #include "llviewerregion.h"
-
+#include <boost/regex.hpp>
 static LLPanelInjector<LLFlickrPhotoPanel> t_panel_photo("llflickrphotopanel");
 static LLPanelInjector<LLFlickrAccountPanel> t_panel_account("llflickraccountpanel");
 
-const S32 MAX_POSTCARD_DATASIZE = 1024 * 1024; // one megabyte
 const std::string DEFAULT_PHOTO_QUERY_PARAMETERS = "?sourceid=slshare_photo&utm_source=flickr&utm_medium=photo&utm_campaign=slshare";
 const std::string DEFAULT_TAG_TEXT = "secondlife ";
 const std::string FLICKR_MACHINE_TAGS_NAMESPACE = "secondlife";
@@ -345,7 +344,12 @@ void LLFlickrPhotoPanel::sendPhoto()
 		std::string parcel_name = LLViewerParcelMgr::getInstance()->getAgentParcelName();
 		if (!parcel_name.empty())
 		{
-			photo_link_text += " at " + parcel_name;
+			boost::regex pattern = boost::regex("\\S\\.[a-zA-Z]{2,}");
+			boost::match_results<std::string::const_iterator> matches;
+			if(!boost::regex_search(parcel_name, matches, pattern))
+			{
+				photo_link_text += " at " + parcel_name;
+			}
 		}
 		photo_link_text += " in Second Life";
 

@@ -99,14 +99,11 @@ LLViewerObject* getSelectedParentObject(LLViewerObject *object) ;
 // Consts
 //
 
-const S32 NUM_SELECTION_UNDO_ENTRIES = 200;
 const F32 SILHOUETTE_UPDATE_THRESHOLD_SQUARED = 0.02f;
-const S32 MAX_ACTION_QUEUE_SIZE = 20;
 const S32 MAX_SILS_PER_FRAME = 50;
 const S32 MAX_OBJECTS_PER_PACKET = 254;
 // For linked sets
 const S32 MAX_CHILDREN_PER_TASK = 255;
-const S32 MAX_CHILDREN_PER_PHYSICAL_TASK = 32;
 
 //
 // Globals
@@ -368,7 +365,7 @@ LLObjectSelectionHandle LLSelectMgr::selectObjectOnly(LLViewerObject* object, S3
 //-----------------------------------------------------------------------------
 // Select the object, parents and children.
 //-----------------------------------------------------------------------------
-LLObjectSelectionHandle LLSelectMgr::selectObjectAndFamily(LLViewerObject* obj, BOOL add_to_end)
+LLObjectSelectionHandle LLSelectMgr::selectObjectAndFamily(LLViewerObject* obj, BOOL add_to_end, BOOL ignore_select_owned)
 {
 	llassert( obj );
 
@@ -385,7 +382,7 @@ LLObjectSelectionHandle LLSelectMgr::selectObjectAndFamily(LLViewerObject* obj, 
 		return NULL;
 	}
 
-	if (!canSelectObject(obj))
+	if (!canSelectObject(obj,ignore_select_owned))
 	{
 		//make_ui_sound("UISndInvalidOp");
 		return NULL;
@@ -1766,6 +1763,40 @@ void LLSelectMgr::selectionRevertColors()
 	getSelection()->applyToObjects(&sendfunc);
 }
 
+void LLSelectMgr::selectionRevertShinyColors()
+{
+	struct f : public LLSelectedTEFunctor
+	{
+		LLObjectSelectionHandle mSelectedObjects;
+		f(LLObjectSelectionHandle sel) : mSelectedObjects(sel) {}
+		bool apply(LLViewerObject* object, S32 te)
+		{
+			if (object->permModify())
+			{
+				LLSelectNode* nodep = mSelectedObjects->findNode(object);
+				if (nodep && te < (S32)nodep->mSavedShinyColors.size())
+				{
+					LLColor4 color = nodep->mSavedShinyColors[te];
+					// update viewer side color in anticipation of update from simulator
+					LLMaterialPtr old_mat = object->getTE(te)->getMaterialParams();
+					if (!old_mat.isNull())
+					{
+						LLMaterialPtr new_mat = gFloaterTools->getPanelFace()->createDefaultMaterial(old_mat);
+						new_mat->setSpecularLightColor(color);
+						object->getTE(te)->setMaterialParams(new_mat);
+						LLMaterialMgr::getInstance()->put(object->getID(), te, *new_mat);
+					}
+				}
+			}
+			return true;
+		}
+	} setfunc(mSelectedObjects);
+	getSelection()->applyToTEs(&setfunc);
+
+	LLSelectMgrSendFunctor sendfunc;
+	getSelection()->applyToObjects(&sendfunc);
+}
+
 BOOL LLSelectMgr::selectionRevertTextures()
 {
 	struct f : public LLSelectedTEFunctor
@@ -1941,7 +1972,7 @@ void LLSelectMgr::selectionSetMedia(U8 media_type, const LLSD &media_data)
 					llassert(mMediaData.isMap());
 					const LLTextureEntry *texture_entry = object->getTE(te);
 					if (!mMediaData.isMap() ||
-						(NULL != texture_entry) && !texture_entry->hasMedia() && !mMediaData.has(LLMediaEntry::HOME_URL_KEY))
+						((NULL != texture_entry) && !texture_entry->hasMedia() && !mMediaData.has(LLMediaEntry::HOME_URL_KEY)))
 					{
 						// skip adding/updating media
 					}
@@ -4501,6 +4532,19 @@ void LLSelectMgr::saveSelectedObjectColors()
 	getSelection()->applyToNodes(&func);	
 }
 
+void LLSelectMgr::saveSelectedShinyColors()
+{
+	struct f : public LLSelectedNodeFunctor
+	{
+		virtual bool apply(LLSelectNode* node)
+		{
+			node->saveShinyColors();
+			return true;
+		}
+	} func;
+	getSelection()->applyToNodes(&func);
+}
+
 void LLSelectMgr::saveSelectedObjectTextures()
 {
 	// invalidate current selection so we update saved textures
@@ -4596,11 +4640,18 @@ struct LLSelectMgrApplyFlags : public LLSelectedObjectFunctor
 	BOOL mState;
 	virtual bool apply(LLViewerObject* object)
 	{
-		if ( object->permModify() &&	// preemptive permissions check
-			 object->isRoot()) 		// don't send for child objects
+		if ( object->permModify())
 		{
-			object->setFlags( mFlags, mState);
-		}
+			if (object->isRoot()) 		// don't send for child objects
+			{
+				object->setFlags( mFlags, mState);
+			}
+			else if (FLAGS_WORLD & mFlags && ((LLViewerObject*)object->getRoot())->isSelected())
+			{
+				// FLAGS_WORLD are shared by all items in linkset
+				object->setFlagsWithoutUpdate(FLAGS_WORLD & mFlags, mState);
+			}
+		};
 		return true;
 	}
 };
@@ -5752,6 +5803,7 @@ LLSelectNode::LLSelectNode(LLViewerObject* object, BOOL glow)
 	mCreationDate(0)
 {
 	saveColors();
+	saveShinyColors();
 }
 
 LLSelectNode::LLSelectNode(const LLSelectNode& nodep)
@@ -5796,6 +5848,11 @@ LLSelectNode::LLSelectNode(const LLSelectNode& nodep)
 	for (color_iter = nodep.mSavedColors.begin(); color_iter != nodep.mSavedColors.end(); ++color_iter)
 	{
 		mSavedColors.push_back(*color_iter);
+	}
+	mSavedShinyColors.clear();
+	for (color_iter = nodep.mSavedShinyColors.begin(); color_iter != nodep.mSavedShinyColors.end(); ++color_iter)
+	{
+		mSavedShinyColors.push_back(*color_iter);
 	}
 	
 	saveTextures(nodep.mSavedTextures);
@@ -5876,6 +5933,26 @@ void LLSelectNode::saveColors()
 		{
 			const LLTextureEntry* tep = mObject->getTE(i);
 			mSavedColors.push_back(tep->getColor());
+		}
+	}
+}
+
+void LLSelectNode::saveShinyColors()
+{
+	if (mObject.notNull())
+	{
+		mSavedShinyColors.clear();
+		for (S32 i = 0; i < mObject->getNumTEs(); i++)
+		{
+			const LLMaterialPtr mat = mObject->getTE(i)->getMaterialParams();
+			if (!mat.isNull())
+			{
+				mSavedShinyColors.push_back(mat->getSpecularLightColor());
+			}
+			else
+			{
+				mSavedShinyColors.push_back(LLColor4::white);
+			}
 		}
 	}
 }
@@ -6698,29 +6775,32 @@ void LLSelectMgr::validateSelection()
 	getSelection()->applyToObjects(&func);	
 }
 
-BOOL LLSelectMgr::canSelectObject(LLViewerObject* object)
+BOOL LLSelectMgr::canSelectObject(LLViewerObject* object, BOOL ignore_select_owned)
 {
 	// Never select dead objects
 	if (!object || object->isDead())
 	{
 		return FALSE;
 	}
-	
+
 	if (mForceSelection)
 	{
 		return TRUE;
 	}
 
-	if ((gSavedSettings.getBOOL("SelectOwnedOnly") && !object->permYouOwner()) ||
-		(gSavedSettings.getBOOL("SelectMovableOnly") && (!object->permMove() ||  object->isPermanentEnforced())))
+	if(!ignore_select_owned)
 	{
-		// only select my own objects
-		return FALSE;
+		if ((gSavedSettings.getBOOL("SelectOwnedOnly") && !object->permYouOwner()) ||
+				(gSavedSettings.getBOOL("SelectMovableOnly") && (!object->permMove() ||  object->isPermanentEnforced())))
+		{
+			// only select my own objects
+			return FALSE;
+		}
 	}
 
 	// Can't select orphans
 	if (object->isOrphaned()) return FALSE;
-	
+
 	// Can't select avatars
 	if (object->isAvatar()) return FALSE;
 

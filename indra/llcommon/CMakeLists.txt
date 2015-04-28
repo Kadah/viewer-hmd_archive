@@ -12,12 +12,14 @@ include(GoogleBreakpad)
 include(GooglePerfTools)
 include(Copy3rdPartyLibs)
 include(ZLIB)
+include(URIPARSER)
 
 include_directories(
     ${EXPAT_INCLUDE_DIRS}
     ${LLCOMMON_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
     ${BREAKPAD_INCLUDE_DIRECTORIES}
+    ${URIPARSER_INCLUDE_DIRS}
     )
 
 # add_executable(lltreeiterators lltreeiterators.cpp)
@@ -103,6 +105,7 @@ set(llcommon_SOURCE_FILES
     lltracerecording.cpp
     lltracethreadrecorder.cpp
     lluri.cpp
+    lluriparser.cpp
     lluuid.cpp
     llworkerthread.cpp
     timing.cpp
@@ -217,6 +220,7 @@ set(llcommon_HEADER_FILES
     llunits.h
     llunittype.h
     lluri.h
+    lluriparser.h
     lluuid.h
     llwin32headers.h
     llwin32headerslean.h
@@ -261,6 +265,7 @@ target_link_libraries(
     ${BOOST_PROGRAM_OPTIONS_LIBRARY}
     ${BOOST_REGEX_LIBRARY}
     ${GOOGLE_PERFTOOLS_LIBRARIES}
+    ${URIPARSER_LIBRARIES}
     )
 
 if (DARWIN)
@@ -301,7 +306,7 @@ if (LL_TESTS)
   LL_ADD_INTEGRATION_TEST(llunits "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(stringize "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(lleventdispatcher "" "${test_libs}")
-  LL_ADD_INTEGRATION_TEST(lleventcoro "" "${test_libs};${BOOST_CONTEXT_LIBRARY};${BOOST_COROUTINE_LIBRARY};${BOOST_SYSTEM_LIBRARY}")
+  LL_ADD_INTEGRATION_TEST(lleventcoro "" "${test_libs};${BOOST_CONTEXT_LIBRARY};${BOOST_THREAD_LIBRARY};${BOOST_COROUTINE_LIBRARY};${BOOST_SYSTEM_LIBRARY}")
   LL_ADD_INTEGRATION_TEST(llprocess "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(llleap "" "${test_libs}")
   LL_ADD_INTEGRATION_TEST(llstreamqueue "" "${test_libs}")

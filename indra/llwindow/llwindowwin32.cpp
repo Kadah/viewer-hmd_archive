@@ -4285,11 +4285,11 @@ void LLWindowWin32::adjustPosForHMDScaling(LLCoordGL& pt)
     {
         if (mHMDScale[0] > 0.0f && mHMDScale[0] < 1.0f)
         {
-            pt.mX = llround((F32)pt.mX / mHMDScale[0]);
+            pt.mX = ll_round((F32)pt.mX / mHMDScale[0]);
         }
         if (mHMDScale[1] > 0.0f && mHMDScale[1] < 1.0f)
         {
-            pt.mY = llround((F32)pt.mY / mHMDScale[1]);
+            pt.mY = ll_round((F32)pt.mY / mHMDScale[1]);
         }
     }
 }

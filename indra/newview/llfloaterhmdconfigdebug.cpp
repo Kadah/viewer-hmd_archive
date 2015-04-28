@@ -394,7 +394,7 @@ void LLFloaterHMDConfigDebug::onClickSave()
 
 void LLFloaterHMDConfigDebug::onSetUIMagnification()
 {
-    F32 f = llround(mUIMagnificationSliderCtrl->getValueF32(), mUIMagnificationSliderCtrl->getIncrement());
+    F32 f = ll_round(mUIMagnificationSliderCtrl->getValueF32(), mUIMagnificationSliderCtrl->getIncrement());
     U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUIMagnification(f);
     updateUIMagnificationLabel();
@@ -409,7 +409,7 @@ void LLFloaterHMDConfigDebug::updateUIMagnificationLabel()
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceOffsetDepth()
 {
-    F32 f = llround(mUISurfaceOffsetDepthSliderCtrl->getValueF32(), mUISurfaceOffsetDepthSliderCtrl->getIncrement());
+    F32 f = ll_round(mUISurfaceOffsetDepthSliderCtrl->getValueF32(), mUISurfaceOffsetDepthSliderCtrl->getIncrement());
     U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceOffsetDepth(f);
     updateUISurfaceOffsetDepthLabel();
@@ -424,7 +424,7 @@ void LLFloaterHMDConfigDebug::updateUISurfaceOffsetDepthLabel()
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceOffsetVertical()
 {
-    F32 f = llround(mUISurfaceOffsetVerticalSliderCtrl->getValueF32(), mUISurfaceOffsetVerticalSliderCtrl->getIncrement());
+    F32 f = ll_round(mUISurfaceOffsetVerticalSliderCtrl->getValueF32(), mUISurfaceOffsetVerticalSliderCtrl->getIncrement());
     U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceOffsetVertical(f);
     updateUISurfaceOffsetVerticalLabel();
@@ -439,7 +439,7 @@ void LLFloaterHMDConfigDebug::updateUISurfaceOffsetVerticalLabel()
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceOffsetHorizontal()
 {
-    F32 f = llround(mUISurfaceOffsetHorizontalSliderCtrl->getValueF32(), mUISurfaceOffsetHorizontalSliderCtrl->getIncrement());
+    F32 f = ll_round(mUISurfaceOffsetHorizontalSliderCtrl->getValueF32(), mUISurfaceOffsetHorizontalSliderCtrl->getIncrement());
     U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceOffsetHorizontal(f);
     updateUISurfaceOffsetHorizontalLabel();
@@ -454,34 +454,34 @@ void LLFloaterHMDConfigDebug::updateUISurfaceOffsetHorizontalLabel()
 
 void LLFloaterHMDConfigDebug::onSetUIShapePreset()
 {
-    S32 f = llround(mUISurfaceShapePresetSliderCtrl->getValueF32());
+    S32 f = ll_round(mUISurfaceShapePresetSliderCtrl->getValueF32());
     U32 oldType = gHMD.getUIShapePresetType();
-    if (f > llround(mUISurfaceShapePresetSliderCtrl->getMaxValue()))
+    if (f > ll_round(mUISurfaceShapePresetSliderCtrl->getMaxValue()))
     {
         mUISurfaceShapePresetSliderCtrl->setMaxValue((F32)f);
     }
     gHMD.setUIShapePresetIndex(f);
     updateUIShapePresetLabel(oldType != gHMD.getUIShapePresetType());
 
-    mUISurfaceOffsetDepthSliderCtrl->setValue(llround(gHMD.getUISurfaceOffsetDepth(), mUISurfaceOffsetDepthSliderCtrl->getIncrement()));
+    mUISurfaceOffsetDepthSliderCtrl->setValue(ll_round(gHMD.getUISurfaceOffsetDepth(), mUISurfaceOffsetDepthSliderCtrl->getIncrement()));
     updateUISurfaceOffsetDepthLabel();
-    mUISurfaceOffsetVerticalSliderCtrl->setValue(llround(gHMD.getUISurfaceOffsetVertical(), mUISurfaceOffsetVerticalSliderCtrl->getIncrement()));
+    mUISurfaceOffsetVerticalSliderCtrl->setValue(ll_round(gHMD.getUISurfaceOffsetVertical(), mUISurfaceOffsetVerticalSliderCtrl->getIncrement()));
     updateUISurfaceOffsetVerticalLabel();
-    mUISurfaceOffsetHorizontalSliderCtrl->setValue(llround(gHMD.getUISurfaceOffsetHorizontal(), mUISurfaceOffsetHorizontalSliderCtrl->getIncrement()));
+    mUISurfaceOffsetHorizontalSliderCtrl->setValue(ll_round(gHMD.getUISurfaceOffsetHorizontal(), mUISurfaceOffsetHorizontalSliderCtrl->getIncrement()));
     updateUISurfaceOffsetHorizontalLabel();
-    mUIMagnificationSliderCtrl->setValue(llround(gHMD.getUIMagnification(), mUIMagnificationSliderCtrl->getIncrement()));
+    mUIMagnificationSliderCtrl->setValue(ll_round(gHMD.getUIMagnification(), mUIMagnificationSliderCtrl->getIncrement()));
     updateUIMagnificationLabel();
-    mUISurfaceToroidRadiusWidthSliderCtrl->setValue(llround(gHMD.getUISurfaceToroidRadiusWidth(), mUISurfaceToroidRadiusWidthSliderCtrl->getIncrement()));
+    mUISurfaceToroidRadiusWidthSliderCtrl->setValue(ll_round(gHMD.getUISurfaceToroidRadiusWidth(), mUISurfaceToroidRadiusWidthSliderCtrl->getIncrement()));
     updateUISurfaceToroidRadiusWidthLabel();
-    mUISurfaceToroidRadiusDepthSliderCtrl->setValue(llround(gHMD.getUISurfaceToroidRadiusDepth(), mUISurfaceToroidRadiusDepthSliderCtrl->getIncrement()));
+    mUISurfaceToroidRadiusDepthSliderCtrl->setValue(ll_round(gHMD.getUISurfaceToroidRadiusDepth(), mUISurfaceToroidRadiusDepthSliderCtrl->getIncrement()));
     updateUISurfaceToroidRadiusDepthLabel();
-    mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->setValue(llround(gHMD.getUISurfaceToroidCrossSectionRadiusWidth(), mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getIncrement()));
+    mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->setValue(ll_round(gHMD.getUISurfaceToroidCrossSectionRadiusWidth(), mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getIncrement()));
     updateUISurfaceToroidCrossSectionRadiusWidthLabel();
-    mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->setValue(llround(gHMD.getUISurfaceToroidCrossSectionRadiusHeight(), mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getIncrement()));
+    mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->setValue(ll_round(gHMD.getUISurfaceToroidCrossSectionRadiusHeight(), mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getIncrement()));
     updateUISurfaceToroidCrossSectionRadiusHeightLabel();
-    mUISurfaceToroidArcHorizontalSliderCtrl->setValue(llround(gHMD.getUISurfaceArcHorizontal() / F_PI, mUISurfaceToroidArcHorizontalSliderCtrl->getIncrement()));
+    mUISurfaceToroidArcHorizontalSliderCtrl->setValue(ll_round(gHMD.getUISurfaceArcHorizontal() / F_PI, mUISurfaceToroidArcHorizontalSliderCtrl->getIncrement()));
     updateUISurfaceToroidArcHorizontalLabel();
-    mUISurfaceToroidArcVerticalSliderCtrl->setValue(llround(gHMD.getUISurfaceArcVertical() / F_PI, mUISurfaceToroidArcVerticalSliderCtrl->getIncrement()));
+    mUISurfaceToroidArcVerticalSliderCtrl->setValue(ll_round(gHMD.getUISurfaceArcVertical() / F_PI, mUISurfaceToroidArcVerticalSliderCtrl->getIncrement()));
     updateUISurfaceToroidArcVerticalLabel();
     updateDirty();
 }
@@ -492,7 +492,7 @@ void LLFloaterHMDConfigDebug::updateUIShapePresetLabel(BOOL typeChanged)
     // This method is called from a number of places since the preset index can be changed as a side effect of a number
     // of other values being modified.  So, to keep the slider in sync with the actual value, we update the slider value
     // here to match the real value.
-    if (gHMD.getUIShapePresetIndex() != llround(mUISurfaceShapePresetSliderCtrl->getValueF32()))
+    if (gHMD.getUIShapePresetIndex() != ll_round(mUISurfaceShapePresetSliderCtrl->getValueF32()))
     {
         mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndex(), TRUE);
     }
@@ -520,7 +520,7 @@ void LLFloaterHMDConfigDebug::updateUIShapePresetLabel(BOOL typeChanged)
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidRadiusWidth()
 {
-    F32 f = llround(mUISurfaceToroidRadiusWidthSliderCtrl->getValueF32(), mUISurfaceToroidRadiusWidthSliderCtrl->getIncrement());
+    F32 f = ll_round(mUISurfaceToroidRadiusWidthSliderCtrl->getValueF32(), mUISurfaceToroidRadiusWidthSliderCtrl->getIncrement());
     U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceToroidRadiusWidth(f);
     updateUISurfaceToroidRadiusWidthLabel();
@@ -535,7 +535,7 @@ void LLFloaterHMDConfigDebug::updateUISurfaceToroidRadiusWidthLabel()
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidRadiusDepth()
 {
-    F32 f = llround(mUISurfaceToroidRadiusDepthSliderCtrl->getValueF32(), mUISurfaceToroidRadiusDepthSliderCtrl->getIncrement());
+    F32 f = ll_round(mUISurfaceToroidRadiusDepthSliderCtrl->getValueF32(), mUISurfaceToroidRadiusDepthSliderCtrl->getIncrement());
     U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceToroidRadiusDepth(f);
     updateUISurfaceToroidRadiusDepthLabel();
@@ -550,7 +550,7 @@ void LLFloaterHMDConfigDebug::updateUISurfaceToroidRadiusDepthLabel()
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidCrossSectionRadiusWidth()
 {
-    F32 f = llround(mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getValueF32(), mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getIncrement());
+    F32 f = ll_round(mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getValueF32(), mUISurfaceToroidCrossSectionRadiusWidthSliderCtrl->getIncrement());
     U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceToroidCrossSectionRadiusWidth(f);
     updateUISurfaceToroidCrossSectionRadiusWidthLabel();
@@ -567,7 +567,7 @@ void LLFloaterHMDConfigDebug::updateUISurfaceToroidCrossSectionRadiusWidthLabel(
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidCrossSectionRadiusHeight()
 {
-    F32 f = llround(mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getValueF32(), mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getIncrement());
+    F32 f = ll_round(mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getValueF32(), mUISurfaceToroidCrossSectionRadiusHeightSliderCtrl->getIncrement());
     U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceToroidCrossSectionRadiusHeight(f);
     updateUISurfaceToroidCrossSectionRadiusHeightLabel();
@@ -582,7 +582,7 @@ void LLFloaterHMDConfigDebug::updateUISurfaceToroidCrossSectionRadiusHeightLabel
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidArcHorizontal()
 {
-    F32 f = llround(mUISurfaceToroidArcHorizontalSliderCtrl->getValueF32(), mUISurfaceToroidArcHorizontalSliderCtrl->getIncrement());
+    F32 f = ll_round(mUISurfaceToroidArcHorizontalSliderCtrl->getValueF32(), mUISurfaceToroidArcHorizontalSliderCtrl->getIncrement());
     U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceArcHorizontal(f * F_PI);
     updateUISurfaceToroidArcHorizontalLabel();
@@ -599,7 +599,7 @@ void LLFloaterHMDConfigDebug::updateUISurfaceToroidArcHorizontalLabel()
 
 void LLFloaterHMDConfigDebug::onSetUISurfaceToroidArcVertical()
 {
-    F32 f = llround(mUISurfaceToroidArcVerticalSliderCtrl->getValueF32(), mUISurfaceToroidArcVerticalSliderCtrl->getIncrement());
+    F32 f = ll_round(mUISurfaceToroidArcVerticalSliderCtrl->getValueF32(), mUISurfaceToroidArcVerticalSliderCtrl->getIncrement());
     U32 oldType = gHMD.getUIShapePresetType();
     gHMD.setUISurfaceArcVertical(f * F_PI);
     updateUISurfaceToroidArcVerticalLabel();
@@ -648,7 +648,7 @@ void LLFloaterHMDConfigDebug::onCheckTimewarp()
 
 void LLFloaterHMDConfigDebug::onSetTimewarpInterval()
 {
-    F32 f = llround(mTimewarpIntervalSliderCtrl->getValueF32(), mTimewarpIntervalSliderCtrl->getIncrement());
+    F32 f = ll_round(mTimewarpIntervalSliderCtrl->getValueF32(), mTimewarpIntervalSliderCtrl->getIncrement());
     gHMD.setTimewarpIntervalSeconds(f / 1000.0f);
     updateTimewarpIntervalLabel();
     updateDirty();

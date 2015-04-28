@@ -86,7 +86,6 @@ const LLManip::EManipPart MANIPULATOR_IDS[LLManipScale::NUM_MANIPULATORS] =
 	LLManip::LL_FACE_NEGZ
 };
 
-
 F32 get_default_max_prim_scale(bool is_flora)
 {
 	// a bit of a hack, but if it's foilage, we don't want to use the
@@ -230,8 +229,6 @@ void LLManipScale::render()
 		const F32 BOX_HANDLE_BASE_SIZE		= 50.0f;   // box size in pixels = BOX_HANDLE_BASE_SIZE * BOX_HANDLE_BASE_FACTOR
 		const F32 BOX_HANDLE_BASE_FACTOR	= 0.2f;
 
-		LLVector3 center_agent = gAgent.getPosAgentFromGlobal(LLSelectMgr::getInstance()->getSelectionCenterGlobal());
-
 		if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 		{
 			for (S32 i = 0; i < NUM_MANIPULATORS; i++)
@@ -293,10 +290,6 @@ void LLManipScale::render()
 			{
 				LLGLEnable poly_offset(GL_POLYGON_OFFSET_FILL);
 				glPolygonOffset( -2.f, -2.f);
-
-				// JC - Band-aid until edge stretch working similar to side stretch
-				// in non-uniform.
-				// renderEdges( bbox );
 
 				renderCorners( bbox );
 				renderFaces( bbox );
@@ -362,6 +355,10 @@ BOOL LLManipScale::handleMouseDownOnPart( S32 x, S32 y, MASK mask )
 
 	updateSnapGuides(bbox);
 
+	mFirstClickX = x;
+	mFirstClickY = y;
+	mIsFirstClick = true;
+
 	mDragStartPointGlobal = gAgent.getPosGlobalFromAgent(box_corner_agent);
 	mDragStartCenterGlobal = gAgent.getPosGlobalFromAgent(box_center_agent);
 	LLVector3 far_corner_agent = bbox.localToAgent( unitVectorToLocalBBoxExtent( -1.f * partToUnitVector( mManipPart ), bbox ) );
@@ -425,7 +422,15 @@ BOOL LLManipScale::handleHover(S32 x, S32 y, MASK mask)
 		}
 		else
 		{
-			drag( x, y );
+			if((mFirstClickX != x) || (mFirstClickY != y))
+			{
+				mIsFirstClick = false;
+			}
+
+			if(!mIsFirstClick)
+			{
+				drag( x, y );
+			}
 		}
 		LL_DEBUGS("UserInput") << "hover handled by LLManipScale (active)" << LL_ENDL;		
 	}
@@ -734,62 +739,37 @@ void LLManipScale::renderFaces( const LLBBox& bbox )
 			{
 			  case 0:
 				conditionalHighlight( LL_FACE_POSZ, &z_highlight_color, &z_normal_color );
-				renderAxisHandle( LL_FACE_POSZ, ctr, LLVector3( ctr.mV[VX], ctr.mV[VY], max.mV[VZ] ) );
+				renderAxisHandle( 8, ctr, LLVector3( ctr.mV[VX], ctr.mV[VY], max.mV[VZ] ) );
 				break;
 
 			  case 1:
 				conditionalHighlight( LL_FACE_POSX, &x_highlight_color, &x_normal_color );
-				renderAxisHandle( LL_FACE_POSX, ctr, LLVector3( max.mV[VX], ctr.mV[VY], ctr.mV[VZ] ) );
+				renderAxisHandle( 9, ctr, LLVector3( max.mV[VX], ctr.mV[VY], ctr.mV[VZ] ) );
 				break;
 
 			  case 2:
 				conditionalHighlight( LL_FACE_POSY, &y_highlight_color, &y_normal_color );
-				renderAxisHandle( LL_FACE_POSY, ctr, LLVector3( ctr.mV[VX], max.mV[VY], ctr.mV[VZ] ) );
+				renderAxisHandle( 10, ctr, LLVector3( ctr.mV[VX], max.mV[VY], ctr.mV[VZ] ) );
 				break;
 
 			  case 3:
 				conditionalHighlight( LL_FACE_NEGX, &x_highlight_color, &x_normal_color );
-				renderAxisHandle( LL_FACE_NEGX, ctr, LLVector3( min.mV[VX], ctr.mV[VY], ctr.mV[VZ] ) );
+				renderAxisHandle( 11, ctr, LLVector3( min.mV[VX], ctr.mV[VY], ctr.mV[VZ] ) );
 				break;
 
 			  case 4:
 				conditionalHighlight( LL_FACE_NEGY, &y_highlight_color, &y_normal_color );
-				renderAxisHandle( LL_FACE_NEGY, ctr, LLVector3( ctr.mV[VX], min.mV[VY], ctr.mV[VZ] ) );
+				renderAxisHandle( 12, ctr, LLVector3( ctr.mV[VX], min.mV[VY], ctr.mV[VZ] ) );
 				break;
 
 			  case 5:
 				conditionalHighlight( LL_FACE_NEGZ, &z_highlight_color, &z_normal_color );
-				renderAxisHandle( LL_FACE_NEGZ, ctr, LLVector3( ctr.mV[VX], ctr.mV[VY], min.mV[VZ] ) );
+				renderAxisHandle( 13, ctr, LLVector3( ctr.mV[VX], ctr.mV[VY], min.mV[VZ] ) );
 				break;
 			}
 		}
 	}
 }
-
-void LLManipScale::renderEdges( const LLBBox& bbox )
-{
-	LLVector3 extent = bbox.getExtentLocal();
-
-	for( U32 part = LL_EDGE_MIN; part <= LL_EDGE_MAX; part++ )
-	{
-		F32 edge_width = mBoxHandleSize[part] * .6f;
-		LLVector3 direction = edgeToUnitVector( part );
-		LLVector3 center_to_edge = unitVectorToLocalBBoxExtent( direction, bbox );
-
-		gGL.pushMatrix();
-		{
-			gGL.translatef( center_to_edge.mV[0], center_to_edge.mV[1], center_to_edge.mV[2] );
-			conditionalHighlight( part );
-			gGL.scalef(
-				direction.mV[0] ? edge_width : extent.mV[VX],
-				direction.mV[1] ? edge_width : extent.mV[VY],
-				direction.mV[2] ? edge_width : extent.mV[VZ] );
-			gBox.render();
-		}
-		gGL.popMatrix();
-	}
-}
-
 
 void LLManipScale::renderCorners( const LLBBox& bbox )
 {
@@ -833,14 +813,14 @@ void LLManipScale::renderBoxHandle( F32 x, F32 y, F32 z )
 }
 
 
-void LLManipScale::renderAxisHandle( U32 part, const LLVector3& start, const LLVector3& end )
+void LLManipScale::renderAxisHandle( U32 handle_index, const LLVector3& start, const LLVector3& end )
 {
 	if( getShowAxes() )
 	{
 		// Draws a single "jacks" style handle: a long, retangular box from start to end.
 		LLVector3 offset_start = end - start;
 		offset_start.normalize();
-		offset_start = start + mBoxHandleSize[part] * offset_start;
+		offset_start = start + mBoxHandleSize[handle_index] * offset_start;
 
 		LLVector3 delta = end - offset_start;
 		LLVector3 pos = offset_start + 0.5f * delta;
@@ -849,9 +829,9 @@ void LLManipScale::renderAxisHandle( U32 part, const LLVector3& start, const LLV
 		{
 			gGL.translatef( pos.mV[VX], pos.mV[VY], pos.mV[VZ] );
 			gGL.scalef(
-				mBoxHandleSize[part] + llabs(delta.mV[VX]),
-				mBoxHandleSize[part] + llabs(delta.mV[VY]),
-				mBoxHandleSize[part] + llabs(delta.mV[VZ]));
+				mBoxHandleSize[handle_index] + llabs(delta.mV[VX]),
+				mBoxHandleSize[handle_index] + llabs(delta.mV[VY]),
+				mBoxHandleSize[handle_index] + llabs(delta.mV[VZ]));
 			gBox.render();
 		}
 		gGL.popMatrix();
@@ -1610,8 +1590,8 @@ void LLManipScale::updateSnapGuides(const LLBBox& bbox)
 	mScaleSnapUnit1 = mScaleSnapUnit1 / (mSnapDir1 * mScaleDir);
 	mScaleSnapUnit2 = mScaleSnapUnit2 / (mSnapDir2 * mScaleDir);
 
-	mTickPixelSpacing1 = llround((F32)MIN_DIVISION_PIXEL_WIDTH / (mScaleDir % mSnapGuideDir1).length());
-	mTickPixelSpacing2 = llround((F32)MIN_DIVISION_PIXEL_WIDTH / (mScaleDir % mSnapGuideDir2).length());
+	mTickPixelSpacing1 = ll_round((F32)MIN_DIVISION_PIXEL_WIDTH / (mScaleDir % mSnapGuideDir1).length());
+	mTickPixelSpacing2 = ll_round((F32)MIN_DIVISION_PIXEL_WIDTH / (mScaleDir % mSnapGuideDir2).length());
 
 	if (uniform)
 	{
@@ -1682,8 +1662,8 @@ void LLManipScale::renderSnapGuides(const LLBBox& bbox)
 		F32 grid_offset2 = fmodf(dist_grid_axis, smallest_subdivision2);
 
 		// how many smallest grid units are we away from largest grid scale?
-		S32 sub_div_offset_1 = llround(fmod(dist_grid_axis - grid_offset1, mScaleSnapUnit1 / sGridMinSubdivisionLevel) / smallest_subdivision1);
-		S32 sub_div_offset_2 = llround(fmod(dist_grid_axis - grid_offset2, mScaleSnapUnit2 / sGridMinSubdivisionLevel) / smallest_subdivision2);
+		S32 sub_div_offset_1 = ll_round(fmod(dist_grid_axis - grid_offset1, mScaleSnapUnit1 / sGridMinSubdivisionLevel) / smallest_subdivision1);
+		S32 sub_div_offset_2 = ll_round(fmod(dist_grid_axis - grid_offset2, mScaleSnapUnit2 / sGridMinSubdivisionLevel) / smallest_subdivision2);
 
 		S32 num_ticks_per_side1 = llmax(1, lltrunc(0.5f * mSnapGuideLength / smallest_subdivision1));
 		S32 num_ticks_per_side2 = llmax(1, lltrunc(0.5f * mSnapGuideLength / smallest_subdivision2));
@@ -1737,7 +1717,7 @@ void LLManipScale::renderSnapGuides(const LLBBox& bbox)
 		LLVector2 screen_translate_axis(llabs(mScaleDir * LLViewerCamera::getInstance()->getLeftAxis()), llabs(mScaleDir * LLViewerCamera::getInstance()->getUpAxis()));
 		screen_translate_axis.normalize();
 
-		S32 tick_label_spacing = llround(screen_translate_axis * sTickLabelSpacing);
+		S32 tick_label_spacing = ll_round(screen_translate_axis * sTickLabelSpacing);
 
 		for (pass = 0; pass < 3; pass++)
 		{
@@ -1817,8 +1797,8 @@ void LLManipScale::renderSnapGuides(const LLBBox& bbox)
 		stop_tick = llmin(max_ticks1, num_ticks_per_side1);
 
 		F32 grid_resolution = mObjectSelection->getSelectType() == SELECT_TYPE_HUD ? 0.25f : llmax(gSavedSettings.getF32("GridResolution"), 0.001f);
-		S32 label_sub_div_offset_1 = llround(fmod(dist_grid_axis - grid_offset1, mScaleSnapUnit1  * 32.f) / smallest_subdivision1);
-		S32 label_sub_div_offset_2 = llround(fmod(dist_grid_axis - grid_offset2, mScaleSnapUnit2  * 32.f) / smallest_subdivision2);
+		S32 label_sub_div_offset_1 = ll_round(fmod(dist_grid_axis - grid_offset1, mScaleSnapUnit1  * 32.f) / smallest_subdivision1);
+		S32 label_sub_div_offset_2 = ll_round(fmod(dist_grid_axis - grid_offset2, mScaleSnapUnit2  * 32.f) / smallest_subdivision2);
 
 		for (S32 i = start_tick; i <= stop_tick; i++)
 		{
