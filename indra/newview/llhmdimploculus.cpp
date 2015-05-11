@@ -733,7 +733,10 @@ LLRenderTarget* LLHMDImplOculus::getCurrentEyeRT()
 
 LLRenderTarget* LLHMDImplOculus::getEyeRT(U32 eye)
 {
-    return (eye >= (U32)LLHMD::CENTER_EYE && eye <= (U32)LLHMD::RIGHT_EYE) ? mEyeRT[eye] : NULL;
+    //Should we ever change this value, use >= comparison instead of ==.
+    assert( LLHMD::CENTER_EYE == 0 );
+    return (eye <= (U32)LLHMD::RIGHT_EYE) ? mEyeRT[eye] : NULL;
+    //return (eye >= (U32)LLHMD::CENTER_EYE && eye <= (U32)LLHMD::RIGHT_EYE) ? mEyeRT[eye] : NULL;
 }
 
 

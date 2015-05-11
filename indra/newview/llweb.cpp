@@ -191,10 +191,10 @@ std::string LLWeb::expandURLSubstitutions(const std::string &url,
 {
 	LLSD substitution = default_subs;
 	substitution["VERSION"] = LLVersionInfo::getVersion();
-	substitution["VERSION_MAJOR"] = LLVersionInfo::getMajor();
-	substitution["VERSION_MINOR"] = LLVersionInfo::getMinor();
-	substitution["VERSION_PATCH"] = LLVersionInfo::getPatch();
-	substitution["VERSION_BUILD"] = LLVersionInfo::getBuild();
+	substitution["VERSION_MAJOR"] = (LLSD::Integer)LLVersionInfo::getMajor();
+	substitution["VERSION_MINOR"] = (LLSD::Integer)LLVersionInfo::getMinor();
+	substitution["VERSION_PATCH"] = (LLSD::Integer)LLVersionInfo::getPatch();
+	substitution["VERSION_BUILD"] = (LLSD::Integer)LLVersionInfo::getBuild();
 	substitution["CHANNEL"] = LLVersionInfo::getChannel();
 	substitution["GRID"] = LLGridManager::getInstance()->getGridId();
 	substitution["GRID_LOWERCASE"] = utf8str_tolower(LLGridManager::getInstance()->getGridId());

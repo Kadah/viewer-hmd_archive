@@ -70,6 +70,7 @@
 #include "llfloatergroups.h"
 #include "llfloaterhardwaresettings.h"
 #include "llfloaterhelpbrowser.h"
+#include "llfloaterhoverheight.h"
 #include "llfloaterhmdconfigdebug.h"
 #include "llfloaterhud.h"
 #include "llfloaterimagepreview.h"
@@ -222,7 +223,7 @@ void LLViewerFloaterReg::registerFloaters()
 	LLFloaterReg::add("god_tools", "floater_god_tools.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterGodTools>);
 	LLFloaterReg::add("group_picker", "floater_choose_group.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterGroupPicker>);
 
-	LLFloaterReg::add("help_browser", "floater_help_browser.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterHelpBrowser>);	
+	LLFloaterReg::add("help_browser", "floater_help_browser.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterHelpBrowser>);
 	LLFloaterReg::add("edit_hover_height", "floater_edit_hover_height.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterHoverHeight>);
 	LLFloaterReg::add("floater_hmd_config_debug", "floater_hmd_config_debug.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterHMDConfigDebug>);
 	LLFloaterReg::add("hud", "floater_hud.xml", (LLFloaterBuildFunc)&LLFloaterReg::build<LLFloaterHUD>);
