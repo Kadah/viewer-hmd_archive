@@ -48,6 +48,7 @@
 
 #include "llares.h"
 #include "llavatarnamecache.h"
+#include "llexperiencecache.h"
 #include "lllandmark.h"
 #include "llcachename.h"
 #include "lldir.h"
@@ -194,6 +195,7 @@
 #include "llevents.h"
 #include "llstartuplistener.h"
 #include "lltoolbarview.h"
+#include "llexperiencelog.h"
 
 #if LL_WINDOWS
 #include "lldxhardware.h"
@@ -1306,6 +1308,9 @@ bool idle_startup()
 		gAgent.setPositionAgent(agent_start_position_region);
 
 		LLViewerDisplay::display_startup();
+		LLStartUp::initExperiences();
+
+        LLViewerDisplay::display_startup();
 		LLStartUp::setStartupState( STATE_MULTIMEDIA_INIT );
 		
 		LLConversationLog::getInstance();
@@ -2822,6 +2827,14 @@ void LLStartUp::initNameCache()
 	LLAvatarNameCache::initClass(false,gSavedSettings.getBOOL("UsePeopleAPI"));
 	LLAvatarNameCache::setUseDisplayNames(gSavedSettings.getBOOL("UseDisplayNames"));
 	LLAvatarNameCache::setUseUsernames(gSavedSettings.getBOOL("NameTagShowUsernames"));
+}
+
+
+void LLStartUp::initExperiences()
+{
+	LLAppViewer::instance()->loadExperienceCache();
+	LLExperienceCache::initClass();
+	LLExperienceLog::instance().initialize();
 }
 
 void LLStartUp::cleanupNameCache()
