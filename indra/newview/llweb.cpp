@@ -49,7 +49,6 @@
 #include "llviewerregion.h"
 #include "llviewerwindow.h"
 #include "llnotificationsutil.h"
-#include "llhmd.h"
 #include "lluriparser.h"
 #include "uriparser/Uri.h"
 
@@ -147,12 +146,7 @@ bool on_load_url_external_response(const LLSD& notification, const LLSD& respons
 		std::string escaped_url = LLWeb::escapeURL(url);
 		if (gViewerWindow)
 		{
-            U32 oldRenderMode = gHMD.suspendHMDMode();
 			gViewerWindow->getWindow()->spawnWebBrowser(escaped_url, async);
-            if (async)
-            {
-                gHMD.resumeHMDMode(oldRenderMode);
-            }
 		}
 	}
 	return false;
@@ -191,10 +185,10 @@ std::string LLWeb::expandURLSubstitutions(const std::string &url,
 {
 	LLSD substitution = default_subs;
 	substitution["VERSION"] = LLVersionInfo::getVersion();
-	substitution["VERSION_MAJOR"] = (LLSD::Integer)LLVersionInfo::getMajor();
-	substitution["VERSION_MINOR"] = (LLSD::Integer)LLVersionInfo::getMinor();
-	substitution["VERSION_PATCH"] = (LLSD::Integer)LLVersionInfo::getPatch();
-	substitution["VERSION_BUILD"] = (LLSD::Integer)LLVersionInfo::getBuild();
+    substitution["VERSION_MAJOR"] = (S32)LLVersionInfo::getMajor();
+    substitution["VERSION_MINOR"] = (S32)LLVersionInfo::getMinor();
+    substitution["VERSION_PATCH"] = (S32)LLVersionInfo::getPatch();
+    substitution["VERSION_BUILD"] = (S32)LLVersionInfo::getBuild();
 	substitution["CHANNEL"] = LLVersionInfo::getChannel();
 	substitution["GRID"] = LLGridManager::getInstance()->getGridId();
 	substitution["GRID_LOWERCASE"] = utf8str_tolower(LLGridManager::getInstance()->getGridId());
@@ -240,6 +234,9 @@ std::string LLWeb::expandURLSubstitutions(const std::string &url,
 //static
 bool LLWeb::useExternalBrowser(const std::string &url)
 {
+#ifdef EXTERNAL_TOS
+	return true;
+#else
 	if (gSavedSettings.getU32("PreferredBrowserBehavior") == BROWSER_EXTERNAL_ONLY)
 	{
 		return true;
@@ -256,4 +253,5 @@ bool LLWeb::useExternalBrowser(const std::string &url)
 		return !(boost::regex_search(uri_string, matches, pattern));
 	}
 	return false;
+#endif
 }

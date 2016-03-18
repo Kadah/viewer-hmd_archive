@@ -42,6 +42,7 @@
 #include "llgl.h"
 #include "llstring.h"
 #include "lldir.h"
+#include "llsdutil.h"
 #include "llglslshader.h"
 #include "stringize.h"
 
@@ -918,9 +919,9 @@ BOOL LLWindowWin32::getPosition(LLCoordScreen *position)
 {
 	RECT window_rect;
     if (NULL == position || !getCurrentWindowRect(window_rect))
-    {
-        return FALSE;
-    }
+	{
+		return FALSE;
+	}
 	position->mX = window_rect.left;
 	position->mY = window_rect.top;
 	return TRUE;
@@ -930,9 +931,9 @@ BOOL LLWindowWin32::getSize(LLCoordScreen *size)
 {
 	RECT window_rect;
     if (NULL == size || !getCurrentWindowRect(window_rect))
-    {
-        return FALSE;
-    }
+	{
+		return FALSE;
+	}
 	size->mX = window_rect.right - window_rect.left;
 	size->mY = window_rect.bottom - window_rect.top;
 	return TRUE;
@@ -940,11 +941,11 @@ BOOL LLWindowWin32::getSize(LLCoordScreen *size)
 
 BOOL LLWindowWin32::getSize(LLCoordWindow *size)
 {
-    RECT client_rect;
+	RECT client_rect;
     if (NULL == size || !getCurrentClientRect(client_rect))
-    {
-        return FALSE;
-    }
+	{
+		return FALSE;
+	}
 	size->mX = client_rect.right - client_rect.left;
 	size->mY = client_rect.bottom - client_rect.top;
 	return TRUE;
@@ -1111,7 +1112,7 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
                 break;
             }
 
-            // Move window borders out not to cover window contents.
+			// Move window borders out not to cover window contents.
 			// This converts client rect to window rect, i.e. expands it by the window border size.
 			AdjustWindowRectEx(&window_rect, mDwStyle[mCurRCIdx], FALSE, mDwExStyle[mCurRCIdx]);
 		}
@@ -1144,7 +1145,7 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
             break;
         case 0:
         default:
-		    // Window with an edge
+		// Window with an edge
 		    mDwExStyle[mCurRCIdx] = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
 		    mDwStyle[mCurRCIdx] = WS_OVERLAPPEDWINDOW;
             break;
@@ -1159,17 +1160,17 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 	// create window
 	DestroyWindow(mWindowHandle[mCurRCIdx]);
 	mWindowHandle[mCurRCIdx] = CreateWindowEx(  mDwExStyle[0],
-		                                        mWindowClassName,
-		                                        mWindowTitle,
+		mWindowClassName,
+		mWindowTitle,
 		                                        WS_CLIPSIBLINGS | WS_CLIPCHILDREN | mDwStyle[mCurRCIdx],
-		                                        window_rect.left,								// x pos
-		                                        window_rect.top,								// y pos
-		                                        window_rect.right - window_rect.left,			// width
-		                                        window_rect.bottom - window_rect.top,			// height
-		                                        NULL,
-		                                        NULL,
-		                                        mhInstance,
-		                                        NULL);
+		window_rect.left,								// x pos
+		window_rect.top,								// y pos
+		window_rect.right - window_rect.left,			// width
+		window_rect.bottom - window_rect.top,			// height
+		NULL,
+		NULL,
+		mhInstance,
+		NULL);
 
 	LL_INFOS("Window") << "window is created." << LL_ENDL ;
 
@@ -1295,17 +1296,18 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 			mCallbacks->translateString("MBError"), OSMB_OK);
 		return FALSE;
 	}
-
+		
 	if (!wglMakeCurrent(mhDC[mCurRCIdx], mhRC))
 	{
 		close();
-		OSMessageBox(mCallbacks->translateString("MBGLContextActErr"), mCallbacks->translateString("MBError"), OSMB_OK);
+		OSMessageBox(mCallbacks->translateString("MBGLContextActErr"),
+			mCallbacks->translateString("MBError"), OSMB_OK);
 		return FALSE;
 	}
 
 	LL_INFOS("Window") << "Drawing context is created." << LL_ENDL ;
 
-    gGLManager.initWGL();
+	gGLManager.initWGL();
 	
 	if (wglChoosePixelFormatARB)
 	{
@@ -1479,17 +1481,17 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 		
 
 		mWindowHandle[mCurRCIdx] = CreateWindowEx(  mDwExStyle[mCurRCIdx],
-			                                        mWindowClassName,
-			                                        mWindowTitle,
+			mWindowClassName,
+			mWindowTitle,
 			                                        WS_CLIPSIBLINGS | WS_CLIPCHILDREN | mDwStyle[mCurRCIdx],
-			                                        window_rect.left,								// x pos
-			                                        window_rect.top,								// y pos
-			                                        window_rect.right - window_rect.left,			// width
-			                                        window_rect.bottom - window_rect.top,			// height
-			                                        NULL,
-			                                        NULL,
-			                                        mhInstance,
-			                                        NULL);
+			window_rect.left,								// x pos
+			window_rect.top,								// y pos
+			window_rect.right - window_rect.left,			// width
+			window_rect.bottom - window_rect.top,			// height
+			NULL,
+			NULL,
+			mhInstance,
+			NULL);
 
 		LL_INFOS("Window") << "recreate window done." << LL_ENDL ;
 
@@ -1633,13 +1635,13 @@ BOOL LLWindowWin32::switchContext(BOOL fullscreen, const LLCoordScreen &size, BO
 	}
 	
     if (disable_vsync)
-    {
+	{
         enableVSync(FALSE);
-    }
-    else
-    {
-        LL_DEBUGS("Window") << "Keeping vertical sync" << LL_ENDL;
-    }
+	}
+	else
+	{
+		LL_DEBUGS("Window") << "Keeping vertical sync" << LL_ENDL;
+	}
 
 	SetWindowLong(mWindowHandle[mCurRCIdx], GWL_USERDATA, (U32)this);
 
@@ -1791,10 +1793,10 @@ void LLWindowWin32::showCursor()
 	// makes sure the cursor shows up
     if (!mHMDMode)
     {
-	    while (ShowCursor(TRUE) < 0)
-	    {
-		    // do nothing, wait for cursor to pop out
-	    }
+	while (ShowCursor(TRUE) < 0)
+	{
+		// do nothing, wait for cursor to pop out
+	}
     }
 	mCursorHidden = FALSE;
 	mHideCursorPermanent = FALSE;
@@ -2223,6 +2225,9 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 			window_imp->mKeyCharCode = 0; // don't know until wm_char comes in next
 			window_imp->mKeyScanCode = ( l_param >> 16 ) & 0xff;
 			window_imp->mKeyVirtualKey = w_param;
+			window_imp->mRawMsg = u_msg;
+			window_imp->mRawWParam = w_param;
+			window_imp->mRawLParam = l_param;
 
 			window_imp->mCallbacks->handlePingWatchdog(window_imp, "Main:WM_KEYDOWN");
 			{
@@ -2245,6 +2250,9 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 		{
 			window_imp->mKeyScanCode = ( l_param >> 16 ) & 0xff;
 			window_imp->mKeyVirtualKey = w_param;
+			window_imp->mRawMsg = u_msg;
+			window_imp->mRawWParam = w_param;
+			window_imp->mRawLParam = l_param;
 
 			window_imp->mCallbacks->handlePingWatchdog(window_imp, "Main:WM_KEYUP");
 			LL_RECORD_BLOCK_TIME(FTM_KEYHANDLER);
@@ -2332,6 +2340,9 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 
 		case WM_CHAR:
 			window_imp->mKeyCharCode = w_param;
+			window_imp->mRawMsg = u_msg;
+			window_imp->mRawWParam = w_param;
+			window_imp->mRawLParam = l_param;
 
 			// Should really use WM_UNICHAR eventually, but it requires a specific Windows version and I need
 			// to figure out how that works. - Doug
@@ -2449,6 +2460,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 					sHandleLeftMouseUp = true;
 					break;
 				}
+				sHandleDoubleClick = true;
 
 				//if (gDebugClicks)
 				//{
@@ -2748,7 +2760,9 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
                     }
 
 					// Ignore updates for minimizing and minimized "windows"
-					window_imp->mCallbacks->handleResize(window_imp, width, height);
+					window_imp->mCallbacks->handleResize(	window_imp, 
+						LOWORD(l_param), 
+						HIWORD(l_param) );
 				}
 
 				window_imp->mLastSizeWParam = w_param;
@@ -2796,11 +2810,11 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 
 BOOL LLWindowWin32::convertCoords(LLCoordGL from, LLCoordWindow *to)
 {
-	RECT client_rect;
-    if (NULL == to || !getCurrentClientRect(client_rect))
-    {
-        return FALSE;
-    }
+	RECT	client_rect;
+    if ((NULL == to) || !getCurrentClientRect(client_rect))
+	{
+		return FALSE;
+	}
 	to->mX = from.mX;
 	S32 client_height = (client_rect.bottom - client_rect.top) + mHMDClientHeightDiff;
 	to->mY = client_height - from.mY - 1;
@@ -2810,20 +2824,20 @@ BOOL LLWindowWin32::convertCoords(LLCoordGL from, LLCoordWindow *to)
 
 BOOL LLWindowWin32::convertCoords(LLCoordWindow from, LLCoordGL* to)
 {
-    RECT client_rect;
-    if (NULL == to || !getCurrentClientRect(client_rect))
-    {
-        return FALSE;
-    }
-    to->mX = from.mX;
+	RECT	client_rect;
+    if ((NULL == to) || !getCurrentClientRect(client_rect))
+	{
+		return FALSE;
+	}
+	to->mX = from.mX;
 	S32 client_height = (client_rect.bottom - client_rect.top) + mHMDClientHeightDiff;
-    to->mY = client_height - from.mY - 1;
+	to->mY = client_height - from.mY - 1;
 
-    return TRUE;
+	return TRUE;
 }
 
 BOOL LLWindowWin32::convertCoords(LLCoordScreen from, LLCoordWindow* to)
-{
+{	
     if (!mWindowHandle[mCurRCIdx] || NULL == to)
     {
         return FALSE;
@@ -2861,21 +2875,24 @@ BOOL LLWindowWin32::convertCoords(LLCoordWindow from, LLCoordScreen *to)
 BOOL LLWindowWin32::convertCoords(LLCoordScreen from, LLCoordGL *to)
 {
 	LLCoordWindow window_coord;
-    if (!convertCoords(from, &window_coord) || !convertCoords(window_coord, to))
-    {
-        return FALSE;
-    }
-    return TRUE;
+    if (!mWindowHandle[mCurRCIdx]  || (NULL == to) || !convertCoords(from, &window_coord) || !convertCoords(window_coord, to))
+	{
+		return FALSE;
+	}
+	return TRUE;
 }
 
 BOOL LLWindowWin32::convertCoords(LLCoordGL from, LLCoordScreen *to)
 {
 	LLCoordWindow window_coord;
-    if (!convertCoords(from, &window_coord) || !convertCoords(window_coord, to))
-    {
-        return FALSE;
-    }
-    return TRUE;
+    if (!mWindowHandle[mCurRCIdx]  || (NULL == to) || !convertCoords(from, &window_coord) || !convertCoords(window_coord, to))
+	{
+		return FALSE;
+	}
+
+	convertCoords(from, &window_coord);
+	convertCoords(window_coord, to);
+	return TRUE;
 }
 
 
@@ -2983,28 +3000,28 @@ void LLWindowWin32::setMouseClipping( BOOL b )
 
 BOOL LLWindowWin32::getClientRectInScreenSpace( RECT* rectp )
 {
-    BOOL success = FALSE;
+	BOOL success = FALSE;
 	RECT client_rect;
-    if (NULL != rectp && getCurrentClientRect(client_rect))
-    {
-        POINT top_left;
-        top_left.x = client_rect.left;
-        top_left.y = client_rect.top;
+	if( mWindowHandle[mCurRCIdx] && GetClientRect(mWindowHandle[mCurRCIdx], &client_rect) )
+	{
+		POINT top_left;
+		top_left.x = client_rect.left;
+		top_left.y = client_rect.top;
         ClientToScreen(mWindowHandle[mCurRCIdx], &top_left);
 
-        POINT bottom_right;
-        bottom_right.x = client_rect.right;
-        bottom_right.y = client_rect.bottom;
+		POINT bottom_right;
+		bottom_right.x = client_rect.right;
+		bottom_right.y = client_rect.bottom;
         ClientToScreen(mWindowHandle[mCurRCIdx], &bottom_right);
 
-        SetRect( rectp,
-            top_left.x,
-            top_left.y,
-            bottom_right.x,
-            bottom_right.y );
+		SetRect( rectp,
+			top_left.x,
+			top_left.y,
+			bottom_right.x,
+			bottom_right.y );
 
-        success = TRUE;
-    }
+		success = TRUE;
+	}
 
 	return success;
 }
@@ -3393,6 +3410,9 @@ LLSD LLWindowWin32::getNativeKeyData()
 
 	result["scan_code"] = (S32)mKeyScanCode;
 	result["virtual_key"] = (S32)mKeyVirtualKey;
+	result["msg"] = ll_sd_from_U32(mRawMsg);
+	result["w_param"] = ll_sd_from_U32(mRawWParam);
+	result["l_param"] = ll_sd_from_U32(mRawLParam);
 
 	return result;
 }

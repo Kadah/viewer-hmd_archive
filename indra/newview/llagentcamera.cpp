@@ -148,6 +148,7 @@ LLAgentCamera::LLAgentCamera() :
 	mCameraUpVector(LLVector3::z_axis), // default is straight up
 
 	mFocusOnAvatar(TRUE),
+	mAllowChangeToFollow(FALSE),
 	mFocusGlobal(),
 	mFocusTargetGlobal(),
 	mFocusObject(NULL),
@@ -311,7 +312,7 @@ void LLAgentCamera::resetView(BOOL reset_camera, BOOL change_camera)
         }
         else
         {
-		    changeCameraToDefault();
+		changeCameraToDefault();
         }
 		
 		if (LLViewerJoystick::getInstance()->getOverrideCamera())
@@ -886,7 +887,7 @@ void LLAgentCamera::cameraZoomIn(const F32 fraction)
 	}
 
 	LLObjectSelectionHandle selection = LLSelectMgr::getInstance()->getSelection();
-	if (selection->getObjectCount() && selection->getSelectType() == SELECT_TYPE_HUD)
+	if (LLToolMgr::getInstance()->inBuildMode() && selection->getObjectCount() && selection->getSelectType() == SELECT_TYPE_HUD)
 	{
 		// just update hud zoom level
 		mHUDTargetZoom /= fraction;
@@ -964,8 +965,8 @@ void LLAgentCamera::cameraOrbitIn(const F32 meters)
             }
             else
             {
-                changeCameraToMouselook(FALSE);
-            }
+			changeCameraToMouselook(FALSE);
+		}
 		}
 
 		mCameraZoomFraction = llclamp(mCameraZoomFraction, MIN_ZOOM_FRACTION, MAX_ZOOM_FRACTION);
@@ -1130,14 +1131,14 @@ void LLAgentCamera::updateLookAt(const S32 mouse_x, const S32 mouse_y)
 		{
             if (!gSavedSettings.getBOOL("DisableLookAtFollowsMouseCursor"))
             {
-			    // range from -.5 to .5
-			    F32 x_from_center = 
+			// range from -.5 to .5
+			F32 x_from_center = 
 				    ((F32) mouse_x / (F32)(gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : gViewerWindow->getWorldViewWidthScaled()) ) - 0.5f;
-			    F32 y_from_center = 
+			F32 y_from_center = 
 				    ((F32) mouse_y / (F32)(gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled()) ) - 0.5f;
 
-			    frameCamera.yaw( - x_from_center * gSavedSettings.getF32("YawFromMousePosition") * DEG_TO_RAD);
-			    frameCamera.pitch( - y_from_center * gSavedSettings.getF32("PitchFromMousePosition") * DEG_TO_RAD);
+			frameCamera.yaw( - x_from_center * gSavedSettings.getF32("YawFromMousePosition") * DEG_TO_RAD);
+			frameCamera.pitch( - y_from_center * gSavedSettings.getF32("PitchFromMousePosition") * DEG_TO_RAD);
             }
 			lookAtType = LOOKAT_TARGET_FREELOOK;
             headLookAxis = frameCamera.getAtAxis();
@@ -1158,9 +1159,11 @@ void LLAgentCamera::updateCamera()
 {
 	LL_RECORD_BLOCK_TIME(FTM_UPDATE_CAMERA);
 
+	// - changed camera_skyward to the new global "mCameraUpVector"
 	mCameraUpVector = LLVector3::z_axis;
+	//LLVector3	camera_skyward(0.f, 0.f, 1.f);
 
-    U32 camera_mode = mCameraAnimating ? mLastCameraMode : mCameraMode;
+	U32 camera_mode = mCameraAnimating ? mLastCameraMode : mCameraMode;
 
 	validateFocusObject();
 
@@ -1168,11 +1171,14 @@ void LLAgentCamera::updateCamera()
 		gAgentAvatarp->isSitting() &&
 		(camera_mode == CAMERA_MODE_MOUSELOOK || camera_mode == CAMERA_MODE_FIRST_PERSON))
 	{
+		//changed camera_skyward to the new global "mCameraUpVector"
 		mCameraUpVector = mCameraUpVector * gAgentAvatarp->getRenderRotation();
 	}
 
-	if (cameraThirdPerson() && mFocusOnAvatar && LLFollowCamMgr::getActiveFollowCamParams())
+	if (cameraThirdPerson() && (mFocusOnAvatar || mAllowChangeToFollow) && LLFollowCamMgr::getActiveFollowCamParams())
 	{
+		mAllowChangeToFollow = FALSE;
+		mFocusOnAvatar = TRUE;
 		changeCameraToFollow();
 	}
 
@@ -1986,10 +1992,10 @@ void LLAgentCamera::handleScrollWheel(S32 clicks)
                 }
                 else
                 {
-                    changeCameraToMouselook(FALSE);
-                }
+				changeCameraToMouselook(FALSE);
 			}
 		}
+	}
 	}
     else if (mCameraMode == CAMERA_MODE_FIRST_PERSON)
     {
@@ -2704,6 +2710,7 @@ void LLAgentCamera::setFocusOnAvatar(BOOL focus_on_avatar, BOOL animate)
 	{
 		// keep camera focus point consistent, even though it is now unlocked
 		setFocusGlobal(gAgent.getPositionGlobal() + calcThirdPersonFocusOffset(), gAgent.getID());
+		mAllowChangeToFollow = FALSE;
 	}
 	
 	mFocusOnAvatar = focus_on_avatar;

@@ -315,6 +315,11 @@ BOOL LLMuteList::add(const LLMute& mute, U32 flags)
 				{
 					LLPipeline::removeMutedAVsLights(avatarp);
 				}
+				//remove agent's notifications as well
+				if (localmute.mType == LLMute::AGENT)
+				{
+					LLNotifications::instance().cancelByOwner(localmute.mID);
+				}
 				return TRUE;
 			}
 		}
@@ -644,6 +649,22 @@ BOOL LLMuteList::isMuted(const LLUUID& id, const std::string& name, U32 flags) c
 	// Look in legacy pile
 	string_set_t::const_iterator legacy_it = mLegacyMutes.find(name);
 	return legacy_it != mLegacyMutes.end();
+}
+
+BOOL LLMuteList::isMuted(const std::string& username, U32 flags) const
+{
+	mute_set_t::const_iterator mute_iter = mMutes.begin();
+	while(mute_iter != mMutes.end())
+	{
+		// can't convert "leha.test" into "LeHa TesT" so username comparison is more reliable
+		if (mute_iter->mType == LLMute::AGENT
+			&& LLCacheName::buildUsername(mute_iter->mName) == username)
+		{
+			return TRUE;
+		}
+		mute_iter++;
+	}
+	return FALSE;
 }
 
 //-----------------------------------------------------------------------------

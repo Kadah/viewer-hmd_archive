@@ -243,56 +243,59 @@ void LLPanelGroupInvite::impl::addRoleNames(LLGroupMgrGroupData* gdatap)
 	LLGroupMgrGroupData::member_list_t::iterator agent_iter =
 		gdatap->mMembers.find(gAgent.getID());
 
-	//get the member data for the agent if it exists
-	if ( agent_iter != gdatap->mMembers.end() )
-	{
-		LLGroupMemberData* member_data = (*agent_iter).second;
-
-		//loop over the agent's roles in the group
-		//then add those roles to the list of roles that the agent
-		//can invite people to be
-		if ( member_data && mRoleNames)
-		{
-			//if the user is the owner then we add
-			//all of the roles in the group
-			//else if they have the add to roles power
-			//we add every role but owner,
-			//else if they have the limited add to roles power
-			//we add every role the user is in
-			//else we just add to everyone
-			bool is_owner   = member_data->isOwner();
-			bool can_assign_any = gAgent.hasPowerInGroup(mGroupID,
+	//loop over the agent's roles in the group
+	//then add those roles to the list of roles that the agent
+	//can invite people to be.
+	//if the user is the owner then we add
+	//all of the roles in the group,
+	//else if they have the add to roles power
+	//we add every role but owner,
+	//else if they have the limited add to roles power
+	//we add every role the user is in,
+	//else we just add to everyone
+	bool is_owner = FALSE;
+	bool can_assign_any = gAgent.hasPowerInGroup(mGroupID,
 												 GP_ROLE_ASSIGN_MEMBER);
-			bool can_assign_limited = gAgent.hasPowerInGroup(mGroupID,
-												 GP_ROLE_ASSIGN_MEMBER_LIMITED);
-
-			LLGroupMgrGroupData::role_list_t::iterator rit = gdatap->mRoles.begin();
-			LLGroupMgrGroupData::role_list_t::iterator end = gdatap->mRoles.end();
-
-			//populate the role list
-			for ( ; rit != end; ++rit)
-			{
-				LLUUID role_id = (*rit).first;
-				LLRoleData rd;
-				if ( gdatap->getRoleData(role_id,rd) )
-				{
-					// Owners can add any role.
-					if ( is_owner 
-						// Even 'can_assign_any' can't add owner role.
-						 || (can_assign_any && role_id != gdatap->mOwnerRole)
-						// Add all roles user is in
-						 || (can_assign_limited && member_data->isInRole(role_id))
-						// Everyone role.
-						 || role_id == LLUUID::null )
-					{
-							mRoleNames->add(rd.mRoleName,
-											role_id,
-											ADD_BOTTOM);
-					}
-				}
-			}
+	bool can_assign_limited = gAgent.hasPowerInGroup(mGroupID,
+													 GP_ROLE_ASSIGN_MEMBER_LIMITED);
+	LLGroupMemberData* member_data = NULL;
+	//get the member data for the agent if it exists
+	if (agent_iter != gdatap->mMembers.end())
+	{
+		member_data = (*agent_iter).second;
+		if (member_data && mRoleNames)
+		{
+			is_owner = member_data->isOwner();
 		}//end if member data is not null
 	}//end if agent is in the group
+
+
+
+	LLGroupMgrGroupData::role_list_t::iterator rit = gdatap->mRoles.begin();
+	LLGroupMgrGroupData::role_list_t::iterator end = gdatap->mRoles.end();
+
+	//populate the role list:
+	for ( ; rit != end; ++rit)
+	{
+		LLUUID role_id = (*rit).first;
+		LLRoleData rd;
+		if ( gdatap->getRoleData(role_id,rd) )
+		{
+			// Owners can add any role.
+			if ( is_owner 
+				// Even 'can_assign_any' can't add owner role.
+				|| (can_assign_any && role_id != gdatap->mOwnerRole)
+				// Add all roles user is in
+				|| (can_assign_limited && member_data && member_data->isInRole(role_id))
+				// Everyone role.
+				|| role_id == LLUUID::null )
+			{
+				mRoleNames->add(rd.mRoleName,
+								role_id,
+								ADD_BOTTOM);
+			}
+		}
+	}
 }
 
 //static
@@ -498,25 +501,22 @@ void LLPanelGroupInvite::addUsers(uuid_vec_t& agent_ids)
 		}
 		else
 		{
-			//looks like user try to invite offline friend
+			//looks like user try to invite offline avatar (or the avatar from the other region)
 			//for offline avatar_id gObjectList.findObject() will return null
 			//so we need to do this additional search in avatar tracker, see EXT-4732
-			if (LLAvatarTracker::instance().isBuddy(agent_id))
+			LLAvatarName av_name;
+			if (!LLAvatarNameCache::get(agent_id, &av_name))
 			{
-				LLAvatarName av_name;
-				if (!LLAvatarNameCache::get(agent_id, &av_name))
-				{
-					// actually it should happen, just in case
-					//LLAvatarNameCache::get(LLUUID(agent_id), boost::bind(&LLPanelGroupInvite::addUserCallback, this, _1, _2));
-					// for this special case!
-					//when there is no cached name we should remove resident from agent_ids list to avoid breaking of sequence
-					// removed id will be added in callback
-					agent_ids.erase(agent_ids.begin() + i);
-				}
-				else
-				{
-					names.push_back(av_name.getAccountName());
-				}
+				// actually it should happen, just in case
+				//LLAvatarNameCache::get(LLUUID(agent_id), boost::bind(&LLPanelGroupInvite::addUserCallback, this, _1, _2));
+				// for this special case!
+				//when there is no cached name we should remove resident from agent_ids list to avoid breaking of sequence
+				// removed id will be added in callback
+				agent_ids.erase(agent_ids.begin() + i);
+			}
+			else
+			{
+				names.push_back(av_name.getAccountName());
 			}
 		}
 	}
@@ -579,7 +579,8 @@ void LLPanelGroupInvite::updateLists()
 		{
 			waiting = true;
 		}
-		if (gdatap->isRoleDataComplete() && gdatap->isMemberDataComplete() && gdatap->isRoleMemberDataComplete()) 
+		if (gdatap->isRoleDataComplete() && gdatap->isMemberDataComplete()
+			&& (gdatap->isRoleMemberDataComplete() || !gdatap->mMembers.size())) // MAINT-5270: large groups receives an empty members list without some powers, so RoleMemberData wouldn't be complete for them
 		{
 			if ( mImplementation->mRoleNames )
 			{

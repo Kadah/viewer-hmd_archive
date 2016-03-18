@@ -35,6 +35,7 @@
 #include "llappearancemgr.h"
 #include "llinventoryfunctions.h"
 #include "llinventoryicon.h"
+#include "llgesturemgr.h"
 #include "lltransutil.h"
 #include "llviewerattachmenu.h"
 #include "llvoavatarself.h"
@@ -55,7 +56,8 @@ bool LLFindOutfitItems::operator()(LLInventoryCategory* cat,
 	{
 		if((item->getType() == LLAssetType::AT_CLOTHING)
 		   || (item->getType() == LLAssetType::AT_BODYPART)
-		   || (item->getType() == LLAssetType::AT_OBJECT))
+		   || (item->getType() == LLAssetType::AT_OBJECT)
+		   || (item->getType() == LLAssetType::AT_GESTURE))
 		{
 			return TRUE;
 		}
@@ -124,7 +126,7 @@ void LLPanelWearableOutfitItem::updateItem(const std::string& name,
 	// We don't use get_is_item_worn() here because this update is triggered by
 	// an inventory observer upon link in COF beind added or removed so actual
 	// worn status of a linked item may still remain unchanged.
-	if (mWornIndicationEnabled && LLAppearanceMgr::instance().isLinkInCOF(mInventoryItemUUID))
+	if (mWornIndicationEnabled && LLAppearanceMgr::instance().isLinkedInCOF(mInventoryItemUUID))
 	{
 		search_label += LLTrans::getString("worn");
 		item_state = IS_WORN;
@@ -491,6 +493,7 @@ LLWearableItemTypeNameComparator::LLWearableItemTypeNameComparator()
 	mWearableOrder[LLAssetType::AT_CLOTHING] = LLWearableTypeOrder(ORDER_RANK_1, false, false);
 	mWearableOrder[LLAssetType::AT_OBJECT]   = LLWearableTypeOrder(ORDER_RANK_2, true, true);
 	mWearableOrder[LLAssetType::AT_BODYPART] = LLWearableTypeOrder(ORDER_RANK_3, false, true);
+	mWearableOrder[LLAssetType::AT_GESTURE] = LLWearableTypeOrder(ORDER_RANK_4, true, false);
 }
 
 void LLWearableItemTypeNameComparator::setOrder(LLAssetType::EType items_of_type,  LLWearableItemTypeNameComparator::ETypeListOrder order_priority, bool sort_asset_items_by_name, bool sort_wearable_items_by_name)
@@ -988,6 +991,10 @@ void LLWearableItemsList::ContextMenu::updateMask(U32& mask, LLAssetType::EType 
 	else if (at == LLAssetType::AT_OBJECT)
 	{
 		mask |= MASK_ATTACHMENT;
+	}
+	else if (at == LLAssetType::AT_GESTURE)
+	{
+		mask |= MASK_GESTURE;
 	}
 	else
 	{

@@ -125,13 +125,15 @@
 #include "llleap.h"
 #include "stringize.h"
 #include "llcoros.h"
+#if !LL_LINUX
+#include "cef/llceflib.h"
+#endif
 
 // Third party library includes
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
-
 
 #if LL_WINDOWS
 #	include <share.h> // For _SH_DENYWR in processMarkerFiles
@@ -329,6 +331,9 @@ BOOL				gDisconnected = FALSE;
 LLFrameTimer	gRestoreGLTimer;
 BOOL			gRestoreGL = FALSE;
 BOOL				gUseWireframe = FALSE;
+
+//use for remember deferred mode in wireframe switch
+BOOL			gInitialDeferredModeForWireframe = FALSE;
 
 // VFS globals - see llappviewer.h
 LLVFS* gStaticVFS = NULL;
@@ -683,7 +688,6 @@ LLAppViewer::LLAppViewer()
 	mPurgeOnExit(false),
 	mSecondInstance(false),
 	mSavedFinalSnapshot(false),
-    mIsSavingFinalSnapshot(false),
 	mSavePerAccountSettings(false),		// don't save settings on logout unless login succeeded.
 	mQuitRequested(false),
 	mLogoutRequestSent(false),
@@ -1216,14 +1220,6 @@ bool LLAppViewer::init()
 		LLStringOps::sPM = LLTrans::getString("dateTimePM");
 	}
 
-    if (!gHMD.isPreDetectionInitialized() && !gHMD.failedInit())
-    {
-        if (!gHMD.init())
-        {
-            LL_WARNS("HMD") << "HMD initialization Failed!" << LL_ENDL;
-        }
-    }
-
 	LLAgentLanguage::init();
 
 	return true;
@@ -1737,6 +1733,9 @@ bool LLAppViewer::cleanup()
 	//flag all elements as needing to be destroyed immediately
 	// to ensure shutdown order
 	LLMortician::setZealous(TRUE);
+
+    // Give any remaining SLPlugin instances a chance to exit cleanly.
+    LLPluginProcessParent::shutdown();
 
 	LLVoiceClient::getInstance()->terminate();
 	
@@ -2797,10 +2796,12 @@ bool LLAppViewer::initConfiguration()
 	//
 	gWindowTitle = LLTrans::getString("APP_NAME");
 #if LL_DEBUG
-	gWindowTitle += std::string(" [DEBUG] ") + gArgs;
-#else
-	gWindowTitle += std::string(" ") + gArgs;
+    gWindowTitle += std::string(" [DEBUG]");
 #endif
+	if (!gArgs.empty())
+	{
+	gWindowTitle += std::string(" ") + gArgs;
+	}
 	LLStringUtil::truncate(gWindowTitle, 255);
 
 	//RN: if we received a URL, hand it off to the existing instance.
@@ -3104,8 +3105,8 @@ void LLAppViewer::initUpdater()
 	U32 check_period = gSavedSettings.getU32("UpdaterServiceCheckPeriod");
 	bool willing_to_test;
 	LL_DEBUGS("UpdaterService") << "channel " << channel << LL_ENDL;
-	static const boost::regex is_test_channel("\\bTest$");
-	if (boost::regex_search(channel, is_test_channel)) 
+
+	if (LLVersionInfo::TEST_VIEWER == LLVersionInfo::getViewerMaturity()) 
 	{
 		LL_INFOS("UpdaterService") << "Test build: overriding willing_to_test by sending testno" << LL_ENDL;
 		willing_to_test = false;
@@ -3383,8 +3384,11 @@ LLSD LLAppViewer::getViewerInfo() const
 		info["VOICE_VERSION"] = LLTrans::getString("NotConnected");
 	}
 
-	// TODO: Implement media plugin version query
-	info["QT_WEBKIT_VERSION"] = "4.7.1 (version number hard-coded)";
+#if !LL_LINUX
+	info["LLCEFLIB_VERSION"] = LLCEFLIB_VERSION;
+#else
+	info["LLCEFLIB_VERSION"] = "Undefined";
+#endif
 
 	S32 packets_in = LLViewerStats::instance().getRecording().getSum(LLStatViewer::PACKETS_IN);
 	if (packets_in > 0)
@@ -4538,7 +4542,13 @@ void LLAppViewer::purgeCache()
 	LL_INFOS("AppCache") << "Purging Cache and Texture Cache..." << LL_ENDL;
 	LLAppViewer::getTextureCache()->purgeCache(LL_PATH_CACHE);
 	LLVOCache::getInstance()->removeCache(LL_PATH_CACHE);
-	gDirUtilp->deleteFilesInDir(gDirUtilp->getExpandedFilename(LL_PATH_CACHE, ""), "*.*");
+	std::string browser_cache = gDirUtilp->getExpandedFilename(LL_PATH_CACHE, "cef_cache");
+	if (LLFile::isdir(browser_cache))
+	{
+		// cef does not support clear_cache and clear_cookies, so clear what we can manually.
+		gDirUtilp->deleteDirAndContents(browser_cache);
+	}
+	gDirUtilp->deleteFilesInDir(gDirUtilp->getExpandedFilename(LL_PATH_CACHE, ""), "*");
 }
 
 //purge cache immediately, do not wait until the next login.
@@ -4857,7 +4867,7 @@ void LLAppViewer::idle()
         {
             gHMD.onIdle();
         }
-
+    
 	    //////////////////////////////////////
 	    //
 	    // Update simulator agent state
@@ -4973,6 +4983,7 @@ void LLAppViewer::idle()
 		
 		gIdleCallbacks.callFunctions();
 		gInventory.idleNotifyObservers();
+		LLAvatarTracker::instance().idleNotifyObservers();
 	}
 	
 	// Metrics logging (LLViewerAssetStats, etc.)

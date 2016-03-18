@@ -209,6 +209,7 @@ public:
 	void			setCameraPosAndFocusGlobal(const LLVector3d& pos, const LLVector3d& focus, const LLUUID &object_id);
 	void			clearFocusObject();
 	void			setFocusObject(LLViewerObject* object);
+	void			setAllowChangeToFollow(BOOL focus) 	{ mAllowChangeToFollow = focus; }
 	void			setObjectTracking(BOOL track) 	{ mTrackFocusObject = track; }
 	const LLVector3d &getFocusGlobal() const		{ return mFocusGlobal; }
 	const LLVector3d &getFocusTargetGlobal() const	{ return mFocusTargetGlobal; }
@@ -216,6 +217,7 @@ private:
 	LLVector3d		mCameraFocusOffset;				// Offset from focus point in build mode
 	LLVector3d		mCameraFocusOffsetTarget;		// Target towards which we are lerping the camera's focus offset
 	BOOL			mFocusOnAvatar;					
+	BOOL			mAllowChangeToFollow;
 	LLVector3d		mFocusGlobal;
 	LLVector3d		mFocusTargetGlobal;
 	LLPointer<LLViewerObject> mFocusObject;

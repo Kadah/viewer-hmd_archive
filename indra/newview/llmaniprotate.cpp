@@ -386,7 +386,7 @@ BOOL LLManipRotate::handleMouseDown(S32 x, S32 y, MASK mask)
 		if( mHighlightedPart != LL_NO_PART )
 		{
             mHandlingMouseClick = TRUE;
-		    handled = handleMouseDownOnPart( x, y, mask );
+			handled = handleMouseDownOnPart( x, y, mask );
             mHandlingMouseClick = FALSE;
 		}
 	}
@@ -408,7 +408,7 @@ BOOL LLManipRotate::handleMouseDownOnPart( S32 x, S32 y, MASK mask )
         // for some odd reason, rotation handles don't handle calling highlightManipulators on a click in HMD mode.  Not really sure why,
         // but the mouse position of the click seems to be in the wrong position.   However, since calling this is pretty redundant
         // anyway and not calling it fixes the issue...
-	    highlightManipulators(x, y);
+	highlightManipulators(x, y);
     }
 	S32 hit_part = mHighlightedPart;
 	// we just started a drag, so save initial object positions
@@ -758,7 +758,8 @@ void LLManipRotate::renderActiveRing( F32 radius, F32 width, const LLColor4& fro
 
 void LLManipRotate::renderSnapGuides()
 {
-	if (!gSavedSettings.getBOOL("SnapEnabled"))
+	static LLCachedControl<bool> snap_enabled(gSavedSettings, "SnapEnabled", true);
+	if (!snap_enabled)
 	{
 		return;
 	}
@@ -766,9 +767,10 @@ void LLManipRotate::renderSnapGuides()
 	LLVector3 grid_origin;
 	LLVector3 grid_scale;
 	LLQuaternion grid_rotation;
-	LLVector3 constraint_axis = getConstraintAxis();
 
-	LLSelectMgr::getInstance()->getGrid(grid_origin, grid_rotation, grid_scale);
+	LLSelectMgr::getInstance()->getGrid(grid_origin, grid_rotation, grid_scale, true);
+
+	LLVector3 constraint_axis = getConstraintAxis();
 
 	LLVector3 center = gAgent.getPosAgentFromGlobal( mRotationCenter );
 	LLVector3 cam_at_axis;
@@ -1156,16 +1158,16 @@ void LLManipRotate::renderSnapGuides()
             }
             else
             {
-                std::string help_text =  LLTrans::getString("manip_hint1");
-                LLColor4 help_text_color = LLColor4::white;
-                help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
-                hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
-                help_text =  LLTrans::getString("manip_hint2");
-                help_text_pos -= offset_dir * mRadiusMeters * 0.4f;
-                hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
-            }
+			std::string help_text =  LLTrans::getString("manip_hint1");
+			LLColor4 help_text_color = LLColor4::white;
+			help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
+			hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+			help_text =  LLTrans::getString("manip_hint2");
+			help_text_pos -= offset_dir * mRadiusMeters * 0.4f;
+			hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
 		}
 	}
+}
 }
 
 // Returns TRUE if center of sphere is visible.  Also sets a bunch of member variables that are used later (e.g. mCenterToCam)
@@ -1321,7 +1323,7 @@ LLVector3 LLManipRotate::getConstraintAxis()
 	else
 	{
 		S32 axis_dir = mManipPart - LL_ROT_X;
-		if ((axis_dir >= 0) && (axis_dir < 3))
+		if ((axis_dir >= LL_NO_PART) && (axis_dir < LL_Z_ARROW))
 		{
 			axis.mV[axis_dir] = 1.f;
 		}
@@ -1786,19 +1788,19 @@ void LLManipRotate::highlightManipulators( S32 x, S32 y )
     mouse_dir_x = mdx_raw;
 	mouse_dir_x -= rotation_center;
 	// push intersection point out when working at obtuse angle to make ring easier to hit
-	mouse_dir_x *= 1.f + (1.f - proj_rot_x_axis) * 0.1f;
+	mouse_dir_x *= 1.f + (1.f - llabs(rot_x_axis * mCenterToCamNorm)) * 0.1f;
 
 	// test y
 	getMousePointOnPlaneAgent(mdy_raw, x, y, rotation_center, rot_y_axis);
     mouse_dir_y = mdy_raw;
 	mouse_dir_y -= rotation_center;
-	mouse_dir_y *= 1.f + (1.f - proj_rot_y_axis) * 0.1f;
+	mouse_dir_y *= 1.f + (1.f - llabs(rot_y_axis * mCenterToCamNorm)) * 0.1f;
 
 	// test z
 	getMousePointOnPlaneAgent(mdz_raw, x, y, rotation_center, rot_z_axis);
     mouse_dir_z = mdz_raw;
 	mouse_dir_z -= rotation_center;
-	mouse_dir_z *= 1.f + (1.f - proj_rot_z_axis) * 0.1f;
+	mouse_dir_z *= 1.f + (1.f - llabs(rot_z_axis * mCenterToCamNorm)) * 0.1f;
 
 	// test roll
 	getMousePointOnPlaneAgent(intersection_roll, x, y, rotation_center, mCenterToCamNorm);
@@ -1809,7 +1811,7 @@ void LLManipRotate::highlightManipulators( S32 x, S32 y )
 	F32 dist_z = mouse_dir_z.normVec();
 
     F32 h = gHMD.isHMDMode() ? (F32)gHMD.getHMDViewportHeight() : (F32)gViewerWindow->getWorldViewHeightScaled();
-	F32 distance_threshold = (MAX_MANIP_SELECT_DISTANCE * mRadiusMeters) / h;
+	F32 distance_threshold = (MAX_MANIP_SELECT_DISTANCE * mRadiusMeters) / (h > 0.01f ? h : 1.0f);
 
 	if (llabs(dist_x - mRadiusMeters) * llmax(0.05f, proj_rot_x_axis) < distance_threshold)
 	{

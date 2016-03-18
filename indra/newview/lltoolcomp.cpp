@@ -268,7 +268,7 @@ BOOL LLToolCompTranslate::handleHover(S32 x, S32 y, MASK mask)
 BOOL LLToolCompTranslate::handleMouseDown(S32 x, S32 y, MASK mask)
 {
 	mMouseDown = TRUE;
-	gViewerWindow->pickAsync(x, y, mask, pickCallback, TRUE);
+	gViewerWindow->pickAsync(x, y, mask, pickCallback, /*BOOL pick_transparent*/ TRUE);
 	return TRUE;
 }
 
@@ -278,7 +278,7 @@ void LLToolCompTranslate::pickCallback(const LLPickInfo& pick_info)
 
     if (!gHMD.isHMDMode())
     {
-    	LLToolCompTranslate::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+	LLToolCompTranslate::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
     }
 	if (!LLToolCompTranslate::getInstance()->mMouseDown)
 	{
@@ -408,7 +408,7 @@ void LLToolCompScale::pickCallback(const LLPickInfo& pick_info)
         // for some odd reason, scale handles don't handle calling highlightManipulators on a click in HMD mode.  Not really sure why,
         // but the mouse position of the click seems to be in the wrong position.   However, since calling this is pretty redundant
         // anyway and not calling it fixes the issue...
-	    LLToolCompScale::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+	LLToolCompScale::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
     }
 	if (!LLToolCompScale::getInstance()->mMouseDown)
 	{
@@ -614,7 +614,7 @@ void LLToolCompRotate::pickCallback(const LLPickInfo& pick_info)
         // for some odd reason, rotation handles don't handle calling highlightManipulators on a click in HMD mode.  Not really sure why,
         // but the mouse position of the click seems to be in the wrong position.   However, since calling this is pretty redundant
         // anyway and not calling it fixes the issue...
-    	LLToolCompRotate::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+	LLToolCompRotate::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
     }
 	if (!LLToolCompRotate::getInstance()->mMouseDown)
 	{
@@ -758,9 +758,10 @@ BOOL LLToolCompGun::handleHover(S32 x, S32 y, MASK mask)
 
 BOOL LLToolCompGun::handleMouseDown(S32 x, S32 y, MASK mask)
 { 
-	// if the left button is grabbed, don't put up the pie menu
-	if (gAgent.leftButtonGrabbed())
+    // if the left button is blocked, don't put up the pie menu
+    if (gAgent.leftButtonBlocked())
 	{
+        // in case of "grabbed" control flag will be set later
 		gAgent.setControlFlags(AGENT_CONTROL_ML_LBUTTON_DOWN);
 		return FALSE;
 	}
@@ -775,9 +776,10 @@ BOOL LLToolCompGun::handleMouseDown(S32 x, S32 y, MASK mask)
 
 BOOL LLToolCompGun::handleDoubleClick(S32 x, S32 y, MASK mask)
 {
-	// if the left button is grabbed, don't put up the pie menu
-	if (gAgent.leftButtonGrabbed())
+    // if the left button is blocked, don't put up the pie menu
+    if (gAgent.leftButtonBlocked())
 	{
+        // in case of "grabbed" control flag will be set later
 		gAgent.setControlFlags(AGENT_CONTROL_ML_LBUTTON_DOWN);
 		return FALSE;
 	}

@@ -130,7 +130,7 @@ public:
 	virtual void move(LLFolderViewModelItem* parent_listener);	
 	virtual BOOL isItemCopyable() const;
 	virtual BOOL copyToClipboard() const;
-	virtual BOOL cutToClipboard() const;
+	virtual BOOL cutToClipboard();
 	virtual BOOL isClipboardPasteable() const;
 	virtual void pasteFromClipboard();
 	virtual void pasteLinkFromClipboard();
@@ -542,7 +542,7 @@ BOOL LLTaskInvFVBridge::copyToClipboard() const
 	return FALSE;
 }
 
-BOOL LLTaskInvFVBridge::cutToClipboard() const
+BOOL LLTaskInvFVBridge::cutToClipboard()
 {
 	return FALSE;
 }
@@ -905,7 +905,11 @@ void LLTaskTextureBridge::openItem()
 	LLPreviewTexture* preview = LLFloaterReg::showTypedInstance<LLPreviewTexture>("preview_texture", LLSD(mUUID), TAKE_FOCUS_YES);
 	if(preview)
 	{
-		preview->setAuxItem(findItem());
+	    LLInventoryItem* item = findItem();
+	    if(item)
+	    {
+	        preview->setAuxItem(item);
+	    }
 		preview->setObjectID(mPanel->getTaskUUID());
 	}
 }
@@ -1163,9 +1167,18 @@ void LLTaskNotecardBridge::openItem()
 	{
 		return;
 	}
-	if(object->permModify() || gAgent.isGodlike())
+
+	// Note: even if we are not allowed to modify copyable notecard, we should be able to view it
+	LLInventoryItem *item = dynamic_cast<LLInventoryItem*>(object->getInventoryObject(mUUID));
+	BOOL item_copy = item && gAgent.allowOperation(PERM_COPY, item->getPermissions(), GP_OBJECT_MANIPULATE);
+	if( item_copy
+		|| object->permModify()
+		|| gAgent.isGodlike())
 	{
-		LLPreviewNotecard* preview = LLFloaterReg::showTypedInstance<LLPreviewNotecard>("preview_notecard", LLSD(mUUID), TAKE_FOCUS_YES);
+	    LLSD floater_key;
+	    floater_key["taskid"] = mPanel->getTaskUUID();
+	    floater_key["itemid"] = mUUID;
+	    LLPreviewNotecard* preview = LLFloaterReg::showTypedInstance<LLPreviewNotecard>("preview_notecard", floater_key, TAKE_FOCUS_YES);
 		if (preview)
 		{
 			preview->setObjectID(mPanel->getTaskUUID());

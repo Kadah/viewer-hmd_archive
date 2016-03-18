@@ -136,7 +136,7 @@ protected:
 	HCURSOR loadColorCursor(LPCTSTR name);
 	BOOL	isValid();
 	void	moveWindow(const LLCoordScreen& position,const LLCoordScreen& size, BOOL adjustPosition);
-	LLSD	getNativeKeyData();
+	virtual LLSD	getNativeKeyData();
 
 	// Changes display resolution. Returns true if successful
 	BOOL	setDisplayResolution(S32 width, S32 height, S32 bits, S32 refresh);
@@ -187,7 +187,7 @@ protected:
 	HDC		    mhDC[2];            // Windows Device context handle
 	U32         mPixelFormat;
     PIXELFORMATDESCRIPTOR mPixelFormatDescriptor;
-	HGLRC		mhRC;           // OpenGL rendering context
+	HGLRC		mhRC;			// OpenGL rendering context
 	HINSTANCE	mhInstance;		// handle to application instance
 	WNDPROC		mWndProc;		// user-installable window proc
 	RECT		mOldMouseClip;  // Screen rect to which the mouse cursor was globally constrained before we changed it in clipMouse()
@@ -235,6 +235,9 @@ protected:
 	U32				mKeyCharCode;
 	U32				mKeyScanCode;
 	U32				mKeyVirtualKey;
+	U32				mRawMsg;
+	U32				mRawWParam;
+	U32				mRawLParam;
 
 	friend class LLWindowManager;
 };

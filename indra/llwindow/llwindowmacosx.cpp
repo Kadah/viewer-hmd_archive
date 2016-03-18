@@ -51,7 +51,10 @@ extern BOOL gDebugWindowProc;
 const S32	BITS_PER_PIXEL = 32;
 const S32	MAX_NUM_RESOLUTIONS = 32;
 
-
+namespace
+{
+    NSKeyEventRef mRawKeyEvent = NULL;
+}
 //
 // LLWindowMacOSX
 //
@@ -219,14 +222,20 @@ void LLWindowMacOSX::adjustPosForHMDScaling(LLCoordGL& pt)
 // These functions are used as wrappers for our internal event handling callbacks.
 // It's a good idea to wrap these to avoid reworking more code than we need to within LLWindow.
 
-bool callKeyUp(unsigned short key, unsigned int mask)
+bool callKeyUp(NSKeyEventRef event, unsigned short key, unsigned int mask)
 {
-	return gKeyboard->handleKeyUp(key, mask);
+    mRawKeyEvent = event;
+	bool retVal = gKeyboard->handleKeyUp(key, mask);
+    mRawKeyEvent = NULL;
+    return retVal;
 }
 
-bool callKeyDown(unsigned short key, unsigned int mask)
+bool callKeyDown(NSKeyEventRef event, unsigned short key, unsigned int mask)
 {
-	return gKeyboard->handleKeyDown(key, mask);
+    mRawKeyEvent = event;
+	bool retVal = gKeyboard->handleKeyDown(key, mask);
+    mRawKeyEvent = NULL;
+    return retVal;
 }
 
 void callResetKeys()
@@ -236,7 +245,23 @@ void callResetKeys()
 
 bool callUnicodeCallback(wchar_t character, unsigned int mask)
 {
-	return gWindowImplementation->getCallbacks()->handleUnicodeChar(character, mask);
+    NativeKeyEventData eventData;
+    
+    memset(&eventData, 0, sizeof(NativeKeyEventData));
+    
+    eventData.mKeyEvent = NativeKeyEventData::KEYCHAR;
+    eventData.mEventType = 0;
+    eventData.mEventModifiers = mask;
+    eventData.mEventKeyCode = 0;
+    eventData.mEventChars = character;
+    eventData.mEventUnmodChars = character;
+    eventData.mEventRepeat = false;
+    
+    mRawKeyEvent = &eventData;
+    
+    bool result = gWindowImplementation->getCallbacks()->handleUnicodeChar(character, mask);
+    mRawKeyEvent = NULL;
+    return result;
 }
 
 void callFocus()
@@ -604,6 +629,8 @@ BOOL LLWindowMacOSX::createContext(int x, int y, int width, int height, int bits
 
 	if(mContext != NULL)
 	{
+		
+		
 		U32 err = CGLSetCurrentContext(mContext);
 		if (err != kCGLNoError)
 		{
@@ -838,11 +865,11 @@ BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
 	S32 err = -1;
 
     if (mFullscreen && !mHMDMode)
-    {
-        size->mX = mFullscreenWidth;
-        size->mY = mFullscreenHeight;
-        err = noErr;
-    }
+	{
+		size->mX = mFullscreenWidth;
+		size->mY = mFullscreenHeight;
+		err = noErr;
+	}
     else if (mWindow[mCurRCIdx])
     {
         float rect[4];
@@ -854,12 +881,12 @@ BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
             size->mY = llmin(sz[1], mHMDSize[1]);
         }
         else
-        {
+	{
             size->mX = sz[0];
             size->mY = sz[1];
         }
         err = noErr;
-    }
+	}
 	else
 	{
 		LL_ERRS() << "LLWindowMacOSX::getPosition(): no window and not fullscreen!" << LL_ENDL;
@@ -871,15 +898,15 @@ BOOL LLWindowMacOSX::getSize(LLCoordScreen *size)
 BOOL LLWindowMacOSX::getSize(LLCoordWindow *size)
 {
 	S32 err = -1;
-
+	
     if (mFullscreen && !mHMDMode)
-    {
-        size->mX = mFullscreenWidth;
-        size->mY = mFullscreenHeight;
-        err = noErr;
-    }
+	{
+		size->mX = mFullscreenWidth;
+		size->mY = mFullscreenHeight;
+		err = noErr;
+	}
     else if (mWindow[mCurRCIdx])
-    {
+	{
         float rect[4];
 		getContentViewBounds(mWindow[mCurRCIdx], rect);
         S32 sz[2] = { ll_round(rect[2]), ll_round(rect[3]) };
@@ -894,7 +921,7 @@ BOOL LLWindowMacOSX::getSize(LLCoordWindow *size)
             size->mY = sz[1];
         }
         err = noErr;
-    }
+	}
 	else
 	{
 		LL_ERRS() << "LLWindowMacOSX::getPosition(): no window and not fullscreen!" << LL_ENDL;
@@ -907,7 +934,7 @@ BOOL LLWindowMacOSX::setPosition(const LLCoordScreen position)
 {
 	if (mWindow[mCurRCIdx])
 	{
-        float pos[2] = {position.mX, position.mY};
+		float pos[2] = {position.mX, position.mY};
 		setWindowPos(mWindow[mCurRCIdx], pos);
         return TRUE;
 	}
@@ -993,11 +1020,11 @@ BOOL LLWindowMacOSX::setSizeImpl(const LLCoordScreen size, BOOL adjustPosition)
 BOOL LLWindowMacOSX::setSizeImpl(const LLCoordWindow size, BOOL adjustPosition)
 {
 	if (mWindow[mCurRCIdx])
-	{
+{
         LLCoordWindow actualSize(size);
         actualSize.mY += (mFullscreen ? 0 : 22);
         if (adjustPosition && !mFullscreen)
-        {
+	{
             adjustWindowToFitScreen(actualSize);
         }
         setWindowSize(mWindow[mCurRCIdx], actualSize.mX, actualSize.mY);
@@ -1160,7 +1187,7 @@ BOOL LLWindowMacOSX::setCursorPosition(const LLCoordWindow position)
             pos2.mY = (S32)((F32)pos2.mY * mHMDScale[1]);
         }
     }
-    LLCoordScreen screen_pos;
+	LLCoordScreen screen_pos;
     BOOL result = convertCoords(pos2, &screen_pos);
     mCurRCIdx = oldIdx;
 	if (!result)
@@ -1202,7 +1229,7 @@ BOOL LLWindowMacOSX::getCursorPosition(LLCoordWindow *position)
 	
 	float cursor_point[2];
 	getCursorPos(mWindow[0], cursor_point);
-    
+
 	if(mCursorDecoupled)
 	{
 		//		CGMouseDelta x, y;
@@ -1437,14 +1464,14 @@ BOOL LLWindowMacOSX::convertCoords(LLCoordGL from, LLCoordWindow *to)
 {
     if (to)
     {
-	    to->mX = from.mX;
-	    to->mY = from.mY;
+	to->mX = from.mX;
+	to->mY = from.mY;
         if (mHMDMode && mCurRCIdx == 0)
         {
             to->mY = llmin(to->mY, mHMDSize[1]);
         }
-	    return TRUE;
-    }
+	return TRUE;
+}
     return FALSE;
 }
 
@@ -1452,10 +1479,10 @@ BOOL LLWindowMacOSX::convertCoords(LLCoordWindow from, LLCoordGL* to)
 {
     if (to)
     {
-	    to->mX = from.mX;
-        to->mY = from.mY;
-	    return TRUE;
-    }
+	to->mX = from.mX;
+	to->mY = from.mY;
+	return TRUE;
+}
     return FALSE;
 }
 
@@ -1510,6 +1537,8 @@ BOOL LLWindowMacOSX::convertCoords(LLCoordGL from, LLCoordScreen *to)
 
 	return(convertCoords(from, &window_coord) && convertCoords(window_coord, to));
 }
+
+
 
 
 void LLWindowMacOSX::setupFailure(const std::string& text, const std::string& caption, U32 type)
@@ -1703,8 +1732,8 @@ ECursorType LLWindowMacOSX::getCursor() const
     }
     else
     {
-	    return mCurrentCursor;
-    }
+	return mCurrentCursor;
+}
 }
 
 void LLWindowMacOSX::initCursors()
@@ -1768,8 +1797,8 @@ void LLWindowMacOSX::hideCursor()
 		mHideCursorPermanent = TRUE;
         if (!mHMDMode)
         {
-		    hideNSCursor();
-        }
+		hideNSCursor();
+	}
 	}
 	else
 	{
@@ -1788,8 +1817,8 @@ void LLWindowMacOSX::showCursor()
 		mHideCursorPermanent = FALSE;
         if (!mHMDMode)
         {
-		    showNSCursor();
-        }
+		showNSCursor();
+	}
 	}
 	else
 	{
@@ -1919,49 +1948,15 @@ void LLWindowMacOSX::spawnWebBrowser(const std::string& escaped_url, bool async)
 LLSD LLWindowMacOSX::getNativeKeyData()
 {
 	LLSD result = LLSD::emptyMap();
-#if 0
+#if 1
 	if(mRawKeyEvent)
 	{
-		char char_code = 0;
-		UInt32 key_code = 0;
-		UInt32 modifiers = 0;
-		UInt32 keyboard_type = 0;
-
-		GetEventParameter (mRawKeyEvent, kEventParamKeyMacCharCodes, typeChar, NULL, sizeof(char), NULL, &char_code);
-		GetEventParameter (mRawKeyEvent, kEventParamKeyCode, typeUInt32, NULL, sizeof(UInt32), NULL, &key_code);
-		GetEventParameter (mRawKeyEvent, kEventParamKeyModifiers, typeUInt32, NULL, sizeof(UInt32), NULL, &modifiers);
-		GetEventParameter (mRawKeyEvent, kEventParamKeyboardType, typeUInt32, NULL, sizeof(UInt32), NULL, &keyboard_type);
-
-		result["char_code"] = (S32)char_code;
-		result["key_code"] = (S32)key_code;
-		result["modifiers"] = (S32)modifiers;
-		result["keyboard_type"] = (S32)keyboard_type;
-
-#if 0
-		// This causes trouble for control characters -- apparently character codes less than 32 (escape, control-A, etc)
-		// cause llsd serialization to create XML that the llsd deserializer won't parse!
-		std::string unicode;
-		S32 err = noErr;
-		EventParamType actualType = typeUTF8Text;
-		UInt32 actualSize = 0;
-		char *buffer = NULL;
-
-		err = GetEventParameter (mRawKeyEvent, kEventParamKeyUnicodes, typeUTF8Text, &actualType, 0, &actualSize, NULL);
-		if(err == noErr)
-		{
-			// allocate a buffer and get the actual data.
-			buffer = new char[actualSize];
-			err = GetEventParameter (mRawKeyEvent, kEventParamKeyUnicodes, typeUTF8Text, &actualType, actualSize, &actualSize, buffer);
-			if(err == noErr)
-			{
-				unicode.assign(buffer, actualSize);
-			}
-			delete[] buffer;
-		}
-
-		result["unicode"] = unicode;
-#endif
-
+        result["event_type"] = LLSD::Integer(mRawKeyEvent->mEventType);
+        result["event_modifiers"] = LLSD::Integer(mRawKeyEvent->mEventModifiers);
+        result["event_keycode"] = LLSD::Integer(mRawKeyEvent->mEventKeyCode);
+        result["event_chars"] = (mRawKeyEvent->mEventChars) ? LLSD(LLSD::Integer(mRawKeyEvent->mEventChars)) : LLSD();
+        result["event_umodchars"] = (mRawKeyEvent->mEventUnmodChars) ? LLSD(LLSD::Integer(mRawKeyEvent->mEventUnmodChars)) : LLSD();
+        result["event_isrepeat"] = LLSD::Boolean(mRawKeyEvent->mEventRepeat);
 	}
 #endif
 
@@ -2358,7 +2353,7 @@ void LLWindowMacOSX::handleDragNDrop(std::string url, LLWindowCallbacks::DragNDr
 	LLCoordWindow window_coords(mouse_point[0], mouse_point[1]);
 	LLCoordGL gl_pos;
 	convertCoords(window_coords, &gl_pos);
-
+	
 	if(!url.empty())
 	{
 		LLWindowCallbacks::DragNDropResult res =

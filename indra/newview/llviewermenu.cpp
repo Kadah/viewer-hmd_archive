@@ -57,6 +57,7 @@
 #include "llfacebookconnect.h"
 #include "llfilepicker.h"
 #include "llfirstuse.h"
+#include "llfloaterabout.h"
 #include "llfloaterbuy.h"
 #include "llfloaterbuycontents.h"
 #include "llbuycurrencyhtml.h"
@@ -88,6 +89,7 @@
 #include "llinventoryfunctions.h"
 #include "llpanellogin.h"
 #include "llpanelblockedlist.h"
+#include "llmarketplacefunctions.h"
 #include "llmenuoptionpathfindingrebakenavmesh.h"
 #include "llmoveview.h"
 #include "llparcel.h"
@@ -98,6 +100,7 @@
 #include "llspellcheckmenuhandler.h"
 #include "llstatusbar.h"
 #include "lltextureview.h"
+#include "lltoolbarview.h"
 #include "lltoolcomp.h"
 #include "lltoolmgr.h"
 #include "lltoolpie.h"
@@ -154,6 +157,7 @@ void handle_test_load_url(void*);
 //extern BOOL gDebugAvatarRotation;
 extern BOOL gDebugClicks;
 extern BOOL gDebugWindowProc;
+extern BOOL gShaderProfileFrame;
 
 //extern BOOL gDebugTextEditorTips;
 //extern BOOL gDebugSelectMgr;
@@ -385,6 +389,66 @@ void set_underclothes_menu_options()
 		gMenuBarView->getChild<LLView>("Menu Underpants")->setVisible(FALSE);
 		gMenuBarView->getChild<LLView>("Menu Undershirt")->setVisible(FALSE);
 	}
+}
+
+void set_merchant_SLM_menu()
+{
+    // DD-170 : SLM Alpha and Beta program : for the moment, we always show the SLM menu and 
+    // tools so that all merchants can try out the UI, even if not migrated.
+    // *TODO : Keep SLM UI hidden for non migrated merchant in released viewer
+    
+    //if (LLMarketplaceData::instance().getSLMStatus() == MarketplaceStatusCodes::MARKET_PLACE_NOT_MIGRATED_MERCHANT)
+    //{
+        // Merchant not migrated: show only the old Merchant Outbox menu
+    //    gMenuHolder->getChild<LLView>("MerchantOutbox")->setVisible(TRUE);
+    //}
+    //else
+    //{
+        // All other cases (new merchant, not merchant, migrated merchant): show the new Marketplace Listings menu and enable the tool
+        gMenuHolder->getChild<LLView>("MarketplaceListings")->setVisible(TRUE);
+        LLCommand* command = LLCommandManager::instance().getCommand("marketplacelistings");
+		gToolBarView->enableCommand(command->id(), true);
+    //}
+}
+
+void set_merchant_outbox_menu(U32 status, const LLSD& content)
+{
+    // If the merchant is fully migrated, the API is disabled (503) and we won't show the old menu item.
+    // In all other cases, we show it.
+    if (status != MarketplaceErrorCodes::IMPORT_SERVER_API_DISABLED)
+    {
+        gMenuHolder->getChild<LLView>("MerchantOutbox")->setVisible(TRUE);
+    }
+}
+
+void check_merchant_status()
+{
+    if (!gSavedSettings.getBOOL("InventoryOutboxDisplayBoth"))
+    {
+        // Reset the SLM status: we actually want to check again, that's the point of calling check_merchant_status()
+        LLMarketplaceData::instance().setSLMStatus(MarketplaceStatusCodes::MARKET_PLACE_NOT_INITIALIZED);
+        
+        // Hide SLM related menu item
+        gMenuHolder->getChild<LLView>("MarketplaceListings")->setVisible(FALSE);
+        
+        // Also disable the toolbar button for Marketplace Listings
+        LLCommand* command = LLCommandManager::instance().getCommand("marketplacelistings");
+		gToolBarView->enableCommand(command->id(), false);
+        
+        // Launch an SLM test connection to get the merchant status
+        LLMarketplaceData::instance().initializeSLM(boost::bind(&set_merchant_SLM_menu));
+
+        // Do the Merchant Outbox init only once per session
+        if (LLMarketplaceInventoryImporter::instance().getMarketPlaceStatus() == MarketplaceStatusCodes::MARKET_PLACE_NOT_INITIALIZED)
+        {
+            // Hide merchant outbox related menu item
+            gMenuHolder->getChild<LLView>("MerchantOutbox")->setVisible(FALSE);
+            
+            // Launch a Merchant Outbox test connection to get the migration status
+            LLMarketplaceInventoryImporter::instance().setStatusReportCallback(boost::bind(&set_merchant_outbox_menu,_1, _2));
+            LLMarketplaceInventoryImporter::instance().initialize();
+        }
+    }
 }
 
 void init_menus()
@@ -1183,9 +1247,24 @@ class LLAdvancedToggleWireframe : public view_listener_t
 	bool handleEvent(const LLSD& userdata)
 	{
 		gUseWireframe = !(gUseWireframe);
+
+		if (gUseWireframe)
+		{
+			gInitialDeferredModeForWireframe = LLPipeline::sRenderDeferred;
+		}
+
 		LLViewerDisplay::gWindowResized = TRUE;
 		LLPipeline::updateRenderDeferred();
 		gPipeline.resetVertexBuffers();
+
+		if (!gUseWireframe && !gInitialDeferredModeForWireframe && LLPipeline::sRenderDeferred != gInitialDeferredModeForWireframe && gPipeline.isInit())
+		{
+			LLPipeline::refreshCachedSettings();
+			gPipeline.releaseGLBuffers();
+			gPipeline.createGLBuffers();
+			LLViewerShaderMgr::instance()->setShaders();
+		}
+
 		return true;
 	}
 };
@@ -2078,6 +2157,22 @@ class LLAdvancedCheckShowObjectUpdates : public view_listener_t
 
 
 
+///////////////////////
+// CHECK FOR UPDATES //
+///////////////////////
+
+
+
+class LLAdvancedCheckViewerUpdates : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		LLFloaterAboutUtil::checkUpdatesAndNotify();
+		return true;
+	}
+};
+
+
 ////////////////////
 // COMPRESS IMAGE //
 ////////////////////
@@ -2696,6 +2791,7 @@ void handle_object_edit()
 
 	if (gAgentCamera.getFocusOnAvatar() && !LLToolMgr::getInstance()->inEdit())
 	{
+		LLFloaterTools::sPreviousFocusOnAvatar = true;
 		LLObjectSelectionHandle selection = LLSelectMgr::getInstance()->getSelection();
 
 		if (selection->getSelectType() == SELECT_TYPE_HUD || !gSavedSettings.getBOOL("EditCameraMovement"))
@@ -7179,12 +7275,11 @@ void handle_selected_texture_info(void*)
    			{
    				msg.append( llformat("%d ", (S32)(it->second[i])));
    			}
-
-			LLSD args;
-			args["MESSAGE"] = msg;
-			LLNotificationsUtil::add("SystemMessage", args);
    		}
-	}
+		LLSD args;
+		args["MESSAGE"] = msg;
+		LLNotificationsUtil::add("SystemMessage", args);
+   	}
 }
 
 void handle_selected_material_info()
@@ -8962,6 +9057,7 @@ void initialize_menus()
 	// Advanced (toplevel)
 	view_listener_t::addMenu(new LLAdvancedToggleShowObjectUpdates(), "Advanced.ToggleShowObjectUpdates");
 	view_listener_t::addMenu(new LLAdvancedCheckShowObjectUpdates(), "Advanced.CheckShowObjectUpdates");
+	view_listener_t::addMenu(new LLAdvancedCheckViewerUpdates(), "Advanced.CheckViewerUpdates");
 	view_listener_t::addMenu(new LLAdvancedCompressImage(), "Advanced.CompressImage");
 	view_listener_t::addMenu(new LLAdvancedShowDebugSettings(), "Advanced.ShowDebugSettings");
 	view_listener_t::addMenu(new LLAdvancedEnableViewAdminOptions(), "Advanced.EnableViewAdminOptions");

@@ -37,6 +37,7 @@
 #include "lltextparser.h"
 #include "lltextutil.h"
 #include "lltooltip.h"
+#include "lltrans.h"
 #include "lluictrl.h"
 #include "llurlaction.h"
 #include "llurlregistry.h"
@@ -672,7 +673,7 @@ void LLTextBase::drawText()
 			line_end = next_start;
 		}
 
-		LLRect text_rect(line.mRect);
+        LLRectf text_rect(line.mRect.mLeft, line.mRect.mTop, line.mRect.mRight, line.mRect.mBottom);
 		text_rect.mRight = mDocumentView->getRect().getWidth(); // clamp right edge to document extents
 		text_rect.translate(mDocumentView->getRect().mLeft, mDocumentView->getRect().mBottom); // adjust by scroll position
 
@@ -745,7 +746,7 @@ void LLTextBase::drawText()
 				++misspell_it;
 			}
 
-			text_rect.mLeft = (S32)(cur_segment->draw(seg_start - cur_segment->getStart(), clipped_end, selection_left, selection_right, text_rect));
+			text_rect.mLeft = cur_segment->draw(seg_start - cur_segment->getStart(), clipped_end, selection_left, selection_right, text_rect);
 
 			seg_start = clipped_end + cur_segment->getStart();
 		}
@@ -2060,27 +2061,33 @@ void LLTextBase::appendTextImpl(const std::string &new_text, const LLStyle::Para
 
 			// add icon before url if need
 			LLTextUtil::processUrlMatch(&match, this, isContentTrusted() || match.isTrusted());
+			if ((isContentTrusted() || match.isTrusted()) && !match.getIcon().empty() )
+			{
+				setLastSegmentToolTip(LLTrans::getString("TooltipSLIcon"));
+			}
 
 			// output the styled Url
 			appendAndHighlightTextImpl(match.getLabel(), part, link_params, match.underlineOnHoverOnly());
+			bool tooltip_required =  !match.getTooltip().empty();
 
-			// show query part of url with gray color only for LLUrlEntryHTTP and LLUrlEntryHTTPNoProtocol url entries
+			// set the tooltip for the Url label
+			if (tooltip_required)
+			{
+				setLastSegmentToolTip(match.getTooltip());
+			}
+
+			// show query part of url with gray color only for LLUrlEntryHTTP url entries
 			std::string label = match.getQuery();
 			if (label.size())
 			{
 				link_params.color = LLColor4::grey;
 				link_params.readonly_color = LLColor4::grey;
 				appendAndHighlightTextImpl(label, part, link_params, match.underlineOnHoverOnly());
-			}
-			
-			// set the tooltip for the Url label
-			if (! match.getTooltip().empty())
-			{
-				segment_set_t::iterator it = getSegIterContaining(getLength()-1);
-				if (it != mSegments.end())
+
+				// set the tooltip for the query part of url
+				if (tooltip_required)
 				{
-					LLTextSegmentPtr segment = *it;
-					segment->setToolTip(match.getTooltip());
+					setLastSegmentToolTip(match.getTooltip());
 				}
 			}
 
@@ -2104,6 +2111,16 @@ void LLTextBase::appendTextImpl(const std::string &new_text, const LLStyle::Para
 	else
 	{
 		appendAndHighlightText(new_text, part, style_params);
+	}
+}
+
+void LLTextBase::setLastSegmentToolTip(const std::string &tooltip)
+{
+	segment_set_t::iterator it = getSegIterContaining(getLength()-1);
+	if (it != mSegments.end())
+	{
+		LLTextSegmentPtr segment = *it;
+		segment->setToolTip(tooltip);
 	}
 }
 
@@ -3013,7 +3030,7 @@ bool LLTextSegment::getDimensions(S32 first_char, S32 num_chars, S32& width, S32
 S32	LLTextSegment::getOffset(S32 segment_local_x_coord, S32 start_offset, S32 num_chars, bool round) const { return 0; }
 S32	LLTextSegment::getNumChars(S32 num_pixels, S32 segment_offset, S32 line_offset, S32 max_chars) const { return 0; }
 void LLTextSegment::updateLayout(const LLTextBase& editor) {}
-F32	LLTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRect& draw_rect) { return draw_rect.mLeft; }
+F32	LLTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRectf& draw_rect) { return draw_rect.mLeft; }
 bool LLTextSegment::canEdit() const { return false; }
 void LLTextSegment::unlinkFromDocument(LLTextBase*) {}
 void LLTextSegment::linkToDocument(LLTextBase*) {}
@@ -3079,7 +3096,7 @@ LLNormalTextSegment::~LLNormalTextSegment()
 }
 
 
-F32 LLNormalTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRect& draw_rect)
+F32 LLNormalTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRectf& draw_rect)
 {
 	if( end - start > 0 )
 	{
@@ -3089,7 +3106,7 @@ F32 LLNormalTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 selec
 }
 
 // Draws a single text segment, reversing the color for selection if needed.
-F32 LLNormalTextSegment::drawClippedSegment(S32 seg_start, S32 seg_end, S32 selection_start, S32 selection_end, LLRect rect)
+F32 LLNormalTextSegment::drawClippedSegment(S32 seg_start, S32 seg_end, S32 selection_start, S32 selection_end, LLRectf rect)
 {
 	F32 alpha = LLViewDrawContext::getCurrentContext().mAlpha;
 
@@ -3121,7 +3138,7 @@ F32 LLNormalTextSegment::drawClippedSegment(S32 seg_start, S32 seg_end, S32 sele
 				 &right_x, 
 				 mEditor.getUseEllipses());
 	}
-	rect.mLeft = (S32)ceil(right_x);
+	rect.mLeft = right_x;
 	
 	if( (selection_start < seg_end) && (selection_end > seg_start) )
 	{
@@ -3140,7 +3157,7 @@ F32 LLNormalTextSegment::drawClippedSegment(S32 seg_start, S32 seg_end, S32 sele
 				 &right_x, 
 				 mEditor.getUseEllipses());
 	}
-	rect.mLeft = (S32)ceil(right_x);
+	rect.mLeft = right_x;
 	if( selection_end < seg_end )
 	{
 		// Draw normally
@@ -3157,7 +3174,7 @@ F32 LLNormalTextSegment::drawClippedSegment(S32 seg_start, S32 seg_end, S32 sele
 				 &right_x, 
 				 mEditor.getUseEllipses());
 	}
-	return right_x;
+    return right_x;
 }
 
 BOOL LLNormalTextSegment::handleHover(S32 x, S32 y, MASK mask)
@@ -3388,7 +3405,7 @@ LLOnHoverChangeableTextSegment::LLOnHoverChangeableTextSegment( LLStyleConstSP s
 	  mNormalStyle(normal_style){}
 
 /*virtual*/ 
-F32 LLOnHoverChangeableTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRect& draw_rect)
+F32 LLOnHoverChangeableTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRectf& draw_rect)
 {
 	F32 result = LLNormalTextSegment::draw(start, end, selection_start, selection_end, draw_rect);
 	if (end == mEnd - mStart)
@@ -3466,7 +3483,7 @@ void LLInlineViewSegment::updateLayout(const LLTextBase& editor)
 	mView->setOrigin(start_rect.mLeft + mLeftPad, start_rect.mBottom + mBottomPad);
 }
 
-F32	LLInlineViewSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRect& draw_rect)
+F32	LLInlineViewSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRectf& draw_rect)
 {
 	// return padded width of widget
 	// widget is actually drawn during mDocumentView's draw()
@@ -3507,7 +3524,7 @@ S32	LLLineBreakTextSegment::getNumChars(S32 num_pixels, S32 segment_offset, S32 
 {
 	return 1;
 }
-F32	LLLineBreakTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRect& draw_rect)
+F32	LLLineBreakTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRectf& draw_rect)
 {
 	return  draw_rect.mLeft;
 }
@@ -3557,7 +3574,23 @@ S32	 LLImageTextSegment::getNumChars(S32 num_pixels, S32 segment_offset, S32 lin
 	return 0;
 }
 
-F32	LLImageTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRect& draw_rect)
+BOOL LLImageTextSegment::handleToolTip(S32 x, S32 y, MASK mask)
+{
+	if (!mTooltip.empty())
+	{
+		LLToolTipMgr::instance().show(mTooltip);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+void LLImageTextSegment::setToolTip(const std::string& tooltip)
+{
+	mTooltip = tooltip;
+}
+
+F32	LLImageTextSegment::draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRectf& draw_rect)
 {
 	if ( (start >= 0) && (end <= mEnd - mStart))
 	{

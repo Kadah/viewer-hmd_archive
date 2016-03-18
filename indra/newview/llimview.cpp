@@ -131,10 +131,10 @@ void process_dnd_im(const LLSD& notification)
             fromID, 
             false, 
             false); //will need slight refactor to retrieve whether offline message or not (assume online for now)
-	}
+		}
 
 	notify_of_message(data, true);
-}
+    }
 
 
 
@@ -211,7 +211,7 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 			if (!gAgent.isDoNotDisturb() && (gSavedSettings.getBOOL("PlaySoundNearbyChatIM") == TRUE))
 			{
 				make_ui_sound("UISndNewIncomingIMSession");
-			}
+    }
 		}
 	}
     else if(session->isP2PSessionType())
@@ -319,9 +319,9 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 				}
 				else
 				{
-					im_box->flashConversationItemWidget(session_id, true);
-				}
-			}
+    		im_box->flashConversationItemWidget(session_id, true);
+    	}
+    }
 		}
 	}
 
@@ -333,16 +333,16 @@ void notify_of_message(const LLSD& msg, bool is_dnd_msg)
 		&& !is_dnd_msg) //prevent flashing FUI button because the conversation floater will have already opened
 	{
 		if(!LLMuteList::getInstance()->isMuted(participant_id))
-		{
+    {
 			if(!gAgent.isDoNotDisturb())
-			{
+    	{
 				gToolBarView->flashCommand(LLCommandId("chat"), true, im_box->isMinimized());
-			}
+    	}
 			else
 			{
 				store_dnd_message = true;
 			}
-		}
+    }
 	}
 
     // 4. Toast
@@ -1295,8 +1295,15 @@ void LLIMModel::sendMessage(const std::string& utf8_text,
 		gAgent.sendReliableMessage();
 	}
 
+	bool is_group_chat = false;
+	LLIMModel::LLIMSession* session = LLIMModel::getInstance()->findIMSession(im_session_id);
+	if(session)
+	{
+		is_group_chat = session->isGroupSessionType();
+	}
+
 	// If there is a mute list and this is not a group chat...
-	if ( LLMuteList::getInstance() )
+	if ( LLMuteList::getInstance() && !is_group_chat)
 	{
 		// ... the target should not be in our mute list for some message types.
 		// Auto-remove them if present.
@@ -1345,7 +1352,6 @@ void LLIMModel::sendMessage(const std::string& utf8_text,
 
 	if (is_not_group_id)
 	{
-		LLIMModel::LLIMSession* session = LLIMModel::getInstance()->findIMSession(im_session_id);
 		if( session == 0)//??? shouldn't really happen
 		{
 			LLRecentPeople::instance().add(other_participant_id);

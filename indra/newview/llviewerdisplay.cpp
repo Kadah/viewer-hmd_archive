@@ -1468,7 +1468,7 @@ void LLViewerDisplay::render_ui_3d(BOOL hmdUIMode)
     }
 
     // render HUD selections/highlights
-    gViewerWindow->renderSelections(gHMD.isHMDMode() ? hmdUIMode : TRUE, FALSE);
+    gViewerWindow->renderSelections(gHMD.isHMDMode() ? hmdUIMode : TRUE, FALSE, TRUE);
 
     stop_glerror();
 

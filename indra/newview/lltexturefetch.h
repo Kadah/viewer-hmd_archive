@@ -332,6 +332,7 @@ private:
 	F32 mTextureBandwidth;												// <none>
 	F32 mMaxBandwidth;													// Mfnq
 	LLTextureInfo mTextureInfo;
+	LLTextureInfo mTextureInfoMainThread;
 
 	// XXX possible delete
 	U32Bits mHTTPTextureBits;												// Mfnq
@@ -539,7 +540,7 @@ private:
 	S32 mNbCurlRequests;
 	S32 mNbCurlCompleted;
 
-	std::map< LLPointer<LLViewerFetchedTexture>, std::vector<S32> > mRefetchList;
+	std::map< LLPointer<LLViewerFetchedTexture>, std::vector<S32> > mRefetchList; // treats UI textures as normal textures
 	std::vector< LLPointer<LLViewerFetchedTexture> > mTempTexList;
 	S32 mTempIndex;
 	S32 mHistoryListIndex;

@@ -229,7 +229,6 @@ LLPanelLogin::LLPanelLogin(const LLRect &rect,
 		}
 	}
 	server_choice_combo->sortByName();
-	server_choice_combo->addSeparator(ADD_TOP);
 	LL_DEBUGS("AppInit")<<"adding current "<<current_grid<<LL_ENDL;
 	server_choice_combo->add(LLGridManager::getInstance()->getGridLabel(), 
 							 current_grid,
@@ -859,11 +858,16 @@ void LLPanelLogin::onClickConnect(void *)
 		// The start location SLURL has already been sent to LLStartUp::setStartSLURL
 
 		std::string username = sInstance->getChild<LLUICtrl>("username_combo")->getValue().asString();
+		std::string password = sInstance->getChild<LLUICtrl>("password_edit")->getValue().asString();
 		
 		if(username.empty())
 		{
 			// user must type in something into the username field
 			LLNotificationsUtil::add("MustHaveAccountToLogIn");
+		}
+		else if(password.empty())
+		{
+		    LLNotificationsUtil::add("MustEnterPasswordToLogIn");
 		}
 		else
 		{

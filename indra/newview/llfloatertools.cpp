@@ -92,6 +92,7 @@
 // Globals
 LLFloaterTools *gFloaterTools = NULL;
 bool LLFloaterTools::sShowObjectCost = true;
+bool LLFloaterTools::sPreviousFocusOnAvatar = false;
 
 const std::string PANEL_NAMES[LLFloaterTools::PANEL_COUNT] =
 {
@@ -369,6 +370,7 @@ LLFloaterTools::LLFloaterTools(const LLSD& key)
 	mLandImpactsObserver(NULL),
 
 	mDirty(TRUE),
+	mHasSelection(TRUE),
 	mNeedMediaTitle(TRUE)
 {
 	gFloaterTools = this;
@@ -540,7 +542,14 @@ void LLFloaterTools::refresh()
 
 void LLFloaterTools::draw()
 {
-	if (mDirty)
+    BOOL has_selection = !LLSelectMgr::getInstance()->getSelection()->isEmpty();
+    if(!has_selection && (mHasSelection != has_selection))
+    {
+        mDirty = TRUE;
+    }
+    mHasSelection = has_selection;
+
+    if (mDirty)
 	{
 		refresh();
 		mDirty = FALSE;
@@ -891,6 +900,12 @@ void LLFloaterTools::onClose(bool app_quitting)
 
 	// prepare content for next call
 	mPanelContents->clearContents();
+
+	if(sPreviousFocusOnAvatar)
+	{
+		sPreviousFocusOnAvatar = false;
+		gAgentCamera.setAllowChangeToFollow(TRUE);
+	}
 }
 
 void click_popup_info(void*)

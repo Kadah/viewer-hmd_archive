@@ -128,14 +128,14 @@ LLLocalBitmap::LLLocalBitmap(std::string filename)
 LLLocalBitmap::~LLLocalBitmap()
 {
 	// replace IDs with defaults, if set to do so.
-	if(LL_LOCAL_REPLACE_ON_DEL && mValid) // fix for STORM-1837
+	if(LL_LOCAL_REPLACE_ON_DEL && mValid && gAgentAvatarp) // fix for STORM-1837
 	{
 		replaceIDs(mWorldID, IMG_DEFAULT);
 		LLLocalBitmapMgr::doRebake();
 	}
 
 	// delete self from gimagelist
-	LLViewerFetchedTexture* image = gTextureList.findImage(mWorldID);
+	LLViewerFetchedTexture* image = gTextureList.findImage(mWorldID, TEX_LIST_DISCARD);
 	gTextureList.deleteImage(image);
 
 	if (image)
@@ -207,7 +207,7 @@ bool LLLocalBitmap::updateSelf(EUpdateType optional_firstupdate)
 					texture->setCachedRawImage(LL_LOCAL_DISCARD_LEVEL, raw_image);
 					texture->ref(); 
 
-					gTextureList.addImage(texture);
+					gTextureList.addImage(texture, TEX_LIST_DISCARD);
 			
 					if (optional_firstupdate != UT_FIRSTUSE)
 					{
@@ -215,7 +215,7 @@ bool LLLocalBitmap::updateSelf(EUpdateType optional_firstupdate)
 						replaceIDs(old_id, mWorldID);
 
 						// remove old_id from gimagelist
-						LLViewerFetchedTexture* image = gTextureList.findImage(old_id);
+						LLViewerFetchedTexture* image = gTextureList.findImage(old_id, TEX_LIST_DISCARD);
 						if (image != NULL)
 						{
 							gTextureList.deleteImage(image);
@@ -384,7 +384,7 @@ void LLLocalBitmap::replaceIDs(LLUUID old_id, LLUUID new_id)
 std::vector<LLViewerObject*> LLLocalBitmap::prepUpdateObjects(LLUUID old_id, U32 channel)
 {
 	std::vector<LLViewerObject*> obj_list;
-	LLViewerFetchedTexture* old_texture = gTextureList.findImage(old_id);
+	LLViewerFetchedTexture* old_texture = gTextureList.findImage(old_id, TEX_LIST_DISCARD);
 
 	for(U32 face_iterator = 0; face_iterator < old_texture->getNumFaces(channel); face_iterator++)
 	{
@@ -502,7 +502,7 @@ void LLLocalBitmap::updateUserPrims(LLUUID old_id, LLUUID new_id, U32 channel)
 
 void LLLocalBitmap::updateUserSculpts(LLUUID old_id, LLUUID new_id)
 {
-	LLViewerFetchedTexture* old_texture = gTextureList.findImage(old_id);
+	LLViewerFetchedTexture* old_texture = gTextureList.findImage(old_id, TEX_LIST_DISCARD);
 	for(U32 volume_iter = 0; volume_iter < old_texture->getNumVolumes(); volume_iter++)
 	{
 		LLVOVolume* volume_to_object = (*old_texture->getVolumeList())[volume_iter];
@@ -515,7 +515,7 @@ void LLLocalBitmap::updateUserSculpts(LLUUID old_id, LLUUID new_id)
 			{
 				LLSculptParams* old_params = (LLSculptParams*)object->getParameterEntry(LLNetworkData::PARAMS_SCULPT);
 				LLSculptParams new_params(*old_params);
-				new_params.setSculptTexture(new_id);
+				new_params.setSculptTexture(new_id, (*old_params).getSculptType());
 				object->setParameterEntry(LLNetworkData::PARAMS_SCULPT, new_params, TRUE);
 			}
 		}

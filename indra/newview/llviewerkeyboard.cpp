@@ -169,8 +169,8 @@ void agent_push_forward( EKeystate s )
 	}
 	else
 	{
-	agent_push_forwardbackward(s, 1, LLAgent::DOUBLETAP_FORWARD);
-}
+		agent_push_forwardbackward(s, 1, LLAgent::DOUBLETAP_FORWARD);
+	}
 }
 
 void camera_move_backward( EKeystate s );
@@ -190,8 +190,8 @@ void agent_push_backward( EKeystate s )
 	}
 	else
 	{
-	agent_push_forwardbackward(s, -1, LLAgent::DOUBLETAP_BACKWARD);
-}
+		agent_push_forwardbackward(s, -1, LLAgent::DOUBLETAP_BACKWARD);
+	}
 }
 
 void align_hips_to_eyes( EKeystate state )
@@ -463,7 +463,7 @@ void camera_move_backward( EKeystate s )
 void camera_move_forward_sitting( EKeystate s )
 {
 	if( KEYSTATE_UP == s && gAgent.mDoubleTapRunMode != LLAgent::DOUBLETAP_FORWARD ) return;
-	if (gAgent.forwardGrabbed() || gAgentCamera.sitCameraEnabled() || gAgent.getRunning())
+	if (gAgent.forwardGrabbed() || gAgentCamera.sitCameraEnabled() || (gAgent.getRunning() && !gAgent.getAlwaysRun()))
 	{
 		agent_push_forward(s);
 	}
@@ -478,7 +478,7 @@ void camera_move_backward_sitting( EKeystate s )
 {
 	if( KEYSTATE_UP == s && gAgent.mDoubleTapRunMode != LLAgent::DOUBLETAP_BACKWARD ) return;
 
-	if (gAgent.backwardGrabbed() || gAgentCamera.sitCameraEnabled() || gAgent.getRunning())
+	if (gAgent.backwardGrabbed() || gAgentCamera.sitCameraEnabled() || (gAgent.getRunning() && !gAgent.getAlwaysRun()))
 	{
 		agent_push_backward(s);
 	}
@@ -838,7 +838,10 @@ BOOL LLViewerKeyboard::handleKey(KEY translated_key,  MASK translated_mask, BOOL
 	return mKeyHandledByUI[translated_key];
 }
 
-
+BOOL LLViewerKeyboard::handleKeyUp(KEY translated_key, MASK translated_mask)
+{
+	return gViewerWindow->handleKeyUp(translated_key, translated_mask);
+}
 
 BOOL LLViewerKeyboard::bindKey(const S32 mode, const KEY key, const MASK mask, const std::string& function_name)
 {

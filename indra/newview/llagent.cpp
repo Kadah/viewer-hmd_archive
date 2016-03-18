@@ -276,8 +276,23 @@ bool LLAgent::isActionAllowed(const LLSD& sdname)
 
 	if (param == "speak")
 	{
+        bool allow_agent_voice = false;
+        LLVoiceChannel* channel = LLVoiceChannel::getCurrentVoiceChannel();
+        if (channel != NULL)
+        {
+            if (channel->getSessionName().empty() && channel->getSessionID().isNull())
+            {
+                // default channel
+                allow_agent_voice = LLViewerParcelMgr::getInstance()->allowAgentVoice();
+            }
+            else
+            {
+                allow_agent_voice = channel->isActive() && channel->callStarted();
+            }
+        }
+
 		if ( gAgent.isVoiceConnected() && 
-			LLViewerParcelMgr::getInstance()->allowAgentVoice() &&
+            allow_agent_voice &&
 				! LLVoiceClient::getInstance()->inTuningMode() )
 		{
 			retval = true;
@@ -512,10 +527,10 @@ void LLAgent::onAppFocusGained()
 	{
         if (!gHMD.isChangingRenderContext())
         {
-		    gAgentCamera.changeCameraToDefault();
-		    LLToolMgr::getInstance()->clearSavedTool();
-        }
+		gAgentCamera.changeCameraToDefault();
+		LLToolMgr::getInstance()->clearSavedTool();
 	}
+}
 }
 
 
@@ -2847,7 +2862,7 @@ BOOL LLAgent::isInGroup(const LLUUID& group_id, BOOL ignore_god_mode /* FALSE */
 // This implementation should mirror LLAgentInfo::hasPowerInGroup
 BOOL LLAgent::hasPowerInGroup(const LLUUID& group_id, U64 power) const
 {
-	if (isGodlike())
+	if (isGodlikeWithoutAdminMenuFakery())
 		return true;
 
 	// GP_NO_POWERS can also mean no power is enough to grant an ability.
@@ -3200,6 +3215,13 @@ BOOL LLAgent::leftButtonGrabbed() const
 		|| (camera_mouse_look && mControlsTakenCount[CONTROL_ML_LBUTTON_DOWN_INDEX] > 0)
 		|| (!camera_mouse_look && mControlsTakenPassedOnCount[CONTROL_LBUTTON_DOWN_INDEX] > 0)
 		|| (camera_mouse_look && mControlsTakenPassedOnCount[CONTROL_ML_LBUTTON_DOWN_INDEX] > 0);
+}
+
+BOOL LLAgent::leftButtonBlocked() const
+{
+    const BOOL camera_mouse_look = gAgentCamera.cameraMouselook();
+    return (!camera_mouse_look && mControlsTakenCount[CONTROL_LBUTTON_DOWN_INDEX] > 0)
+        || (camera_mouse_look && mControlsTakenCount[CONTROL_ML_LBUTTON_DOWN_INDEX] > 0);
 }
 
 BOOL LLAgent::rotateGrabbed() const		
@@ -3659,6 +3681,13 @@ BOOL LLAgent::anyControlGrabbed() const
 
 BOOL LLAgent::isControlGrabbed(S32 control_index) const
 {
+    if (gAgent.mControlsTakenCount[control_index] > 0)
+        return TRUE;
+    return gAgent.mControlsTakenPassedOnCount[control_index] > 0;
+}
+
+BOOL LLAgent::isControlBlocked(S32 control_index) const
+{
 	return mControlsTakenCount[control_index] > 0;
 }
 
@@ -3838,6 +3867,7 @@ void LLAgent::startTeleportRequest()
     }
 	if (hasPendingTeleportRequest())
 	{
+        mTeleportCanceled.reset();
 		if  (!isMaturityPreferenceSyncedWithServer())
 		{
 			LLViewerDisplay::gTeleportDisplay = TRUE;
@@ -3867,6 +3897,7 @@ void LLAgent::startTeleportRequest()
 void LLAgent::handleTeleportFinished()
 {
 	clearTeleportRequest();
+    mTeleportCanceled.reset();
 	if (mIsMaturityRatingChangingDuringTeleport)
 	{
 		// notify user that the maturity preference has been changed
@@ -3877,6 +3908,12 @@ void LLAgent::handleTeleportFinished()
 		LLNotificationsUtil::add("PreferredMaturityChanged", args);
 		mIsMaturityRatingChangingDuringTeleport = false;
 	}
+    
+    // Init SLM Marketplace connection so we know which UI should be used for the user as a merchant
+    // Note: Eventually, all merchant will be migrated to the new SLM system and there will be no reason to show the old UI at all.
+    // Note: Some regions will not support the SLM cap for a while so we need to do that check for each teleport.
+    // *TODO : Suppress that line from here once the whole grid migrated to SLM and move it to idle_startup() (llstartup.cpp)
+    check_merchant_status();
 }
 
 void LLAgent::handleTeleportFailed()
@@ -4005,12 +4042,24 @@ void LLAgent::teleportCancel()
 			msg->addUUIDFast(_PREHASH_SessionID, getSessionID());
 			sendReliableMessage();
 		}	
+		mTeleportCanceled = mTeleportRequest;
 	}
 	clearTeleportRequest();
 	gAgent.setTeleportState( LLAgent::TELEPORT_NONE );
 	gPipeline.resetVertexBuffers();
 }
 
+void LLAgent::restoreCanceledTeleportRequest()
+{
+    if (mTeleportCanceled != NULL)
+    {
+        gAgent.setTeleportState( LLAgent::TELEPORT_REQUESTED );
+        mTeleportRequest = mTeleportCanceled;
+        mTeleportCanceled.reset();
+        LLViewerDisplay::gTeleportDisplay = TRUE;
+        LLViewerDisplay::gTeleportDisplayTimer.reset();
+    }
+}
 
 void LLAgent::teleportViaLocation(const LLVector3d& pos_global)
 {

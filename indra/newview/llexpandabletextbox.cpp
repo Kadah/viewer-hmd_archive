@@ -77,7 +77,7 @@ public:
 			return 0;
 		}
 	}
-	/*virtual*/ F32		draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRect& draw_rect)
+	/*virtual*/ F32		draw(S32 start, S32 end, S32 selection_start, S32 selection_end, const LLRectf& draw_rect)
 	{
 		F32 right_x;
 		mStyle->getFont()->renderUTF8(mExpanderLabel, start, 
@@ -237,6 +237,7 @@ LLExpandableTextBox::LLExpandableTextBox(const Params& p)
 	LLTextBoxEx::Params textbox_params = p.textbox;
 	textbox_params.rect(rc);
 	mTextBox = LLUICtrlFactory::create<LLTextBoxEx>(textbox_params);
+	mTextBox->setContentTrusted(false);
 	mScroll->addChild(mTextBox);
 
 	updateTextBoxRect();
@@ -258,6 +259,11 @@ void LLExpandableTextBox::draw()
 	collapseIfPosChanged();
 
 	LLUICtrl::draw();
+}
+
+void LLExpandableTextBox::setContentTrusted(bool trusted_content)
+{
+    mTextBox->setContentTrusted(trusted_content);
 }
 
 void LLExpandableTextBox::collapseIfPosChanged()

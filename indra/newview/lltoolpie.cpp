@@ -86,7 +86,8 @@ LLToolPie::LLToolPie()
 	mBlockClickToWalk(false),
 	mClickAction(0),
 	mClickActionBuyEnabled( gSavedSettings.getBOOL("ClickActionBuyEnabled") ),
-	mClickActionPayEnabled( gSavedSettings.getBOOL("ClickActionPayEnabled") )
+	mClickActionPayEnabled( gSavedSettings.getBOOL("ClickActionPayEnabled") ),
+	mDoubleClickTimer()
 {
 }
 
@@ -102,12 +103,17 @@ BOOL LLToolPie::handleAnyMouseClick(S32 x, S32 y, MASK mask, EClickType clicktyp
 
 BOOL LLToolPie::handleMouseDown(S32 x, S32 y, MASK mask)
 {
+    if (mDoubleClickTimer.getStarted())
+    {
+        mDoubleClickTimer.stop();
+    }
+
 	mMouseOutsideSlop = FALSE;
 	mMouseDownX = x;
 	mMouseDownY = y;
 
-	//left mouse down always picks transparent
-	mPick = gViewerWindow->pickImmediate(x, y, TRUE);
+	//left mouse down always picks transparent (but see handleMouseUp)
+	mPick = gViewerWindow->pickImmediate(x, y, TRUE, FALSE);
 	mPick.mKeyMask = mask;
 
 	mMouseButtonDown = true;
@@ -122,7 +128,7 @@ BOOL LLToolPie::handleMouseDown(S32 x, S32 y, MASK mask)
 BOOL LLToolPie::handleRightMouseDown(S32 x, S32 y, MASK mask)
 {
 	// don't pick transparent so users can't "pay" transparent objects
-	mPick = gViewerWindow->pickImmediate(x, y, FALSE, TRUE);
+	mPick = gViewerWindow->pickImmediate(x, y, /*BOOL pick_transparent*/ FALSE, /*BOOL pick_rigged*/ TRUE, /*BOOL pick_particle*/ TRUE);
 	mPick.mKeyMask = mask;
 
 	// claim not handled so UI focus stays same
@@ -281,7 +287,7 @@ BOOL LLToolPie::handleLeftClickPick()
 					gAgentCamera.setFocusOnAvatar(FALSE, ANIMATE);
 					
 					LLBBox bbox = object->getBoundingBoxAgent() ;
-					F32 angle_of_view = llmax(0.1f, LLViewerCamera::getInstance()->getUIAspect() > 1.f ? LLViewerCamera::getInstance()->getView() * LLViewerCamera::getInstance()->getUIAspect() : LLViewerCamera::getInstance()->getView());
+					F32 angle_of_view = llmax(0.1f, LLViewerCamera::getInstance()->getAspect() > 1.f ? LLViewerCamera::getInstance()->getView() * LLViewerCamera::getInstance()->getAspect() : LLViewerCamera::getInstance()->getView());
 					F32 distance = bbox.getExtentLocal().magVec() * PADDING_FACTOR / atan(angle_of_view);
 				
 					LLVector3 obj_to_cam = LLViewerCamera::getInstance()->getOrigin() - bbox.getCenterAgent();
@@ -319,6 +325,7 @@ BOOL LLToolPie::handleLeftClickPick()
 	{
 		gGrabTransientTool = this;
 		mMouseButtonDown = false;
+		LLToolGrab::getInstance()->setClickedInMouselook(gAgentCamera.cameraMouselook());
 		LLToolMgr::getInstance()->getCurrentToolset()->selectTool( LLToolGrab::getInstance() );
 		return LLToolGrab::getInstance()->handleObjectHit( mPick );
 	}
@@ -545,7 +552,7 @@ void LLToolPie::selectionPropertiesReceived()
 
 BOOL LLToolPie::handleHover(S32 x, S32 y, MASK mask)
 {
-	mHoverPick = gViewerWindow->pickImmediate(x, y, FALSE);
+	mHoverPick = gViewerWindow->pickImmediate(x, y, FALSE, FALSE);
 	LLViewerObject *parent = NULL;
 	LLViewerObject *object = mHoverPick.getObject();
 	LLSelectMgr::getInstance()->setHoverObject(object, mHoverPick.mObjectFace);

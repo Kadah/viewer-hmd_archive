@@ -131,7 +131,8 @@ public:
 	{
 		// open the new pick panel on the Picks floater
 		LLFloater* picks_floater = LLFloaterReg::showInstance("picks");
-		LLPanelPicks* picks = picks_floater ? picks_floater->findChild<LLPanelPicks>("panel_picks") : NULL;
+
+		LLPanelPicks* picks = picks_floater->findChild<LLPanelPicks>("panel_picks");
 		if (picks)
 		{
 			picks->createNewPick();
@@ -250,7 +251,8 @@ public:
 	{
 		// open the new classified panel on the Picks floater
 		LLFloater* picks_floater = LLFloaterReg::showInstance("picks");
-		LLPanelPicks* picks = picks_floater ? picks_floater->findChild<LLPanelPicks>("panel_picks") : NULL;
+
+		LLPanelPicks* picks = picks_floater->findChild<LLPanelPicks>("panel_picks");
 		if (picks)
 		{
 			picks->createNewClassified();
@@ -430,7 +432,7 @@ void LLPanelPicks::processProperties(void* data, EAvatarProcessorType type)
 		
 		mNoPicks = !mPicksList->size();
 	}
-	else if(APT_CLASSIFIEDS == type)
+	else if((APT_CLASSIFIEDS == type) || (APT_CLASSIFIED_INFO == type))
 	{
 		LLAvatarClassifieds* c_info = static_cast<LLAvatarClassifieds*>(data);
 		if(c_info && getAvatarId() == c_info->target_id)

@@ -218,7 +218,7 @@ void LLPreviewNotecard::loadAsset()
 		LLPermissions perm(item->getPermissions());
 		BOOL is_owner = gAgent.allowOperation(PERM_OWNER, perm, GP_OBJECT_MANIPULATE);
 		BOOL allow_copy = gAgent.allowOperation(PERM_COPY, perm, GP_OBJECT_MANIPULATE);
-		BOOL allow_modify = gAgent.allowOperation(PERM_MODIFY, perm, GP_OBJECT_MANIPULATE);
+		BOOL allow_modify = canModify(mObjectUUID, item);
 
 		if (allow_copy || gAgent.isGodlike())
 		{
@@ -233,6 +233,7 @@ void LLPreviewNotecard::loadAsset()
 			else
 			{
 				LLHost source_sim = LLHost::invalid;
+				LLSD* user_data = new LLSD();
 				if (mObjectUUID.notNull())
 				{
 					LLViewerObject *objectp = gObjectList.findObject(mObjectUUID);
@@ -251,7 +252,13 @@ void LLPreviewNotecard::loadAsset()
 						mAssetStatus = PREVIEW_ASSET_LOADED;
 						return;
 					}
+					user_data->with("taskid", mObjectUUID).with("itemid", mItemUUID);
 				}
+				else
+				{
+				    user_data =  new LLSD(mItemUUID);
+				}
+
 				gAssetStorage->getInvItemAsset(source_sim,
 												gAgent.getID(),
 												gAgent.getSessionID(),
@@ -261,7 +268,7 @@ void LLPreviewNotecard::loadAsset()
 												item->getAssetUUID(),
 												item->getType(),
 												&onLoadComplete,
-												(void*)new LLUUID(mItemUUID),
+												(void*)user_data,
 												TRUE);
 				mAssetStatus = PREVIEW_ASSET_LOADING;
 			}
@@ -304,9 +311,8 @@ void LLPreviewNotecard::onLoadComplete(LLVFS *vfs,
 									   void* user_data, S32 status, LLExtStat ext_status)
 {
 	LL_INFOS() << "LLPreviewNotecard::onLoadComplete()" << LL_ENDL;
-	LLUUID* item_id = (LLUUID*)user_data;
-	
-	LLPreviewNotecard* preview = LLFloaterReg::findTypedInstance<LLPreviewNotecard>("preview_notecard", LLSD(*item_id));
+	LLSD* floater_key = (LLSD*)user_data;
+	LLPreviewNotecard* preview = LLFloaterReg::findTypedInstance<LLPreviewNotecard>("preview_notecard", *floater_key);
 	if( preview )
 	{
 		if(0 == status)
@@ -338,10 +344,7 @@ void LLPreviewNotecard::onLoadComplete(LLVFS *vfs,
 			}
 
 			previewEditor->makePristine();
-
-			const LLInventoryItem* item = preview->getItem();
-			BOOL modifiable = item && gAgent.allowOperation(PERM_MODIFY,
-								item->getPermissions(), GP_OBJECT_MANIPULATE);
+			BOOL modifiable = preview->canModify(preview->mObjectID, preview->getItem());
 			preview->setEnabled(modifiable);
 			preview->mAssetStatus = PREVIEW_ASSET_LOADED;
 		}
@@ -365,7 +368,7 @@ void LLPreviewNotecard::onLoadComplete(LLVFS *vfs,
 			preview->mAssetStatus = PREVIEW_ASSET_ERROR;
 		}
 	}
-	delete item_id;
+	delete floater_key;
 }
 
 // static

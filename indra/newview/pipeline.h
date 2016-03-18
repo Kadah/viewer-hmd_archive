@@ -67,7 +67,7 @@ void glh_set_current_modelview(const glh::matrix4f& mat);
 glh::matrix4f glh_get_current_projection();
 void glh_set_current_projection(glh::matrix4f& mat);
 glh::matrix4f gl_ortho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat znear, GLfloat zfar);
-glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar, BOOL display = FALSE);
+glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar, BOOL display);
 glh::matrix4f gl_lookat(LLVector3 eye, LLVector3 center, LLVector3 up);
 
 extern LLTrace::BlockTimerStatHandle FTM_RENDER_GEOMETRY;
@@ -183,6 +183,7 @@ public:
 	//get the object between start and end that's closest to start.
 	LLViewerObject* lineSegmentIntersectInWorld(const LLVector4a& start, const LLVector4a& end,
 												BOOL pick_transparent,
+												BOOL pick_rigged,
 												S32* face_hit,                          // return the face hit
 												LLVector4a* intersection = NULL,         // return the intersection point
 												LLVector2* tex_coord = NULL,            // return the texture coordinates of the intersection point
@@ -876,6 +877,7 @@ public:
 	static F32 RenderDeferredSunWash;
 	static U32 RenderFSAASamples;
 	static U32 RenderResolutionDivisor;
+	static BOOL RenderUIBuffer;
 	static S32 RenderShadowDetail;
 	static BOOL RenderDeferredSSAO;
 	static F32 RenderShadowResolutionScale;

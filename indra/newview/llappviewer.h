@@ -117,7 +117,7 @@ public:
     void badNetworkHandler(); // Cause a crash state due to bad network packet.
 
 	bool hasSavedFinalSnapshot() { return mSavedFinalSnapshot; }
-	void saveFinalSnapshot();
+	void saveFinalSnapshot(); 
     bool isSavingFinalSnapshot() { return mIsSavingFinalSnapshot; }
 
     void loadNameCache();
@@ -377,6 +377,7 @@ extern BOOL		gDisconnected;
 extern LLFrameTimer	gRestoreGLTimer;
 extern BOOL			gRestoreGL;
 extern BOOL		gUseWireframe;
+extern BOOL		gInitialDeferredModeForWireframe;
 
 // VFS globals - gVFS is for general use
 // gStaticVFS is read-only and is shipped w/ the viewer

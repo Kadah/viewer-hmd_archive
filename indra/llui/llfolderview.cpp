@@ -730,7 +730,7 @@ void LLFolderView::removeSelectedItems()
 		// structures.
 		std::vector<LLFolderViewItem*> items;
 		S32 count = mSelectedItems.size();
-		if(count == 0) return;
+		if(count <= 0) return;
 		LLFolderViewItem* item = NULL;
 		selected_items_t::iterator item_it;
 		for (item_it = mSelectedItems.begin(); item_it != mSelectedItems.end(); ++item_it)
@@ -947,7 +947,6 @@ void LLFolderView::cut()
 			if (listener)
 			{
 				listener->cutToClipboard();
-				listener->removeItem();
 			}
 		}
 		
@@ -1667,7 +1666,7 @@ void LLFolderView::update()
 
   BOOL is_visible = isInVisibleChain();
 
-  // Puts folders/items in proper positions
+  //Puts folders/items in proper positions
   // arrange() takes the model filter flag into account and call sort() if necessary (CHUI-849)
   // It also handles the open/close folder animation
   if ( is_visible )

@@ -105,10 +105,10 @@ LLTexUnit::LLTexUnit(S32 index)
 	mCurrColorSrc1(TBS_TEX_COLOR), mCurrColorSrc2(TBS_PREV_COLOR),
 	mCurrAlphaSrc1(TBS_TEX_ALPHA), mCurrAlphaSrc2(TBS_PREV_ALPHA),
 	mCurrColorScale(1), mCurrAlphaScale(1), mCurrTexture(0),
-	mHasMipMaps(false)
+	mHasMipMaps(false),
+	mIndex(index)
 {
 	llassert_always(index < (S32)LL_NUM_TEXTURE_LAYERS);
-	mIndex = index;
 }
 
 //static
@@ -231,6 +231,7 @@ bool LLTexUnit::bind(LLTexture* texture, bool for_rendering, bool forceBind)
 	gGL.flush();
 
 	LLImageGL* gl_tex = NULL ;
+
 		if (texture != NULL && (gl_tex = texture->getGLTexture()))
 	{
 			if (gl_tex->getTexName()) //if texture exists
@@ -1608,7 +1609,7 @@ void LLRender::setSceneBlendType(eBlendType type)
             }
             else
             { 
-			    blendFunc(BF_SOURCE_ALPHA, BF_ONE_MINUS_SOURCE_ALPHA);
+			blendFunc(BF_SOURCE_ALPHA, BF_ONE_MINUS_SOURCE_ALPHA);
             }
 			break;
 		case BT_ADD:

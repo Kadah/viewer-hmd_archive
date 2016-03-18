@@ -89,8 +89,12 @@ LLPreviewTexture::~LLPreviewTexture()
 	{
 		getWindow()->decBusyCount();
 	}
-	mImage->setBoostLevel(mImageOldBoostLevel);
-	mImage = NULL;
+
+	if (mImage.notNull())
+	{
+		mImage->setBoostLevel(mImageOldBoostLevel);
+		mImage = NULL;
+	}
 }
 
 // virtual
@@ -618,4 +622,5 @@ void LLPreviewTexture::setObjectID(const LLUUID& object_id)
 		mAssetStatus = PREVIEW_ASSET_UNLOADED;
 		loadAsset();
 	}
+	refreshFromItem();
 }
