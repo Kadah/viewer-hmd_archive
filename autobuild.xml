@@ -13,26 +13,14 @@
         <string>libovr</string>
         <key>platforms</key>
         <map>
-          <key>darwin</key>
-          <map>
-            <key>archive</key>
-            <map>
-              <key>hash</key>
-              <string>5eba7dbd75138dd8319fb7e64ef64187</string>
-              <key>url</key>
-              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/libovr_3p-update-libovr/rev/302039/arch/Darwin/installer/libovr-0.4.3-darwin-302039.tar.bz2</string>
-            </map>
-            <key>name</key>
-            <string>darwin</string>
-          </map>
           <key>windows</key>
           <map>
             <key>archive</key>
             <map>
               <key>hash</key>
-              <string>f6c6fe4ede540cafc703e6cc8dcb8810</string>
+              <string>6d7bc874f83fa2d4511dfc10c98f25fc</string>
               <key>url</key>
-              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-update-libovr-0.7/rev/310834/arch/CYGWIN/installer/libovr-0.7.0-windows-310834.tar.bz2</string>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-libovr/rev/314159/arch/CYGWIN/installer/libovr-1.2.0-windows-oculus120.tar.bz2</string>
             </map>
             <key>name</key>
             <string>windows</string>

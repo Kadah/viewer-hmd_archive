@@ -48,7 +48,9 @@
     #define IDCONTINUE 1        // Exist on Windows along "IDOK" and "IDCANCEL" but not on Mac
 #endif
 
-#define OCULUS_07 1
+#define OCULUS_07 0
+#define OCULUS_08 0
+#define OCULUS_12 1
 
 #include "OVR_CAPI_GL.h"
 
@@ -63,10 +65,6 @@ struct LLHMDImplOculus::OculusData
     }
 
 #if OCULUS_12
-    typedef ovrSession          Headset;
-    typedef ovrTextureSwapChain SwapChain;
-    typedef ovrMirrorTexture    MirrorTexture;
-#elif OCULUS_08
     typedef ovrSession          Headset;
     typedef ovrTextureSwapChain SwapChain;
     typedef ovrMirrorTexture    MirrorTexture;
