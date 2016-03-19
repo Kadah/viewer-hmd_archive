@@ -525,12 +525,9 @@ void LLAgent::onAppFocusGained()
 {
 	if (CAMERA_MODE_MOUSELOOK == gAgentCamera.getCameraMode())
 	{
-        if (!gHMD.isChangingRenderContext())
-        {
 		gAgentCamera.changeCameraToDefault();
 		LLToolMgr::getInstance()->clearSavedTool();
 	}
-}
 }
 
 

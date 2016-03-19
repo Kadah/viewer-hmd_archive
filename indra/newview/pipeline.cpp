@@ -799,7 +799,6 @@ void LLPipeline::resizeScreenTexture()
 			{
 				gSavedSettings.setBOOL("RenderDeferred", FALSE);
 				LLPipeline::refreshCachedSettings();
-
 				}
 #endif
 			}
@@ -4099,7 +4098,7 @@ void LLPipeline::renderHighlights()
 	LLGLEnable color_mat(GL_COLOR_MATERIAL);
 	disableLights();
 
-	if (!hasRenderType(LLPipeline::RENDER_TYPE_HUD) && !mHighlightSet.empty())
+	if (!hasRenderType(LLPipeline::RENDER_TYPE_HUD) && !mHighlightSet.empty() && (!LLGLSLShader::sNoFixedFunction || LLGLSLShader::sCurBoundShaderPtr != NULL))
 	{ //draw blurry highlight image over screen
 		LLGLEnable blend(GL_BLEND);
 		LLGLDepthTest depth(GL_TRUE, GL_FALSE, GL_ALWAYS);
@@ -7673,7 +7672,6 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 	if (LLPipeline::sRenderDeferred)
 	{
-
 		bool dof_enabled = !LLViewerCamera::getInstance()->cameraUnderWater() &&
 			(RenderDepthOfFieldInEditMode || !LLToolMgr::getInstance()->inBuildMode()) &&
 							RenderDepthOfField;
@@ -9589,7 +9587,7 @@ void LLPipeline::setupSpotLight(LLGLSLShader& shader, LLDrawable* drawablep)
 	n.normalize();
 	
 	F32 proj_range = far_clip - near_clip;
-	glh::matrix4f light_proj = gl_perspective(fovy, aspect, near_clip, far_clip, FALSE);
+	glh::matrix4f light_proj = gl_perspective(fovy, aspect, near_clip, far_clip);
 	screen_to_light = trans * light_proj * screen_to_light;
 	shader.uniformMatrix4fv(LLShaderMgr::PROJECTOR_MATRIX, 1, FALSE, screen_to_light.m);
 	shader.uniform1f(LLShaderMgr::PROJECTOR_NEAR, near_clip);
@@ -10429,7 +10427,7 @@ BOOL LLPipeline::getVisiblePointCloud(LLCamera& camera, LLVector3& min, LLVector
 
 void LLPipeline::renderHighlight(const LLViewerObject* obj, F32 fade)
 {
-	if (obj && obj->getVolume())
+	if (obj && obj->getVolume() && (!LLGLSLShader::sNoFixedFunction || LLGLSLShader::sCurBoundShaderPtr != NULL))
 	{
 		for (LLViewerObject::child_list_t::const_iterator iter = obj->getChildren().begin(); iter != obj->getChildren().end(); ++iter)
 		{
@@ -11197,7 +11195,7 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 			F32 fovy = fov * RAD_TO_DEG;
 			F32 aspect = width/height;
 			
-			proj[i+4] = gl_perspective(fovy, aspect, near_clip, far_clip, FALSE);
+			proj[i+4] = gl_perspective(fovy, aspect, near_clip, far_clip);
 
 			//translate and scale to from [-1, 1] to [0, 1]
 			glh::matrix4f trans(0.5f, 0.f, 0.f, 0.5f,
@@ -11624,23 +11622,28 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 }
 
 
-void LLPipeline::postRender(BOOL writeAlpha)
+void LLPipeline::postRender(BOOL writeAlpha, BOOL forHMD, int whichEye)
 {
-    if (!(gPipeline.canUseVertexShaders() && sRenderGlow))
+    if (forHMD)
     {
-        return;
+        gHMD.releaseEyeRT(whichEye);
+    }
+    else
+    {
+        if (!(gPipeline.canUseVertexShaders() && sRenderGlow))
+        {
+            return;
+        }
     }
 
-    if (gHMD.isHMDMode())
-    {
-        gHMD.flushCurrentEyeRT();
-    }
-
-    if (LLRenderTarget::sUseFBO && !gHMD.isHMDMode())
+    if (LLRenderTarget::sUseFBO)
 	{
         //copy depth buffer from mScreen to framebuffer
-		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
-			0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		LLRenderTarget::copyContentsToFramebuffer(
+                                                mScreen,
+                                                0, 0, mScreen.getWidth(), mScreen.getHeight(), 
+			                                    0, 0, mScreen.getWidth(), mScreen.getHeight(),
+                                                GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 	}
 }
 

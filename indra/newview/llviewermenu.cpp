@@ -4240,53 +4240,20 @@ class LLViewCycleDisplay : public view_listener_t
         {
         case LLHMD::RenderMode_None:
             {
-                // check to ensure that HMD mode is possible and notify user of reasons if it is not.
-                BOOL hmdModePossible = TRUE;
-                if (!gHMD.isPreDetectionInitialized())
+                if (!gHMD.isInitialized())
                 {
-		            LLNotificationsUtil::add("HMDModeErrorPreInitFailed");
+		    LLNotificationsUtil::add("HMDModeErrorInitFailed");
                     return true;
                 }
-                else if (!gHMD.isHMDAllowed())
-                {
-		            LLNotificationsUtil::add("HMDModeErrorAllowed");
-                    return true;
-                }
-                if (gHMD.isUsingDebugHMD() || !gHMD.isHMDConnected())
-                {
-                    if (!gHMD.detectHMDDevice(TRUE))
-                    {
-		                LLNotificationsUtil::add("HMDModeErrorNoDevice");
-                        hmdModePossible = FALSE;
-                    }
-                }
-                if (hmdModePossible && !gHMD.isPostDetectionInitialized())
-                {
-                    LLNotificationsUtil::add("HMDModeErrorNoDevice");
-                    hmdModePossible = FALSE;
-                }
-                if (hmdModePossible && !gHMD.isUsingDebugHMD() && gHMD.isHMDDirectMode())
-                {
-                    LLNotificationsUtil::add("HMDModeDirectModeNotSupported");
-                    hmdModePossible = FALSE;
-                    gHMD.removeHMDDevice();
-                }
-                if (hmdModePossible)
-                {
-                    if (!gHMD.useMirrorHack() && gHMD.isHMDDirectMode() && !gHMD.isUsingDebugHMD())
-                    {
-                        nextRenderMode = LLHMD::RenderMode_HMD;
-                    }
-                    else
-                    {
-                        nextRenderMode = LLHMD::RenderMode_ScreenStereo;
-                    }
-                }
+
+                nextRenderMode = LLHMD::RenderMode_HMD;
             }
             break;
+
         case LLHMD::RenderMode_HMD:
-            nextRenderMode = gHMD.isAdvancedMode() ? LLHMD::RenderMode_ScreenStereo : LLHMD::RenderMode_None;
+            nextRenderMode = LLHMD::RenderMode_None;
             break;
+
         case LLHMD::RenderMode_ScreenStereo:
         default:
             nextRenderMode = LLHMD::RenderMode_None;

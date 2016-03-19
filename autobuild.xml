@@ -30,9 +30,9 @@
             <key>archive</key>
             <map>
               <key>hash</key>
-              <string>979b7123a4469f59c3aa8329e2ca98d4</string>
+              <string>f6c6fe4ede540cafc703e6cc8dcb8810</string>
               <key>url</key>
-              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/libovr_3p-update-libovr/rev/302039/arch/CYGWIN/installer/libovr-0.4.3-windows-302039.tar.bz2</string>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-update-libovr-0.7/rev/310834/arch/CYGWIN/installer/libovr-0.7.0-windows-310834.tar.bz2</string>
             </map>
             <key>name</key>
             <string>windows</string>

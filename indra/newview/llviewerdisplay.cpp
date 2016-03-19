@@ -635,58 +635,24 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
     if (!gDisconnected)
     {
         U32 render_mode = gHMD.getRenderMode();
-        BOOL hmd_ready = gHMD.isPostDetectionInitialized() && gHMD.isHMDConnected();
-        BOOL render_ok = TRUE;
-
-        if (!gHMD.useMirrorHack() && ((S32)LLFrameTimer::getFrameCount() % 30) == 0)
-        {
-            // every 30 frames, render black background to unused window
-            if (hmd_ready && !for_snapshot_original && (render_mode == LLHMD::RenderMode_None || render_mode == LLHMD::RenderMode_ScreenStereo))
-            {
-                gHMD.renderUnusedHMDWindow();
-            }
-            else if (render_mode == LLHMD::RenderMode_HMD)
-            {
-                gHMD.renderUnusedMainWindow();
-            }
-        }
+        BOOL hmd_ready = gHMD.isHMDMode() && gHMD.isHMDConnected();
 
         if (render_mode == LLHMD::RenderMode_None || for_snapshot_original)
         {
-            render_ok = (!hmd_ready || gHMD.setRenderWindowMain());
-            if (render_ok)
-            {
-                gHMD.setCurrentEye(LLHMD::CENTER_EYE);
                 render_frame(rebuild);
             }
-        }
-        else
-        {
-            if (render_mode == LLHMD::RenderMode_ScreenStereo)
-            {
-                render_ok = (!hmd_ready || gHMD.setRenderWindowMain());
-            }
-            else if (render_mode == LLHMD::RenderMode_HMD)
-            {
-                render_ok = (hmd_ready && gHMD.setRenderWindowHMD());
-            }
-            if (render_ok && !gHMD.isFrameTimewarped())
+        else if (hmd_ready)
             {
                 gHMD.setupStereoValues();
-                gHMD.setCurrentEye(LLHMD::LEFT_EYE);
-                render_frame(rebuild);
-                gHMD.setCurrentEye(LLHMD::RIGHT_EYE);
-                render_frame(rebuild);
-            }
+            render_frame(rebuild, TRUE, 0);
+            render_frame(rebuild, TRUE, 1);
         }
+
         if (!for_snapshot)
         {
             swap(gDisplaySwapBuffers, TRUE);
         }
     }
-
-    // this prevents forced shutdown while in HMD mode showing only a black screen
-    gHMD.setCurrentEye(LLHMD::CENTER_EYE);
 
     if (!gDisconnected)
     {
@@ -1432,7 +1398,7 @@ void LLViewerDisplay::draw_axes()
 	gGL.popMatrix();
 }
 
-void LLViewerDisplay::render_ui_3d(BOOL hmdUIMode)
+void LLViewerDisplay::render_ui_3d(BOOL showAxes)
 {
 	LLGLSPipeline gls_pipeline;
 
@@ -1458,7 +1424,7 @@ void LLViewerDisplay::render_ui_3d(BOOL hmdUIMode)
 		gUIProgram.bind();
 	}
 
-    if (!gHMD.isHMDMode() || !hmdUIMode)
+    if (showAxes)
     {
 	    // Coordinate axes
 	    if (gSavedSettings.getBOOL("ShowAxes"))
@@ -1468,7 +1434,7 @@ void LLViewerDisplay::render_ui_3d(BOOL hmdUIMode)
     }
 
     // render HUD selections/highlights
-    gViewerWindow->renderSelections(gHMD.isHMDMode() ? hmdUIMode : TRUE, FALSE, TRUE);
+    gViewerWindow->renderSelections(TRUE, TRUE, FALSE);
 
     stop_glerror();
 
@@ -1478,7 +1444,7 @@ void LLViewerDisplay::render_ui_3d(BOOL hmdUIMode)
     }
 }
 
-void LLViewerDisplay::render_ui_2d()
+void LLViewerDisplay::render_ui_2d(BOOL forHMD)
 {
 	LLGLSUIDefault gls_ui;
 
@@ -1490,16 +1456,10 @@ void LLViewerDisplay::render_ui_2d()
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	//  Menu overlays, HUD, etc
+    gViewerWindow->setup2DRender(0, 0, forHMD ? gHMD.getHMDUIWidth() : 0, forHMD ? gHMD.getHMDUIHeight() : 0);
 
-    if (gHMD.getCurrentEye() == LLHMD::CENTER_EYE)
+    if (!forHMD)
     {
-        gViewerWindow->setup2DRender();
-    }
-    else if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
-    {
-        gViewerWindow->setup2DRender(0, 0, gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight());
-    }
-
 	F32 zoom_factor = LLViewerCamera::getInstance()->getZoomFactor();
 	S16 sub_region = LLViewerCamera::getInstance()->getZoomSubRegion();
 
@@ -1514,7 +1474,6 @@ void LLViewerDisplay::render_ui_2d()
 	}
 
 	stop_glerror();
-	//gGL.getTexUnit(0)->setTextureBlendType(LLTexUnit::TB_MULT);
 
 	// render outline for HUD
 	if (isAgentAvatarValid() && gAgentCamera.mHUDCurZoom < 0.98f)
@@ -1532,17 +1491,18 @@ void LLViewerDisplay::render_ui_2d()
 		stop_glerror();
 	}
 
-    gViewerWindow->draw();
-
 	// reset current origin for font rendering, in case of tiling render
 	LLFontGL::sCurOrigin.set(0, 0);
+}
+
+    gViewerWindow->draw();
 }
 
 void LLViewerDisplay::render_disconnected_background()
 {
 	if (LLGLSLShader::sNoFixedFunction)
 	{
-		gUIProgram.bind();
+	    gUIProgram.bind();
 	}
 
 	gGL.color4f(1,1,1,1);
@@ -1620,7 +1580,7 @@ void LLViewerDisplay::render_disconnected_background()
 	}
 }
 
-void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
+void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield, BOOL forHMD, BOOL hmdPrePost, int whichEye)
 {
 	LLAppViewer::instance()->pingMainloopTimeout("Display:RenderUI");
 
@@ -1644,15 +1604,11 @@ void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
 	}
 	
     BOOL to_texture = gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow;
+
 	if (to_texture)
 	{
         push_state_gl_identity();
 		gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
-        if (gHMD.isHMDMode())
-        {
-            gHMD.render3DUI();
-        }
-        gPipeline.postRender();
         pop_state_gl();
 
         LLVertexBuffer::unbind();
@@ -1660,48 +1616,32 @@ void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
         LLGLState::checkTextureChannels();
     }
 
-    if (gHMD.isHMDMode())
-    {
-        gHMD.prerender2DUI();
-    }
-    if (gHMD.getCurrentEye() != LLHMD::LEFT_EYE)
-    {
-        if (gHMD.getCurrentEye() == LLHMD::CENTER_EYE)
+    if (forHMD)
         {
-            render_hud_elements();  // in-world text, labels, nametags
+        gHMD.render3DUI();
         }
-        render_hud_attachments();   // huds worn by avatar
 
-        LLGLSDefault gls_default;
-	    LLGLSUIDefault gls_ui;
-	    gPipeline.disableLights();
-        gGL.setColorMask(true, gHMD.isHMDMode());
+    gPipeline.postRender(FALSE, forHMD, whichEye);
 
-        if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
+    if (forHMD && hmdPrePost)
 	    {
-            LL_RECORD_BLOCK_TIME(FTM_RENDER_UI);
-            if (!gDisconnected)
-            {
-                // edit outline, move arrows, selection highlighting, debug axes, etc.
-                render_ui_3d(TRUE);
-			    LLGLState::checkStates();
+        gHMD.prerender2DUI();
 		    }
-		    else if (!gHMD.isHMDMode())
+    
+    if (!forHMD)
 		    {
-			    render_disconnected_background();
-            }
-            // Side/bottom buttons, 2D UI windows, etc.
-            render_ui_2d();
-		    LLGLState::checkStates();
+        render_hud_elements();    // in-world text, labels, nametags
+        render_hud_attachments(); // huds worn by avatar
 	    }
+
 	    gGL.flush();
 
         // debugging text
         gViewerWindow->setup2DRender();
         gViewerWindow->updateDebugText();
         gViewerWindow->drawDebugText();
-    }
-    if (gHMD.isHMDMode())
+
+    if (forHMD && hmdPrePost)
     {
         gHMD.postRender2DUI();
     }
@@ -1715,47 +1655,57 @@ void LLViewerDisplay::render_ui(F32 zoom_factor, int subfield)
 	}
 }
 
-void LLViewerDisplay::render_frame(BOOL rebuild)
+void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
 {
     gViewerWindow->setup3DViewport();
 
     // Collect objects in the stereoscopic cull frustum rather than each eye's asymmetric camera frustum.
-	if (gHMD.isHMDMode())
-	{
-        gHMD.setupStereoCullFrustum();
-        gHMD.bindCurrentEyeRT();
-	}
-
-    update();
-    static LLCullResult cullResult;
-    S32 occlusion = cull(cullResult);
-
-    if (gHMD.isHMDMode())
+    if (forHMD)
     {
-        gHMD.setupEye();
-	    stop_glerror();
-	    update_camera();
-	    stop_glerror();
+        gHMD.setupStereoCullFrustum();
+        gHMD.bindEyeRT(whichEye);
     }
 
-	BOOL to_texture = gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow;
+    update();
+
+    static LLCullResult cullResult;
+
+    S32 occlusion = cull(cullResult);
+
+    if (forHMD)
+    {
+        gHMD.setupEye(whichEye);
+	    update_camera();
+    }
+
+    BOOL to_texture = (gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow);
 
     display_swap();
     display_imagery();
     update_images();
+
     state_sort(rebuild, cullResult);
 
 	LLPipeline::sUseOcclusion = occlusion;
 
+    if (!forHMD)
+    {
     render_start(to_texture);
+    }
+
     render_geom();
+
+    if (!forHMD)
+    {
     render_flush(to_texture);
+    }
 
     if (!gSnapshot)
     {
-		LL_RECORD_BLOCK_TIME(FTM_RENDER_UI);
-        render_ui();
+	LL_RECORD_BLOCK_TIME(FTM_RENDER_UI);
+        render_ui(1.0f, 0, forHMD, (whichEye == 1), whichEye);
     }
+
     LLSpatialGroup::sNoDelete = FALSE;
 }
 

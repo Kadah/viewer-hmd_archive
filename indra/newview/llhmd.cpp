@@ -50,11 +50,23 @@
 #include "llviewerwindow.h"
 #include "llvoavatarself.h"
 #include "llwindow.h"
+
 #if LL_DARWIN
     #include "llwindowmacosx.h"
 #elif LL_WINDOWS
     #include "llwindowwin32.h"
 #endif
+
+//#include "OVR.h"
+
+#if LL_DARWIN
+// hack around an SDK warning that becomes an error with our compilation settings
+#define __gl_h_
+#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
+#endif
+
+#include "OVR_CAPI_GL.h"
+
 #include "llviewerdisplay.h"
 #include "pipeline.h"
 #include "raytrace.h"
@@ -80,7 +92,6 @@ const F32 LLHMDImpl::kDefaultOrthoPixelOffset = 0.1775f; // -0.1775f Right Eye
 const F32 LLHMDImpl::kDefaultVerticalFOVRadians = 2.196863;
 const F32 LLHMDImpl::kDefaultAspect = 0.8f;
 
-
 LLHMD gHMD;
 
 LLHMD::LLHMD()
@@ -101,17 +112,13 @@ LLHMD::LLHMD()
     , mStereoCameraFOV(DEFAULT_FIELD_OF_VIEW)
     , mStereoCullCameraFOV(0.0f)
     , mStereoCullCameraAspect(0.0f)
-    , mTimewarpIntervalSeconds(0.0001f)
-    , mLastHUDColorRebuildFrame(0)
 {
     memset(&mUIShape, 0, sizeof(UISurfaceShapeSettings));
     mUIShape.mPresetType = (U32)LLHMD::kCustom;
     mUIShape.mPresetTypeIndex = 0;
     // "Custom" preset is always in index 0
     mUIPresetValues.push_back(mUIShape);
-    memset(mProjectionOffset, 0, sizeof(F32) * 4 * 4);
 }
-
 
 LLHMD::~LLHMD()
 {
@@ -122,18 +129,20 @@ LLHMD::~LLHMD()
     }
 }
 
-
 BOOL LLHMD::init()
 {
-    if (gHMD.isPreDetectionInitialized())
-    {
-        return TRUE;
-    }
-    else if (gHMD.failedInit())
+    // You had your shot at VR stardom, and you missed.    
+    if (gHMD.isFailedInit())
     {
         return FALSE;
     }
-    BOOL preInitResult = FALSE;
+    // Saul Goodman. Carry on.
+    else if (gHMD.isInitialized())
+    {
+        return TRUE;
+    }
+
+    BOOL initResult = FALSE;
 
 #if LL_HMD_SUPPORTED
     if (!mImpl)
@@ -141,17 +150,7 @@ BOOL LLHMD::init()
         mImpl = new LLHMDImplOculus();
     }
 
-    gSavedSettings.getControl("HMDAdvancedMode")->getSignal()->connect(boost::bind(&onChangeHMDAdvancedMode));
-    onChangeHMDAdvancedMode();
-    gSavedSettings.getControl("HMDLowPersistence")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
-    gSavedSettings.getControl("HMDPixelLuminanceOverdrive")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
-    gSavedSettings.getControl("HMDUseMotionPrediction")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
-    gSavedSettings.getControl("HMDTimewarp")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
-    gSavedSettings.getControl("HMDTimewarpIntervalSeconds")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
-    gSavedSettings.getControl("HMDEnablePositionalTracking")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDPixelDensity")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
-    gSavedSettings.getControl("HMDUseSRGBDistortion")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
-    onChangeRenderSettings();
     gSavedSettings.getControl("HMDUISurfaceArcHorizontal")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
     gSavedSettings.getControl("HMDUISurfaceArcVertical")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
     gSavedSettings.getControl("HMDUISurfaceToroidWidth")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
@@ -177,9 +176,8 @@ BOOL LLHMD::init()
     onChangeMouselookControlMode();
     gSavedSettings.getControl("HMDAllowTextRoll")->getSignal()->connect(boost::bind(&onChangeAllowTextRoll));
     onChangeAllowTextRoll();
-
-    preInitResult = mImpl->preInit();
-    if (preInitResult)
+    initResult = mImpl->init();
+    if (initResult)
     {
         // load textures
         mCursorTextures.clear();
@@ -309,38 +307,24 @@ BOOL LLHMD::init()
         //UI_CURSOR_TOOLNO
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/llno.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
         mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
-
-        gHMD.isHMDAllowed(gPipeline.getUseVertexShaders() && LLVertexBuffer::sEnableVBOs);
     }
     else
 #endif
     {
-        gHMD.isHMDAllowed(FALSE);
-        gHMD.isPreDetectionInitialized(FALSE);
-        gHMD.isPostDetectionInitialized(FALSE);
-        gHMD.failedInit(TRUE);  // if we fail pre-init, we're done forever (or at least until client is restarted).
+        gHMD.isInitialized(FALSE);
+        gHMD.isHMDConnected(FALSE);
     }
 
-    return preInitResult;
+    return initResult;
 }
 
-
-void LLHMD::onChangeHMDAdvancedMode()
-{
-    gHMD.isAdvancedMode(gSavedSettings.getBOOL("HMDAdvancedMode"));
-    if (!gHMD.isAdvancedMode() && gHMD.isUsingDebugHMD())
+void LLHMD::onChangeUIMagnification()
     {
-        gHMD.removeHMDDevice();
+    gHMD.setUIMagnification(gSavedSettings.getF32("HMDUIMagnification"));
     }
-}
-
-void LLHMD::onChangeUIMagnification() { if (!gHMD.isSavingSettings()) { gHMD.setUIMagnification(gSavedSettings.getF32("HMDUIMagnification")); } }
-
 
 void LLHMD::onChangeUISurfaceSavedParams()
 {
-    if (!gHMD.isSavingSettings())
-    {
         gHMD.mUIShape.mPresetType = (U32)LLHMD::kCustom;
         gHMD.mUIShape.mPresetTypeIndex = 1;
         gHMD.mUIShape.mArcHorizontal = gSavedSettings.getF32("HMDUISurfaceArcHorizontal");
@@ -355,8 +339,6 @@ void LLHMD::onChangeUISurfaceSavedParams()
         gHMD.mUIShape.mOffsetZ = offsets[VZ];
         onChangeUISurfaceShape();
     }
-}
-
 
 void LLHMD::onChangePresetValues()
 {
@@ -432,42 +414,42 @@ void LLHMD::onChangePresetValues()
     }
 }
 
+void LLHMD::onChangeUIShapePreset()
+{
+    gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset"));
+}
 
-void LLHMD::onChangeUIShapePreset() { if (!gHMD.isSavingSettings()) { gHMD.setUIShapePresetIndex(gSavedSettings.getS32("HMDUIShapePreset")); } }
-void LLHMD::onChangeWorldCursorSizeMult() { if (!gHMD.isSavingSettings()) { gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult"); } }
-void LLHMD::onChangeMouselookControlMode() { if (!gHMD.isSavingSettings()) { gHMD.setMouselookControlMode(gSavedSettings.getS32("HMDMouselookControlMode")); } }
-void LLHMD::onChangeAllowTextRoll() { if (!gHMD.isSavingSettings()) { gHMD.allowTextRoll(gSavedSettings.getBOOL("HMDAllowTextRoll")); } }
+void LLHMD::onChangeWorldCursorSizeMult()
+{    
+    gHMD.mMouseWorldSizeMult = gSavedSettings.getF32("HMDWorldCursorSizeMult");
+}
 
+void LLHMD::onChangeMouselookControlMode()
+{
+    gHMD.setMouselookControlMode(gSavedSettings.getS32("HMDMouselookControlMode"));
+}
+
+void LLHMD::onChangeAllowTextRoll()
+{
+    gHMD.allowTextRoll(gSavedSettings.getBOOL("HMDAllowTextRoll"));
+}
 
 void LLHMD::onChangeMouselookSettings()
 {
-    if (!gHMD.isSavingSettings())
-    { 
         gHMD.mMouselookRotThreshold = llclamp(gSavedSettings.getF32("HMDMouselookRotThreshold") * DEG_TO_RAD, (10.0f * DEG_TO_RAD), (80.0f * DEG_TO_RAD));
         gHMD.mMouselookRotMax = llclamp(gSavedSettings.getF32("HMDMouselookRotMax") * DEG_TO_RAD, (1.0f * DEG_TO_RAD), (90.0f * DEG_TO_RAD));
         gHMD.mMouselookTurnSpeedMax = llclamp(gSavedSettings.getF32("HMDMouselookTurnSpeedMax"), 0.01f, 0.5f);
         gHMD.isMouselookYawOnly(gSavedSettings.getBOOL("HMDMouselookYawOnly"));
     }
-}
 
 
 void LLHMD::onChangeUISurfaceShape() { gPipeline.mHMDUISurface = NULL; }
 
-
 void LLHMD::onChangeRenderSettings()
 {
-    if (!gHMD.isSavingSettings())
-    {
-        gHMD.useLowPersistence(gSavedSettings.getBOOL("HMDLowPersistence"));
-        gHMD.usePixelLuminanceOverdrive(gSavedSettings.getBOOL("HMDPixelLuminanceOverdrive"));
-        gHMD.useMotionPrediction(gSavedSettings.getBOOL("HMDUseMotionPrediction"));
-        gHMD.isTimewarpEnabled(gSavedSettings.getBOOL("HMDTimewarp"));
-        gHMD.setTimewarpIntervalSeconds(gSavedSettings.getF32("HMDTimewarpIntervalSeconds"));
-        gHMD.useSRGBDistortion(gSavedSettings.getBOOL("HMDUseSRGBDistortion"));
-        gHMD.renderSettingsChanged(TRUE);
-    }
+    F32 pixelDensity = gSavedSettings.getF32("HMDPixelDensity");
+    gHMD.setPixelDensity(pixelDensity);
 }
-
 
 void LLHMD::shutdown()
 {
@@ -480,58 +462,6 @@ void LLHMD::shutdown()
     mFlags = 0;
 }
 
-
-void LLHMD::onIdle()
-{
-#if LL_HMD_SUPPORTED
-    if (mImpl)
-    {
-        if (gHMD.isHMDMode() && gHMD.isFBOError())
-        {
-            U32 curMode = gHMD.getRenderMode();
-            gHMD.setRenderMode(RenderMode_None);
-            gHMD.setRenderMode(curMode);
-            gHMD.isFBOError(FALSE);
-        }
-        mLastRollPitchYaw.setVec(mImpl->getRoll(), mImpl->getPitch(), mImpl->getYaw());
-        mImpl->onIdle();
-        if (isHMDMode() && gAgentCamera.cameraMouselook() && getMouselookControlMode() == (S32)kMouselookControl_Linked)
-        {
-            LLVector3 atLeveled = gAgent.getAtAxis();
-            atLeveled[VZ] = 0.0f;
-            atLeveled.normalize();
-            gAgent.resetAxes(atLeveled);
-
-            if (!gHMD.isMouselookYawOnly())
-            {
-                gAgent.pitch(mImpl->getPitch());
-            }
-
-            LLVector3 skyward = gAgent.getReferenceUpVector();
-            F32 yaw = mImpl->getYaw();
-            F32 dy = yaw - mLastRollPitchYaw[VZ];
-            if (yaw < -mMouselookRotThreshold || yaw > mMouselookRotThreshold)
-            {
-                F32 yt = llclamp(llabs(yaw) - mMouselookRotThreshold, 0.0f, mMouselookRotMax) * ((yaw >= 0.0f) ? 1.0f : -1.0f);
-                F32 v = llclamp(gAgent.getVelocity().lengthSquared(), 0.0f, 16.0f);
-                if (v <= 1.0f)
-                {
-                    // rotate faster when stopped or moving very slowly.
-                    yt *= 2.0f;
-                }
-                dy += (mMouselookTurnSpeedMax * ((1.0f / mMouselookRotMax) * yt));
-            }
-            gAgent.rotate(dy, skyward[VX], skyward[VY], skyward[VZ]);
-        }
-        if (gHMD.isForceHUDColorRebuild() && (gFrameCount > (mLastHUDColorRebuildFrame + 10)))
-        {
-            gHMD.isForceHUDColorRebuild(FALSE);
-        }
-    }
-#endif
-}
-
-
 void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 {
 #if LL_HMD_SUPPORTED
@@ -539,382 +469,75 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
     if (newRenderMode != mRenderMode)
     {
         LLWindow* windowp = gViewerWindow->getWindow();
-#if LL_DARWIN
-        LLWindowMacOSX* platformWindow = windowp ? dynamic_cast<LLWindowMacOSX*>(windowp) : NULL;
-#elif LL_WINDOWS
-        LLWindowWin32* platformWindow = windowp ? dynamic_cast<LLWindowWin32*>(windowp) : NULL;
-#endif
-
-        if (!windowp || !platformWindow || !mImpl || (newRenderMode == RenderMode_HMD && (!isPostDetectionInitialized() || !isHMDConnected())))
-        {
-            return;
-        }
 
         LLViewerCamera* pCamera = LLViewerCamera::getInstance();
+
         U32 oldMode = mRenderMode;
         mRenderMode = newRenderMode;
+
         switch (oldMode)
         {
-        case RenderMode_HMD:
-        case RenderMode_ScreenStereo:
+            case RenderMode_HMD:
+            case RenderMode_ScreenStereo:
             {
                 switch (mRenderMode)
                 {
                 case RenderMode_HMD:
-                    // switching from ScreenStereo to HMD
-                    // not currently possible, but could change, so might as well handle it
-//                    {
-//                        // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
-//                        // the HMD is still connected, etc.
-//                        if (!gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
-//                        {
-//                            // can't render to the HMD window, so abort
-//                            mRenderMode = RenderMode_ScreenStereo;
-//                            return;
-//                        }
-//#if LL_DARWIN
-//                        // resize main window to be the size of the HMD
-//                        // to handle cursor positioning in HMD mode
-//                        if (!gHMD.isMainFullScreen())
-//                        {
-//                            windowp->setSize(getHMDClientSize());
-//                        }
-//#endif
-//                        if (!setRenderWindowHMD())
-//                        {
-//                            // Somehow, we've lost the HMD window, so just recreate it
-//                            setRenderWindowMain();
-//                            gHMD.isPostDetectionInitialized(FALSE);
-//                            if (!mImpl->postDetectionInit() || !setRenderWindowHMD())
-//                            {
-//                                // still can't create the window - abort
-//                                setRenderMode(RenderMode_ScreenStereo, setFocusWindow);
-//                                return;
-//                            }
-//                        }
-//                        windowp->enableVSync(TRUE);
-//                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-//                        onViewChange(oldMode);
-//                    }
                     break;
+
                 case RenderMode_ScreenStereo:
-                    // switching from HMD to ScreenStereo
-                    // not much to do here except resize the main window
-                    // UNUSED TRANSITION until openGL Direct Mode support is available for Oculus SDK
-                    //{
-                    //    setRenderWindowMain();
-                    //    windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-                    //    if (isMainFullScreen())
-                    //    {
-                    //        onViewChange(oldMode);
-                    //    }
-                    //    else
-                    //    {
-                    //        windowp->setSize(getHMDClientSize());
-                    //        windowp->setPosition(mMainWindowPos);
-                    //    }
-                    //    windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
-                    //}
                     break;
+
                 case RenderMode_None:
                 default:
-                    // switching from isHMDMode() to !isHMDMode()
-                    {
-                        //if (oldMode == RenderMode_HMD)
-                        //{
-                        //    setRenderWindowMain();
-                        //}
-                        windowp->setHMDMode(FALSE, gSavedSettings.getU32("MinWindowWidth"), gSavedSettings.getU32("MinWindowHeight"));
-                        if (oldMode == RenderMode_ScreenStereo)
-                        {
-#if LL_DARWIN
-                            platformWindow->scaleBackSurface(FALSE);
-#endif
-                            if (!gHMD.isHMDMirror() && !gHMD.isUsingDebugHMD())
-                            {
-#if LL_DARWIN
-                                // Mac: exit fullscreen on HMD
-                                if (windowp->getFullscreen())
-                                {
-                                    platformWindow->exitFullScreen(mMainWindowPos, mMainClientSize);
-                                }
-                                else
-#endif
-                                // Windows: restore on HMD
-                                if (windowp->getMaximized())
-                                {
-                                    windowp->restore();
-                                }
-                                windowp->setBorderStyle(TRUE, 0);   // re-add title bar
-                                windowp->enableVSync(!gSavedSettings.getBOOL("DisableVerticalSync"));
-                            }
-#if LL_DARWIN
-                            if (gHMD.isMainFullScreen() && !windowp->getFullscreen())
-                            {
-                                platformWindow->enterFullScreen();
-                            }
-                            else
-#endif
-                            {
-                                if ((!gHMD.isHMDMirror() && !gHMD.isUsingDebugHMD()) || !gHMD.isMainMaximized())
-                                {
-#if LL_DARWIN
-                                    windowp->setSize(mMainClientSize);
-#else
-                                    windowp->setSize(mMainWindowSize);
-#endif
-                                    windowp->setPosition(mMainWindowPos);
-                                }
-                                if (gHMD.isMainMaximized() && !windowp->getMaximized())
-                                {
-                                    windowp->maximize();
-                                }
-                            }
-                        }
-                        LLFloaterCamera::onHMDChange();
-                        LLFloaterReg::setBlockInstance(false, "snapshot");
-                        pCamera->setAspect(mMainWindowAspect);
-                        gSavedSettings.setF32("CameraAngle", mMainWindowFOV);
-                        pCamera->setDefaultFOV(gSavedSettings.getF32("CameraAngle"));
-                        gViewerWindow->reshape(mMainClientSize.mX, mMainClientSize.mY);
-                    }
+                        windowp->enableVSync(FALSE);
                     break;
                 }
             }
             break;
-        case RenderMode_None:
-        default:
+
+            case RenderMode_None:
+            default:
             {
                 // clear the main window and save off size settings
                 windowp->getFramePos(&mMainWindowPos);
                 windowp->getSize(&mMainWindowSize);
                 windowp->getSize(&mMainClientSize);
+
                 mMainWindowFOV = gSavedSettings.getF32("CameraAngle");
                 mMainWindowAspect = pCamera->getAspect();
-                isMainFullScreen(windowp->getFullscreen());
-                isMainMaximized(windowp->getMaximized());
-                renderUnusedMainWindow();
 
-                // snapshots are disabled in HMD mode due to problems with always rendering UI and sometimes
-                // rendering black screen before saving.  This is probably a solvable issue, but not in the 
-                // time constraints given right now, so disabling them until someone has a chance to fix
-                // the issues.
-                LLFloaterReg::setBlockInstance(true, "snapshot");
                 switch (mRenderMode)
                 {
-                case RenderMode_ScreenStereo:
-                    // switching from Normal to ScreenStereo
+                    case RenderMode_ScreenStereo:
+                    break;
+
+                    case RenderMode_HMD:
                     {
-                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-                        pCamera->setAspect(gHMD.getAspect());
-                        pCamera->setDefaultFOV(gHMD.getVerticalFOV());
-                        gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
-
-                        if (!gHMD.isHMDMirror() && !gHMD.isUsingDebugHMD())
-                        {
-                            // put main window in moveable state
-#if LL_DARWIN
-                            if (gHMD.isMainFullScreen() && windowp->getFullscreen())
-                            {
-                                // exit full screen on main monitor
-                                platformWindow->exitFullScreen(mMainWindowPos, mMainClientSize);
-                            }
-                            else 
-#endif
-                            if (gHMD.isMainMaximized() && windowp->getMaximized())
-                            {
-                                windowp->restore();
-                            }
-
-                            // move main window to HMD and position at top
-                            windowp->setBorderStyle(FALSE, 0);  // remove title bar (no effect on Mac)
-                            windowp->setSize(getHMDClientSize(), TRUE);
-                            windowp->setPosition(mImpl->getHMDScreenPos());
-
-                            // enable vsync
-                            windowp->enableVSync(TRUE);
-                        }
-#if LL_DARWIN
-                        if (!windowp->getFullscreen())
-                        {
-                            platformWindow->enterFullScreen();
-                        }
-                        platformWindow->scaleBackSurface(TRUE);
-#elif LL_WINDOWS
-                        if (!windowp->getMaximized())
-                        {
-                            windowp->maximize();
-                        }
-#endif
-                        mImpl->calculateViewportSettings();
-                        gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight());
-                        gPipeline.resetVertexBuffers();
+                        windowp->enableVSync(TRUE);
                     }
                     break;
-                case RenderMode_HMD:
-                    // switching from Normal to HMD
-                    // UNUSED TRANSITION until openGL Direct Mode support is available for Oculus SDK
-//                    {
-//                        // first ensure that we CAN render to the HMD (i.e. it's initialized, we have a valid window,
-//                        // the HMD is still connected, etc.
-//                        if (!gHMD.isPostDetectionInitialized() || !gHMD.isHMDConnected())
-//                        {
-//                            // can't render to the HMD window, so abort
-//                            mRenderMode = RenderMode_None;
-//                            return;
-//                        }
-//#if LL_DARWIN
-//                        // resize main window to be the size of the HMD
-//                        // to handle cursor positioning in HMD mode
-//                        if (!gHMD.isMainFullScreen())
-//                        {
-//                            windowp->setSize(getHMDClientSize(), TRUE);
-//                        }
-//#endif
-//                        if (!setRenderWindowHMD())
-//                        {
-//                            // Somehow, we've lost the HMD window, so just recreate it
-//                            setRenderWindowMain(); 
-//                            gHMD.isPostDetectionInitialized(FALSE);
-//                            if (!mImpl->postDetectionInit() || !setRenderWindowHMD())
-//                            {
-//                                // still can't create the window - abort
-//                                setRenderMode(RenderMode_ScreenStereo, setFocusWindow);
-//                                return;
-//                            }
-//                        }
-//                        windowp->enableVSync(TRUE);
-//                        windowp->setHMDMode(TRUE, (U32)mImpl->getHMDWidth(), (U32)mImpl->getHMDHeight());
-//                        pCamera->setAspect(gHMD.getAspect());
-//                        pCamera->setDefaultFOV(gHMD.getVerticalFOV());
-//                        gSavedSettings.setF32("CameraAngle", gHMD.getVerticalFOV());
-//                        onViewChange(oldMode);
-//                    }
-                    break;
                 }
+
                 LLFloaterCamera::onHMDChange();
             }
             break;
         }
-        if (setFocusWindow)
-        {
-            if (mRenderMode == RenderMode_HMD)
-            {
-                setFocusWindowHMD();
-            }
-            else
-            {
-                setFocusWindowMain();
-            }
-        }
-        if (mImpl && isPostDetectionInitialized() && isHMDConnected() && isHMDMode() && !gHMD.isFBOError())
+
+        if (mImpl && isHMDMode())
         {
             mImpl->resetOrientation();
         }
-
-        gHMD.isForceHUDColorRebuild(TRUE);
-        mLastHUDColorRebuildFrame = gFrameCount;
     }
 #else
     mRenderMode = RenderMode_None;
 #endif
 }
 
-
-BOOL LLHMD::setRenderWindowMain()
-{
-    return gViewerWindow->getWindow()->setRenderWindow(0, gHMD.isMainFullScreen());
-}
-
-
-BOOL LLHMD::setRenderWindowHMD()
-{
-    BOOL res = FALSE;
-#if LL_HMD_SUPPORTED
-    res = gHMD.isHMDDirectMode() || gHMD.useMirrorHack() || gViewerWindow->getWindow()->setRenderWindow(1, TRUE);
-#endif // LL_HMD_SUPPORTED
-    return res;
-}
-
-
-void LLHMD::setFocusWindowMain()
-{
-#if LL_HMD_SUPPORTED
-    isChangingRenderContext(TRUE);
-    BOOL curIsFullScreen = FALSE;
-    S32 curRenderWindow = gViewerWindow->getWindow()->getRenderWindow(curIsFullScreen);
-    BOOL res = gViewerWindow->getWindow()->setFocusWindow(0);
-    if (res)
-    {
-        if (gHMD.isHMDMode() && curRenderWindow == 0)
-        {
-            // in this case, appFocusGained is not called because we're not changing windows, so just call manually
-            onAppFocusGained();
-            if ((!gHMD.isHMDMirror() && !gHMD.isHMDDirectMode()) || gHMD.isUsingDebugHMD())
-            {
-                gViewerWindow->moveCursorToCenter();
-            }
-        }
-        else if (!gHMD.isHMDMode())
-        {
-#if !LL_DARWIN
-            // setFocusWindow on Mac does not call FocusGained or FocusLost.  In order to make things behave,
-            // we always need to call them directly here, whether the display is mirrored or not.  On non-Mac platforms
-            // we only need to call onAppFocusGained directly if we're in Mirroring mode.
-            if (curRenderWindow == 0)
-#endif // LL_DARWIN
-            {
-                onAppFocusGained();
-                if ((!gHMD.isHMDMirror() && !gHMD.isHMDDirectMode()) || gHMD.isUsingDebugHMD())
-                {
-                    gViewerWindow->moveCursorToCenter();
-                }
-            }
-            // in the case of switching from debug HMD mode to normal mode, no appfocus message is sent since 
-            // we're already focused on the main window, so we have to manually disable mouse clipping.  In the case
-            // where we are switching from HMD to normal mode, then this is just a redundant call, but doesn't hurt
-            // anything.
-            gViewerWindow->getWindow()->setMouseClipping(FALSE);
-        }
-    }
-    else
-    {
-        isChangingRenderContext(FALSE);
-    }
-#endif // LL_HMD_SUPPORTED
-}
-
-
-void LLHMD::setFocusWindowHMD()
-{
-#if LL_HMD_SUPPORTED
-    if (!gViewerWindow->isMouseInWindow())
-    {
-        gViewerWindow->moveCursorToCenter();
-    }
-    isChangingRenderContext(TRUE);
-    if (!gViewerWindow->getWindow()->setFocusWindow(1))
-    {
-        isChangingRenderContext(FALSE);
-    }
-#if LL_DARWIN
-    else
-    {
-        // setFocusWindow on Mac does not call FocusGained or FocusLost, except for calling FocusLost the first time.
-        // WHY that is, I have no idea.   But in order to make things behave, we need to call them directly here.
-        onAppFocusGained();
-    }
-#endif // LL_DARWIN
-#endif // LL_HMD_SUPPORTED
-}
-
-
 void LLHMD::onAppFocusGained()
 {
-#if LL_HMD_SUPPORTED
-    if (isChangingRenderContext())
-    {
-        if (isHMDMode())
+    #if LL_HMD_SUPPORTED
+        if (mRenderMode == (U32)RenderMode_ScreenStereo)
         {
             gViewerWindow->getWindow()->setMouseClipping(TRUE);
         }
@@ -922,141 +545,16 @@ void LLHMD::onAppFocusGained()
         {
             gViewerWindow->getWindow()->setMouseClipping(FALSE);
         }
-        isChangingRenderContext(FALSE);
-    }
-    else
-    {
-        // if we've tried to focus on the HMD window while not intentionally swapping contexts, we'll likely get a BSOD.
-        // Note that since the HMD window has no task-bar icon, this should not be possible, but users will find a way...
-        if (mRenderMode == (U32)RenderMode_HMD)
-        {
-            setRenderMode(RenderMode_None);
-        }
-        else if (mRenderMode == (U32)RenderMode_ScreenStereo)
-        {
-            gViewerWindow->getWindow()->setMouseClipping(TRUE);
-        }
-        else
-        {
-            gViewerWindow->getWindow()->setMouseClipping(FALSE);
-        }
-    }
-#endif // LL_HMD_SUPPORTED
+    #endif // LL_HMD_SUPPORTED
 }
-
 
 void LLHMD::onAppFocusLost()
 {
-#if LL_HMD_SUPPORTED
-    if (gHMD.isHMDMode() && !isChangingRenderContext())
-    {
-#if LL_DARWIN
-        BOOL exitHMDMode = TRUE;
-#elif LL_WINDOWS
-        BOOL exitHMDMode = (mRenderMode == (U32)RenderMode_ScreenStereo && !gHMD.isHMDMirror() && !gHMD.isUsingDebugHMD());
-#endif
-        if (exitHMDMode)
-        {
-            // Make sure we change the render window to main so that we avoid BSOD in the graphics drivers when
-            // it tries to render to a (now) invalid renderContext.
-            setRenderWindowMain();
-            setRenderMode(RenderMode_None, false);
-        }
-    }
-#endif // LL_HMD_SUPPORTED
+
 }
 
-
-void LLHMD::renderUnusedMainWindow()
-{
-//#if LL_HMD_SUPPORTED
-//    if (gHMD.getRenderMode() == LLHMD::RenderMode_HMD
-//        && gHMD.isPostDetectionInitialized()
-//        && gHMD.isHMDConnected()
-//        && gHMD.isHMDSensorConnected()
-//        && !gHMD.isUsingAppWindow()
-//        && gViewerWindow
-//        && gViewerWindow->getWindow()
-//       )
-//    {
-//        if (gHMD.setRenderWindowMain())
-//        {
-//            gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getMainWindowWidth(), gHMD.getMainWindowHeight());
-//            glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-//            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-//            glClear(GL_COLOR_BUFFER_BIT);
-//            LLViewerDisplay::swap(TRUE, LLViewerDisplay::gDisplaySwapBuffers);
-//        }
-//    }
-//#endif
-}
-
-
-void LLHMD::renderUnusedHMDWindow()
-{
-#if LL_HMD_SUPPORTED
-    if (gHMD.isPostDetectionInitialized()
-        && gHMD.isHMDConnected()
-        && gHMD.getRenderMode() != LLHMD::RenderMode_HMD
-        && !gHMD.isHMDDirectMode()
-        && !gHMD.useMirrorHack()
-        && gViewerWindow
-        && gViewerWindow->getWindow())
-    {
-        if (gHMD.setRenderWindowHMD())
-        {
-            gHMD.getViewportInfo(gGLViewport);
-            //gViewerWindow->getWindowViewportRaw(gGLViewport, gHMD.getHMDWidth(), gHMD.getHMDHeight());
-            glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-            // write text "press CTRL-SHIFT-D to switch to HMD"
-            gViewerWindow->getWindow()->swapBuffers();
-            //LLViewerDisplay::swap(TRUE, LLViewerDisplay::gDisplaySwapBuffers);
-        }
-    }
-#endif
-}
-
-
-U32 LLHMD::suspendHMDMode()
-{
-    U32 oldMode = getRenderMode();
-    if (isHMDMode())
-    {
-        setRenderMode(RenderMode_None);
-    }
-    return oldMode;
-}
-
-
-void LLHMD::resumeHMDMode(U32 prevRenderMode)
-{
-    if (prevRenderMode != RenderMode_None)
-    {
-        setRenderMode(prevRenderMode);
-    }
-}
-
-
-U32 LLHMD::getCurrentEye() const { return mImpl ? mImpl->getCurrentEye() : 0; }
-
-
-void LLHMD::setCurrentEye(U32 eye)
-{
-    if (mImpl)
-    {
-        mImpl->setCurrentEye(eye);
-    }
-    if (eye == CENTER_EYE)
-    {
-        mCameraOffset = LLVector3::zero;
-    }
-}
-
-
-void LLHMD::getViewportInfo(S32& x, S32& y, S32& w, S32& h) { if (mImpl) { mImpl->getViewportInfo(x, y, w, h); } }
-void LLHMD::getViewportInfo(S32 vp[4]) { if (mImpl) { mImpl->getViewportInfo(vp); } else { vp[0] = vp[1] = vp[2] = vp[3] = 0; } }
+F32 LLHMD::getPixelDensity() const { return mImpl ? mImpl->getPixelDensity() : 1.0f; }
+void LLHMD::setPixelDensity(F32 pixelDensity) { if (mImpl) { mImpl->setPixelDensity(pixelDensity); } }
 S32 LLHMD::getHMDWidth() const { return mImpl ? mImpl->getHMDWidth() : 0; }
 S32 LLHMD::getHMDEyeWidth() const { return mImpl ? mImpl->getHMDEyeWidth() : 0; }
 S32 LLHMD::getHMDHeight() const { return mImpl ? mImpl->getHMDHeight() : 0; }
@@ -1065,11 +563,8 @@ S32 LLHMD::getHMDUIHeight() const { return mImpl ? mImpl->getHMDUIHeight() : 0; 
 S32 LLHMD::getHMDViewportWidth() const { return mImpl ? mImpl->getViewportWidth() : 0; }
 S32 LLHMD::getHMDViewportHeight() const { return mImpl ? mImpl->getViewportHeight() : 0; }
 F32 LLHMD::getInterpupillaryOffset() const { return mImpl ? mImpl->getInterpupillaryOffset() : 0.0f; }
-F32 LLHMD::getInterpupillaryOffsetDefault() const { return mImpl ? mImpl->getInterpupillaryOffsetDefault() : 0.0f; }
 F32 LLHMD::getEyeToScreenDistance() const { return mImpl ? mImpl->getEyeToScreenDistance() : 0.0f; }
-F32 LLHMD::getEyeToScreenDistanceDefault() const { return mImpl ? mImpl->getEyeToScreenDistanceDefault() : 0.0f; }
 void LLHMD::setEyeToScreenDistance(F32 f) { calculateUIEyeDepth(); gPipeline.mHMDUISurface = NULL; }
-
 
 void LLHMD::setUIMagnification(F32 f)
 {
@@ -1137,13 +632,9 @@ F32 LLHMD::getHMDYaw() const { return mImpl ? mImpl->getYaw() : 0.0f; }
 F32 LLHMD::getHMDLastYaw() const { return mLastRollPitchYaw[VZ]; }
 F32 LLHMD::getHMDDeltaYaw() const { if (mImpl) { return mImpl->getYaw() - mLastRollPitchYaw[VZ]; } else { return 0.0f; } }
 LLVector3 LLHMD::getHeadPosition() const { if (mImpl) { return mImpl->getHeadPosition(); } else { return LLVector3::zero; } }
-BOOL LLHMD::detectHMDDevice(BOOL force) { if (mImpl) { return mImpl->detectHMDDevice(force); } else { return FALSE; } }
-void LLHMD::removeHMDDevice() { if (mImpl) { mImpl->removeHMDDevice(); } }
 
 F32 LLHMD::getVerticalFOV() const { return mImpl ? mImpl->getVerticalFOV() : 0.0f; }
 F32 LLHMD::getAspect() { return mImpl ? mImpl->getAspect() : 0.0f; }
-F32 LLHMD::getOrthoPixelOffset() const { return mImpl ? mImpl->getOrthoPixelOffset() : 0.0f; }
-
 
 std::string LLHMD::getUIShapeName() const
 {
@@ -1170,7 +661,7 @@ void LLHMD::calculateUIEyeDepth()
         ////  MESD = eye_to_screen_dist_where_X_should_be_zero
         ////  in the current case:
         ////  -14.285714 = 600 / ((0.041 - 0.083) * 1000)
-        F32 eyeDepthMult = mUIShape.mUIMagnification / ((getEyeToScreenDistanceDefault() - 0.083f) * 1000.0f);
+        F32 eyeDepthMult = mUIShape.mUIMagnification / ((getEyeToScreenDistance() - 0.083f) * 1000.0f);
         mUIEyeDepth = ((mImpl->getEyeToScreenDistance() - 0.083f) * eyeDepthMult);
     }
 }
@@ -1308,7 +799,6 @@ BOOL LLHMD::removePreset(S32 idx)
 
 void LLHMD::saveSettings()
 {
-    isSavingSettings(TRUE);
     if (mUIShapePreset == 0)
     {
         // These SHOULD already be set to these values, but just in case..
@@ -1332,26 +822,9 @@ void LLHMD::saveSettings()
     gSavedSettings.setVector3("HMDUISurfaceOffsets", offsets);
     gSavedSettings.setF32("HMDUIMagnification", gHMD.getUIMagnification());
     gSavedSettings.setS32("HMDUIShapePreset", gHMD.getUIShapePresetIndex());
-
-    gSavedSettings.setBOOL("HMDLowPersistence", gHMD.useLowPersistence());
-    gSavedSettings.setBOOL("HMDPixelLuminanceOverdrive", gHMD.usePixelLuminanceOverdrive());
-    gSavedSettings.setBOOL("HMDUseMotionPrediction", gHMD.useMotionPrediction());
-    gSavedSettings.setBOOL("HMDTimewarp", gHMD.isTimewarpEnabled());
-    gSavedSettings.setF32("HMDTimewarpIntervalSeconds", gHMD.getTimewarpIntervalSeconds());
-    gSavedSettings.setBOOL("HMDUseSRGBDistortion", gHMD.useSRGBDistortion());
     gSavedSettings.setBOOL("HMDMouselookYawOnly", gHMD.isMouselookYawOnly());
-
-    //gSavedSettings.setBOOL("HMDAdvancedMode", gHMD.isAdvancedMode());
-    //gSavedSettings.setBOOL("HMDEnablePositionalTracking", gHMD.isPositionTrackingEnabled());
-    //gSavedSettings.setBOOL("HMDAllowTextRoll", gHMD.allowTextRoll());
-    //gSavedSettings.setF32("HMDWorldCursorSizeMult", gHMD.getWorldCursorSizeMult());
-    //gSavedSettings.setS32("HMDMouselookControlMode", gHMD.getMouselookControlMode());
-    //gSavedSettings.setF32("HMDMouselookRotThreshold", mMouselookRotThreshold);
-    //gSavedSettings.setF32("HMDMouselookRotMax", mMouselookRotMax);
-    //gSavedSettings.setF32("HMDMouselookTurnSpeedMax", mMouselookTurnSpeedMax);
-    //gSavedSettings.setF32("HMDPixelDensity", gHMD.useMotionPrediction());
-
-    isSavingSettings(FALSE);
+    gSavedSettings.setBOOL("HMDAllowTextRoll", gHMD.allowTextRoll());
+    gSavedSettings.setF32("HMDPixelDensity", gHMD.getPixelDensity());
 
     static const char* kPresetTypeStrings[] = { "Custom", "Default", "User" };
     LLSDArray entries;
@@ -1373,21 +846,6 @@ void LLHMD::saveSettings()
     }
     gSavedSettings.setLLSD("HMDUIPresetValues", entries);
 }
-
-
-void LLHMD::onViewChange(S32 oldMode)
-{
-    if (mImpl)
-    {
-        mImpl->onViewChange(oldMode);
-    }
-    if (gHMD.isHMDMode())
-    {
-        gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight());
-        gPipeline.resetVertexBuffers();
-    }
-}
-
 
 // Creates a surface that is part of an outer shell of a torus.
 // Results are in local-space with -z forward, y up (i.e. standard OpenGL)
@@ -1577,7 +1035,6 @@ void LLHMD::setupStereoValues()
     mStereoCameraPosition = cam->getOrigin();
 
     // Stereo culling frustum camera parameters.
-    mStereoCullCameraDeltaForwards = mImpl->getStereoCullCameraForwards();
     mStereoCullCameraFOV = mStereoCameraFOV;
     mStereoCullCameraAspect = mImpl->getAspect();
 }
@@ -1586,86 +1043,79 @@ void LLHMD::setupStereoValues()
 void LLHMD::setupStereoCullFrustum()
 {
     mCameraOffset = LLVector3::zero;
-    mProjectionOffset[0][2] = 0.0f;
+
+    mProjection.make_identity();
+
     LLViewerCamera* cam = LLViewerCamera::getInstance();
+
     cam->setView(mStereoCullCameraFOV, TRUE);
     cam->setAspect(mStereoCullCameraAspect);
-    LLVector3 new_position = mStereoCameraPosition + mStereoCullCameraDeltaForwards;
+
+    LLVector3 new_position = mStereoCameraPosition;
+    
     cam->setOrigin(new_position);
 }
 
 
-void LLHMD::setupEye()
+void LLHMD::setupEye(int which)
 {
-    mCameraOffset = mImpl->getCurrentEyeCameraOffset();
-    mImpl->getCurrentEyeProjectionOffset(mProjectionOffset);
-
     LLViewerCamera* cam = LLViewerCamera::getInstance();
-    cam->setView(mStereoCameraFOV, getCurrentEye() == (U32)LLHMD::CENTER_EYE ? TRUE : FALSE);
+
+    mEyeProjection[which].make_identity();
+    mImpl->getEyeProjection(which, mEyeProjection[which]);
+
+    mEyeOffset[which].setZero();
+    mImpl->getEyeOffset(which, mEyeOffset[which]);
+
+    cam->setView(mStereoCameraFOV, FALSE);
     cam->setAspect(mImpl->getAspect());
-    cam->setOrigin(mImpl->getCurrentEyeOffset(mStereoCameraPosition));
+    cam->setOrigin(mEyeOffset[which] + mStereoCameraPosition);
 }
 
-
-LLRenderTarget* LLHMD::getCurrentEyeRT()
-{
-    return mImpl ? mImpl->getCurrentEyeRT() : NULL;
-}
-
-
-void LLHMD::bindCurrentEyeRT()
-{
-    LLRenderTarget* target = getCurrentEyeRT();
-    if (target)
-    {
-        target->bindTarget();
-    }
-}
-
-
-void LLHMD::flushCurrentEyeRT()
-{
-    LLRenderTarget* target = getCurrentEyeRT();
-    if (target)
-    {
-        target->flush();
-    }
-}
-
-
-void LLHMD::releaseAllEyeRT()
+BOOL LLHMD::bindEyeRT(int eye)
 {
     if (mImpl)
     {
-        for (U32 i = (U32)LLHMD::CENTER_EYE; i <= (U32)LLHMD::RIGHT_EYE; ++i)
-        {
-            LLRenderTarget* rt = mImpl->getEyeRT(i);
-            if (rt)
-            {
-                rt->release();
-            }
-        }
+        return mImpl->bindEyeRT(eye);
     }
+
+    return FALSE;
 }
 
 
+BOOL LLHMD::releaseEyeRT(int eye)
+{
+    if (mImpl)
+    {
+        return mImpl->releaseEyeRT(eye);
+    }
+
+    return FALSE;
+}
+
+BOOL LLHMD::releaseAllEyeRT()
+{
+    if (mImpl)
+    {
+        return mImpl->releaseAllEyeRT();
+        }
+
+    return FALSE;
+    }
+
 void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye)
 {
-    S32 x = 0, y = 0, w = 0, h = 0;
-    if (forEye)
-    {
-        mImpl->getViewportInfo(x, y, w, h);
-    }
-    x += x_offset;
-    y += y_offset;
+    S32 x = 0;
+    S32 y = 0;
+    S32 w = mImpl->getViewportWidth();
+    S32 h = mImpl->getViewportHeight();
     gViewerWindow->getWorldViewportRaw(gGLViewport, w, h, x, y);
 	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 
-
 void LLHMD::setup2DRender()
 {
-    gl_state_for_2d(gHMD.getHMDViewportWidth(), gHMD.getHMDViewportHeight(), 0, gHMD.getOrthoPixelOffset());
+    gl_state_for_2d(gHMD.getHMDViewportWidth(), gHMD.getHMDViewportHeight());
     gViewerWindow->getWindowViewportRaw(gGLViewport);
     glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
@@ -1842,21 +1292,29 @@ void LLHMD::render3DUI()
     LLViewerDisplay::pop_state_gl();
 
     render_hud_elements();  // in-world text, labels, nametags
+
     if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
     {
-        //LLFastTimer t(FTM_RENDER_UI);
         LLViewerDisplay::render_ui_3d(FALSE);
-        LLGLState::checkStates();
     }
 
     renderCursor3D();
 
-    if (gPipeline.mUIScreen.isComplete())
+    if (!gPipeline.mUIScreen.isComplete())
     {
+        if (!gPipeline.mUIScreen.allocate(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
+        {
+            LL_WARNS() << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
+            return;
+        }
+
         if (gPipeline.mHMDUISurface.isNull())
         {
             gPipeline.mHMDUISurface = createUISurface();
         }
+    }
+    else
+    {        
         gGL.matrixMode(LLRender::MM_MODELVIEW);
         gGL.pushMatrix();
         LLMatrix4 m1(mUIModelViewInv);
@@ -1879,16 +1337,8 @@ void LLHMD::render3DUI()
         gGL.matrixMode(LLRender::MM_MODELVIEW);
         gGL.popMatrix();
     }
-    else if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
-    {
-        if (!gPipeline.mUIScreen.allocate(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
-        {
-            LL_WARNS() << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
-            return;
-        }
-    }
 
-    if (gAgentCamera.cameraMouselook() && gHMD.getCurrentEye() != LLHMD::CENTER_EYE)
+    if (gAgentCamera.cameraMouselook())
     {
         LLTool* toolBase = LLToolMgr::getInstance()->getCurrentTool();
         LLToolCompGun* tool =  LLToolCompGun::getInstance();
@@ -1919,7 +1369,6 @@ void LLHMD::render3DUI()
     LLViewerDisplay::push_state_gl_identity();
 }
 
-
 void LLHMD::reshapeUI(BOOL useUIViewPort)
 {
     if (useUIViewPort)
@@ -1932,11 +1381,8 @@ void LLHMD::reshapeUI(BOOL useUIViewPort)
     }
 }
 
-
 void LLHMD::prerender2DUI()
 {
-    if (gHMD.getCurrentEye() == LLHMD::RIGHT_EYE)
-    {
         gPipeline.mUIScreen.bindTarget();
         gGL.setColorMask(true, true);
         glClearColor(0.0f,0.0f,0.0f,0.0f);
@@ -1948,31 +1394,21 @@ void LLHMD::prerender2DUI()
         gGL.setSceneBlendType(LLRender::BT_ALPHA);
         reshapeUI(TRUE);
     }
-}
-
 
 void LLHMD::postRender2DUI()
 {
-    if (getCurrentEye() == LLHMD::RIGHT_EYE)
-    {
         gHMD.renderCursor2D();
         gPipeline.mUIScreen.flush();
         if (LLRenderTarget::sUseFBO)
         {
-            // check to see if we somehow got in a bad rendering state and have to reset to normal render mode
-            if (gHMD.isHMDMode() && LLRenderTarget::sBoundTarget && LLRenderTarget::sBoundTarget != &gPipeline.mScreen && (!LLRenderTarget::sBoundTarget->getFBO() || !gPipeline.mScreen.getFBO()))
-            {
-                gHMD.isFBOError(TRUE);
-            }
             //copy depth buffer from mScreen to framebuffer
             LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
-                0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+                                                                     0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
+                                                                     GL_DEPTH_BUFFER_BIT, GL_NEAREST);
         }
         LLUI::setDestIsRenderTarget(FALSE);
         reshapeUI(FALSE);
     }
-}
-
 
 BOOL LLHMD::beginFrame()
 {
@@ -1986,33 +1422,71 @@ BOOL LLHMD::beginFrame()
         }
     }
 
-    return mImpl ? mImpl->beginFrame() : FALSE;
+    BOOL beginFrameResult = FALSE;
+
+    if (mImpl && isHMDMode())
+    {
+        beginFrameResult = mImpl->beginFrame();
+
+        mLastRollPitchYaw.setVec(mImpl->getRoll(), mImpl->getPitch(), mImpl->getYaw());
+
+        if (gAgentCamera.cameraMouselook() && getMouselookControlMode() == (S32)kMouselookControl_Linked)
+        {
+            LLVector3 atLeveled = gAgent.getAtAxis();
+            atLeveled[VZ] = 0.0f;
+            atLeveled.normalize();
+            gAgent.resetAxes(atLeveled);
+
+            if (!gHMD.isMouselookYawOnly())
+{
+                gAgent.pitch(mImpl->getPitch());
 }
 
+            LLVector3 skyward = gAgent.getReferenceUpVector();
+            F32 yaw = mImpl->getYaw();
+            F32 dy = yaw - mLastRollPitchYaw[VZ];
+            if (yaw < -mMouselookRotThreshold || yaw > mMouselookRotThreshold)
+{
+                F32 yt = llclamp(llabs(yaw) - mMouselookRotThreshold, 0.0f, mMouselookRotMax) * ((yaw >= 0.0f) ? 1.0f : -1.0f);
+                F32 v = llclamp(gAgent.getVelocity().lengthSquared(), 0.0f, 16.0f);
+                if (v <= 1.0f)
+    {
+                    // rotate faster when stopped or moving very slowly.
+                    yt *= 2.0f;
+                }
+                dy += (mMouselookTurnSpeedMax * ((1.0f / mMouselookRotMax) * yt));
+            }
+            gAgent.rotate(dy, skyward[VX], skyward[VY], skyward[VZ]);
+    }
+}
+
+    return beginFrameResult;
+}
 
 BOOL LLHMD::endFrame()
 {
     return mImpl ? mImpl->endFrame() : FALSE;
 }
 
-
-void LLHMD::showHSW(BOOL show)
-{
-    if (mImpl)
-    {
-        mImpl->showHSW(show);
-    }
-}
-
-
 LLQuaternion LLHMD::getHMDRotation() const
 {
     return mImpl ? mImpl->getHMDRotation() : LLQuaternion();
 }
 
-
-LLVector3 LLHMD::getCurrentEyeCameraOffset() const
+U32 LLHMD::suspendHMDMode()
 {
-    return mImpl ? mImpl->getCurrentEyeCameraOffset() : LLVector3::zero;
+    U32 oldMode = getRenderMode();
+    if (isHMDMode())
+    {
+        setRenderMode(RenderMode_None);
+    }
+    return oldMode;
 }
 
+void LLHMD::resumeHMDMode(U32 prevRenderMode)
+{
+    if (prevRenderMode != RenderMode_None)
+{
+        setRenderMode(prevRenderMode);
+    }
+}

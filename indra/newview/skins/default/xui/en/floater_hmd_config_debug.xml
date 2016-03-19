@@ -161,68 +161,6 @@
         left="0" top="0" width="200" height ="280">
 
         <layout_panel follows="top|left|right" width="200" height="40">
-          <check_box name="hmd_config_debug_low_persistence"
-            initial_value="false"
-            left="0" top="12" width="32" height="16" valign="center"
-            label="Low Persistence" label_text.valign="center" label_text.v_pad="-1" 
-            tool_tip="Low Persistence Mode to reduce/eliminate motion blur and judder.  While it does help with these things, it also makes the display noticeably dimmer.">
-            <check_box.commit_callback function="HMDConfigDebug.CheckLowPersistence" />
-          </check_box>
-        </layout_panel>
-
-        <layout_panel follows="top|left|right" width="200" height="40">
-          <check_box name="hmd_config_debug_pixel_luminance_overdrive"
-            initial_value="true"
-            left="0" top="12" width="32" height="16" valign="center"
-            label="Pixel Luminance Overdrive" label_text.valign="center" label_text.v_pad="-1"
-            tool_tip="Attempts to combat the dimness of Low Persistence Mode in software without sacrificing the benefits of that mode.">
-            <check_box.commit_callback function="HMDConfigDebug.CheckPixelLuminanceOverdrive" />
-          </check_box>
-        </layout_panel>
-
-        <layout_panel follows="top|left|right" width="200" height="40">
-          <check_box name="hmd_config_debug_motion_prediction"
-            initial_value="true"
-            left="0" top="12" width="32" height="16" valign="center"
-            label="Motion Prediction" label_text.valign="center" label_text.v_pad="-1"
-            tool_tip="Motion prediction attempts to predict headset movement for a smoother, less jerky experience">
-            <check_box.commit_callback function="HMDConfigDebug.CheckMotionPrediction" />
-          </check_box>
-        </layout_panel>
-
-        <layout_panel follows="top|left|right" width="200" height="40">
-          <check_box name="hmd_config_debug_timewarp"
-            initial_value="true"
-            left="0" top="12" width="32" height="16" valign="center"
-            label="Timewarp" label_text.valign="center" label_text.v_pad="-1"
-            tool_tip="Reduce motion-to-photon latency, i.e. how long it takes from the moment you move your head to when the scene rendered by the Rift is updated.  This allows lower latency and higher frame rates.  Experimental.">
-            <check_box.commit_callback function="HMDConfigDebug.CheckTimewarp" />
-          </check_box>
-        </layout_panel>
-
-        <layout_panel follows="top|left|right" width="200" height="40">
-          <text font.name="SansSerifSmall" left="5" top="5" right="-75" height="10" follows="top|left|right" halign="center"
-                tool_tip="Timewarp Rendering Interval.  Higher value = higher FPS, but more 'dropped' frames.">Timewarp Interval</text>
-          <text name="hmd_config_debug_timewarp_interval_slider_amount" font.name="SansSerifSmall" top="5" right="-5" width="70" height="10" follows="top|right" halign="right">0.01</text>
-          <slider_bar
-            name="hmd_config_debug_timewarp_interval_slider"
-            min_val="5" max_val="250" increment="5" initial_value="20"
-            left="5" top="18" right="-5" height="22" follows="top|left|right">
-            <slider_bar.commit_callback function="HMDConfigDebug.SetTimewarpInterval" />
-          </slider_bar>
-        </layout_panel>
-
-        <layout_panel follows="top|left|right" width="200" height="40">
-          <check_box name="hmd_config_debug_use_srgb_distortion"
-            initial_value="false"
-            left="0" top="12" width="32" height="16" valign="center"
-            label="SRGB Distortion" label_text.valign="center" label_text.v_pad="-1"
-            tool_tip="Use SRGB texture/buffer format for HMD rendering.  Attempts to get better chromatic aberration, but can also cause things to appear faded or washed-out.  Note that due to SDK issues, if you start the viewer with this off and then turn it on, you'll need to toggle the DK1 legacy support checkbox in the Oculus Tool (in the Rift Display Mode panel) to get the brightness correct.">
-            <check_box.commit_callback function="HMDConfigDebug.CheckUseSRGBDistortion" />
-          </check_box>
-        </layout_panel>
-
-        <layout_panel follows="top|left|right" width="200" height="40">
           <check_box name="hmd_config_debug_mouselook_yaw_only"
             initial_value="true"
             left="0" top="12" width="32" height="16" valign="center"

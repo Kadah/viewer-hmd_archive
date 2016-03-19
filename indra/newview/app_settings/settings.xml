@@ -3151,6 +3151,17 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>DisableLookAtFollowsMouseCursor</key>
+    <map>
+        <key>Comment</key>
+        <string>Disable head turning following cursor motion in third person view</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+    </map>
     <key>DisableMouseWarp</key>
     <map>
       <key>Comment</key>
@@ -3766,6 +3777,17 @@
       <string>Boolean</string>
       <key>Value</key>
       <integer>0</integer>
+    </map>
+    <key>FirstPersonModeInCycle</key>
+    <map>
+        <key>Comment</key>
+        <string>When pressing m, add first-person mode.  Thus m would cycle through normal, mouselook, and firstperson camera modes instead of just normal and mouselook</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>1</integer>
     </map>
     <key>FirstRunThisInstall</key>
     <map>
@@ -12082,6 +12104,17 @@
       <string>String</string>
       <key>Value</key>
       <string>fss.txt</string>
+    </map>
+    <key>SwapStopMoveAndAction</key>
+    <map>
+      <key>Comment</key>
+      <string>Swap the Action (X) and Stop-Movement (space-bar) key functionality</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
     <key>SystemLanguage</key>
     <map>

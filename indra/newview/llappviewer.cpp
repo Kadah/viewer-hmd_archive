@@ -1220,6 +1220,11 @@ bool LLAppViewer::init()
 		LLStringOps::sPM = LLTrans::getString("dateTimePM");
 	}
 
+    if (!gHMD.isFailedInit() && !gHMD.init())
+    {
+        LL_WARNS("HMD") << "HMD initialization Failed!" << LL_ENDL;
+    }
+
 	LLAgentLanguage::init();
 
 	return true;
@@ -4862,11 +4867,6 @@ void LLAppViewer::idle()
 		LL_RECORD_BLOCK_TIME(FTM_NETWORK);
 		// Update spaceserver timeinfo
 	    LLWorld::getInstance()->setSpaceTimeUSec(LLWorld::getInstance()->getSpaceTimeUSec() + LLUnits::Seconds::fromValue(dt_raw));
-    
-        if (gHMD.isPreDetectionInitialized())
-        {
-            gHMD.onIdle();
-        }
     
 	    //////////////////////////////////////
 	    //

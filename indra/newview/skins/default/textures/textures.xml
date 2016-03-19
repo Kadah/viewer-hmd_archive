@@ -242,7 +242,7 @@ with the same filename but different name
   <texture name="Hierarchy_View_On" file_name="icons/Hierarchy_View_On.png" preload="false" />
 
 
-  <texture name="Home_Off" file_name="navbar/Home_Off.png" preload="false" />
+<texture name="Home_Off" file_name="navbar/Home_Off.png" preload="false" />
 	<texture name="Horizontal Drag Handle" file_name="widgets/horizontal_drag_handle.png" scale.left="8" scale.right="120" scale.bottom="1" scale.top="6" scale_type="scale_outer"/>
 
   <texture name="Icon_Close_Foreground" file_name="windows/Icon_Close_Foreground.png" preload="true" />

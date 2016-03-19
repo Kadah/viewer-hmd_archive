@@ -34,102 +34,89 @@
 #include "v4math.h"
 #include "llviewertexture.h"
 
-#include "OVR.h"
-#if LL_DARWIN
-    // hack around an SDK warning that becomes an error with our compilation settings
-    #define __gl_h_
-    #define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
-#endif
-#include "OVR_CAPI_GL.h"
-
 class LLRenderTarget;
-
-
-class LLHMDImplOculus : public LLHMDImpl //, OVR::MessageHandler
+class LLHMDImplOculus : public LLHMDImpl
 {
 public:
     LLHMDImplOculus();
     ~LLHMDImplOculus();
 
-    virtual BOOL preInit();
-    virtual BOOL postDetectionInit();
-    BOOL initHMDDevice();
-    virtual void removeHMDDevice();
-    virtual BOOL detectHMDDevice(BOOL force);
-    bool isReady() { return mHMD && gHMD.isHMDConnected() && gHMD.isHMDDisplayEnabled(); }
+    virtual BOOL init();
+
+    virtual void destroy();
     virtual void shutdown();
-    virtual void onIdle();
-    virtual U32 getCurrentEye() const { return mCurrentEye; }
-    U32 getCurrentOVREye() const { return mCurrentEye == LLHMD::RIGHT_EYE ? 1 : 0; }
-    virtual void setCurrentEye(U32 eye) { mCurrentEye = llclamp(eye, (U32)LLHMD::CENTER_EYE, (U32)LLHMD::RIGHT_EYE); }
-    virtual void getViewportInfo(S32& x, S32& y, S32& w, S32& h) const;
-    virtual void getViewportInfo(S32 vp[4]) const;
+
     virtual S32 getViewportWidth() const;
     virtual S32 getViewportHeight() const;
-    virtual LLCoordScreen getHMDScreenPos() const;
 
-    virtual S32 getHMDWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w : kDefaultHResolution; }
-    virtual S32 getHMDEyeWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w / 2 : (kDefaultHResolution / 2); }
-    virtual S32 getHMDHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
-    virtual S32 getHMDUIWidth() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.w : kDefaultHResolution; }
-    virtual S32 getHMDUIHeight() const { return gHMD.isPostDetectionInitialized() ? mHMD->Resolution.h : kDefaultVResolution; }
-    virtual F32 getInterpupillaryOffset() const { return gHMD.isPostDetectionInitialized() ? mInterpupillaryDistance : getInterpupillaryOffsetDefault(); }
-    virtual void setInterpupillaryOffset(F32 f) { if (gHMD.isPostDetectionInitialized()) { mInterpupillaryDistance = f; } }
-    virtual F32 getEyeToScreenDistance() const { return gHMD.isPostDetectionInitialized() ? mEyeToScreenDistance : getEyeToScreenDistanceDefault(); }
-    virtual F32 getVerticalFOV() { return gHMD.isPostDetectionInitialized() ? mFOVRadians.h : kDefaultVerticalFOVRadians; }
+    virtual S32 getHMDWidth()  const;
+    virtual S32 getHMDHeight() const;
+
+    inline S32 getHMDEyeWidth() const { return getHMDWidth() >> 1; }
+    inline S32 getHMDUIWidth()  const { return getHMDWidth();      }
+    inline S32 getHMDUIHeight() const { return getHMDHeight();     }
+
+    virtual F32  getInterpupillaryOffset() const { return mInterpupillaryDistance; }
+    virtual void setInterpupillaryOffset(F32 f)  { mInterpupillaryDistance = f;    }
+
+    virtual F32 getEyeToScreenDistance() const { return mEyeToScreenDistance; }
+
+    virtual F32 getVerticalFOV() const;
     virtual F32 getAspect() const;
 
-    virtual F32 getRoll() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::ROLL] : 0.0f; }
-    virtual F32 getPitch() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::PITCH] : 0.0f; }
-    virtual F32 getYaw() const { return gHMD.isPostDetectionInitialized() ? mEyeRPY[LLHMD::YAW] : 0.0f; }
+    virtual F32 getRoll()  const;
+    virtual F32 getPitch() const;
+    virtual F32 getYaw()   const;
+
     virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     virtual LLQuaternion getHMDRotation() const { return mEyeRotation; }
 
+    virtual void getEyeProjection(int whichEye, glh::matrix4f& proj) const;
+    virtual void getEyeOffset(int whichEye, LLVector3& offsetOut) const;
+    virtual void getCameraOffset(LLVector3& offsetOut) const;
+    virtual void getProjection(glh::matrix4f& projectionOut) const;
+
     virtual void resetOrientation();
 
-    virtual F32 getOrthoPixelOffset() const { return gHMD.isPostDetectionInitialized() ? mOrthoPixelOffset[mCurrentEye] : (kDefaultOrthoPixelOffset * (mCurrentEye == (U32)LLHMD::LEFT_EYE ? 1.0f : -1.0f)); }
-
-    // DK2
     virtual BOOL beginFrame();
+    virtual BOOL bindEyeRT(int which);
+    virtual BOOL releaseEyeRT(int which);
     virtual BOOL endFrame();
-    virtual void getCurrentEyeProjectionOffset(F32 p[4][4]) const;
-    virtual LLVector3 getStereoCullCameraForwards() const;
-    virtual LLVector3 getCurrentEyeCameraOffset() const;
-    virtual LLVector3 getCurrentEyeOffset(const LLVector3& centerPos) const;
+
+    virtual BOOL releaseAllEyeRT();
+
+    virtual void resetFrameIndex();
+    virtual U32  getFrameIndex();
+    virtual void incrementFrameIndex();
+
+    virtual U32  getSubmittedFrameIndex();
+    virtual void incrementSubmittedFrameIndex();
+
     virtual LLVector3 getHeadPosition() const;
 
-    virtual LLRenderTarget* getCurrentEyeRT();
-    virtual LLRenderTarget* getEyeRT(U32 eye);
-    virtual void onViewChange(S32 oldMode);
-    virtual void showHSW(BOOL show);
     virtual BOOL calculateViewportSettings();
 
 private:
-    ovrHmd mHMD;
-    ovrFrameTiming mFrameTiming;
-    ovrTrackingState mTrackingState;
-    OVR::Sizei mEyeRenderSize[ovrEye_Count];
-    ovrGLTexture mEyeTexture[ovrEye_Count];
-    ovrEyeRenderDesc mEyeRenderDesc[ovrEye_Count];
-    ovrPosef mEyeRenderPose[ovrEye_Count];
+    BOOL initSwapChains();
+    BOOL initSwapChain(int eyeIndex);
+    void destroySwapChains();
+
+    LLVector3    mHeadPos;
+    LLQuaternion mEyeRotation;
+
+    U32 mFrameIndex;
+    U32 mSubmittedFrameIndex;
     U32 mTrackingCaps;
-    // Note: OVR matrices are RH, row-major with OGL axes (-Z forward, Y up, X Right)
-    OVR::Matrix4f mProjection[ovrEye_Count];
-    //OVR::Matrix4f mOrthoProjection[ovrEye_Count];      // TODO: needed?
-    //OVR::Matrix4f mConvOculusToLL;  // convert from OGL to LL (RH, Row-Major, X Forward, Z Up, Y Left)
-    //OVR::Matrix4f mConvLLToOculus;  // convert from LL to OGL
-    double mLastTimewarpUpdate;
     F32 mInterpupillaryDistance;
     F32 mEyeToScreenDistance;
-    OVR::Sizef mFOVRadians;
+    F32 mVerticalFovRadians;
     F32 mAspect;
-    F32 mOrthoPixelOffset[3];
-    S32 mCurrentHMDCount;
-    LLRenderTarget* mEyeRT[3];
-    U32 mCurrentEye;
-    LLVector3 mEyeRPY;
-    LLVector3 mHeadPos;
-    LLQuaternion mEyeRotation;
+    F32 mOrthoPixelOffset[2];
+
+    LLRenderTarget* mEyeRT[2][3];
+
+    struct OculusData;
+    OculusData* mOculus;
 };
 #endif // LL_HMD_SUPPORTED
 #endif // LL_LLHMDIMPL_OCULUS_H

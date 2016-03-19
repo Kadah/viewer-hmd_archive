@@ -339,14 +339,11 @@ void LLAgentPilot::moveCamera()
             mat = m1.getMat3();
             LLVector3 deltaPos(LLVector3::zero);
 
-            if (gHMD.isPositionTrackingEnabled())
-            {
-                //nudge origin by tracked head position
-                LLVector3 headPos = gHMD.getHeadPosition();
-                headPos = headPos * cfr;
-                headPos *= ~camera->getQuaternion();
-                deltaPos = headPos;
-            }
+            //nudge origin by tracked head position
+            LLVector3 headPos = gHMD.getHeadPosition();
+            headPos = headPos * cfr;
+            headPos *= ~camera->getQuaternion();
+            deltaPos = headPos;
 
             camera->setOrigin(origin + deltaPos);
             camera->mXAxis = LLVector3(mat.mMatrix[0]);

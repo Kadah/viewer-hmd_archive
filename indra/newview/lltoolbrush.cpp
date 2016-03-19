@@ -494,10 +494,6 @@ void LLToolBrushLand::render()
 							  pos_world);
 			}
 		}
-        if (gHMD.getCurrentEye() != LLHMD::LEFT_EYE)
-        {
-		    mGotHover = FALSE;
-        }
 	}
 }
 

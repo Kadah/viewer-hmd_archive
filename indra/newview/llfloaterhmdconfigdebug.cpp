@@ -109,12 +109,6 @@ LLFloaterHMDConfigDebug::LLFloaterHMDConfigDebug(const LLSD& key)
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetUISurfaceToroidArcHorizontal", boost::bind(&LLFloaterHMDConfigDebug::onSetUISurfaceToroidArcHorizontal, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.SetUISurfaceToroidArcVertical", boost::bind(&LLFloaterHMDConfigDebug::onSetUISurfaceToroidArcVertical, this));
 
-    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckLowPersistence", boost::bind(&LLFloaterHMDConfigDebug::onCheckLowPersistence, this));
-    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckPixelLuminanceOverdrive", boost::bind(&LLFloaterHMDConfigDebug::onCheckPixelLuminanceOverdrive, this));
-    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckMotionPrediction", boost::bind(&LLFloaterHMDConfigDebug::onCheckMotionPrediction, this));
-    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckTimewarp", boost::bind(&LLFloaterHMDConfigDebug::onCheckTimewarp, this));
-    mCommitCallbackRegistrar.add("HMDConfigDebug.SetTimewarpInterval", boost::bind(&LLFloaterHMDConfigDebug::onSetTimewarpInterval, this));
-    mCommitCallbackRegistrar.add("HMDConfigDebug.CheckUseSRGBDistortion", boost::bind(&LLFloaterHMDConfigDebug::onCheckUseSRGBDistortion, this));
     mCommitCallbackRegistrar.add("HMDConfigDebug.CheckMouselookYawOnly", boost::bind(&LLFloaterHMDConfigDebug::onCheckMouselookYawOnly, this));
 }
 
@@ -247,37 +241,6 @@ void LLFloaterHMDConfigDebug::onOpen(const LLSD& key)
         pPanel->mUISurfaceShapePresetSliderCtrl->setValue(pPanel->mUISurfaceShapePresetOriginal);
         pPanel->updateUIShapePresetLabel(TRUE);
     }
-    if (pPanel->mLowPersistenceCheckBoxCtrl)
-    {
-        pPanel->mLowPersistenceCheckedOriginal = gHMD.useLowPersistence();
-        pPanel->mLowPersistenceCheckBoxCtrl->setValue(pPanel->mLowPersistenceCheckedOriginal);
-    }
-    if (pPanel->mPLOCheckBoxCtrl)
-    {
-        pPanel->mPLOCheckedOriginal = gHMD.usePixelLuminanceOverdrive();
-        pPanel->mPLOCheckBoxCtrl->setValue(pPanel->mPLOCheckedOriginal);
-    }
-    if (pPanel->mMotionPredictionCheckBoxCtrl)
-    {
-        pPanel->mMotionPredictionCheckedOriginal = gHMD.useMotionPrediction();
-        pPanel->mMotionPredictionCheckBoxCtrl->setValue(pPanel->mMotionPredictionCheckedOriginal);
-    }
-    if (pPanel->mTimewarpCheckBoxCtrl)
-    {
-        pPanel->mTimewarpCheckedOriginal = gHMD.isTimewarpEnabled();
-        pPanel->mTimewarpCheckBoxCtrl->setValue(pPanel->mTimewarpCheckedOriginal);
-    }
-    if (pPanel->mTimewarpIntervalSliderCtrl)
-    {
-        pPanel->mTimewarpIntervalOriginal = gHMD.getTimewarpIntervalSeconds() * 1000.0f;
-        pPanel->mTimewarpIntervalSliderCtrl->setValue(pPanel->mTimewarpCheckedOriginal);
-        pPanel->updateTimewarpIntervalLabel();
-    }
-    if (pPanel->mUseSRGBDistortionCheckBoxCtrl)
-    {
-        pPanel->mUseSRGBDistortionCheckedOriginal = gHMD.useSRGBDistortion();
-        pPanel->mUseSRGBDistortionCheckBoxCtrl->setValue(pPanel->mUseSRGBDistortionCheckedOriginal);
-    }
     if (pPanel->mMouselookYawOnlyCheckBoxCtrl)
     {
         pPanel->mMouselookYawOnlyCheckedOriginal = gHMD.isMouselookYawOnly();
@@ -325,18 +288,6 @@ void LLFloaterHMDConfigDebug::onClickResetValues()
 {
     mUISurfaceShapePresetSliderCtrl->setValue((F32)gHMD.getUIShapePresetIndexDefault());
     onSetUIShapePreset();
-    mLowPersistenceCheckBoxCtrl->setValue(gHMD.useLowPersistenceDefault());
-    onCheckLowPersistence();
-    mPLOCheckBoxCtrl->setValue(gHMD.usePixelLuminanceOverdriveDefault());
-    onCheckPixelLuminanceOverdrive();
-    mMotionPredictionCheckBoxCtrl->setValue(gHMD.useMotionPredictionDefault());
-    onCheckMotionPrediction();
-    mTimewarpCheckBoxCtrl->setValue(gHMD.isTimewarpEnabledDefault());
-    onCheckTimewarp();
-    mTimewarpIntervalSliderCtrl->setValue(gHMD.getTimewarpIntervalSecondsDefault());
-    void onSetTimewarpInterval();
-    mUseSRGBDistortionCheckBoxCtrl->setValue(gHMD.useSRGBDistortionDefault());
-    onCheckUseSRGBDistortion();
     mMouselookYawOnlyCheckBoxCtrl->setValue(gHMD.isMouselookYawOnlyDefault());
     onCheckMouselookYawOnly();
 }
@@ -366,18 +317,6 @@ void LLFloaterHMDConfigDebug::onClickCancel()
     onSetUISurfaceToroidArcVertical();
     mUISurfaceShapePresetSliderCtrl->setValue(mUISurfaceShapePresetOriginal);
     onSetUIShapePreset();
-    mLowPersistenceCheckBoxCtrl->setValue(mLowPersistenceCheckedOriginal);
-    onCheckLowPersistence();
-    mPLOCheckBoxCtrl->setValue(mPLOCheckedOriginal);
-    onCheckPixelLuminanceOverdrive();
-    mMotionPredictionCheckBoxCtrl->setValue(mMotionPredictionCheckedOriginal);
-    onCheckMotionPrediction();
-    mTimewarpCheckBoxCtrl->setValue(mTimewarpCheckedOriginal);
-    onCheckTimewarp();
-    mTimewarpIntervalSliderCtrl->setValue(mTimewarpIntervalOriginal);
-    onSetTimewarpInterval();
-    mUseSRGBDistortionCheckBoxCtrl->setValue(mUseSRGBDistortionCheckedOriginal);
-    onCheckUseSRGBDistortion();
     mMouselookYawOnlyCheckBoxCtrl->setValue(mMouselookYawOnlyCheckedOriginal);
     onCheckMouselookYawOnly();
     mDirty = FALSE;
@@ -612,61 +551,6 @@ void LLFloaterHMDConfigDebug::updateUISurfaceToroidArcVerticalLabel()
 	LLStringUtil::format_map_t args;
 	args["[VAL]"] = llformat("%.03f", gHMD.getUISurfaceArcVertical() / F_PI);
 	mUISurfaceToroidArcVerticalAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsRadians", args));
-}
-
-void LLFloaterHMDConfigDebug::onCheckLowPersistence()
-{
-    BOOL checked = mLowPersistenceCheckBoxCtrl->get();
-    gHMD.useLowPersistence(checked);
-    gHMD.renderSettingsChanged(TRUE);
-    updateDirty();
-}
-
-void LLFloaterHMDConfigDebug::onCheckPixelLuminanceOverdrive()
-{
-    BOOL checked = mPLOCheckBoxCtrl->get();
-    gHMD.usePixelLuminanceOverdrive(checked);
-    gHMD.renderSettingsChanged(TRUE);
-    updateDirty();
-}
-
-void LLFloaterHMDConfigDebug::onCheckMotionPrediction()
-{
-    BOOL checked = mMotionPredictionCheckBoxCtrl->get();
-    gHMD.useMotionPrediction(checked);
-    gHMD.renderSettingsChanged(TRUE);
-    updateDirty();
-}
-
-void LLFloaterHMDConfigDebug::onCheckTimewarp()
-{
-    BOOL checked = mTimewarpCheckBoxCtrl->get();
-    gHMD.isTimewarpEnabled(checked);
-    gHMD.renderSettingsChanged(TRUE);
-    updateDirty();
-}
-
-void LLFloaterHMDConfigDebug::onSetTimewarpInterval()
-{
-    F32 f = ll_round(mTimewarpIntervalSliderCtrl->getValueF32(), mTimewarpIntervalSliderCtrl->getIncrement());
-    gHMD.setTimewarpIntervalSeconds(f / 1000.0f);
-    updateTimewarpIntervalLabel();
-    updateDirty();
-}
-
-void LLFloaterHMDConfigDebug::updateTimewarpIntervalLabel()
-{
-    LLStringUtil::format_map_t args;
-    args["[VAL]"] = llformat("%.03f", gHMD.getTimewarpIntervalSeconds() * 1000.0f);
-    mTimewarpIntervalAmountCtrl->setValue(LLTrans::getString("HMDConfigUnitsMilliseconds", args));
-}
-
-void LLFloaterHMDConfigDebug::onCheckUseSRGBDistortion()
-{
-    BOOL checked = mUseSRGBDistortionCheckBoxCtrl->get();
-    gHMD.useSRGBDistortion(checked);
-    gHMD.renderSettingsChanged(TRUE);
-    updateDirty();
 }
 
 void LLFloaterHMDConfigDebug::onCheckMouselookYawOnly()

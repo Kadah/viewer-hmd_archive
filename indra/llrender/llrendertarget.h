@@ -75,6 +75,12 @@ public:
 	//multiple calls will release previously allocated resources
 	bool allocate(U32 resx, U32 resy, U32 color_fmt, bool depth, bool stencil, LLTexUnit::eTextureType usage = LLTexUnit::TT_TEXTURE, bool use_fbo = false, S32 samples = 0);
 
+	//A stripped version of allocate to handle insertion of Rift swap buffer textures.
+	bool addTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, LLTexUnit::eTextureType usage = LLTexUnit::TT_TEXTURE);
+
+        //A stripped version of allocate to handle insertion of Rift swap buffer textures.
+        bool forceTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, LLTexUnit::eTextureType usage = LLTexUnit::TT_TEXTURE);
+
 	//resize existing attachments to use new resolution and color format
 	// CAUTION: if the GL runs out of memory attempting to resize, this render target will be undefined
 	// DO NOT use for screen space buffers or for scratch space for an image that might be uploaded
@@ -114,6 +120,7 @@ public:
 
 	LLTexUnit::eTextureType getUsage(void) const { return mUsage; }
 
+	BOOL setTexture(U32 index, U32 texID);
 	U32 getTexture(U32 attachment = 0) const;
 	U32 getNumTextures() const;
 

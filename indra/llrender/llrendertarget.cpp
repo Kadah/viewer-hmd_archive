@@ -117,6 +117,193 @@ void LLRenderTarget::resize(U32 resx, U32 resy)
 	}
 }
 	
+bool LLRenderTarget::addTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, LLTexUnit::eTextureType usage )
+{
+	resx = llmin(resx, (U32)gGLManager.mGLMaxTextureSize);
+	resy = llmin(resy, (U32)gGLManager.mGLMaxTextureSize);
+
+	stop_glerror();
+	release();
+	stop_glerror();
+
+	mResX = resx;
+	mResY = resy;
+
+	mStencil = false;
+	mUsage = usage;
+	mUseDepth = true;
+
+	if (gGLManager.mHasFramebufferObject)
+	{
+
+		if (!allocateDepth())
+		{
+			LL_WARNS() << "Failed to allocate depth buffer for render target." << LL_ENDL;
+			return false;
+		}
+
+
+		glGenFramebuffers(1, (GLuint *)&mFBO);
+
+		if (mDepth)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, LLTexUnit::getInternalType(mUsage), mDepth, 0);
+		stop_glerror();
+			glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
+	}
+
+		stop_glerror();
+	}
+
+	///////////////
+	U32 offset = mTex.size();
+
+	if (offset >= 4)
+	{
+		LL_WARNS() << "Too many color attachments" << LL_ENDL;
+		llassert(offset < 4);
+		return false;
+	}
+	if (offset > 0 && (mFBO == 0 || !gGLManager.mHasDrawBuffers))
+	{
+		LL_WARNS() << "FBO not used or no drawbuffers available; mFBO=" << (U32)mFBO << " gGLManager.mHasDrawBuffers=" << (U32)gGLManager.mHasDrawBuffers << LL_ENDL;
+		llassert(mFBO != 0);
+		llassert(gGLManager.mHasDrawBuffers);
+		return false;
+	}
+
+	gGL.getTexUnit(0)->bindManual(mUsage, texID);
+
+	stop_glerror();
+
+	{
+		clear_glerror();
+		LLImageGL::setManualImage(LLTexUnit::getInternalType(mUsage), 0, color_fmt, mResX, mResY, GL_RGBA, GL_UNSIGNED_BYTE, NULL, false);
+		if (glGetError() != GL_NO_ERROR)
+		{
+			LL_WARNS() << "Could not allocate color buffer for render target." << LL_ENDL;
+			return false;
+		}
+	}
+
+	sBytesAllocated += mResX*mResY * 4;
+
+	stop_glerror();
+
+	if (offset == 0)
+	{ //use bilinear filtering on single texture render targets that aren't multisampled
+		gGL.getTexUnit(0)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
+		stop_glerror();
+	}
+	else
+	{ //don't filter data attachments
+		gGL.getTexUnit(0)->setTextureFilteringOption(LLTexUnit::TFO_POINT);
+		stop_glerror();
+	}
+
+	if (mUsage != LLTexUnit::TT_RECT_TEXTURE)
+	{
+		gGL.getTexUnit(0)->setTextureAddressMode(LLTexUnit::TAM_MIRROR);
+		stop_glerror();
+	}
+	else
+	{
+		// ATI doesn't support mirrored repeat for rectangular textures.
+		gGL.getTexUnit(0)->setTextureAddressMode(LLTexUnit::TAM_CLAMP);
+		stop_glerror();
+	}
+
+	if (mFBO)
+	{
+		stop_glerror();
+		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + offset,
+			LLTexUnit::getInternalType(mUsage), texID, 0);
+		stop_glerror();
+
+		check_framebuffer_status();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
+	}
+
+	mTex.push_back(texID);
+	mInternalFormat.push_back(color_fmt);
+
+	return true;
+}
+
+bool LLRenderTarget::forceTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, LLTexUnit::eTextureType usage )
+{
+	resx = llmin(resx, (U32)gGLManager.mGLMaxTextureSize);
+	resy = llmin(resy, (U32)gGLManager.mGLMaxTextureSize);
+
+	stop_glerror();
+	release();
+	stop_glerror();
+
+	mResX = resx;
+	mResY = resy;
+
+	mStencil  = false;
+    mUseDepth = false;
+	mUsage    = usage;
+	
+
+	if (gGLManager.mHasFramebufferObject)
+	{
+
+		glGenFramebuffers(1, (GLuint *)&mFBO);
+
+		stop_glerror();
+	}
+
+    mTex.clear();
+    mInternalFormat.clear();
+
+	gGL.getTexUnit(0)->bindManual(mUsage, texID);
+
+	stop_glerror();
+
+	{
+		clear_glerror();
+		LLImageGL::setManualImage(LLTexUnit::getInternalType(mUsage), 0, color_fmt, mResX, mResY, GL_RGBA, GL_UNSIGNED_BYTE, NULL, false);
+		if (glGetError() != GL_NO_ERROR)
+		{
+			LL_WARNS() << "Could not allocate color buffer for render target." << LL_ENDL;
+			return false;
+		}
+	}
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SRGB_DECODE_EXT, GL_DECODE_EXT);
+
+	sBytesAllocated += mResX*mResY * 4;
+
+	stop_glerror();
+
+	if (mFBO)
+	{
+		stop_glerror();
+		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, LLTexUnit::getInternalType(mUsage), texID, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
+		stop_glerror();
+
+		check_framebuffer_status();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
+	}
+
+	mTex.push_back(texID);
+	mInternalFormat.push_back(color_fmt);
+
+	return true;
+}
 
 bool LLRenderTarget::allocate(U32 resx, U32 resy, U32 color_fmt, bool depth, bool stencil, LLTexUnit::eTextureType usage, bool use_fbo, S32 samples)
 {
@@ -500,6 +687,21 @@ U32 LLRenderTarget::getTexture(U32 attachment) const
 		return 0;
 	}
 	return mTex[attachment];
+}
+
+//Replaces texID at index 
+BOOL LLRenderTarget::setTexture(U32 index, U32 texID)
+{
+	//SPATTERS TODO:  Probably leaks existing texture.  Check and fix if needed.
+	if (index < 0 || index > mTex.size()-1 )
+	{
+		return FALSE;
+	}
+	else
+	{
+		mTex[index] = texID;
+	}
+	return TRUE;
 }
 
 U32 LLRenderTarget::getNumTextures() const

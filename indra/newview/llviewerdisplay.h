@@ -36,9 +36,9 @@ public:
     static void display_startup();
     static void update_camera();
     static void display(BOOL rebuild = TRUE, F32 zoom_factor = 1.f, int subfield = 0, BOOL for_snapshot = FALSE);
-    static void render_ui(F32 zoom_factor = 1.f, int subfield = 0);
-    static void render_ui_3d(BOOL hmdUIMode = FALSE);
-    static void render_ui_2d();
+    static void render_ui(F32 zoom_factor = 1.f, int subfield = 0, BOOL forHMD = false, BOOL hmdPrePost = FALSE, int whichEye = -1);
+    static void render_ui_3d(BOOL showAxes = FALSE);
+    static void render_ui_2d(BOOL forHMD = FALSE);
     static void display_cleanup();
     static void swap(BOOL doSwap, BOOL newSwap);
 
@@ -64,7 +64,7 @@ private:
     static void renderCoordinateAxes();
     static void draw_axes();
     static void render_disconnected_background();
-    static void render_frame(BOOL rebuild);
+    static void render_frame(BOOL rebuild, BOOL forHMD = FALSE, int whichEye = -1);
 
 public:
     static BOOL gDisplaySwapBuffers;
