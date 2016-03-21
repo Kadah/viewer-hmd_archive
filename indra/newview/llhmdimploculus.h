@@ -49,12 +49,8 @@ public:
     virtual S32 getViewportWidth() const;
     virtual S32 getViewportHeight() const;
 
-    virtual S32 getHMDWidth()  const;
-    virtual S32 getHMDHeight() const;
-
-    inline S32 getHMDEyeWidth() const { return getHMDWidth() >> 1; }
-    inline S32 getHMDUIWidth()  const { return getHMDWidth();      }
-    inline S32 getHMDUIHeight() const { return getHMDHeight();     }
+    inline S32 getUIWidth()  const { return getViewportWidth()  * 2; }
+    inline S32 getUIHeight() const { return getViewportHeight();     }
 
     virtual F32  getInterpupillaryOffset() const { return mInterpupillaryDistance; }
     virtual void setInterpupillaryOffset(F32 f)  { mInterpupillaryDistance = f;    }
@@ -69,12 +65,10 @@ public:
     virtual F32 getYaw()   const;
 
     virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
-    virtual LLQuaternion getHMDRotation() const { return mEyeRotation; }
+    virtual const LLQuaternion getHMDRotation() const { return mEyeRotation; }
 
-    virtual void getEyeProjection(int whichEye, glh::matrix4f& proj) const;
+    virtual void getEyeProjection(int whichEye, glh::matrix4f& proj, float zNear, float zFar) const;
     virtual void getEyeOffset(int whichEye, LLVector3& offsetOut) const;
-    virtual void getCameraOffset(LLVector3& offsetOut) const;
-    virtual void getProjection(glh::matrix4f& projectionOut) const;
 
     virtual void resetOrientation();
 
@@ -111,7 +105,6 @@ private:
     F32 mEyeToScreenDistance;
     F32 mVerticalFovRadians;
     F32 mAspect;
-    F32 mOrthoPixelOffset[2];
 
     LLRenderTarget* mEyeRT[2][3];
 

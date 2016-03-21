@@ -3,6 +3,30 @@
 <map>
     <key>installables</key>
     <map>
+      <key>openvr</key>
+      <map>
+        <key>license</key>
+        <string>Valve</string>
+        <key>license_file</key>
+        <string>LICENSES/openvr_api.txt</string>
+        <key>name</key>
+        <string>openvr</string>
+        <key>platforms</key>
+        <map>
+          <key>windows</key>
+          <map>
+            <key>archive</key>
+            <map>
+              <key>hash</key>
+              <string>23de1db62491457f567f7fb8051608c8</string>
+              <key>url</key>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-openvr/rev/314159/arch/CYGWIN/installer/libopenvr-0.9.19-windows-0.9.19.tar.bz2</string>
+            </map>
+            <key>name</key>
+            <string>windows</string>
+          </map>
+        </map>
+      </map>
       <key>libovr</key>
       <map>
         <key>license</key>

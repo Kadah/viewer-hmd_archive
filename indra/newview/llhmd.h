@@ -186,16 +186,12 @@ public:
 
     F32 getPixelDensity() const;
     void setPixelDensity(F32 pixelDensity);
+    
+    S32 getUIWidth() const;
+    S32 getUIHeight() const;
 
-    S32 getHMDWidth() const;
-    S32 getHMDHeight() const;
-    S32 getHMDEyeWidth() const;
-
-    S32 getHMDUIWidth() const;
-    S32 getHMDUIHeight() const;
-
-    S32 getHMDViewportWidth() const;
-    S32 getHMDViewportHeight() const;
+    S32 getViewportWidth() const;
+    S32 getViewportHeight() const;
 
     F32 getInterpupillaryOffset() const;
     F32 getInterpupillaryOffsetDefault() const;
@@ -206,7 +202,7 @@ public:
     F32 getVerticalFOV() const;
     F32 getAspect();
 
-    F32 getUIAspect() const { return (F32)getHMDUIWidth() / (F32)getHMDUIHeight(); }
+    F32 getUIAspect() const { return (F32)getUIWidth() / (F32)getUIHeight(); }
     F32 getUIEyeDepth() const { return mUIEyeDepth; }
     F32 getUIMagnification() { return mUIShape.mUIMagnification; }
 
@@ -239,7 +235,8 @@ public:
     void setUIModelView(F32* m);
     F32* getUIModelView() { return mUIModelView; }
     F32* getUIModelViewInv() { return mUIModelViewInv; }
-    
+
+#if 0    
     LLCoordScreen getMainWindowPos() const { return mMainWindowPos; }
     void setMainWindowPos(LLCoordScreen pos) { mMainWindowPos = pos; }
     S32 getMainWindowWidth() const { return mMainWindowSize.mX; }
@@ -251,8 +248,10 @@ public:
     void setMainClientWidth(S32 w) { mMainClientSize.mX = w; }
     S32 getMainClientHeight() const { return mMainClientSize.mY; }
     void setMainClientHeight(S32 h) { mMainClientSize.mY = h; }
+
     LLCoordWindow getMainClientSize() const { return mMainClientSize; }
     LLCoordWindow getHMDClientSize() const { return LLCoordWindow(getHMDWidth(), getHMDHeight()); }
+#endif
 
     std::string getUIShapeName() const;
     F32 getUISurfaceArcHorizontal() const { return mUIShape.mArcHorizontal; }
@@ -325,9 +324,6 @@ public:
 
     void getEyeProjection(int whichEye, glh::matrix4f& projOut) const { projOut  = mEyeProjection[whichEye]; }
     void getEyeOffset(int whichEye, LLVector3& offsetOut)       const { offsetOut= mEyeOffset[whichEye];     }
-
-    void getCameraOffset(LLVector3& offsetOut) const { offsetOut = mCameraOffset; }
-    void getProjection(glh::matrix4f& projOut) const { projOut   = mProjection;   }
 
     void setup2DRender();
     void render3DUI();
@@ -457,12 +453,10 @@ public:
     virtual F32 getPixelDensity() const { return 1.0f; }
     virtual void setPixelDensity(F32 pixelDensity) { (void)pixelDensity; }
 
-    virtual S32 getHMDWidth()    const { return kDefaultHResolution;       }
-    virtual S32 getHMDEyeWidth() const { return (kDefaultHResolution / 2); }
-    virtual S32 getHMDHeight()   const { return kDefaultVResolution;       }
+    virtual S32 getUIWidth()  const { return kDefaultHResolution; }
+    virtual S32 getUIHeight() const { return kDefaultVResolution; }
 
-    virtual S32 getHMDUIWidth()  const { return kDefaultHResolution; }
-    virtual S32 getHMDUIHeight() const { return kDefaultVResolution; }
+    virtual BOOL calculateViewportSettings() { return FALSE; }
 
     virtual F32 getEyeToScreenDistance() const { return kDefaultEyeToScreenDistance; }
     virtual void setEyeToScreenDistance(F32 f) {}
@@ -476,31 +470,27 @@ public:
     virtual F32 getYaw()   const { return 0.0f; }
 
     virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = pitch = yaw = 0.0f; }
-
-    virtual LLQuaternion getHMDRotation() const { return LLQuaternion(); };
+    virtual const LLQuaternion getHMDRotation() const { return LLQuaternion(0.0f, LLVector3(0.0f)); };
     
-    virtual void getEyeProjection(int whichEye, glh::matrix4f& proj) const { (void)proj, (void)whichEye; }
+    virtual void getEyeProjection(int whichEye, glh::matrix4f& proj, float zNear, float zFar) const { (void)proj, (void)whichEye, (void)zNear, (void)zFar; }
     virtual void getEyeOffset(int whichEye, LLVector3& offsetOut)    const { (void)offsetOut, (void)whichEye; }
-    virtual void getCameraOffset(LLVector3& offsetOut)               const { (void)offsetOut; }
-    virtual void getProjection(glh::matrix4f& projectionOut)         const { (void)projectionOut; }
 
     virtual void resetOrientation() {}
+    virtual LLVector3 getHeadPosition() const { return LLVector3::zero; }
+    
 
     virtual BOOL beginFrame()               { return FALSE; }
     virtual BOOL bindEyeRT(int whichEye)    { return FALSE; }
     virtual BOOL releaseEyeRT(int whichEye) { return FALSE; }
     virtual BOOL endFrame()                 { return FALSE; }
     virtual BOOL releaseAllEyeRT()          { return FALSE; }
+
     virtual U32  getFrameIndex()            { return 0;     }
     virtual U32  getSubmittedFrameIndex()   { return 0;     }
 
     virtual void resetFrameIndex()              {}
     virtual void incrementFrameIndex()          {}    
     virtual void incrementSubmittedFrameIndex() {}
-
-    virtual LLVector3 getHeadPosition() const { return LLVector3::zero; }
-    
-    virtual BOOL calculateViewportSettings() { return FALSE; }
 };
 
 #endif // LL_LLHMD_H

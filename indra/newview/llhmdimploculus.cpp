@@ -41,6 +41,7 @@
 #include "llrendertarget.h"
 #include "llnotificationsutil.h"
 #include "lltimer.h"
+
 #if LL_WINDOWS
     #include "llwindowwin32.h"
 #elif LL_DARWIN
@@ -48,9 +49,9 @@
     #define IDCONTINUE 1        // Exist on Windows along "IDOK" and "IDCANCEL" but not on Mac
 #endif
 
-#define OCULUS_07 0
-#define OCULUS_08 0
+
 #define OCULUS_12 1
+#define OCULUS_08 !OCULUS_12
 
 #include "OVR_CAPI_GL.h"
 
@@ -237,20 +238,23 @@ void LLHMDImplOculus::destroySwapChains()
 {
     for (int i = 0; i < ovrEye_Count; ++i)
     {
-        // Release Oculus' swap textures from our RTs before we destroy them (twice!).
-        for (int t = 0; t < 3; ++t)
+        if (mEyeRT[i][0])
         {
-            mEyeRT[i][t]->forceTarget(0, 0, 0, GL_RGBA);
-            delete mEyeRT[i][t];
-            mEyeRT[i][t] = nullptr;
-        }
+            // Release Oculus' swap textures from our RTs before we destroy them (twice!).
+            for (int t = 0; t < 3; ++t)
+            {
+                mEyeRT[i][t]->forceTarget(0, 0, 0, GL_RGBA);
+                delete mEyeRT[i][t];
+                mEyeRT[i][t] = nullptr;
+            }
 
-        #if OCULUS_12
-            ovr_DestroyTextureSwapChain(mOculus->mHMD, mOculus->mSwapChain[i]);
-        #else
-            ovr_DestroySwapTextureSet(mOculus->mHMD, mOculus->mSwapChain[i]);
-            mOculus->mSwapChain[i] = nullptr;
-        #endif
+            #if OCULUS_12
+                ovr_DestroyTextureSwapChain(mOculus->mHMD, mOculus->mSwapChain[i]);
+            #else
+                ovr_DestroySwapTextureSet(mOculus->mHMD, mOculus->mSwapChain[i]);
+                mOculus->mSwapChain[i] = nullptr;
+            #endif
+        }
     }
 
     if (mOculus->mMirrorFbo)
@@ -344,9 +348,8 @@ BOOL LLHMDImplOculus::initSwapChain(int eyeIndex)
         ovrMirrorTextureDesc mirrorTextureDesc;
 
         memset(&mirrorTextureDesc, 0, sizeof(mirrorTextureDesc));
-
-        mirrorTextureDesc.Width  = mOculus->mViewport.w * 2;
-        mirrorTextureDesc.Height = mOculus->mViewport.h;
+        mirrorTextureDesc.Width  = gViewerWindow->getWindowWidthRaw();
+        mirrorTextureDesc.Height = gViewerWindow->getWindowHeightRaw();
         mirrorTextureDesc.Format = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
 
         // Create mirror texture and an FBO used to copy mirror texture to back buffer
@@ -400,9 +403,9 @@ U32 LLHMDImplOculus::getFrameIndex()
 }
 
 void LLHMDImplOculus::incrementFrameIndex()
-    {
+{
     ++mFrameIndex;
-    }
+}
 
 U32 LLHMDImplOculus::getSubmittedFrameIndex()
 {
@@ -455,41 +458,41 @@ BOOL LLHMDImplOculus::beginFrame()
 }
 
 BOOL LLHMDImplOculus::bindEyeRT(int which)
-        {
+{
     if (!mEyeRT[0][0])
-            {
+    {
         if (!initSwapChains())
-                {
+        {
             return false;
-                }
-            }
+        }
+    }
 
     int texIndex = mOculus->mCurrentSwapChainIndex[which];
 
     mEyeRT[which][texIndex]->bindTarget();
 
     return true;
-        }
+}
 
 BOOL LLHMDImplOculus::releaseEyeRT(int which)
-            {
+{
     if (!mEyeRT[0][0])
-            {
+    {
         return false;
-            }
+    }
 
     int texIndex = mOculus->mCurrentSwapChainIndex[which];
 
     mEyeRT[which][texIndex]->flush();
 
     return true;
-            }
+}
 
 BOOL LLHMDImplOculus::releaseAllEyeRT()
 {
     destroySwapChains();
     return true;
-    }
+}
 
 BOOL LLHMDImplOculus::endFrame()
 {
@@ -498,8 +501,8 @@ BOOL LLHMDImplOculus::endFrame()
         if (!initSwapChains())
         {
             return FALSE;
+        }
     }
-}
 
     ovrLayerEyeFov eyeLayer;
 
@@ -554,8 +557,8 @@ BOOL LLHMDImplOculus::endFrame()
         // too late, you're already blind!
         if (result == ovrError_DisplayLost)
         {
-                gHMD.isHMDConnected(false);
-                return FALSE;
+            gHMD.isHMDConnected(false);
+            return FALSE;
         }
     }
 
@@ -564,7 +567,7 @@ BOOL LLHMDImplOculus::endFrame()
     {
         glBindFramebuffer(GL_READ_FRAMEBUFFER, mOculus->mMirrorFbo);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        glBlitFramebuffer(0, viewportSizeY, viewportSizeX, 0, 0, 0, viewportSizeX, viewportSizeY, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBlitFramebuffer(0, viewportSizeY, viewportSizeX, 0, 0, 0, gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
         glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
     }
 
@@ -575,7 +578,7 @@ BOOL LLHMDImplOculus::endFrame()
 }
 
 F32 LLHMDImplOculus::getAspect() const
-    {
+{
     return gHMD.isHMDMode() ? mAspect : LLViewerCamera::getInstance()->getAspect();
 }
 
@@ -584,24 +587,16 @@ void LLHMDImplOculus::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
     mEyeRotation.getEulerAngles(&roll, &pitch, &yaw);
 }
 
-void LLHMDImplOculus::getEyeProjection(int whichEye, glh::matrix4f& projOut) const
-    {
-    (void)projOut;
-    }
+void LLHMDImplOculus::getEyeProjection(int whichEye, glh::matrix4f& projOut, float zNear, float zFar) const
+{
+    ovrMatrix4f proj = ovrMatrix4f_Projection(mOculus->mHMDDesc.DefaultEyeFov[whichEye], zNear, zFar, ovrProjection_ClipRangeOpenGL);
+    projOut = glh::matrix4f(&proj.M[0][0]);
+}
 
 void LLHMDImplOculus::getEyeOffset(int whichEye, LLVector3& offsetOut) const
-    {
-    (void)offsetOut;
-    }
-
-void LLHMDImplOculus::getCameraOffset(LLVector3& offsetOut) const
 {
-    (void)offsetOut;
-    }
-
-void LLHMDImplOculus::getProjection(glh::matrix4f& projOut) const
-    {
-    (void)projOut;
+    ovrVector3f offset = mOculus->mEyeRenderDesc[whichEye].HmdToEyeOffset;
+    offsetOut.set(offset.x, offset.y, offset.z);
 }
 
 void LLHMDImplOculus::resetOrientation()
@@ -611,28 +606,19 @@ void LLHMDImplOculus::resetOrientation()
     #else
         ovr_RecenterPose(mOculus->mHMD);
     #endif
+
     resetFrameIndex();
 }
 
-S32 LLHMDImplOculus::getHMDWidth() const
-{
-    return mOculus->mHMDDesc.Resolution.w;
-}
-
-S32 LLHMDImplOculus::getHMDHeight() const
-{
-    return mOculus->mHMDDesc.Resolution.h;
-}
-
 F32 LLHMDImplOculus::getVerticalFOV() const
-    {
+{
     return mVerticalFovRadians;
-    }
+}
 
 S32 LLHMDImplOculus::getViewportWidth() const
-    {
+{
     return mOculus->mViewport.w;
-    }
+}
 
 S32 LLHMDImplOculus::getViewportHeight() const
 {

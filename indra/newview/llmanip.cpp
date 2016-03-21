@@ -288,8 +288,8 @@ BOOL LLManip::getMousePointOnPlaneGlobal(LLVector3d& point, S32 x, S32 y, LLVect
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
 		BOOL result = FALSE;
-        S32 w = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : gViewerWindow->getWorldViewWidthScaled();
-        S32 h = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled();
+        S32 w = gHMD.isHMDMode() ? gHMD.getUIWidth()  : gViewerWindow->getWorldViewWidthScaled();
+        S32 h = gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewHeightScaled();
 		F32 mouse_x = ((F32)x / w - 0.5f) * camera->getUIAspect() / gAgentCamera.mHUDCurZoom;
 		F32 mouse_y = ((F32)y / h - 0.5f) / gAgentCamera.mHUDCurZoom;
 
@@ -360,8 +360,8 @@ BOOL LLManip::nearestPointOnLineFromMouse( S32 x, S32 y, const LLVector3& b1, co
     LLViewerCamera* camera = LLViewerCamera::getInstance();
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
-        S32 w = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : gViewerWindow->getWorldViewWidthScaled();
-        S32 h = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled();
+        S32 w = gHMD.isHMDMode() ? gHMD.getUIWidth() : gViewerWindow->getWorldViewWidthScaled();
+        S32 h = gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewHeightScaled();
 
 		F32 mouse_x = (((F32)x / w) - 0.5f) * camera->getUIAspect() / gAgentCamera.mHUDCurZoom;
 		F32 mouse_y = (((F32)y / h) - 0.5f) / gAgentCamera.mHUDCurZoom;

@@ -30,16 +30,37 @@
 class LLPostProcess;
 class LLCullResult;
 
+struct ui_render_options
+{
+    ui_render_options()
+        : zoom_factor(1.0f)
+        , subfield(0)
+        , do_hud_elements(FALSE)
+        , do_hud_attach(FALSE)
+        , render_3d_ui(FALSE)
+        , for_hmd(FALSE)
+        , hmd_eye(-1)
+        , hmd_pre_post(FALSE)
+    {
+    }
+
+    F32 zoom_factor;
+    int subfield;
+    BOOL do_hud_attach;
+    BOOL do_hud_elements;
+    BOOL render_3d_ui;
+    BOOL for_hmd;
+    int  hmd_eye;
+    BOOL hmd_pre_post;
+};
+
 class LLViewerDisplay
 {
 public:
     static void display_startup();
     static void update_camera();
     static void display(BOOL rebuild = TRUE, F32 zoom_factor = 1.f, int subfield = 0, BOOL for_snapshot = FALSE);
-    static void render_ui(F32 zoom_factor = 1.f, int subfield = 0, BOOL forHMD = false, BOOL hmdPrePost = FALSE, int whichEye = -1);
-    static void render_ui_3d(BOOL showAxes = FALSE);
-    static void render_ui_2d(BOOL forHMD = FALSE);
-    static void display_cleanup();
+    static void render_ui(ui_render_options& options);    
     static void swap(BOOL doSwap, BOOL newSwap);
 
     // Utility
@@ -47,7 +68,12 @@ public:
     static void push_state_gl();
     static void pop_state_gl();
 
+    static void display_cleanup();
+
 private:
+    static void render_ui_3d(BOOL showAxes = FALSE);
+    static void render_ui_2d(BOOL forHMD = FALSE);
+
     // Rendering stuff
     static void display_stats();
     static void update();

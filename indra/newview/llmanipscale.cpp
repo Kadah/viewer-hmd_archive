@@ -233,7 +233,7 @@ void LLManipScale::render()
 		{
 			for (S32 i = 0; i < NUM_MANIPULATORS; i++)
 			{
-				mBoxHandleSize[i] = BOX_HANDLE_BASE_SIZE * BOX_HANDLE_BASE_FACTOR / (F32)(gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels());
+				mBoxHandleSize[i] = BOX_HANDLE_BASE_SIZE * BOX_HANDLE_BASE_FACTOR / (F32)(gHMD.isHMDMode() ? gHMD.getViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels());
 				mBoxHandleSize[i] /= gAgentCamera.mHUDCurZoom;
 			}
 		}
@@ -258,7 +258,7 @@ void LLManipScale::render()
 				if (range_squared > 0.001f * 0.001f)
 				{
 					// range != zero
-                    S32 h = gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels();
+                    S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels();
 					F32 fraction_of_fov = BOX_HANDLE_BASE_SIZE / (F32)h;
 					F32 apparent_angle = fraction_of_fov * LLViewerCamera::getInstance()->getView();  // radians
 					mBoxHandleSize[i] = (F32) sqrtf(range_squared) * tan(apparent_angle) * BOX_HANDLE_BASE_FACTOR;
@@ -562,8 +562,8 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
             F32 half_width = 0, half_height = 0;
             if (gHMD.isHMDMode() && mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
             {
-                half_width = (F32)gHMD.getHMDUIWidth() / 2.0f;
-                half_height = (F32)gHMD.getHMDUIHeight() / 2.0f;
+                half_width = (F32)gHMD.getUIWidth() / 2.0f;
+                half_height = (F32)gHMD.getUIHeight() / 2.0f;
             }
             else
             {

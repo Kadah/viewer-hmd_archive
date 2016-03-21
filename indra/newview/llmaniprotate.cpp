@@ -1193,7 +1193,7 @@ BOOL LLManipRotate::updateVisiblity()
 		mCenterToCamNorm = mCenterToCam;
 		mCenterToCamMag = mCenterToCamNorm.normVec();
 
-		mRadiusMeters = RADIUS_PIXELS / (F32)(gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels());
+		mRadiusMeters = RADIUS_PIXELS / (F32)(gHMD.isHMDMode() ? gHMD.getViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels());
 		mRadiusMeters /= gAgentCamera.mHUDCurZoom;
 
 		mCenterToProfilePlaneMag = mRadiusMeters * mRadiusMeters / mCenterToCamMag;
@@ -1202,7 +1202,7 @@ BOOL LLManipRotate::updateVisiblity()
 		// x axis range is (-aspect * 0.5f, +aspect * 0.5)
 		// y axis range is (-0.5, 0.5)
 		// so use getWorldViewHeightRaw as scale factor when converting to pixel coordinates
-        S32 h = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled();
+        S32 h = gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewHeightScaled();
 		mCenterScreen.set((S32)((0.5f - center.mV[VY]) / gAgentCamera.mHUDCurZoom * h),
 							(S32)((center.mV[VZ] + 0.5f) / gAgentCamera.mHUDCurZoom * h));
 		visible = TRUE;
@@ -1232,7 +1232,7 @@ BOOL LLManipRotate::updateVisiblity()
 			
 			if (mCenterToCamMag > 0.001f)
 			{
-                F32 fraction_of_fov = RADIUS_PIXELS / (F32)(gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels());
+                F32 fraction_of_fov = RADIUS_PIXELS / (F32)(gHMD.isHMDMode() ? gHMD.getViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels());
 				F32 apparent_angle = fraction_of_fov * LLViewerCamera::getInstance()->getView();  // radians
 				mRadiusMeters = z_dist * tan(apparent_angle);
 
@@ -1730,8 +1730,8 @@ void LLManipRotate::mouseToRay( S32 x, S32 y, LLVector3* ray_pt, LLVector3* ray_
 {
 	if (LLSelectMgr::getInstance()->getSelection()->getSelectType() == SELECT_TYPE_HUD)
 	{
-        S32 w = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : gViewerWindow->getWorldViewRectScaled().getWidth();
-        S32 h = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewRectScaled().getHeight();
+        S32 w = gHMD.isHMDMode() ? gHMD.getUIWidth() : gViewerWindow->getWorldViewRectScaled().getWidth();
+        S32 h = gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewRectScaled().getHeight();
 
 		F32 mouse_x = (((F32)x / w) - 0.5f) / gAgentCamera.mHUDCurZoom;
 		F32 mouse_y = ((((F32)y) / h) - 0.5f) / gAgentCamera.mHUDCurZoom;
@@ -1810,7 +1810,7 @@ void LLManipRotate::highlightManipulators( S32 x, S32 y )
 	F32 dist_y = mouse_dir_y.normVec();
 	F32 dist_z = mouse_dir_z.normVec();
 
-    F32 h = gHMD.isHMDMode() ? (F32)gHMD.getHMDViewportHeight() : (F32)gViewerWindow->getWorldViewHeightScaled();
+    F32 h = gHMD.isHMDMode() ? (F32)gHMD.getViewportHeight() : (F32)gViewerWindow->getWorldViewHeightScaled();
 	F32 distance_threshold = (MAX_MANIP_SELECT_DISTANCE * mRadiusMeters) / (h > 0.01f ? h : 1.0f);
 
 	if (llabs(dist_x - mRadiusMeters) * llmax(0.05f, proj_rot_x_axis) < distance_threshold)

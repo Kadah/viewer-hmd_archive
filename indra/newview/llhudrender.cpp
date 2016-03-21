@@ -77,8 +77,8 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	LLVector3 up_axis;
 	if (orthographic)
 	{
-		right_axis.setVec(0.f, -1.f / (F32)(gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled()), 0.f);
-		up_axis.setVec(0.f, 0.f, 1.f / (F32)(gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightScaled()));
+		right_axis.setVec(0.f,  -1.f / (F32)(gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewHeightScaled()), 0.f);
+		up_axis.setVec(0.f, 0.f, 1.f / (F32)(gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewHeightScaled()));
 	}
 	else
 	{

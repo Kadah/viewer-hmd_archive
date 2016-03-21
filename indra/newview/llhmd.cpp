@@ -26,7 +26,6 @@
 * $/LicenseInfo$
 */
 
-
 #include "llviewerprecompiledheaders.h"
 #include "llhmd.h"
 #include "llhmdimploculus.h"
@@ -319,9 +318,9 @@ BOOL LLHMD::init()
 }
 
 void LLHMD::onChangeUIMagnification()
-    {
+{
     gHMD.setUIMagnification(gSavedSettings.getF32("HMDUIMagnification"));
-    }
+}
 
 void LLHMD::onChangeUISurfaceSavedParams()
 {
@@ -555,13 +554,10 @@ void LLHMD::onAppFocusLost()
 
 F32 LLHMD::getPixelDensity() const { return mImpl ? mImpl->getPixelDensity() : 1.0f; }
 void LLHMD::setPixelDensity(F32 pixelDensity) { if (mImpl) { mImpl->setPixelDensity(pixelDensity); } }
-S32 LLHMD::getHMDWidth() const { return mImpl ? mImpl->getHMDWidth() : 0; }
-S32 LLHMD::getHMDEyeWidth() const { return mImpl ? mImpl->getHMDEyeWidth() : 0; }
-S32 LLHMD::getHMDHeight() const { return mImpl ? mImpl->getHMDHeight() : 0; }
-S32 LLHMD::getHMDUIWidth() const { return mImpl ? mImpl->getHMDUIWidth() : 0; }
-S32 LLHMD::getHMDUIHeight() const { return mImpl ? mImpl->getHMDUIHeight() : 0; }
-S32 LLHMD::getHMDViewportWidth() const { return mImpl ? mImpl->getViewportWidth() : 0; }
-S32 LLHMD::getHMDViewportHeight() const { return mImpl ? mImpl->getViewportHeight() : 0; }
+S32 LLHMD::getUIWidth() const { return mImpl ? mImpl->getUIWidth() : 0; }
+S32 LLHMD::getUIHeight() const { return mImpl ? mImpl->getUIHeight() : 0; }
+S32 LLHMD::getViewportWidth() const { return mImpl ? mImpl->getViewportWidth() : 0; }
+S32 LLHMD::getViewportHeight() const { return mImpl ? mImpl->getViewportHeight() : 0; }
 F32 LLHMD::getInterpupillaryOffset() const { return mImpl ? mImpl->getInterpupillaryOffset() : 0.0f; }
 F32 LLHMD::getEyeToScreenDistance() const { return mImpl ? mImpl->getEyeToScreenDistance() : 0.0f; }
 void LLHMD::setEyeToScreenDistance(F32 f) { calculateUIEyeDepth(); gPipeline.mHMDUISurface = NULL; }
@@ -958,8 +954,8 @@ void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
     else
     {
         // 1. determine horizontal and vertical percentage within toroidal UI surface based on mouse_x, mouse_y
-        F32 uiw = (F32)gHMD.getHMDUIWidth();
-        F32 uih = (F32)gHMD.getHMDUIHeight();
+        F32 uiw = (F32)gHMD.getUIWidth();
+        F32 uih = (F32)gHMD.getUIHeight();
         F32 nx = llclamp((F32)mouse_x / (F32)uiw, 0.0f, 1.0f);
         F32 ny = llclamp((F32)mouse_y / (F32)uih, 0.0f, 1.0f);
 
@@ -1062,7 +1058,7 @@ void LLHMD::setupEye(int which)
     LLViewerCamera* cam = LLViewerCamera::getInstance();
 
     mEyeProjection[which].make_identity();
-    mImpl->getEyeProjection(which, mEyeProjection[which]);
+    mImpl->getEyeProjection(which, mEyeProjection[which], 0.25f, 1536.0f);
 
     mEyeOffset[which].setZero();
     mImpl->getEyeOffset(which, mEyeOffset[which]);
@@ -1098,10 +1094,10 @@ BOOL LLHMD::releaseAllEyeRT()
     if (mImpl)
     {
         return mImpl->releaseAllEyeRT();
-        }
+    }
 
     return FALSE;
-    }
+}
 
 void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye)
 {
@@ -1115,7 +1111,7 @@ void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye)
 
 void LLHMD::setup2DRender()
 {
-    gl_state_for_2d(gHMD.getHMDViewportWidth(), gHMD.getHMDViewportHeight());
+    gl_state_for_2d(getViewportWidth(), getViewportHeight());
     gViewerWindow->getWindowViewportRaw(gGLViewport);
     glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
@@ -1291,18 +1287,20 @@ void LLHMD::render3DUI()
 {
     LLViewerDisplay::pop_state_gl();
 
+#if 0
     render_hud_elements();  // in-world text, labels, nametags
-
     if (gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
     {
         LLViewerDisplay::render_ui_3d(FALSE);
+        LLGLState::checkStates();
     }
+#endif
 
     renderCursor3D();
 
     if (!gPipeline.mUIScreen.isComplete())
     {
-        if (!gPipeline.mUIScreen.allocate(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
+        if (!gPipeline.mUIScreen.allocate(gHMD.getUIWidth(), gHMD.getUIHeight(), GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
         {
             LL_WARNS() << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
             return;
@@ -1313,30 +1311,28 @@ void LLHMD::render3DUI()
             gPipeline.mHMDUISurface = createUISurface();
         }
     }
-    else
-    {        
-        gGL.matrixMode(LLRender::MM_MODELVIEW);
-        gGL.pushMatrix();
-        LLMatrix4 m1(mUIModelViewInv);
-        LLMatrix4 m2(mBaseModelView);
-        LLMatrix4 mt(0.0f, 0.0f, 0.0f, LLVector4(0.0f, 0.0f, gHMD.getUIEyeDepth(), 1.0f));
-        m2 *= mt;
-        m1 *= m2;
-        gGL.loadMatrix((GLfloat*)m1.mMatrix);
-        gOneTextureNoColorProgram.bind();
-        gGL.setColorMask(true, true);
-        gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
-        LLVertexBuffer* buff = gPipeline.mHMDUISurface;
-        {
-            LLGLDisable cull(GL_CULL_FACE);
-            LLGLEnable blend(GL_BLEND);
-            buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
-            buff->drawRange(LLRender::TRIANGLES, 0, buff->getNumVerts()-1, buff->getNumIndices(), 0);
-        }
-        gOneTextureNoColorProgram.unbind();
-        gGL.matrixMode(LLRender::MM_MODELVIEW);
-        gGL.popMatrix();
+
+    gGL.matrixMode(LLRender::MM_MODELVIEW);
+    gGL.pushMatrix();
+    LLMatrix4 m1(mUIModelViewInv);
+    LLMatrix4 m2(mBaseModelView);
+    LLMatrix4 mt(0.0f, 0.0f, 0.0f, LLVector4(0.0f, 0.0f, gHMD.getUIEyeDepth(), 1.0f));
+    m2 *= mt;
+    m1 *= m2;
+    gGL.loadMatrix((GLfloat*)m1.mMatrix);
+    gOneTextureNoColorProgram.bind();
+    gGL.setColorMask(true, true);
+    gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+    LLVertexBuffer* buff = gPipeline.mHMDUISurface;
+    {
+        LLGLDisable cull(GL_CULL_FACE);
+        LLGLEnable blend(GL_BLEND);
+        buff->setBuffer(LLVertexBuffer::MAP_VERTEX | LLVertexBuffer::MAP_TEXCOORD0);
+        buff->drawRange(LLRender::TRIANGLES, 0, buff->getNumVerts()-1, buff->getNumIndices(), 0);
     }
+    gOneTextureNoColorProgram.unbind();
+    gGL.matrixMode(LLRender::MM_MODELVIEW);
+    gGL.popMatrix();
 
     if (gAgentCamera.cameraMouselook())
     {
@@ -1357,7 +1353,7 @@ void LLHMD::render3DUI()
             }
             LLViewerDisplay::push_state_gl();
             gHMD.setup2DRender();
-            gun->drawCrosshairs((gHMD.getHMDViewportWidth() / 2), gHMD.getHMDViewportHeight() / 2);
+            gun->drawCrosshairs((gHMD.getViewportWidth() / 2), gHMD.getViewportHeight() / 2);
             LLViewerDisplay::pop_state_gl();
             if (LLGLSLShader::sNoFixedFunction)
             {
@@ -1373,7 +1369,7 @@ void LLHMD::reshapeUI(BOOL useUIViewPort)
 {
     if (useUIViewPort)
     {
-        gViewerWindow->reshape(gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight(), TRUE);
+        gViewerWindow->reshape(gHMD.getUIWidth(), gHMD.getUIHeight(), TRUE);
     }
     else
     {

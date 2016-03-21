@@ -38,6 +38,7 @@ include(LLWindow)
 include(LLXML)
 include(LScript)
 include(LibOVR)
+include(OpenVR)
 include(Linking)
 include(NDOF)
 include(NVAPI)
@@ -335,6 +336,7 @@ set(viewer_SOURCE_FILES
     llhints.cpp
     llhmd.cpp
     llhmdimploculus.cpp
+    llhmdimplopenvr.cpp
     llhomelocationresponder.cpp
     llhttpretrypolicy.cpp
     llhudeffect.cpp

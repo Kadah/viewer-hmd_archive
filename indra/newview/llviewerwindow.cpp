@@ -2327,8 +2327,8 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
 		// round up when converting coordinates to make sure there are no gaps at edge of window
         if (gHMD.isHMDMode())
         {
-            setup2DViewport(0, 0, gHMD.getHMDUIWidth(), gHMD.getHMDUIHeight());
-            mRootView->reshape(llceil((F32)gHMD.getHMDUIWidth() / mDisplayScale.mV[VX]), llceil((F32)gHMD.getHMDUIHeight() / mDisplayScale.mV[VY]));
+            setup2DViewport(0, 0, gHMD.getUIWidth(), gHMD.getUIHeight());
+            mRootView->reshape(llceil((F32)gHMD.getUIWidth() / mDisplayScale.mV[VX]), llceil((F32)gHMD.getUIHeight() / mDisplayScale.mV[VY]));
         }
         else
         {
@@ -2357,15 +2357,16 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
 
 		    if (!maximized)
 		    {
-                    U32 min_window_width = gHMD.isHMDMode() ? gHMD.getHMDWidth() : gSavedSettings.getU32("MinWindowWidth");
-                    U32 min_window_height = gHMD.isHMDMode() ? gHMD.getHMDHeight() : gSavedSettings.getU32("MinWindowHeight");
+                        U32 min_window_width  = gSavedSettings.getU32("MinWindowWidth");
+                        U32 min_window_height = gSavedSettings.getU32("MinWindowHeight");
+
 			    // tell the OS specific window code about min window size
 			    mWindow->setMinSize(min_window_width, min_window_height);
 
 			    LLCoordScreen window_rect;
 			    if (mWindow->getSize(&window_rect))
 			    {
-			    // Only save size if not maximized
+			        // Only save size if not maximized
 				    gSavedSettings.setU32("WindowWidth", window_rect.mX);
 				    gSavedSettings.setU32("WindowHeight", window_rect.mY);
 			    }
@@ -2980,8 +2981,8 @@ void LLViewerWindow::moveCursorToCenter()
 {
 	if (! gSavedSettings.getBOOL("DisableMouseWarp"))
 	{
-		S32 x = (gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : getWorldViewWidthScaled()) / 2;
-		S32 y = (gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : getWorldViewHeightScaled()) / 2;
+		S32 x = (gHMD.isHMDMode() ? gHMD.getUIWidth()  : getWorldViewWidthScaled())  / 2;
+		S32 y = (gHMD.isHMDMode() ? gHMD.getUIHeight() : getWorldViewHeightScaled()) / 2;
 	
 		//on a forced move, all deltas get zeroed out to prevent jumping
 		mCurrentMousePoint.set(x,y);
@@ -3697,8 +3698,8 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point, BOOL updateHMDMouse)
 	// Store last mouse location.
 	// If mouse leaves window, pretend last point was on edge of window
 
-    S32 maxW = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() : getWindowWidthScaled();
-    S32 maxH = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : getWindowHeightScaled();
+    S32 maxW = gHMD.isHMDMode() ? gHMD.getUIWidth()  : getWindowWidthScaled();
+    S32 maxH = gHMD.isHMDMode() ? gHMD.getUIHeight() : getWindowHeightScaled();
 	if (point.mX < 0)
 	{
 		mCurrentMousePoint.mX = 0;
@@ -4222,11 +4223,11 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
 LLVector3 LLViewerWindow::mousePointHUD(const S32 x, const S32 y) const
 {
 	// find screen resolution
-	S32			height = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : getWorldViewHeightScaled();
+	S32			height = gHMD.isHMDMode() ? gHMD.getUIHeight() : getWorldViewHeightScaled();
 
 	// find world view center
-	F32			center_x = gHMD.isHMDMode() ? gHMD.getHMDUIWidth() / 2 : getWorldViewRectScaled().getCenterX();
-	F32			center_y = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() / 2 : getWorldViewRectScaled().getCenterY();
+	F32			center_x = gHMD.isHMDMode() ? gHMD.getUIWidth() / 2 : getWorldViewRectScaled().getCenterX();
+	F32			center_y = gHMD.isHMDMode() ? gHMD.getUIHeight() / 2 : getWorldViewRectScaled().getCenterY();
 
 	// remap with uniform scale (1/height) so that top is -0.5, bottom is +0.5
 	F32 hud_x = -((F32)x - center_x)  / height;
@@ -4728,7 +4729,14 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 				{
 					// Required for showing the GUI in snapshots and performing bloom composite overlay
 					// Call even if show_ui is FALSE
-					LLViewerDisplay::render_ui(scale_factor, subfield);
+                    ui_render_options options;
+
+                    options.do_hud_attach   = TRUE;
+                    options.do_hud_elements = TRUE;
+                    options.subfield        = subfield;
+                    options.zoom_factor     = scale_factor;
+
+                    LLViewerDisplay::render_ui(options);
                     LLViewerDisplay::swap(LLViewerDisplay::gDisplaySwapBuffers, TRUE);
 				}
 				

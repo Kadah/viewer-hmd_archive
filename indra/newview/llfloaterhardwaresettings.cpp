@@ -144,13 +144,7 @@ void LLFloaterHardwareSettings::refreshEnabledState()
 			fsaa_restart->setVisible(FALSE);
 		}
 	}
-    if (gHMD.isInitialized())
-    {
-        if (gHMD.isHMDMode())
-        {
-            gHMD.renderSettingsChanged(TRUE);
-        }
-    }
+
 }
 
 //============================================================================

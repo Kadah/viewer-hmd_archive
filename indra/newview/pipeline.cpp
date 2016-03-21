@@ -799,6 +799,7 @@ void LLPipeline::resizeScreenTexture()
 			{
 				gSavedSettings.setBOOL("RenderDeferred", FALSE);
 				LLPipeline::refreshCachedSettings();
+
 				}
 #endif
 			}
@@ -1045,7 +1046,10 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		mDeferredScreen.shareDepthBuffer(mScreen);
 	}
 
-    gHMD.releaseAllEyeRT();
+    if (gHMD.isHMDMode())
+    {
+        gHMD.releaseAllEyeRT();
+    }
 
 	gGL.getTexUnit(0)->disable();
 
@@ -1232,7 +1236,10 @@ void LLPipeline::releaseScreenBuffers()
 		mShadowOcclusion[i].release();
 	}
     mUIScreen.release();
-    gHMD.releaseAllEyeRT();
+    if (gHMD.isHMDMode())
+    {
+        gHMD.releaseAllEyeRT();
+    }
 }
 
 
@@ -4098,7 +4105,7 @@ void LLPipeline::renderHighlights()
 	LLGLEnable color_mat(GL_COLOR_MATERIAL);
 	disableLights();
 
-	if (!hasRenderType(LLPipeline::RENDER_TYPE_HUD) && !mHighlightSet.empty() && (!LLGLSLShader::sNoFixedFunction || LLGLSLShader::sCurBoundShaderPtr != NULL))
+	if (!hasRenderType(LLPipeline::RENDER_TYPE_HUD) && !mHighlightSet.empty())
 	{ //draw blurry highlight image over screen
 		LLGLEnable blend(GL_BLEND);
 		LLGLDepthTest depth(GL_TRUE, GL_FALSE, GL_ALWAYS);
@@ -7672,14 +7679,18 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
 	if (LLPipeline::sRenderDeferred)
 	{
+
 		bool dof_enabled = !LLViewerCamera::getInstance()->cameraUnderWater() &&
 			(RenderDepthOfFieldInEditMode || !LLToolMgr::getInstance()->inBuildMode()) &&
 							RenderDepthOfField;
+
+    #if VOIDHACK
         // voidpointer 20131121: HMD Mode seems to have problems with DOF (probably because of the alpha-blend
         // changes necessary to handle rendering UI to a rendertarget, but not sure).  Could probably dive into
         // this and figure out why (and possibly even fix it), but have bigger problems to tackle before release.
         // Disabling DOF in HMD mode for now.
         dof_enabled = dof_enabled && !gHMD.isHMDMode();
+    #endif
 
 		bool multisample = RenderFSAASamples > 1 && mFXAABuffer.isComplete();
 
@@ -9587,7 +9598,7 @@ void LLPipeline::setupSpotLight(LLGLSLShader& shader, LLDrawable* drawablep)
 	n.normalize();
 	
 	F32 proj_range = far_clip - near_clip;
-	glh::matrix4f light_proj = gl_perspective(fovy, aspect, near_clip, far_clip);
+	glh::matrix4f light_proj = gl_perspective(fovy, aspect, near_clip, far_clip, FALSE);
 	screen_to_light = trans * light_proj * screen_to_light;
 	shader.uniformMatrix4fv(LLShaderMgr::PROJECTOR_MATRIX, 1, FALSE, screen_to_light.m);
 	shader.uniform1f(LLShaderMgr::PROJECTOR_NEAR, near_clip);
@@ -10427,7 +10438,7 @@ BOOL LLPipeline::getVisiblePointCloud(LLCamera& camera, LLVector3& min, LLVector
 
 void LLPipeline::renderHighlight(const LLViewerObject* obj, F32 fade)
 {
-	if (obj && obj->getVolume() && (!LLGLSLShader::sNoFixedFunction || LLGLSLShader::sCurBoundShaderPtr != NULL))
+	if (obj && obj->getVolume())
 	{
 		for (LLViewerObject::child_list_t::const_iterator iter = obj->getChildren().begin(); iter != obj->getChildren().end(); ++iter)
 		{
@@ -11195,7 +11206,7 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 			F32 fovy = fov * RAD_TO_DEG;
 			F32 aspect = width/height;
 			
-			proj[i+4] = gl_perspective(fovy, aspect, near_clip, far_clip);
+			proj[i+4] = gl_perspective(fovy, aspect, near_clip, far_clip, FALSE);
 
 			//translate and scale to from [-1, 1] to [0, 1]
 			glh::matrix4f trans(0.5f, 0.f, 0.f, 0.5f,
@@ -11624,19 +11635,17 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 
 void LLPipeline::postRender(BOOL writeAlpha, BOOL forHMD, int whichEye)
 {
+    if (!(gPipeline.canUseVertexShaders() && sRenderGlow))
+    {
+        return;
+    }
+
     if (forHMD)
     {
         gHMD.releaseEyeRT(whichEye);
     }
-    else
-    {
-        if (!(gPipeline.canUseVertexShaders() && sRenderGlow))
-        {
-            return;
-        }
-    }
 
-    if (LLRenderTarget::sUseFBO)
+    if (LLRenderTarget::sUseFBO && !gHMD.isHMDMode())
 	{
         //copy depth buffer from mScreen to framebuffer
 		LLRenderTarget::copyContentsToFramebuffer(

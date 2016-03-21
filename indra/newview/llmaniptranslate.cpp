@@ -1871,7 +1871,7 @@ void LLManipTranslate::renderTranslationHandles()
 	// Drag handles 	
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
-        S32 h = gHMD.isHMDMode() ? gHMD.getHMDUIHeight() : gViewerWindow->getWorldViewHeightRaw();
+        S32 h = gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewHeightRaw();
 		mArrowLengthMeters = mAxisArrowLength / h;
 		mArrowLengthMeters /= gAgentCamera.mHUDCurZoom;
 	}
@@ -1893,7 +1893,7 @@ void LLManipTranslate::renderTranslationHandles()
 		if (range > 0.001f)
 		{
 			// range != zero
-            S32 h = gHMD.isHMDMode() ? gHMD.getHMDViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels();
+            S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels();
 			F32 fraction_of_fov = mAxisArrowLength / (F32)h;
 			F32 apparent_angle = fraction_of_fov * LLViewerCamera::getInstance()->getView();  // radians
 			mArrowLengthMeters = range * tan(apparent_angle);
