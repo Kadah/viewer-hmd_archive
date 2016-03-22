@@ -67,8 +67,8 @@ if(WINDOWS)
     endif (FMODEX)
 
     if (OPENVR)
-      set(debug_files "${release_files} openvr_api.dll")
-      set(release_files "${release_files} openvr_api.dll")
+      set(debug_files ${debug_files} openvr_api.dll)
+      set(release_files ${release_files} openvr_api.dll)
     endif (OPENVR)
  
     #*******************************

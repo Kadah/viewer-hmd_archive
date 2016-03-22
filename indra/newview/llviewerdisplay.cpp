@@ -1637,18 +1637,25 @@ void LLViewerDisplay::render_ui(ui_render_options& options)
 
     if (do_debug_render)
     {
-        LLViewerDisplay::render_ui_3d(FALSE);
+        LL_RECORD_BLOCK_TIME(FTM_RENDER_UI);
+        if (!gDisconnected)
+        {
+            LLViewerDisplay::render_ui_3d(FALSE);
+        }
         LLGLState::checkStates();
     }
+
+    render_ui_2d();
+    LLGLState::checkStates();
 
     gPipeline.postRender(FALSE, options.for_hmd, options.hmd_eye);
 
     if (options.hmd_pre_post)
     {
         gHMD.prerender2DUI();
-	}
+    }
     
-	gGL.flush();
+    gGL.flush();
 
     // debugging text
     gViewerWindow->setup2DRender();
@@ -1700,23 +1707,15 @@ void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
 
     state_sort(rebuild, cullResult);
 
-	LLPipeline::sUseOcclusion = occlusion;
+    LLPipeline::sUseOcclusion = occlusion;
 
-    if (!forHMD)
-    {
-        render_start(to_texture);
-    }
-
+    render_start(to_texture);
     render_geom();
-
-    if (!forHMD)
-    {
-        render_flush(to_texture);
-    }
+    render_flush(to_texture);
 
     if (!gSnapshot)
     {
-	    LL_RECORD_BLOCK_TIME(FTM_RENDER_UI);
+        LL_RECORD_BLOCK_TIME(FTM_RENDER_UI);
         ui_render_options options;
         options.hmd_pre_post    = TRUE;
         options.for_hmd         = forHMD;
@@ -1725,7 +1724,6 @@ void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
         options.do_hud_elements = !forHMD || whichEye == 1;
         render_ui(options);
     }
-
     LLSpatialGroup::sNoDelete = FALSE;
 }
 
