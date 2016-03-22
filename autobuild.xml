@@ -18,7 +18,7 @@
             <key>archive</key>
             <map>
               <key>hash</key>
-              <string>23de1db62491457f567f7fb8051608c8</string>
+              <string>f07206ac0121c047c27314687a4c7bc3</string>
               <key>url</key>
               <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-openvr/rev/314159/arch/CYGWIN/installer/libopenvr-0.9.19-windows-0.9.19.tar.bz2</string>
             </map>

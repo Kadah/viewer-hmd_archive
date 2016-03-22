@@ -1402,7 +1402,6 @@ endif (DARWIN)
 if (LINUX)
     LIST(APPEND viewer_SOURCE_FILES llappviewerlinux.cpp)
     LIST(APPEND viewer_SOURCE_FILES llappviewerlinux_api_dbus.cpp)
-    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed")
 
     set(viewer_LIBRARIES
         Xinerama
@@ -1413,6 +1412,8 @@ if (LINUX)
 endif (LINUX)
 
 if (WINDOWS)
+    # force delay load of openvr_api.dll if we're doing OpenVR
+    set(CMAKE_EXE_LINKER_FLAGS "${OPENVR_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS}")
     list(APPEND viewer_SOURCE_FILES
          llappviewerwin32.cpp
          llwindebug.cpp
@@ -1670,7 +1671,9 @@ if (FMODEX)
   set(FMODWRAPPER_LIBRARY ${FMODEX_LIBRARY})
 endif (FMODEX)
 
-set_source_files_properties(llstartup.cpp PROPERTIES COMPILE_FLAGS "${LLSTARTUP_COMPILE_FLAGS}")
+if (OPENVR)
+    set_source_files_properties(llhmdimplopenvr.cpp PROPERTIES COMPILE_FLAGS "${OPENVR_DEFINES}")
+endif (OPENVR)
 
 list(APPEND viewer_SOURCE_FILES ${viewer_HEADER_FILES})
 

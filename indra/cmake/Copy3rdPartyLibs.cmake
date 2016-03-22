@@ -66,6 +66,11 @@ if(WINDOWS)
       set(release_files ${release_files} fmodex.dll)
     endif (FMODEX)
 
+    if (OPENVR)
+      set(debug_files "${release_files} openvr_api.dll")
+      set(release_files "${release_files} openvr_api.dll")
+    endif (OPENVR)
+ 
     #*******************************
     # Copy MS C runtime dlls, required for packaging.
     # *TODO - Adapt this to support VC9
@@ -189,6 +194,11 @@ elseif(DARWIN)
       set(release_files ${release_files} libfmodex.dylib)
     endif (FMODEX)
 
+    if (OPENVR)
+      set(debug_files ${release_files} libopenvr.dylib)
+      set(release_files ${release_files} libopenvr.dylib)
+    endif (OPENVR)
+
 elseif(LINUX)
     # linux is weird, multiple side by side configurations aren't supported
     # and we don't seem to have any debug shared libs built yet anyways...
@@ -244,6 +254,11 @@ elseif(LINUX)
       set(debug_files ${debug_files} "libfmodexL.so")
       set(release_files ${release_files} "libfmodex.so")
     endif (FMODEX)
+
+    if (OPENVR)
+      set(debug_files ${release_files} "libopenvr.so")
+      set(release_files ${release_files} "libopenvr.so")
+    endif (OPENVR)
 
 else(WINDOWS)
     message(STATUS "WARNING: unrecognized platform for staging 3rd party libs, skipping...")

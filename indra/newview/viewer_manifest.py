@@ -377,6 +377,12 @@ class Windows_i686_Manifest(ViewerManifest):
             except:
                 print "Skipping fmodex audio library(assuming other audio engine)"
 
+            # Get OpenVR dll, continue if missing
+            try:
+                self.path("openvr_api.dll")
+            except:
+                print "Skipping OpenVR API library(assuming disabled OpenVR support)"
+
             # For textures
             if self.args['configuration'].lower() == 'debug':
                 self.path("openjpegd.dll")
