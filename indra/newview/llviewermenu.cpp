@@ -4242,7 +4242,7 @@ class LLViewCycleDisplay : public view_listener_t
             {
                 if (!gHMD.isInitialized())
                 {
-		    LLNotificationsUtil::add("HMDModeErrorInitFailed");
+		            LLNotificationsUtil::add("HMDModeErrorInitFailed");
                     return true;
                 }
 

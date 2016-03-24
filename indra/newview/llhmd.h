@@ -27,11 +27,18 @@
 #ifndef LL_LLHMD_H
 #define LL_LLHMD_H
 
-#if LL_WINDOWS || LL_DARWIN
+
+#if LL_WINDOWS
+    #define LL_HMD_OCULUS_SUPPORTED  1
+#endif
+
+#if LL_WINDOWS || LL_DARWIN || LL_LINUX
+    // Enable with -- -DOPENVR=1 to autobeeld for now...sshhhh.
+    //#define LL_HMD_OPENVR_SUPPORTED 1
+#endif
+
+#if LL_HMD_OCULUS_SUPPORTED || LL_HMD_OPENVR_SUPPORTED
     #define LL_HMD_SUPPORTED 1
-#else
-    // We do not support the Oculus Rift on other platforms at the moment
-    #define LL_HMD_SUPPORTED 0
 #endif
 
 #include "llpointer.h"
@@ -179,10 +186,6 @@ public:
 
     U32 suspendHMDMode();
     void resumeHMDMode(U32 prevRenderMode);
-
-    // size and Lower-Left corner for the viewer of the current eye
-    void getViewportInfo(S32& x, S32& y, S32& w, S32& h);
-    void getViewportInfo(S32 vp[4]);
 
     F32 getPixelDensity() const;
     void setPixelDensity(F32 pixelDensity);
@@ -339,14 +342,14 @@ public:
     BOOL bindEyeRT(int which);
     BOOL releaseEyeRT(int which);
     BOOL endFrame();
+    BOOL postSwap();
+
     BOOL releaseAllEyeRT();
 
     void setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye);
 
     LLVector3 getHeadPosition() const;
     const LLQuaternion& getAgentRotation() const { return mAgentRot; }
-
-    void reshapeUI(BOOL useUIViewPort);
 
     static void onChangeInterpupillaryDistance();
     static void onChangeUISurfaceSavedParams();
@@ -483,6 +486,7 @@ public:
     virtual BOOL bindEyeRT(int whichEye)    { return FALSE; }
     virtual BOOL releaseEyeRT(int whichEye) { return FALSE; }
     virtual BOOL endFrame()                 { return FALSE; }
+    virtual BOOL postSwap()                 { return FALSE; }
     virtual BOOL releaseAllEyeRT()          { return FALSE; }
 
     virtual U32  getFrameIndex()            { return 0;     }

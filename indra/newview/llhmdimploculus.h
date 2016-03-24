@@ -76,6 +76,7 @@ public:
     virtual BOOL bindEyeRT(int which);
     virtual BOOL releaseEyeRT(int which);
     virtual BOOL endFrame();
+    virtual BOOL postSwap();
 
     virtual BOOL releaseAllEyeRT();
 

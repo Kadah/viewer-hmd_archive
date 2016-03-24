@@ -144,10 +144,20 @@ BOOL LLHMD::init()
     BOOL initResult = FALSE;
 
 #if LL_HMD_SUPPORTED
+
+#if LL_HMD_OPENVR_SUPPORTED
+    if (!mImpl)
+    {
+        mImpl = new LLHMDImplOpenVR();
+    }
+#endif
+
+#if LL_HMD_OCULUS_SUPPORTED
     if (!mImpl)
     {
         mImpl = new LLHMDImplOculus();
     }
+#endif
 
     gSavedSettings.getControl("HMDPixelDensity")->getSignal()->connect(boost::bind(&onChangeRenderSettings));
     gSavedSettings.getControl("HMDUISurfaceArcHorizontal")->getSignal()->connect(boost::bind(&onChangeUISurfaceSavedParams));
@@ -306,12 +316,13 @@ BOOL LLHMD::init()
         //UI_CURSOR_TOOLNO
         mCursorTextures.push_back(LLViewerTextureManager::getFetchedTextureFromFile("hmd/llno.tga", FTT_LOCAL_FILE, FALSE, LLViewerFetchedTexture::BOOST_UI));
         mCursorHotSpotOffsets.push_back(LLVector2(0.5f, 0.5f));
+        isInitialized(TRUE);
     }
     else
 #endif
     {
-        gHMD.isInitialized(FALSE);
-        gHMD.isHMDConnected(FALSE);
+        isInitialized(FALSE);
+        isHMDConnected(FALSE);
     }
 
     return initResult;
@@ -324,20 +335,20 @@ void LLHMD::onChangeUIMagnification()
 
 void LLHMD::onChangeUISurfaceSavedParams()
 {
-        gHMD.mUIShape.mPresetType = (U32)LLHMD::kCustom;
-        gHMD.mUIShape.mPresetTypeIndex = 1;
-        gHMD.mUIShape.mArcHorizontal = gSavedSettings.getF32("HMDUISurfaceArcHorizontal");
-        gHMD.mUIShape.mArcVertical = gSavedSettings.getF32("HMDUISurfaceArcVertical");
-        gHMD.mUIShape.mToroidRadiusWidth = gSavedSettings.getF32("HMDUISurfaceToroidWidth");
-        gHMD.mUIShape.mToroidRadiusDepth = gSavedSettings.getF32("HMDUISurfaceToroidDepth");
-        gHMD.mUIShape.mToroidCrossSectionRadiusWidth = gSavedSettings.getF32("HMDUISurfaceToroidCSWidth");
-        gHMD.mUIShape.mToroidCrossSectionRadiusHeight = gSavedSettings.getF32("HMDUISurfaceToroidCSHeight");
-        LLVector3 offsets = gSavedSettings.getVector3("HMDUISurfaceOffsets");
-        gHMD.mUIShape.mOffsetX = offsets[VX];
-        gHMD.mUIShape.mOffsetY = offsets[VY];
-        gHMD.mUIShape.mOffsetZ = offsets[VZ];
-        onChangeUISurfaceShape();
-    }
+    gHMD.mUIShape.mPresetType = (U32)LLHMD::kCustom;
+    gHMD.mUIShape.mPresetTypeIndex = 1;
+    gHMD.mUIShape.mArcHorizontal = gSavedSettings.getF32("HMDUISurfaceArcHorizontal");
+    gHMD.mUIShape.mArcVertical = gSavedSettings.getF32("HMDUISurfaceArcVertical");
+    gHMD.mUIShape.mToroidRadiusWidth = gSavedSettings.getF32("HMDUISurfaceToroidWidth");
+    gHMD.mUIShape.mToroidRadiusDepth = gSavedSettings.getF32("HMDUISurfaceToroidDepth");
+    gHMD.mUIShape.mToroidCrossSectionRadiusWidth = gSavedSettings.getF32("HMDUISurfaceToroidCSWidth");
+    gHMD.mUIShape.mToroidCrossSectionRadiusHeight = gSavedSettings.getF32("HMDUISurfaceToroidCSHeight");
+    LLVector3 offsets = gSavedSettings.getVector3("HMDUISurfaceOffsets");
+    gHMD.mUIShape.mOffsetX = offsets[VX];
+    gHMD.mUIShape.mOffsetY = offsets[VY];
+    gHMD.mUIShape.mOffsetZ = offsets[VZ];
+    onChangeUISurfaceShape();
+}
 
 void LLHMD::onChangePresetValues()
 {
@@ -351,6 +362,7 @@ void LLHMD::onChangePresetValues()
         settings.mPresetTypeIndex = 1;
         gHMD.mUIPresetValues.push_back(settings);
     }
+
     U32 nextDefault = 1;
     gHMD.mNextUserPresetIndex = 1;
     for (LLSD::array_const_iterator it1 = raw.beginArray(), it1End = raw.endArray(); it1 != it1End; ++it1)
@@ -597,11 +609,34 @@ void LLHMD::setUISurfaceParam(F32* p, F32 f)
     }
 }
 
+void LLHMD::resetOrientation()
+{
+    if (mImpl)
+    {
+        mImpl->resetOrientation();
+    }
+}
 
-void LLHMD::resetOrientation() { if (mImpl) { mImpl->resetOrientation(); } }
-void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { if (mImpl) { mImpl->getHMDRollPitchYaw(roll, pitch, yaw); } else { roll = pitch = yaw = 0.0f; } }
-void LLHMD::getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = mLastRollPitchYaw[VX]; pitch = mLastRollPitchYaw[VY], yaw = mLastRollPitchYaw[VZ]; }
+void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
+{
+    if (mImpl)
+    {
+        mImpl->getHMDRollPitchYaw(roll, pitch, yaw);
+    }
+    else
+    {
+        roll = 0.0f;
+        pitch = 0.0f;
+        yaw = 0.0f;
+    }
+}
 
+void LLHMD::getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
+{
+    roll = mLastRollPitchYaw[VX];
+    pitch = mLastRollPitchYaw[VY];
+    yaw = mLastRollPitchYaw[VZ];
+}
 
 void LLHMD::getHMDDeltaRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
 {
@@ -618,19 +653,89 @@ void LLHMD::getHMDDeltaRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
 }
 
 
-F32 LLHMD::getHMDRoll() const { return mImpl ? mImpl->getRoll() : 0.0f; }
-F32 LLHMD::getHMDLastRoll() const { return mLastRollPitchYaw[VX]; }
-F32 LLHMD::getHMDDeltaRoll() const { if (mImpl) { return mImpl->getRoll() - mLastRollPitchYaw[VX]; } else { return 0.0f; } }
-F32 LLHMD::getHMDPitch() const { return mImpl ? mImpl->getPitch() : 0.0f; }
-F32 LLHMD::getHMDLastPitch() const { return mLastRollPitchYaw[VY]; }
-F32 LLHMD::getHMDDeltaPitch() const { if (mImpl) { return mImpl->getPitch() - mLastRollPitchYaw[VY]; } else { return 0.0f; } }
-F32 LLHMD::getHMDYaw() const { return mImpl ? mImpl->getYaw() : 0.0f; }
-F32 LLHMD::getHMDLastYaw() const { return mLastRollPitchYaw[VZ]; }
-F32 LLHMD::getHMDDeltaYaw() const { if (mImpl) { return mImpl->getYaw() - mLastRollPitchYaw[VZ]; } else { return 0.0f; } }
-LLVector3 LLHMD::getHeadPosition() const { if (mImpl) { return mImpl->getHeadPosition(); } else { return LLVector3::zero; } }
+F32 LLHMD::getHMDRoll() const
+{ 
+    return mImpl ? mImpl->getRoll() : 0.0f;
+}
 
-F32 LLHMD::getVerticalFOV() const { return mImpl ? mImpl->getVerticalFOV() : 0.0f; }
-F32 LLHMD::getAspect() { return mImpl ? mImpl->getAspect() : 0.0f; }
+F32 LLHMD::getHMDLastRoll() const
+{
+    return mLastRollPitchYaw[VX];
+}
+
+F32 LLHMD::getHMDDeltaRoll() const
+{
+    if (mImpl)
+    {
+        return mImpl->getRoll() - mLastRollPitchYaw[VX];
+    }
+    else
+    {
+        return 0.0f;
+    }
+}
+
+F32 LLHMD::getHMDPitch() const
+{
+    return mImpl ? mImpl->getPitch() : 0.0f;
+}
+
+F32 LLHMD::getHMDLastPitch() const
+{
+    return mLastRollPitchYaw[VY];
+}
+
+F32 LLHMD::getHMDDeltaPitch() const
+{
+    if (mImpl)
+    {
+        return mImpl->getPitch() - mLastRollPitchYaw[VY];
+    }
+    else
+    {
+        return 0.0f;
+    }
+}
+
+F32 LLHMD::getHMDYaw() const
+{
+    return mImpl ? mImpl->getYaw() : 0.0f;
+}
+
+F32 LLHMD::getHMDLastYaw() const
+{
+    return mLastRollPitchYaw[VZ];
+}
+
+F32 LLHMD::getHMDDeltaYaw() const
+{
+    if (mImpl)
+    {
+        return mImpl->getYaw() - mLastRollPitchYaw[VZ];
+    }
+
+    return 0.0f;
+}
+
+LLVector3 LLHMD::getHeadPosition() const
+{
+    if (mImpl)
+    {
+        return mImpl->getHeadPosition();
+    }
+
+    return LLVector3::zero;
+}
+
+F32 LLHMD::getVerticalFOV() const
+{
+    return mImpl ? mImpl->getVerticalFOV() : 0.0f;
+}
+
+F32 LLHMD::getAspect()
+{
+    return mImpl ? mImpl->getAspect() : 0.0f;
+}
 
 std::string LLHMD::getUIShapeName() const
 {
@@ -642,7 +747,6 @@ std::string LLHMD::getUIShapeName() const
     }
     return LLTrans::getString("HMDPresetCustom");
 }
-
 
 void LLHMD::calculateUIEyeDepth()
 {
@@ -1365,46 +1469,32 @@ void LLHMD::render3DUI()
     LLViewerDisplay::push_state_gl_identity();
 }
 
-void LLHMD::reshapeUI(BOOL useUIViewPort)
-{
-    if (useUIViewPort)
-    {
-        gViewerWindow->reshape(gHMD.getUIWidth(), gHMD.getUIHeight(), TRUE);
-    }
-    else
-    {
-        gViewerWindow->reshape(mImpl->getViewportWidth(), mImpl->getViewportHeight(), TRUE);
-    }
-}
-
 void LLHMD::prerender2DUI()
 {
-        gPipeline.mUIScreen.bindTarget();
-        gGL.setColorMask(true, true);
-        glClearColor(0.0f,0.0f,0.0f,0.0f);
-        gPipeline.mUIScreen.clear();
-        gGL.color4f(1,1,1,1);
-        LLUI::setDestIsRenderTarget(TRUE);
-        // this is necessary even though it theoretically already is using that blend type due to
-        // setting the DestIsRenderTarget flag
-        gGL.setSceneBlendType(LLRender::BT_ALPHA);
-        reshapeUI(TRUE);
-    }
+    gPipeline.mUIScreen.bindTarget();
+    gGL.setColorMask(true, true);
+    glClearColor(0.0f,0.0f,0.0f,0.0f);
+    gPipeline.mUIScreen.clear();
+    gGL.color4f(1,1,1,1);
+    //LLUI::setDestIsRenderTarget(TRUE);
+    // this is necessary even though it theoretically already is using that blend type due to
+    // setting the DestIsRenderTarget flag
+    //gGL.setSceneBlendType(LLRender::BT_ALPHA);
+}
 
 void LLHMD::postRender2DUI()
 {
-        gHMD.renderCursor2D();
-        gPipeline.mUIScreen.flush();
-        if (LLRenderTarget::sUseFBO)
-        {
-            //copy depth buffer from mScreen to framebuffer
-            LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
-                                                                     0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
-                                                                     GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-        }
-        LLUI::setDestIsRenderTarget(FALSE);
-        reshapeUI(FALSE);
+    gHMD.renderCursor2D();
+    gPipeline.mUIScreen.flush();
+    if (LLRenderTarget::sUseFBO)
+    {
+        //copy depth buffer from mScreen to framebuffer
+        LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
+                                                                    0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
+                                                                    GL_DEPTH_BUFFER_BIT, GL_NEAREST);
     }
+    //LLUI::setDestIsRenderTarget(FALSE);
+}
 
 BOOL LLHMD::beginFrame()
 {
@@ -1462,6 +1552,11 @@ BOOL LLHMD::beginFrame()
 BOOL LLHMD::endFrame()
 {
     return mImpl ? mImpl->endFrame() : FALSE;
+}
+
+BOOL LLHMD::postSwap()
+{
+    return mImpl ? mImpl->postSwap() : FALSE;
 }
 
 LLQuaternion LLHMD::getHMDRotation() const

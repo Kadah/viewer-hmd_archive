@@ -181,6 +181,8 @@ BOOL LLHMDImplOculus::init()
 
     gHMD.isHMDConnected(true);
 
+    calculateViewportSettings();
+
     return TRUE;
 }
 
@@ -575,6 +577,12 @@ BOOL LLHMDImplOculus::endFrame()
     mOculus->mCurrentSwapChainIndex[0] = mOculus->mCurrentSwapChainIndex[0] < 2 ? (mOculus->mCurrentSwapChainIndex[0] + 1) : 0;
     mOculus->mCurrentSwapChainIndex[1] = mOculus->mCurrentSwapChainIndex[1] < 2 ? (mOculus->mCurrentSwapChainIndex[1] + 1) : 0;
     return TRUE;
+}
+
+BOOL LLHMDImplOculus::postSwap()
+{
+    // Oculus does nada special at this point, this is just for API compliance...
+    return FALSE;
 }
 
 F32 LLHMDImplOculus::getAspect() const

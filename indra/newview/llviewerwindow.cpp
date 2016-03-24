@@ -3057,15 +3057,8 @@ void LLViewerWindow::updateUI()
 	LLLayoutStack::updateClass();
 
 	// use full window for world view when not rendering UI
-    if (gHMD.isHMDMode())
-    {
-        gHMD.reshapeUI(TRUE);
-    }
-    else
-    {
 	bool world_view_uses_full_window = gAgentCamera.cameraMouselook() || !gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI);
 	updateWorldViewRect(world_view_uses_full_window);
-    }
 
 	LLView::sMouseHandlerMessage.clear();
     gHMD.cursorIntersectsWorld(FALSE);
@@ -3461,11 +3454,6 @@ void LLViewerWindow::updateUI()
 	{
 		LLSelectMgr::getInstance()->deselectUnused();
 	}
-
-    if (gHMD.isHMDMode())
-    {
-        gHMD.reshapeUI(FALSE);
-    }
 }
 
 

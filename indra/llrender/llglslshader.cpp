@@ -533,7 +533,7 @@ BOOL LLGLSLShader::mapAttributes(const std::vector<LLStaticHashedString> * attri
     for (U32 i = 0; i < LLShaderMgr::instance()->mReservedAttribs.size(); i++)
     {
         const char* name = LLShaderMgr::instance()->mReservedAttribs[i].c_str();
-        glBindAttribLocationARB(mProgramObject, i, (const GLcharARB *) name);
+        glBindAttribLocation(mProgramObject, i, (const GLcharARB *) name);
     }
     
     //link the program
@@ -552,7 +552,7 @@ BOOL LLGLSLShader::mapAttributes(const std::vector<LLStaticHashedString> * attri
         for (U32 i = 0; i < LLShaderMgr::instance()->mReservedAttribs.size(); i++)
         {
             const char* name = LLShaderMgr::instance()->mReservedAttribs[i].c_str();
-            S32 index = glGetAttribLocationARB(mProgramObject, (const GLcharARB *)name);
+            S32 index = glGetAttribLocation(mProgramObject, (const GLcharARB *)name);
             if (index != -1)
             {
                 mAttribute[i] = index;
@@ -565,7 +565,7 @@ BOOL LLGLSLShader::mapAttributes(const std::vector<LLStaticHashedString> * attri
             for (U32 i = 0; i < numAttributes; i++)
             {
                 const char* name = (*attributes)[i].String().c_str();
-                S32 index = glGetAttribLocationARB(mProgramObject, name);
+                S32 index = glGetAttribLocation(mProgramObject, name);
                 if (index != -1)
                 {
                     mAttribute[LLShaderMgr::instance()->mReservedAttribs.size() + i] = index;

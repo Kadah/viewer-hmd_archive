@@ -148,12 +148,10 @@ bool LLRenderTarget::addTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, LLT
 		if (mDepth)
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
-
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, LLTexUnit::getInternalType(mUsage), mDepth, 0);
-		stop_glerror();
+		    stop_glerror();
 			glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
-	}
-
+        }
 		stop_glerror();
 	}
 
@@ -184,12 +182,12 @@ bool LLRenderTarget::addTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, LLT
 		if (glGetError() != GL_NO_ERROR)
 		{
 			LL_WARNS() << "Could not allocate color buffer for render target." << LL_ENDL;
+            stop_glerror();
 			return false;
 		}
 	}
 
 	sBytesAllocated += mResX*mResY * 4;
-
 	stop_glerror();
 
 	if (offset == 0)
@@ -442,15 +440,6 @@ bool LLRenderTarget::addColorAttachment(U32 color_fmt)
 	mTex.push_back(tex);
 	mInternalFormat.push_back(color_fmt);
 
-#if !LL_DARWIN
-	if (gDebugGL)
-	{ //bind and unbind to validate target
-		bindTarget();
-		flush();
-	}
-#endif
-    
-    
 	return true;
 }
 
@@ -768,7 +757,8 @@ void LLRenderTarget::copyContents(LLRenderTarget& source, S32 srcX0, S32 srcY0, 
 	LLGLDepthTest depth(write_depth, write_depth);
 
 	gGL.flush();
-	if (!source.mFBO || !mFBO)
+
+	if (!source.mFBO)
 	{
 		LL_WARNS() << "Cannot copy framebuffer contents for non FBO render targets." << LL_ENDL;
 		return;

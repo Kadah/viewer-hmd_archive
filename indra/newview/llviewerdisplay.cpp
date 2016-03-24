@@ -638,6 +638,11 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
         U32 render_mode = gHMD.getRenderMode();
         BOOL hmd_ready  = gHMD.isHMDMode() && gHMD.isHMDConnected();
 
+        if (gHMD.isHMDMode())
+        {
+            gHMD.beginFrame();
+        }
+
         if (render_mode == LLHMD::RenderMode_None || for_snapshot_original)
         {
             render_frame(rebuild, FALSE, -1);
@@ -649,9 +654,19 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
             render_frame(rebuild, TRUE, 1);
         }
 
+        if (gHMD.isHMDMode())
+        {
+            gHMD.endFrame();
+        }
+
         if (!for_snapshot)
         {
             swap(gDisplaySwapBuffers, TRUE);
+        }
+
+        if (gHMD.isHMDMode())
+        {
+            gHMD.postSwap();
         }
     }
 
@@ -1320,15 +1335,9 @@ void LLViewerDisplay::swap(BOOL doSwap, BOOL newSwap)
 
 	if (doSwap)
 	{
-        if (gHMD.isHMDMode())
-        {
-            gHMD.endFrame();
-        }
-        else if (gViewerWindow && gViewerWindow->getWindow())
-        {
-            gViewerWindow->getWindow()->swapBuffers();
-        }
+        gViewerWindow->getWindow()->swapBuffers();
 	}
+
 	gDisplaySwapBuffers = newSwap;
 }
 
@@ -1695,9 +1704,10 @@ void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
 
     if (forHMD)
     {
-        gHMD.setupEye(whichEye);
-	update_camera();
+        gHMD.setupEye(whichEye);	    
     }
+
+    update_camera();
 
     BOOL to_texture = (gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow);
 
