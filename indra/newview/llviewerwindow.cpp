@@ -1501,13 +1501,7 @@ BOOL LLViewerWindow::handleActivate(LLWindow *window, BOOL activated)
 
 BOOL LLViewerWindow::handleActivateApp(LLWindow *window, BOOL activating)
 {
-    if (!activating && gHMD.getRenderMode() == LLHMD::RenderMode_HMD)
-    {
-        // need to switch back to normal mode or the HMD window gets borked.
-        gHMD.setRenderMode(LLHMD::RenderMode_None, false);
-    }
 	//if (!activating) gAgentCamera.changeCameraToDefault();
-
 	LLViewerJoystick::getInstance()->setNeedsReset(true);
 	return FALSE;
 }

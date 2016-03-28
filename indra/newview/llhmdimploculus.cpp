@@ -284,19 +284,30 @@ BOOL LLHMDImplOculus::initSwapChains()
     return success;
 }
 
+void dumpOculusError(const char* caller)
+{
+    ovrErrorInfo errorInfo;
+    ovr_GetLastErrorInfo(&errorInfo);
+    LL_ERRS() << caller << " failed: " << errorInfo.ErrorString << LL_ENDL;
+}
+
 BOOL LLHMDImplOculus::initSwapChain(int eyeIndex)
 {
 
 #if OCULUS_12
+    glEnable(GL_FRAMEBUFFER_SRGB);
+
     ovrTextureSwapChainDesc swapChainDesc;
-    swapChainDesc.Type      = ovrTexture_2D;
-    swapChainDesc.ArraySize = 3;
-    swapChainDesc.Width     = mOculus->mViewport.w;
-    swapChainDesc.Height    = mOculus->mViewport.h;
-    swapChainDesc.MipLevels = 1;
-    swapChainDesc.Format    = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
-    swapChainDesc.SampleCount = 1;
-    swapChainDesc.StaticImage = ovrFalse;
+    swapChainDesc.Type          = ovrTexture_2D;
+    swapChainDesc.ArraySize     = 3;
+    swapChainDesc.Width         = mOculus->mViewport.w;
+    swapChainDesc.Height        = mOculus->mViewport.h;
+    swapChainDesc.MipLevels     = 1;
+    swapChainDesc.Format        = OVR_FORMAT_R8G8B8A8_UNORM_SRGB;
+    swapChainDesc.SampleCount   = 1;
+    swapChainDesc.StaticImage   = ovrFalse;
+    swapChainDesc.MiscFlags     = ovrTextureMisc_None;
+    swapChainDesc.BindFlags     = ovrTextureBind_None;
 
     ovrResult result = ovr_CreateTextureSwapChainGL(mOculus->mHMD, &swapChainDesc, &mOculus->mSwapChain[eyeIndex]);
 #else
@@ -305,6 +316,7 @@ BOOL LLHMDImplOculus::initSwapChain(int eyeIndex)
 
     if (!OVR_SUCCESS(result))
     {
+        dumpOculusError("ovr_CreateTextureSwapChainGL");
         return FALSE;
     }
 
@@ -314,6 +326,7 @@ BOOL LLHMDImplOculus::initSwapChain(int eyeIndex)
     result = ovr_GetTextureSwapChainLength(mOculus->mHMD, mOculus->mSwapChain[eyeIndex], &length);
     if (!OVR_SUCCESS(result))
     {
+        dumpOculusError("ovr_GetTextureSwapChainLength");
         return FALSE;
     }
 #else
@@ -330,6 +343,7 @@ BOOL LLHMDImplOculus::initSwapChain(int eyeIndex)
         result = ovr_GetTextureSwapChainBufferGL(mOculus->mHMD, mOculus->mSwapChain[eyeIndex], texIndex, &swapChainTextureId);
         if (!OVR_SUCCESS(result))
         {
+            dumpOculusError("ovr_GetTextureSwapChainBufferGL");
             return FALSE;
         }
     #else
