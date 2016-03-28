@@ -1896,13 +1896,6 @@ bool LLAppViewer::cleanup()
 
 	LLTracker::cleanupInstance();
 	
-	// *FIX: This is handled in LLAppViewerWin32::cleanup().
-	// I'm keeping the comment to remember its order in cleanup,
-	// in case of unforseen dependency.
-	//#if LL_WINDOWS
-	//	gDXHardware.cleanup();
-	//#endif // LL_WINDOWS
-
 	LLVolumeMgr* volume_manager = LLPrimitive::getVolumeManager();
 	if (!volume_manager->cleanup())
 	{
@@ -3362,12 +3355,15 @@ LLSD LLAppViewer::getViewerInfo() const
 	info["GRAPHICS_CARD_VENDOR"] = (const char*)(glGetString(GL_VENDOR));
 	info["GRAPHICS_CARD"] = (const char*)(glGetString(GL_RENDERER));
 
-#if LL_WINDOWS
-	LLSD driver_info = gDXHardware.getDisplayInfo();
+    LLSD driver_info;
+#if LL_USE_DX
+	driver_info = gDXHardware.getDisplayInfo();
 	if (driver_info.has("DriverVersion"))
 	{
 		info["GRAPHICS_DRIVER_VERSION"] = driver_info["DriverVersion"];
 	}
+#elif LL_WINDOWS
+	info["GRAPHICS_DRIVER_VERSION"] = driver_info["DriverVersion"];
 #endif
 
 	info["OPENGL_VERSION"] = (const char*)(glGetString(GL_VERSION));
