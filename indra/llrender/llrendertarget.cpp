@@ -245,17 +245,17 @@ bool LLRenderTarget::forceTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, L
 	mResY = resy;
 
 	mStencil  = false;
-    mUseDepth = false;
+        mUseDepth = false;
 	mUsage    = usage;
 	
 
-	if (gGLManager.mHasFramebufferObject)
-	{
+    if (gGLManager.mHasFramebufferObject)
+    {
 
-		glGenFramebuffers(1, (GLuint *)&mFBO);
+        glGenFramebuffers(1, (GLuint *)&mFBO);
 
-		stop_glerror();
-	}
+        stop_glerror();
+    }
 
     mTex.clear();
     mInternalFormat.clear();
@@ -354,6 +354,26 @@ bool LLRenderTarget::allocate(U32 resx, U32 resy, U32 color_fmt, bool depth, boo
 	}
 
 	return addColorAttachment(color_fmt);
+}
+
+bool LLRenderTarget::setAttachment(int which, int textureId)
+{
+    llassert(which < mTex.size());
+
+    if (mFBO)
+    {
+        stop_glerror();
+        U32 old_tex = mTex[which];
+        glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + which, LLTexUnit::getInternalType(mUsage), textureId, 0);
+        stop_glerror();
+        check_framebuffer_status();
+        glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
+        LLImageGL::deleteTextures(1, &old_tex);
+        mTex[which] = textureId;
+    }
+
+    return TRUE;
 }
 
 bool LLRenderTarget::addColorAttachment(U32 color_fmt)

@@ -78,8 +78,8 @@ public:
 	//A stripped version of allocate to handle insertion of Rift swap buffer textures.
 	bool addTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, LLTexUnit::eTextureType usage = LLTexUnit::TT_TEXTURE);
 
-        //A stripped version of allocate to handle insertion of Rift swap buffer textures.
-        bool forceTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, LLTexUnit::eTextureType usage = LLTexUnit::TT_TEXTURE);
+    //A stripped version of allocate to handle insertion of Rift swap buffer textures.
+    bool forceTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, LLTexUnit::eTextureType usage = LLTexUnit::TT_TEXTURE);
 
 	//resize existing attachments to use new resolution and color format
 	// CAUTION: if the GL runs out of memory attempting to resize, this render target will be undefined
@@ -90,6 +90,9 @@ public:
 	//add color buffer attachment
 	//limit of 4 color attachments per render target
 	bool addColorAttachment(U32 color_fmt);
+
+        //set color buffer attachment to specified texture, use with caution...
+        bool setAttachment(int which, int textureId);
 
 	//allocate a depth texture
 	bool allocateDepth();

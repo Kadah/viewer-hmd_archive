@@ -1202,9 +1202,8 @@ BOOL LLManipRotate::updateVisiblity()
 		// x axis range is (-aspect * 0.5f, +aspect * 0.5)
 		// y axis range is (-0.5, 0.5)
 		// so use getWorldViewHeightRaw as scale factor when converting to pixel coordinates
-        S32 h = gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewHeightScaled();
-		mCenterScreen.set((S32)((0.5f - center.mV[VY]) / gAgentCamera.mHUDCurZoom * h),
-							(S32)((center.mV[VZ] + 0.5f) / gAgentCamera.mHUDCurZoom * h));
+        S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewHeightScaled();
+		mCenterScreen.set((S32)((0.5f - center.mV[VY]) / gAgentCamera.mHUDCurZoom * h), (S32)((center.mV[VZ] + 0.5f) / gAgentCamera.mHUDCurZoom * h));
 		visible = TRUE;
 	}
 	else
@@ -1730,8 +1729,8 @@ void LLManipRotate::mouseToRay( S32 x, S32 y, LLVector3* ray_pt, LLVector3* ray_
 {
 	if (LLSelectMgr::getInstance()->getSelection()->getSelectType() == SELECT_TYPE_HUD)
 	{
-        S32 w = gHMD.isHMDMode() ? gHMD.getUIWidth() : gViewerWindow->getWorldViewRectScaled().getWidth();
-        S32 h = gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewRectScaled().getHeight();
+        S32 w = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWorldViewRectScaled().getWidth();
+        S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewRectScaled().getHeight();
 
 		F32 mouse_x = (((F32)x / w) - 0.5f) / gAgentCamera.mHUDCurZoom;
 		F32 mouse_y = ((((F32)y) / h) - 0.5f) / gAgentCamera.mHUDCurZoom;

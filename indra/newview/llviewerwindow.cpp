@@ -2321,8 +2321,8 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
 		// round up when converting coordinates to make sure there are no gaps at edge of window
         if (gHMD.isHMDMode())
         {
-            setup2DViewport(0, 0, gHMD.getUIWidth(), gHMD.getUIHeight());
-            mRootView->reshape(llceil((F32)gHMD.getUIWidth() / mDisplayScale.mV[VX]), llceil((F32)gHMD.getUIHeight() / mDisplayScale.mV[VY]));
+            setup2DViewport(0, 0, gHMD.getViewportWidth(), gHMD.getViewportHeight());
+            mRootView->reshape(llceil((F32)gHMD.getViewportWidth() / mDisplayScale.mV[VX]), llceil((F32)gHMD.getViewportHeight() / mDisplayScale.mV[VY]));
         }
         else
         {
@@ -2975,8 +2975,8 @@ void LLViewerWindow::moveCursorToCenter()
 {
 	if (! gSavedSettings.getBOOL("DisableMouseWarp"))
 	{
-		S32 x = (gHMD.isHMDMode() ? gHMD.getUIWidth()  : getWorldViewWidthScaled())  / 2;
-		S32 y = (gHMD.isHMDMode() ? gHMD.getUIHeight() : getWorldViewHeightScaled()) / 2;
+		S32 x = (gHMD.isHMDMode() ? gHMD.getViewportWidth()  : getWorldViewWidthScaled())  / 2;
+		S32 y = (gHMD.isHMDMode() ? gHMD.getViewportHeight() : getWorldViewHeightScaled()) / 2;
 	
 		//on a forced move, all deltas get zeroed out to prevent jumping
 		mCurrentMousePoint.set(x,y);
@@ -3680,8 +3680,8 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point, BOOL updateHMDMouse)
 	// Store last mouse location.
 	// If mouse leaves window, pretend last point was on edge of window
 
-    S32 maxW = gHMD.isHMDMode() ? gHMD.getUIWidth()  : getWindowWidthScaled();
-    S32 maxH = gHMD.isHMDMode() ? gHMD.getUIHeight() : getWindowHeightScaled();
+    S32 maxW = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : getWindowWidthScaled();
+    S32 maxH = gHMD.isHMDMode() ? gHMD.getViewportHeight() : getWindowHeightScaled();
 	if (point.mX < 0)
 	{
 		mCurrentMousePoint.mX = 0;
@@ -3760,7 +3760,7 @@ void LLViewerWindow::renderSelections( BOOL for_gl_pick, BOOL pick_parcel_walls,
 			gGL.matrixMode(LLRender::MM_MODELVIEW);
 			gGL.pushMatrix();
 			gGL.loadIdentity();
-			gGL.loadMatrix(OGL_TO_CFR_ROTATION);		// Load Cory's favorite reference frame
+			gGL.loadMatrix(OGL_TO_CFR_BASIS);		// Load Cory's favorite reference frame
 			gGL.translatef(-hud_bbox.getCenterLocal().mV[VX] + (depth *0.5f), 0.f, 0.f);
 		}
 
@@ -4205,11 +4205,11 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
 LLVector3 LLViewerWindow::mousePointHUD(const S32 x, const S32 y) const
 {
 	// find screen resolution
-	S32			height = gHMD.isHMDMode() ? gHMD.getUIHeight() : getWorldViewHeightScaled();
+	S32			height = gHMD.isHMDMode() ? gHMD.getViewportHeight() : getWorldViewHeightScaled();
 
 	// find world view center
-	F32			center_x = gHMD.isHMDMode() ? gHMD.getUIWidth() / 2 : getWorldViewRectScaled().getCenterX();
-	F32			center_y = gHMD.isHMDMode() ? gHMD.getUIHeight() / 2 : getWorldViewRectScaled().getCenterY();
+	F32			center_x = gHMD.isHMDMode() ? gHMD.getViewportWidth() / 2 : getWorldViewRectScaled().getCenterX();
+	F32			center_y = gHMD.isHMDMode() ? gHMD.getViewportHeight() / 2 : getWorldViewRectScaled().getCenterY();
 
 	// remap with uniform scale (1/height) so that top is -0.5, bottom is +0.5
 	F32 hud_x = -((F32)x - center_x)  / height;
@@ -4930,10 +4930,17 @@ void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset, S32 width, S32 
 	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
 }
 
-void LLViewerWindow::setup3DRender(S32 x_offset, S32 y_offset, bool useHMDEyeWidth)
+void LLViewerWindow::setup3DRender(S32 x_offset, S32 y_offset, int whichEye)
 {
-	// setup perspective camera
-	LLViewerCamera::getInstance()->setPerspective(  NOT_FOR_SELECTION,
+    if (gHMD.isHMDMode())
+    {
+        gHMD.setup3DRender(whichEye);
+    }
+    else
+    {
+	    // setup perspective camera
+	    LLViewerCamera::getInstance()->setPerspective(
+                                                    !FOR_SELECTION,
                                                     getWorldViewLeftRaw(),
                                                     getWorldViewBottomRaw(),
                                                     getWorldViewWidthRaw(),
@@ -4941,20 +4948,22 @@ void LLViewerWindow::setup3DRender(S32 x_offset, S32 y_offset, bool useHMDEyeWid
                                                     FALSE,
                                                     LLViewerCamera::getInstance()->getNear(),
                                                     MAX_FAR_CLIP * 2.0f);
-	setup3DViewport(x_offset, y_offset, useHMDEyeWidth);
+    }
+
+	setup3DViewport(x_offset, y_offset);
 }
 
-void LLViewerWindow::setup3DViewport(S32 x_offset, S32 y_offset, bool useHMDEyeWidth)
+void LLViewerWindow::setup3DViewport(S32 x_offset, S32 y_offset)
 {
     if (gHMD.isHMDMode())
-{
-        gHMD.setup3DViewport(x_offset, y_offset, useHMDEyeWidth);
-}
+    {
+        gHMD.setup3DViewport(x_offset, y_offset);
+    }
     else
-{ 
+    { 
         getWorldViewportRaw(gGLViewport, 0, 0, x_offset, y_offset);
-	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-}
+	    glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+    }
 }
 
 void LLViewerWindow::revealIntroPanel()

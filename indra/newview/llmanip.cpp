@@ -288,8 +288,8 @@ BOOL LLManip::getMousePointOnPlaneGlobal(LLVector3d& point, S32 x, S32 y, LLVect
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
 		BOOL result = FALSE;
-        S32 w = gHMD.isHMDMode() ? gHMD.getUIWidth()  : gViewerWindow->getWorldViewWidthScaled();
-        S32 h = gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewHeightScaled();
+        S32 w = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWorldViewWidthScaled();
+        S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewHeightScaled();
 		F32 mouse_x = ((F32)x / w - 0.5f) * camera->getUIAspect() / gAgentCamera.mHUDCurZoom;
 		F32 mouse_y = ((F32)y / h - 0.5f) / gAgentCamera.mHUDCurZoom;
 
@@ -360,8 +360,8 @@ BOOL LLManip::nearestPointOnLineFromMouse( S32 x, S32 y, const LLVector3& b1, co
     LLViewerCamera* camera = LLViewerCamera::getInstance();
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
-        S32 w = gHMD.isHMDMode() ? gHMD.getUIWidth() : gViewerWindow->getWorldViewWidthScaled();
-        S32 h = gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewHeightScaled();
+        S32 w = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWorldViewWidthScaled();
+        S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewHeightScaled();
 
 		F32 mouse_x = (((F32)x / w) - 0.5f) * camera->getUIAspect() / gAgentCamera.mHUDCurZoom;
 		F32 mouse_y = (((F32)y / h) - 0.5f) / gAgentCamera.mHUDCurZoom;
@@ -724,14 +724,14 @@ LLColor4 LLManip::setupSnapGuideRenderPass(S32 pass)
 	{
 	case 0:
 		// shadow
-		gViewerWindow->setup3DViewport(1, -1, true);
+		gViewerWindow->setup3DViewport(1, -1);
 		line_color = grid_color_shadow;
 		line_color.mV[VALPHA] *= line_alpha;
 		LLUI::setLineWidth(2.f);
 		break;
 	case 1:
 		// hidden lines
-		gViewerWindow->setup3DViewport(0, 0, true);
+		gViewerWindow->setup3DViewport(0, 0);
 		line_color = grid_color_bg;
 		line_color.mV[VALPHA] *= line_alpha;
 		LLUI::setLineWidth(1.f);

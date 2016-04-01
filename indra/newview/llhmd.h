@@ -189,9 +189,6 @@ public:
 
     F32 getPixelDensity() const;
     void setPixelDensity(F32 pixelDensity);
-    
-    S32 getUIWidth() const;
-    S32 getUIHeight() const;
 
     S32 getViewportWidth() const;
     S32 getViewportHeight() const;
@@ -205,7 +202,6 @@ public:
     F32 getVerticalFOV() const;
     F32 getAspect();
 
-    F32 getUIAspect() const { return (F32)getUIWidth() / (F32)getUIHeight(); }
     F32 getUIEyeDepth() const { return mUIEyeDepth; }
     F32 getUIMagnification() { return mUIShape.mUIMagnification; }
 
@@ -346,7 +342,8 @@ public:
 
     BOOL releaseAllEyeRT();
 
-    void setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye);
+    void setup3DViewport(S32 x_offset, S32 y_offset);
+    void setup3DRender(int which_eye);
 
     LLVector3 getHeadPosition() const;
     const LLQuaternion& getAgentRotation() const { return mAgentRot; }
@@ -456,9 +453,6 @@ public:
     virtual F32 getPixelDensity() const { return 1.0f; }
     virtual void setPixelDensity(F32 pixelDensity) { (void)pixelDensity; }
 
-    virtual S32 getUIWidth()  const { return kDefaultHResolution; }
-    virtual S32 getUIHeight() const { return kDefaultVResolution; }
-
     virtual BOOL calculateViewportSettings() { return FALSE; }
 
     virtual F32 getEyeToScreenDistance() const { return kDefaultEyeToScreenDistance; }
@@ -481,13 +475,13 @@ public:
     virtual void resetOrientation() {}
     virtual LLVector3 getHeadPosition() const { return LLVector3::zero; }
     
-
+    virtual void setup3DRender(int which)   { (void)which;  }
     virtual BOOL beginFrame()               { return FALSE; }
     virtual BOOL bindEyeRT(int whichEye)    { return FALSE; }
     virtual BOOL releaseEyeRT(int whichEye) { return FALSE; }
     virtual BOOL endFrame()                 { return FALSE; }
     virtual BOOL postSwap()                 { return FALSE; }
-    virtual BOOL releaseAllEyeRT()          { return FALSE; }
+    virtual BOOL releaseAllEyeRT()          { return FALSE; } // release to OS, not flush!
 
     virtual U32  getFrameIndex()            { return 0;     }
     virtual U32  getSubmittedFrameIndex()   { return 0;     }

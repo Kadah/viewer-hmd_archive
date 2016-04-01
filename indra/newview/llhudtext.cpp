@@ -168,8 +168,8 @@ void LLHUDText::renderText()
 	
 	if (mOnHUDAttachment)
 	{
-		x_pixel_vec = LLVector3::y_axis / (F32)(gHMD.isHMDMode() ? gHMD.getUIWidth() : gViewerWindow->getWorldViewWidthRaw());
-		y_pixel_vec = LLVector3::z_axis / (F32)(gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewHeightRaw());
+        x_pixel_vec = LLVector3::y_axis / (F32)(gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWorldViewWidthRaw());
+        y_pixel_vec = LLVector3::z_axis / (F32)(gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewHeightRaw());
 	}
 	else
 	{

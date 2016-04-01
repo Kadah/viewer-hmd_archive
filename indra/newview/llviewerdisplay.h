@@ -58,7 +58,7 @@ class LLViewerDisplay
 {
 public:
     static void display_startup();
-    static void update_camera();
+    static void update_camera(int whichEye = -1); // -1 == not for HMD
     static void display(BOOL rebuild = TRUE, F32 zoom_factor = 1.f, int subfield = 0, BOOL for_snapshot = FALSE);
     static void render_ui(ui_render_options& options);    
     static void swap(BOOL doSwap, BOOL newSwap);

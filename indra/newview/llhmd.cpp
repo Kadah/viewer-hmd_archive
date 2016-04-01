@@ -566,8 +566,6 @@ void LLHMD::onAppFocusLost()
 
 F32 LLHMD::getPixelDensity() const { return mImpl ? mImpl->getPixelDensity() : 1.0f; }
 void LLHMD::setPixelDensity(F32 pixelDensity) { if (mImpl) { mImpl->setPixelDensity(pixelDensity); } }
-S32 LLHMD::getUIWidth() const { return mImpl ? mImpl->getUIWidth() : 0; }
-S32 LLHMD::getUIHeight() const { return mImpl ? mImpl->getUIHeight() : 0; }
 S32 LLHMD::getViewportWidth() const { return mImpl ? mImpl->getViewportWidth() : 0; }
 S32 LLHMD::getViewportHeight() const { return mImpl ? mImpl->getViewportHeight() : 0; }
 F32 LLHMD::getInterpupillaryOffset() const { return mImpl ? mImpl->getInterpupillaryOffset() : 0.0f; }
@@ -1058,8 +1056,8 @@ void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
     else
     {
         // 1. determine horizontal and vertical percentage within toroidal UI surface based on mouse_x, mouse_y
-        F32 uiw = (F32)gHMD.getUIWidth();
-        F32 uih = (F32)gHMD.getUIHeight();
+        F32 uiw = (F32)gHMD.getViewportWidth();
+        F32 uih = (F32)gHMD.getViewportHeight();
         F32 nx = llclamp((F32)mouse_x / (F32)uiw, 0.0f, 1.0f);
         F32 ny = llclamp((F32)mouse_y / (F32)uih, 0.0f, 1.0f);
 
@@ -1203,23 +1201,24 @@ BOOL LLHMD::releaseAllEyeRT()
     return FALSE;
 }
 
-void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset, BOOL forEye)
+void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset)
 {
-    S32 x = 0;
-    S32 y = 0;
-    S32 w = mImpl->getViewportWidth();
-    S32 h = mImpl->getViewportHeight();
-    gViewerWindow->getWorldViewportRaw(gGLViewport, w, h, x, y);
-	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+    S32 w = getViewportWidth();
+    S32 h = getViewportHeight();
+    glViewport(x_offset, y_offset, w, h);
+}
+
+void LLHMD::setup3DRender(int which_eye)
+{
+    LLViewerCamera::getInstance()->setProjectionMatrix(mEyeProjection[which_eye]);
 }
 
 void LLHMD::setup2DRender()
 {
-    gl_state_for_2d(getViewportWidth(), getViewportHeight());
-    gViewerWindow->getWindowViewportRaw(gGLViewport);
-    glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+    S32 w = getViewportWidth();
+    S32 h = getViewportHeight();
+    glViewport(0, 0, w, h);
 }
-
 
 void LLHMD::renderCursor2D()
 {
@@ -1404,7 +1403,7 @@ void LLHMD::render3DUI()
 
     if (!gPipeline.mUIScreen.isComplete())
     {
-        if (!gPipeline.mUIScreen.allocate(gHMD.getUIWidth(), gHMD.getUIHeight(), GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
+        if (!gPipeline.mUIScreen.allocate(gHMD.getViewportWidth(), gHMD.getViewportHeight(), GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
         {
             LL_WARNS() << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
             return;
@@ -1476,24 +1475,24 @@ void LLHMD::prerender2DUI()
     glClearColor(0.0f,0.0f,0.0f,0.0f);
     gPipeline.mUIScreen.clear();
     gGL.color4f(1,1,1,1);
-    //LLUI::setDestIsRenderTarget(TRUE);
+    LLUI::setDestIsRenderTarget(TRUE);
     // this is necessary even though it theoretically already is using that blend type due to
     // setting the DestIsRenderTarget flag
-    //gGL.setSceneBlendType(LLRender::BT_ALPHA);
+    gGL.setSceneBlendType(LLRender::BT_ALPHA);
 }
 
 void LLHMD::postRender2DUI()
 {
     gHMD.renderCursor2D();
     gPipeline.mUIScreen.flush();
-    if (LLRenderTarget::sUseFBO)
+    if (LLRenderTarget::sUseFBO && !gHMD.isHMDMode())
     {
         //copy depth buffer from mScreen to framebuffer
         LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
                                                                     0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
                                                                     GL_DEPTH_BUFFER_BIT, GL_NEAREST);
     }
-    //LLUI::setDestIsRenderTarget(FALSE);
+    LLUI::setDestIsRenderTarget(FALSE);
 }
 
 BOOL LLHMD::beginFrame()

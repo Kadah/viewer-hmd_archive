@@ -810,7 +810,7 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
 		relative_camera_dir = LLVector3(1.f, 0.f, 0.f) * ~grid_rotation;
 		LLVector4 translation(object_position);
 		transform.initRotTrans(grid_rotation, translation);
-		LLMatrix4 cfr(OGL_TO_CFR_ROTATION);
+		LLMatrix4 cfr(OGL_TO_CFR_BASIS);
 		transform *= cfr;
 		LLMatrix4 window_scale;
 		F32 zoom_level = 2.f * gAgentCamera.mHUDCurZoom;
@@ -1871,7 +1871,7 @@ void LLManipTranslate::renderTranslationHandles()
 	// Drag handles 	
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
-        S32 h = gHMD.isHMDMode() ? gHMD.getUIHeight() : gViewerWindow->getWorldViewHeightRaw();
+        S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewHeightRaw();
 		mArrowLengthMeters = mAxisArrowLength / h;
 		mArrowLengthMeters /= gAgentCamera.mHUDCurZoom;
 	}

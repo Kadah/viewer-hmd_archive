@@ -49,12 +49,7 @@
     #define IDCONTINUE 1        // Exist on Windows along "IDOK" and "IDCANCEL" but not on Mac
 #endif
 
-
-#define OCULUS_12 1
-#define OCULUS_08 !OCULUS_12
-
 #include "OVR_CAPI_GL.h"
-
 
 struct LLHMDImplOculus::OculusData
 {
@@ -62,43 +57,32 @@ struct LLHMDImplOculus::OculusData
     {
         mCurrentSwapChainIndex[0] = 0;
         mCurrentSwapChainIndex[1] = 0;
-        mMirrorTexture = 0;
+        mMirrorTexture            = 0;
     }
 
-#if OCULUS_12
-    typedef ovrSession          Headset;
-    typedef ovrTextureSwapChain SwapChain;
-    typedef ovrMirrorTexture    MirrorTexture;
-#else
-    typedef ovrHmd              Headset;
-    typedef ovrSwapTextureSet*  SwapChain;
-    typedef ovrTexture*         MirrorTexture;
-#endif
-
     // Oculus-Specific data structures
-    ovrResult m_initResult;
-    Headset mHMD;
-    ovrHmdDesc mHMDDesc;
-    ovrGraphicsLuid mLUID;
-    ovrSizei mViewport;
-    ovrPosef mEyeRenderPose[ovrEye_Count];
-    ovrMatrix4f mProjection[ovrEye_Count];
-    ovrEyeRenderDesc mEyeRenderDesc[ovrEye_Count];
-    SwapChain mSwapChain[ovrEye_Count];
-    int mCurrentSwapChainIndex[ovrEye_Count];
-    MirrorTexture mMirrorTexture;
-    GLuint mMirrorFbo = 0;
+    ovrSession          mHMD;
+    ovrHmdDesc          mHMDDesc;
+    ovrGraphicsLuid     mLUID;
+    ovrSizei            mViewport;
+    ovrPosef            mEyeRenderPose[ovrEye_Count];
+    ovrMatrix4f         mProjection[ovrEye_Count];
+    ovrEyeRenderDesc    mEyeRenderDesc[ovrEye_Count];
+    ovrTextureSwapChain mSwapChain[ovrEye_Count];    
+    ovrMirrorTexture    mMirrorTexture;
+    int                 mCurrentSwapChainIndex[ovrEye_Count];
 };
 
 LLHMDImplOculus::LLHMDImplOculus()
 : mOculus(NULL)
 , mFrameIndex(0)
 , mSubmittedFrameIndex(0)
-    , mTrackingCaps(0)
+, mTrackingCaps(0)
 , mEyeToScreenDistance(kDefaultEyeToScreenDistance)
 , mInterpupillaryDistance(kDefaultInterpupillaryOffset)
 , mVerticalFovRadians(kDefaultVerticalFOVRadians)
 , mAspect(kDefaultAspect)
+, mMirrorRT(NULL)
 {
     mOculus = new LLHMDImplOculus::OculusData;
     mEyeRotation.setEulerAngles(0.0f, 10.0f, 30.0f); // "haters gonna hate" sane defaults (better than NaNs)
@@ -109,6 +93,7 @@ LLHMDImplOculus::LLHMDImplOculus()
         for (int t = 0; t < 3; ++t)
         {
             mEyeRT[i][t] = nullptr;
+            mSwapTexture[i][t] = 0;
         }
     }
 }
@@ -116,8 +101,8 @@ LLHMDImplOculus::LLHMDImplOculus()
 LLHMDImplOculus::~LLHMDImplOculus()
 {
     shutdown();
-
     delete mOculus;
+    mOculus = NULL;
 }
 
 
@@ -125,29 +110,23 @@ LLHMDImplOculus::~LLHMDImplOculus()
 // Not something to be called per frame as it's kinda 'spensive.
 bool HasHeadMountedDisplay()
 {    
-    #if OCULUS_12
-        const int cTimeoutMs = 512;
-        ovrDetectResult result = ovr_Detect(cTimeoutMs);
-        if (result.IsOculusServiceRunning)
-        {
-            return result.IsOculusHMDConnected;
-        }
-    #endif
-
+    const int cTimeoutMs = 512;
+    ovrDetectResult result = ovr_Detect(cTimeoutMs);
+    if (result.IsOculusServiceRunning)
+    {
+        return result.IsOculusHMDConnected;
+    }
     return false;
 }
 
 BOOL LLHMDImplOculus::init()
 {
     ovrInitParams params;
-
-    params.Flags = 0;
-
-    //params.Flags |= ovrInit_Debug;
-
+    params.Flags                 = ovrInit_Debug;
     params.RequestedMinorVersion = OVR_MINOR_VERSION;
-    params.LogCallback = NULL;
-    params.ConnectionTimeoutMS = 0;
+    params.LogCallback           = NULL;
+    params.UserData              = NULL;
+    params.ConnectionTimeoutMS   = 0;
 
     // Initializes LibOVR, and the Rift
     ovrResult init_result = ovr_Initialize(&params);
@@ -173,12 +152,8 @@ BOOL LLHMDImplOculus::init()
 
     mOculus->mHMDDesc = ovr_GetHmdDesc(mOculus->mHMD);
 
-    #if OCULUS_12
-        mTrackingCaps = ovr_GetTrackingState(mOculus->mHMD, 0.0, ovrTrue).StatusFlags;
-    #else
-        mTrackingCaps = ovr_GetTrackingState(mOculus->mHMD, 0.0).StatusFlags;
-    #endif
-
+    mTrackingCaps = ovr_GetTrackingState(mOculus->mHMD, 0.0, ovrTrue).StatusFlags;
+    
     gHMD.isHMDConnected(true);
 
     calculateViewportSettings();
@@ -240,36 +215,33 @@ void LLHMDImplOculus::destroySwapChains()
 {
     for (int i = 0; i < ovrEye_Count; ++i)
     {
-        if (mEyeRT[i][0])
+        // Release Oculus' swap textures from our RTs before we destroy them (twice!).
+        for (int t = 0; t < 3; ++t)
         {
-            // Release Oculus' swap textures from our RTs before we destroy them (twice!).
-            for (int t = 0; t < 3; ++t)
+            if (mEyeRT[i][t])
             {
-                mEyeRT[i][t]->forceTarget(0, 0, 0, GL_RGBA);
                 delete mEyeRT[i][t];
                 mEyeRT[i][t] = nullptr;
             }
 
-            #if OCULUS_12
-                ovr_DestroyTextureSwapChain(mOculus->mHMD, mOculus->mSwapChain[i]);
-            #else
-                ovr_DestroySwapTextureSet(mOculus->mHMD, mOculus->mSwapChain[i]);
-                mOculus->mSwapChain[i] = nullptr;
-            #endif
+            ovr_DestroyTextureSwapChain(mOculus->mHMD, mOculus->mSwapChain[i]);
         }
     }
 
-    if (mOculus->mMirrorFbo)
+    if (mMirrorRT)
     {
-        glDeleteFramebuffers(1, &mOculus->mMirrorFbo);        
-    }
-    mOculus->mMirrorFbo = 0;
+        mMirrorRT->setAttachment(0, 0); // remove ref to oculus mirror texture...
 
-    if (mOculus->mMirrorTexture)
-    {
-        ovr_DestroyMirrorTexture(mOculus->mHMD, mOculus->mMirrorTexture);
+        if (mOculus->mMirrorTexture)
+        {
+            ovr_DestroyMirrorTexture(mOculus->mHMD, mOculus->mMirrorTexture);
+        }
+        mOculus->mMirrorTexture = 0;
+
+        delete mMirrorRT;
     }
-    mOculus->mMirrorTexture = 0;
+
+    mMirrorRT = NULL;
 }
 
 BOOL LLHMDImplOculus::initSwapChains()
@@ -293,13 +265,11 @@ void dumpOculusError(const char* caller)
 
 BOOL LLHMDImplOculus::initSwapChain(int eyeIndex)
 {
-
-#if OCULUS_12
     glEnable(GL_FRAMEBUFFER_SRGB);
 
     ovrTextureSwapChainDesc swapChainDesc;
     swapChainDesc.Type          = ovrTexture_2D;
-    swapChainDesc.ArraySize     = 3;
+    swapChainDesc.ArraySize     = 1;
     swapChainDesc.Width         = mOculus->mViewport.w;
     swapChainDesc.Height        = mOculus->mViewport.h;
     swapChainDesc.MipLevels     = 1;
@@ -310,10 +280,6 @@ BOOL LLHMDImplOculus::initSwapChain(int eyeIndex)
     swapChainDesc.BindFlags     = ovrTextureBind_None;
 
     ovrResult result = ovr_CreateTextureSwapChainGL(mOculus->mHMD, &swapChainDesc, &mOculus->mSwapChain[eyeIndex]);
-#else
-    ovrResult result = ovr_CreateSwapTextureSetGL(mOculus->mHMD, GL_SRGB8_ALPHA8, mOculus->mViewport.w, mOculus->mViewport.h, &mOculus->mSwapChain[eyeIndex]);
-#endif
-
     if (!OVR_SUCCESS(result))
     {
         dumpOculusError("ovr_CreateTextureSwapChainGL");
@@ -322,45 +288,37 @@ BOOL LLHMDImplOculus::initSwapChain(int eyeIndex)
 
     int length = 0;
 
-#if OCULUS_12
     result = ovr_GetTextureSwapChainLength(mOculus->mHMD, mOculus->mSwapChain[eyeIndex], &length);
     if (!OVR_SUCCESS(result))
     {
         dumpOculusError("ovr_GetTextureSwapChainLength");
         return FALSE;
     }
-#else
-    length = mOculus->mSwapChain[eyeIndex]->TextureCount;
-#endif
 
     llassert(length <= 3);
-
     for (int texIndex = 0; texIndex < length; ++texIndex)
     {
         GLuint swapChainTextureId;
 
-    #if OCULUS_12
         result = ovr_GetTextureSwapChainBufferGL(mOculus->mHMD, mOculus->mSwapChain[eyeIndex], texIndex, &swapChainTextureId);
         if (!OVR_SUCCESS(result))
         {
             dumpOculusError("ovr_GetTextureSwapChainBufferGL");
             return FALSE;
         }
-    #else
-        ovrGLTexture* tex = (ovrGLTexture*)&mOculus->mSwapChain[eyeIndex]->Textures[texIndex];
-        swapChainTextureId = tex->OGL.TexId;
-    #endif
+
+        glBindTexture(GL_TEXTURE_2D, swapChainTextureId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SRGB_DECODE_EXT, GL_DECODE_EXT);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
         mEyeRT[eyeIndex][texIndex] = new LLRenderTarget();
-        mEyeRT[eyeIndex][texIndex]->forceTarget(mOculus->mViewport.w, mOculus->mViewport.h, swapChainTextureId, GL_SRGB8_ALPHA8, LLTexUnit::TT_TEXTURE);
+        mEyeRT[eyeIndex][texIndex]->allocate(mOculus->mViewport.w, mOculus->mViewport.h, GL_SRGB8_ALPHA8, true, false, LLTexUnit::TT_RECT_TEXTURE, true, 1);
+
+        mSwapTexture[eyeIndex][texIndex] = swapChainTextureId;
     }
 
     if (!mOculus->mMirrorTexture)
     {
-
-// TODO THESE SHOULD BE USING THE DIMS OF THE MAIN WINDOW (WHICH WILL GET THIS MIRROR FBO BOUNCED TO IT)
-
-    #if OCULUS_12
         ovrMirrorTextureDesc mirrorTextureDesc;
 
         memset(&mirrorTextureDesc, 0, sizeof(mirrorTextureDesc));
@@ -370,39 +328,28 @@ BOOL LLHMDImplOculus::initSwapChain(int eyeIndex)
 
         // Create mirror texture and an FBO used to copy mirror texture to back buffer
         result = ovr_CreateMirrorTextureGL(mOculus->mHMD, &mirrorTextureDesc, &mOculus->mMirrorTexture);
-    #else
-        result = ovr_CreateMirrorTextureGL(mOculus->mHMD, GL_SRGB8_ALPHA8, mOculus->mViewport.w * 2, mOculus->mViewport.h, reinterpret_cast<ovrTexture**>(&mOculus->mMirrorTexture));
-    #endif
-
         if (!OVR_SUCCESS(result))
         {
             return FALSE;
         }
 
-        glGenFramebuffers(1, &mOculus->mMirrorFbo);
-
         // Configure the mirror read buffer
         GLuint mirrorTextureId;
 
-    #if OCULUS_12
         result = ovr_GetMirrorTextureBufferGL(mOculus->mHMD, mOculus->mMirrorTexture, &mirrorTextureId);
         if (!OVR_SUCCESS(result))
         {
             return FALSE;
         }    
-    #else
-        mirrorTextureId = reinterpret_cast<ovrGLTexture*>(mOculus->mMirrorTexture)->OGL.TexId;
-    #endif
 
         glBindTexture(GL_TEXTURE_2D, mirrorTextureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SRGB_DECODE_EXT, GL_DECODE_EXT);
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, mOculus->mMirrorFbo);
-
-        glFramebufferTexture2D(GL_READ_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mirrorTextureId, 0);
-        glFramebufferRenderbuffer(GL_READ_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, 0);
-    }
+        mMirrorRT = new LLRenderTarget();
+        mMirrorRT->allocate(mirrorTextureDesc.Width, mirrorTextureDesc.Height, GL_SRGB8_ALPHA8, false, false, LLTexUnit::TT_RECT_TEXTURE, true, 1);
+        mMirrorRT->setAttachment(0, mirrorTextureId);
+    }    
 
     return true;
 }
@@ -437,24 +384,12 @@ BOOL LLHMDImplOculus::beginFrame()
 {
     ovrVector3f eyeOffsets[ovrEye_Count] =
     {
-
-    #if OCULUS_12
         mOculus->mEyeRenderDesc[ovrEye_Left ].HmdToEyeOffset,
         mOculus->mEyeRenderDesc[ovrEye_Right].HmdToEyeOffset
-    #else
-        mOculus->mEyeRenderDesc[ovrEye_Left ].HmdToEyeViewOffset,
-        mOculus->mEyeRenderDesc[ovrEye_Right].HmdToEyeViewOffset
-    #endif
-
     };
 
-    #if OCULUS_12
-        const double predictedDisplayTime = ovr_GetPredictedDisplayTime(mOculus->mHMD, getFrameIndex());
-        const ovrTrackingState  tracking_state  = ovr_GetTrackingState(mOculus->mHMD, predictedDisplayTime, ovrTrue);
-    #else
-        ovrFrameTiming          frame_timing    = ovr_GetFrameTiming(mOculus->mHMD, 0);
-        const ovrTrackingState  tracking_state  = ovr_GetTrackingState(mOculus->mHMD, frame_timing.DisplayMidpointSeconds);
-    #endif
+    const double predictedDisplayTime      = ovr_GetPredictedDisplayTime(mOculus->mHMD, getFrameIndex());
+    const ovrTrackingState  tracking_state = ovr_GetTrackingState(mOculus->mHMD, predictedDisplayTime, ovrTrue);
 
     ovr_CalcEyePoses(tracking_state.HeadPose.ThePose, eyeOffsets, mOculus->mEyeRenderPose);
 
@@ -486,6 +421,7 @@ BOOL LLHMDImplOculus::bindEyeRT(int which)
     int texIndex = mOculus->mCurrentSwapChainIndex[which];
 
     mEyeRT[which][texIndex]->bindTarget();
+    mEyeRT[which][texIndex]->clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     return true;
 }
@@ -499,7 +435,30 @@ BOOL LLHMDImplOculus::releaseEyeRT(int which)
 
     int texIndex = mOculus->mCurrentSwapChainIndex[which];
 
-    mEyeRT[which][texIndex]->flush();
+    S32 w = getViewportWidth();
+    S32 h = getViewportHeight();
+
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
+    glBindTexture(GL_TEXTURE_2D, mSwapTexture[which][texIndex]);
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
+
+#if 0
+    S32 srcX0 = 0;
+    S32 srcY0 = 0;
+    S32 srcX1 = getViewportWidth();
+    S32 srcY1 = getViewportHeight();
+
+    S32 dstX0 = (which * 512);
+    S32 dstY0 = 0;
+    S32 dstX1 = dstX0 + 512;
+    S32 dstY1 = 512;
+
+    LLRenderTarget::copyContentsToFramebuffer(
+        *(mEyeRT[which][texIndex]),
+        srcX0, srcY0, srcX1, srcY1,
+        dstX0, dstY0, dstX1, dstY1,
+        GL_COLOR_BUFFER_BIT, GL_NEAREST);
+#endif
 
     return true;
 }
@@ -528,6 +487,8 @@ BOOL LLHMDImplOculus::endFrame()
     int viewportSizeX = getViewportWidth();
     int viewportSizeY = getViewportHeight();
 
+    (void)viewportSizeX, (void)viewportSizeY;
+
     ovrRecti viewport;
 
     viewport.Pos.x = 0;
@@ -549,23 +510,15 @@ BOOL LLHMDImplOculus::endFrame()
     ovrViewScaleDesc viewScaleDesc;
     viewScaleDesc.HmdSpaceToWorldScaleInMeters = 1.0f;
 
-    #if OCULUS_12
-        viewScaleDesc.HmdToEyeOffset[0] = mOculus->mEyeRenderDesc[0].HmdToEyeOffset;
-        viewScaleDesc.HmdToEyeOffset[1] = mOculus->mEyeRenderDesc[1].HmdToEyeOffset;
-    #else
-        viewScaleDesc.HmdToEyeViewOffset[0] = mOculus->mEyeRenderDesc[0].HmdToEyeViewOffset;
-        viewScaleDesc.HmdToEyeViewOffset[1] = mOculus->mEyeRenderDesc[1].HmdToEyeViewOffset;
-    #endif
+    viewScaleDesc.HmdToEyeOffset[0] = mOculus->mEyeRenderDesc[0].HmdToEyeOffset;
+    viewScaleDesc.HmdToEyeOffset[1] = mOculus->mEyeRenderDesc[1].HmdToEyeOffset;
 
     ovrLayerHeader* layers[1] = { &eyeLayer.Header };
 
-    #if OCULUS_12
-        ovr_CommitTextureSwapChain(mOculus->mHMD, mOculus->mSwapChain[0]);
-        ovr_CommitTextureSwapChain(mOculus->mHMD, mOculus->mSwapChain[1]);
-    #endif
+    ovr_CommitTextureSwapChain(mOculus->mHMD, mOculus->mSwapChain[0]);
+    ovr_CommitTextureSwapChain(mOculus->mHMD, mOculus->mSwapChain[1]);
 
     ovrResult result = ovr_SubmitFrame(mOculus->mHMD, getSubmittedFrameIndex(), &viewScaleDesc, layers, 1);
-
     incrementSubmittedFrameIndex();
 
     if (!OVR_SUCCESS(result))
@@ -579,12 +532,11 @@ BOOL LLHMDImplOculus::endFrame()
     }
 
     // Blit mirror texture to back buffer
-    if (mOculus->mMirrorFbo)
+    if (mMirrorRT)
     {
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, mOculus->mMirrorFbo);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        glBlitFramebuffer(0, viewportSizeY, viewportSizeX, 0, 0, 0, gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+        S32 w = gViewerWindow->getWindowWidthRaw();
+        S32 h = gViewerWindow->getWindowHeightRaw();
+        LLRenderTarget::copyContentsToFramebuffer(*mMirrorRT, 0, h, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
     }
 
     // Round-robin our three ring circus.
@@ -623,13 +575,7 @@ void LLHMDImplOculus::getEyeOffset(int whichEye, LLVector3& offsetOut) const
 
 void LLHMDImplOculus::resetOrientation()
 {
-    #if OCULUS_12
-        ovr_RecenterTrackingOrigin(mOculus->mHMD);
-    #else
-        ovr_RecenterPose(mOculus->mHMD);
-    #endif
-
-    resetFrameIndex();
+    ovr_RecenterTrackingOrigin(mOculus->mHMD);
 }
 
 F32 LLHMDImplOculus::getVerticalFOV() const
@@ -681,3 +627,4 @@ F32 LLHMDImplOculus::getYaw() const
 }
 
 #endif // LL_HMD_SUPPORTED
+

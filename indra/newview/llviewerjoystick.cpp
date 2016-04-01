@@ -990,7 +990,7 @@ void LLViewerJoystick::moveFlycam(bool reset)
 
         LLMatrix4 m1(sFlycamRotation);
         LLMatrix4 m2(~gHMD.getHMDRotation());
-        LLMatrix4 cfr(OGL_TO_CFR_ROTATION);
+        LLMatrix4 cfr(OGL_TO_CFR_BASIS);
         m2 *= cfr;
         m1 *= m2;
         mat = m1.getMat3();

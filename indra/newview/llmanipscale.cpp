@@ -469,7 +469,7 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 		{
 			LLVector4 translation(bbox.getPositionAgent());
 			transform.initRotTrans(bbox.getRotation(), translation);
-			LLMatrix4 cfr(OGL_TO_CFR_ROTATION);
+			LLMatrix4 cfr(OGL_TO_CFR_BASIS);
 			transform *= cfr;
 			LLMatrix4 window_scale;
 			F32 zoom_level = 2.f * gAgentCamera.mHUDCurZoom;
@@ -562,12 +562,12 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
             F32 half_width = 0, half_height = 0;
             if (gHMD.isHMDMode() && mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
             {
-                half_width = (F32)gHMD.getUIWidth() / 2.0f;
-                half_height = (F32)gHMD.getUIHeight() / 2.0f;
+                half_width  = (F32)gHMD.getViewportWidth()  / 2.0f;
+                half_height = (F32)gHMD.getViewportHeight() / 2.0f;
             }
             else
             {
-                half_width = (F32)world_view_rect.getWidth() / 2.f;
+                half_width  = (F32)world_view_rect.getWidth()  / 2.f;
                 half_height = (F32)world_view_rect.getHeight() / 2.f;
             }
 		LLVector2 manip2d;

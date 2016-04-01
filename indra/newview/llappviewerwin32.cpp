@@ -543,9 +543,7 @@ bool LLAppViewerWin32::cleanup()
 {
 	bool result = LLAppViewer::cleanup();
 
-#if LL_USE_DX
 	gDXHardware.cleanup();
-#endif
 
 #ifndef LL_RELEASE_FOR_DOWNLOAD
 	LLWinDebug::instance().cleanup();
@@ -593,12 +591,11 @@ bool LLAppViewerWin32::initHardwareTest()
 	if (FALSE == gSavedSettings.getBOOL("NoHardwareProbe"))
 	{
 		// per DEV-11631 - disable hardware probing for everything
-		// but vram.
+		// but vram.		
 		BOOL vram_only = TRUE;
 
 		LLSplashScreen::update(LLTrans::getString("StartupDetectingHardware"));
 
-#if LL_USE_DX
 		LL_DEBUGS("AppInit") << "Attempting to poll DirectX for hardware info" << LL_ENDL;
 		gDXHardware.setWriteDebugFunc(write_debug_dx);
 		BOOL probe_ok = gDXHardware.getInfo(vram_only);
@@ -625,7 +622,6 @@ bool LLAppViewerWin32::initHardwareTest()
 			gWarningSettings.setBOOL("AboutDirectX9", FALSE);
 		}
 		LL_DEBUGS("AppInit") << "Done polling DirectX for hardware info" << LL_ENDL;
-#endif
 
 		// Only probe once after installation
 		gSavedSettings.setBOOL("ProbeHardwareOnStartup", FALSE);
@@ -644,14 +640,10 @@ bool LLAppViewerWin32::initHardwareTest()
 		LL_WARNS("AppInit") << " Someone took over my exception handler (post hardware probe)!" << LL_ENDL;
 	}
 
-#if LL_USE_DX
 	if (gGLManager.mVRAM == 0)
 	{
 		gGLManager.mVRAM = gDXHardware.getVRAM();
 	}
-#else
-        gGLManager.mVRAM = (1L << 35);
-#endif
 
 	LL_INFOS("AppInit") << "Detected VRAM: " << gGLManager.mVRAM << LL_ENDL;
 

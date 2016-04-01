@@ -134,7 +134,7 @@ LLViewerCamera::LLViewerCamera() : LLCamera()
 
 F32 LLViewerCamera::getUIAspect() const
 {
-    return gHMD.isHMDMode() ? gHMD.getUIAspect() : mAspect;
+    return gHMD.isHMDMode() ? gHMD.getAspect() : mAspect;
 }
 
 void LLViewerCamera::updateCameraLocation(  const LLVector3& center,
@@ -250,7 +250,7 @@ const LLMatrix4 &LLViewerCamera::getProjection() const
 
 const LLMatrix4 &LLViewerCamera::getModelview() const
 {
-	LLMatrix4 cfr(OGL_TO_CFR_ROTATION);
+	LLMatrix4 cfr(OGL_TO_CFR_BASIS);
 	getMatrixToLocal(mModelviewMatrix);
 	mModelviewMatrix *= cfr;
 
@@ -377,6 +377,59 @@ void LLViewerCamera::updateFrustumPlanes(LLCamera& camera, BOOL ortho, BOOL zfli
 	camera.calcAgentFrustumPlanes(frust);
 }
 
+void LLViewerCamera::setProjectionMatrix(glh::matrix4f& proj_mat)
+{
+    // Load camera projection matrix
+    gGL.matrixMode(LLRender::MM_PROJECTION);
+    gGL.loadIdentity();
+
+    // May be okay, but...ooof.
+    if (!gHMD.isHMDMode())
+    {
+        if (mZoomFactor > 1.f)
+        {
+            float offset = mZoomFactor - 1.f;
+            int pos_y = mZoomSubregion / llceil(mZoomFactor);
+            int pos_x = mZoomSubregion - (pos_y*llceil(mZoomFactor));
+            glh::matrix4f translate;
+            translate.set_translate(glh::vec3f(offset - (F32)pos_x * 2.f, offset - (F32)pos_y * 2.f, 0.f));
+            glh::matrix4f scale;
+            scale.set_scale(glh::vec3f(mZoomFactor, mZoomFactor, 1.f));
+
+            proj_mat = scale*proj_mat;
+            proj_mat = translate*proj_mat;
+        }
+    }
+
+    gGL.loadMatrix(proj_mat.m);
+
+    /*for (U32 i = 0; i < 16; i++)
+    {
+        gGLProjection[i] = proj_mat.m[i];
+    }*/
+
+    gGL.matrixMode(LLRender::MM_MODELVIEW);
+
+    LLMatrix4 mdlv = getModelview();
+
+    glh::matrix4f modelview((GLfloat*)mdlv.mMatrix);
+
+    if (gHMD.isHMDMode())
+    {
+        gHMD.setBaseModelView(modelview.m);
+    }
+
+    gGL.loadMatrix(modelview.m);
+
+    // Save GL matrices for access elsewhere in code, especially project_world_to_screen
+    /*for (U32 i = 0; i < 16; i++)
+    {
+        gGLModelView[i] = modelview.m[i];
+    }*/
+
+    updateFrustumPlanes(*this);
+}
+
 void LLViewerCamera::setPerspective(BOOL for_selection,
 									S32 x, S32 y_from_bot, S32 width, S32 height,
 									BOOL limit_select_distance,
@@ -395,7 +448,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 	}
 	F32 aspect = getAspect();
 
-	// Load camera view matrix
+	// Load camera projection matrix
 	gGL.matrixMode(LLRender::MM_PROJECTION);
 	gGL.loadIdentity();
 

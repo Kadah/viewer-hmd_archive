@@ -223,7 +223,7 @@ void LLViewerDisplay::display_startup()
 	glClear(GL_DEPTH_BUFFER_BIT);
 }
 
-void LLViewerDisplay::update_camera()
+void LLViewerDisplay::update_camera(int whichEye)
 {
 	LL_RECORD_BLOCK_TIME(FTM_UPDATE_CAMERA);
 	// TODO: cut draw distance down if customizing avatar?
@@ -237,7 +237,7 @@ void LLViewerDisplay::update_camera()
 		final_far *= 0.5f;
 	}
 	LLViewerCamera::getInstance()->setFar(final_far);
-	gViewerWindow->setup3DRender();
+	gViewerWindow->setup3DRender(0, 0, whichEye);
 	
 	// update all the sky/atmospheric/water settings
 	LLWLParamManager::getInstance()->update(LLViewerCamera::getInstance());
@@ -1286,7 +1286,7 @@ bool get_hud_matrices(const LLRect& screen_region, glh::matrix4f& proj, glh::mat
 					   0.f));
 		proj *= mat;
 
-        glh::matrix4f tmp_model((GLfloat*) OGL_TO_CFR_ROTATION);
+        glh::matrix4f tmp_model((GLfloat*) OGL_TO_CFR_BASIS);
 		mat.set_scale(glh::vec3f(zoom_level, zoom_level, zoom_level));
 		mat.set_translate(glh::vec3f(-hud_bbox.getCenterLocal().mV[VX] + (hud_depth * 0.5f), 0.f, 0.f));
 		tmp_model *= mat;
@@ -1466,7 +1466,7 @@ void LLViewerDisplay::render_ui_2d(BOOL forHMD)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	//  Menu overlays, HUD, etc
-    gViewerWindow->setup2DRender(0, 0, forHMD ? gHMD.getUIWidth() : 0, forHMD ? gHMD.getUIHeight() : 0);
+    gViewerWindow->setup2DRender(0, 0, forHMD ? gHMD.getViewportWidth() : 0, forHMD ? gHMD.getViewportHeight() : 0);
 
 	F32 zoom_factor = LLViewerCamera::getInstance()->getZoomFactor();
 	S16 sub_region = LLViewerCamera::getInstance()->getZoomSubRegion();
@@ -1687,7 +1687,6 @@ void LLViewerDisplay::render_ui(ui_render_options& options)
 
 void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
 {
-    gViewerWindow->setup3DViewport();
 
     // Collect objects in the stereoscopic cull frustum rather than each eye's asymmetric camera frustum.
     if (forHMD)
@@ -1695,6 +1694,8 @@ void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
         gHMD.setupStereoCullFrustum();
         gHMD.bindEyeRT(whichEye);
     }
+
+    gViewerWindow->setup3DViewport();
 
     update();
 
@@ -1705,13 +1706,16 @@ void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
     if (forHMD)
     {
         gHMD.setupEye(whichEye);	    
+        update_camera(whichEye); // fix proj mats...
     }
-
-    update_camera();
 
     BOOL to_texture = (gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow);
 
-    display_swap();
+    if (!forHMD)
+    {
+        display_swap();
+    }
+
     display_imagery();
     update_images();
 
@@ -1719,9 +1723,17 @@ void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
 
     LLPipeline::sUseOcclusion = occlusion;
 
-    render_start(to_texture);
+    if (!forHMD)
+    {
+        render_start(to_texture);
+    }
+
     render_geom();
-    render_flush(to_texture);
+
+    if (!forHMD)
+    {
+        render_flush(to_texture);
+    }
 
     if (!gSnapshot)
     {

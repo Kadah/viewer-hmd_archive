@@ -33,18 +33,18 @@
 #include "m4math.h"
 #include "llcoord.h"
 #include "lltrace.h"
+#include "glh/glh_linear.h"
 
 class LLViewerObject;
 
-// This rotation matrix moves the default OpenGL reference frame 
+// This change of basis matrix moves the default OpenGL reference frame 
 // (-Z at, Y up) to Cory's favorite reference frame (X at, Z up)
-const F32 OGL_TO_CFR_ROTATION[16] = {  0.f,  0.f, -1.f,  0.f, 	// -Z becomes X
+const F32 OGL_TO_CFR_BASIS[16] = {  0.f,  0.f, -1.f,  0.f, 	// -Z becomes X
 									  -1.f,  0.f,  0.f,  0.f, 	// -X becomes Y
 									   0.f,  1.f,  0.f,  0.f,	//  Y becomes Z
 									   0.f,  0.f,  0.f,  1.f };
 
 const BOOL FOR_SELECTION = TRUE;
-const BOOL NOT_FOR_SELECTION = FALSE;
 
 // Build time optimization, generate this once in .cpp file
 #ifndef LLVIEWERCAMERA_CPP
@@ -95,6 +95,9 @@ public:
 	static void updateFrustumPlanes(LLCamera& camera, BOOL ortho = FALSE, BOOL zflip = FALSE, BOOL no_hacks = FALSE);
 	static void updateCameraAngle(void* user_data, const LLSD& value);
 	void setPerspective(BOOL for_selection, S32 x, S32 y_from_bot, S32 width, S32 height, BOOL limit_select_distance, F32 z_near = 0, F32 z_far = 0);
+
+    // Force specific projection matrix (for HMD eye mats)
+    void setProjectionMatrix(glh::matrix4f& proj_mat);
 
 	const LLMatrix4 &getProjection() const;
 	const LLMatrix4 &getModelview() const;

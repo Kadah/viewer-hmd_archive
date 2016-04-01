@@ -49,9 +49,6 @@ public:
     virtual S32 getViewportWidth() const;
     virtual S32 getViewportHeight() const;
 
-    inline S32 getUIWidth()  const { return getViewportWidth()  * 2; }
-    inline S32 getUIHeight() const { return getViewportHeight();     }
-
     virtual F32  getInterpupillaryOffset() const { return mInterpupillaryDistance; }
     virtual void setInterpupillaryOffset(F32 f)  { mInterpupillaryDistance = f;    }
 
@@ -107,7 +104,13 @@ private:
     F32 mVerticalFovRadians;
     F32 mAspect;
 
+    // Targets w/ depth in which to render eye data
     LLRenderTarget* mEyeRT[2][3];
+    GLint mSwapTexture[2][3];
+
+    // wraps Oculus FBO so we can copy without screwing up
+    // the oh so delicate static var ecosystem of LLRenderTarget
+    LLRenderTarget* mMirrorRT;
 
     struct OculusData;
     OculusData* mOculus;

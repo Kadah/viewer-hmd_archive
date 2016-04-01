@@ -1046,11 +1046,6 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 		mDeferredScreen.shareDepthBuffer(mScreen);
 	}
 
-    if (gHMD.isHMDMode())
-    {
-        gHMD.releaseAllEyeRT();
-    }
-
 	gGL.getTexUnit(0)->disable();
 
 	stop_glerror();
@@ -1236,10 +1231,6 @@ void LLPipeline::releaseScreenBuffers()
 		mShadowOcclusion[i].release();
 	}
     mUIScreen.release();
-    if (gHMD.isHMDMode())
-    {
-        gHMD.releaseAllEyeRT();
-    }
 }
 
 
@@ -7669,7 +7660,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}*/
 
-        gViewerWindow->setup3DViewport(0, 0, true);
+    gViewerWindow->setup3DViewport(0, 0);
 
 	tc2.setVec((F32)mScreen.getWidth(), (F32)mScreen.getHeight());
 
@@ -7684,13 +7675,8 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			(RenderDepthOfFieldInEditMode || !LLToolMgr::getInstance()->inBuildMode()) &&
 							RenderDepthOfField;
 
-    #if VOIDHACK
-        // voidpointer 20131121: HMD Mode seems to have problems with DOF (probably because of the alpha-blend
-        // changes necessary to handle rendering UI to a rendertarget, but not sure).  Could probably dive into
-        // this and figure out why (and possibly even fix it), but have bigger problems to tackle before release.
-        // Disabling DOF in HMD mode for now.
+        // Disabling DOF in HMD mode for now (it's slow, it doesn't work, nuff said).
         dof_enabled = dof_enabled && !gHMD.isHMDMode();
-    #endif
 
 		bool multisample = RenderFSAASamples > 1 && mFXAABuffer.isComplete();
 
@@ -7883,7 +7869,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				}
 				else
 				{
-                    gViewerWindow->setup3DViewport(0, 0, true);
+                    gViewerWindow->setup3DViewport(0, 0);
 				}
 
 				shader = &gDeferredDoFCombineProgram;
@@ -8015,7 +8001,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 				gGL.getTexUnit(channel)->setTextureFilteringOption(LLTexUnit::TFO_BILINEAR);
 			}
 			
-            gViewerWindow->setup3DViewport(0, 0, true);
+            gViewerWindow->setup3DViewport(0, 0);
 
 			F32 scale_x = (F32) width/mFXAABuffer.getWidth();
 			F32 scale_y = (F32) height/mFXAABuffer.getHeight();
@@ -11442,7 +11428,7 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 		glh::matrix4f mat;
 		camera.getOpenGLTransform(mat.m);
 
-		mat = glh::matrix4f((GLfloat*) OGL_TO_CFR_ROTATION) * mat;
+		mat = glh::matrix4f((GLfloat*) OGL_TO_CFR_BASIS) * mat;
 
 		gGL.loadMatrix(mat.m);
 		glh_set_current_modelview(mat);
