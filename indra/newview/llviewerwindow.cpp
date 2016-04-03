@@ -729,7 +729,7 @@ public:
 		{
 			U8 color[4];
 			LLCoordGL coord = gViewerWindow->getCurrentMouse();
-			glReadPixels(coord.mX, coord.mY, 1,1,GL_RGBA, GL_UNSIGNED_BYTE, color);
+			//glReadPixels(coord.mX, coord.mY, 1,1,GL_RGBA, GL_UNSIGNED_BYTE, color);
 			addText(xpos, ypos, llformat("%d %d %d %d", color[0], color[1], color[2], color[3]));
 			ypos += y_inc;
 		}
@@ -4676,8 +4676,8 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 
 	S32 output_buffer_offset_y = 0;
 
-	F32 depth_conversion_factor_1 = (LLViewerCamera::getInstance()->getFar() + LLViewerCamera::getInstance()->getNear()) / (2.f * LLViewerCamera::getInstance()->getFar() * LLViewerCamera::getInstance()->getNear());
-	F32 depth_conversion_factor_2 = (LLViewerCamera::getInstance()->getFar() - LLViewerCamera::getInstance()->getNear()) / (2.f * LLViewerCamera::getInstance()->getFar() * LLViewerCamera::getInstance()->getNear());
+	//F32 depth_conversion_factor_1 = (LLViewerCamera::getInstance()->getFar() + LLViewerCamera::getInstance()->getNear()) / (2.f * LLViewerCamera::getInstance()->getFar() * LLViewerCamera::getInstance()->getNear());
+	//F32 depth_conversion_factor_2 = (LLViewerCamera::getInstance()->getFar() - LLViewerCamera::getInstance()->getNear()) / (2.f * LLViewerCamera::getInstance()->getFar() * LLViewerCamera::getInstance()->getNear());
 
 	gObjectList.generatePickList(*LLViewerCamera::getInstance());
 
@@ -4711,26 +4711,25 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 				{
 					// Required for showing the GUI in snapshots and performing bloom composite overlay
 					// Call even if show_ui is FALSE
-                    ui_render_options options;
-
+                    render_options options;
                     options.do_hud_attach   = TRUE;
                     options.do_hud_elements = TRUE;
                     options.subfield        = subfield;
                     options.zoom_factor     = scale_factor;
 
-                    LLViewerDisplay::render_ui(options);
+                    LLViewerDisplay::render_ui(FALSE, options);
                     LLViewerDisplay::swap(LLViewerDisplay::gDisplaySwapBuffers, TRUE);
 				}
 				
 				for (U32 out_y = 0; out_y < read_height ; out_y++)
 				{
-					S32 output_buffer_offset = ( 
+					/*S32 output_buffer_offset = ( 
 												(out_y * (raw->getWidth())) // ...plus iterated y...
 												+ (window_width * subimage_x) // ...plus subimage start in x...
 												+ (raw->getWidth() * window_height * subimage_y) // ...plus subimage start in y...
 												- output_buffer_offset_x // ...minus buffer padding x...
 												- (output_buffer_offset_y * (raw->getWidth()))  // ...minus buffer padding y...
-												) * raw->getComponents();
+												) * raw->getComponents();*/
 				
 					// Ping the watchdog thread every 100 lines to keep us alive (arbitrary number, feel free to change)
 					if (out_y % 100 == 0)
@@ -4740,16 +4739,16 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 				
 					if (type == SNAPSHOT_TYPE_COLOR)
 					{
-						glReadPixels(
+						/*glReadPixels(
 									 subimage_x_offset, out_y + subimage_y_offset,
 									 read_width, 1,
 									 GL_RGB, GL_UNSIGNED_BYTE,
 									 raw->getData() + output_buffer_offset
-									 );
+									 );*/
 					}
 					else // SNAPSHOT_TYPE_DEPTH
 					{
-						LLPointer<LLImageRaw> depth_line_buffer = new LLImageRaw(read_width, 1, sizeof(GL_FLOAT)); // need to store floating point values
+						/*LLPointer<LLImageRaw> depth_line_buffer = new LLImageRaw(read_width, 1, sizeof(GL_FLOAT)); // need to store floating point values
 						glReadPixels(
 									 subimage_x_offset, out_y + subimage_y_offset,
 									 read_width, 1,
@@ -4768,7 +4767,7 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 							{
 								*(raw->getData() + output_buffer_offset + (i * raw->getComponents()) + j) = depth_byte;
 							}
-						}
+						}*/
 					}
 				}
 			}
@@ -4916,10 +4915,17 @@ void LLViewerWindow::getWorldViewportRaw(S32* v, S32 w, S32 h, S32 xOffset, S32 
 
 void LLViewerWindow::setup2DRender(S32 x_offset, S32 y_offset, S32 width, S32 height)
 {
-    width = (width > 0) ? width : getWindowWidthRaw();
-    height = (height > 0) ? height : getWindowHeightRaw();
-	gl_state_for_2d(width, height, 0, x_offset);
-	setup2DViewport(x_offset, y_offset, width, height);
+    if (gHMD.isHMDMode())
+    {
+        gHMD.setup2DRender();
+    }
+    else
+    {
+        width = (width > 0) ? width : getWindowWidthRaw();
+        height = (height > 0) ? height : getWindowHeightRaw();
+	    gl_state_for_2d(width, height, 0, x_offset);
+	    setup2DViewport(x_offset, y_offset, width, height);
+    }
 }
 
 void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset, S32 width, S32 height)
@@ -4932,25 +4938,25 @@ void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset, S32 width, S32 
 
 void LLViewerWindow::setup3DRender(S32 x_offset, S32 y_offset, int whichEye)
 {
-    if (gHMD.isHMDMode())
+    if (gHMD.isHMDMode() && (whichEye >= 0))
     {
         gHMD.setup3DRender(whichEye);
+        gHMD.setup3DViewport(x_offset, y_offset);
     }
     else
     {
 	    // setup perspective camera
 	    LLViewerCamera::getInstance()->setPerspective(
-                                                    !FOR_SELECTION,
-                                                    getWorldViewLeftRaw(),
-                                                    getWorldViewBottomRaw(),
-                                                    getWorldViewWidthRaw(),
-                                                    getWorldViewHeightRaw(),
-                                                    FALSE,
-                                                    LLViewerCamera::getInstance()->getNear(),
-                                                    MAX_FAR_CLIP * 2.0f);
-    }
-
-	setup3DViewport(x_offset, y_offset);
+                                        !FOR_SELECTION,
+                                        getWorldViewLeftRaw(),
+                                        getWorldViewBottomRaw(),
+                                        getWorldViewWidthRaw(),
+                                        getWorldViewHeightRaw(),
+                                        FALSE,
+                                        LLViewerCamera::getInstance()->getNear(),
+                                        MAX_FAR_CLIP * 2.0f);
+        setup3DViewport(x_offset, y_offset);
+    }	
 }
 
 void LLViewerWindow::setup3DViewport(S32 x_offset, S32 y_offset)

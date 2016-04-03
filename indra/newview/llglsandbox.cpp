@@ -996,8 +996,8 @@ F32 gpu_benchmark()
 		{
 			//read a pixel off the last target since some drivers seem to ignore glFinish
 			dest[count-1].bindTarget();
-			U32 pixel = 0;
-			glReadPixels(0,0,1,1,GL_RGBA, GL_UNSIGNED_BYTE, &pixel);
+			//U32 pixel = 0;
+			//glReadPixels(0,0,1,1,GL_RGBA, GL_UNSIGNED_BYTE, &pixel);
 			dest[count-1].flush();
 		}
 		else

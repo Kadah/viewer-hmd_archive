@@ -203,7 +203,11 @@ void align_hips_to_eyes( EKeystate state )
             LLVector3 atl = gAgent.getAtAxis();
             atl[VZ] = 0.0f;
             gAgent.resetAxes(atl);
-            gAgent.yaw(gHMD.getHMDYaw());
+            F32 roll;
+            F32 pitch;
+            F32 yaw;
+            gHMD.getHMDRotation().getEulerAngles(&roll,&pitch,&yaw);
+            gAgent.yaw(yaw);
         }
         else if (LLViewerJoystick::getInstance()->getOverrideCamera())
         {

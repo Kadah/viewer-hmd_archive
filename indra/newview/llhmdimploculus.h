@@ -46,6 +46,8 @@ public:
     virtual void destroy();
     virtual void shutdown();
 
+    virtual void resetOrientation();
+
     virtual S32 getViewportWidth() const;
     virtual S32 getViewportHeight() const;
 
@@ -57,38 +59,31 @@ public:
     virtual F32 getVerticalFOV() const;
     virtual F32 getAspect() const;
 
-    virtual F32 getRoll()  const;
-    virtual F32 getPitch() const;
-    virtual F32 getYaw()   const;
-
-    virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
-    virtual const LLQuaternion getHMDRotation() const { return mEyeRotation; }
-
-    virtual void getEyeProjection(int whichEye, glh::matrix4f& proj, float zNear, float zFar) const;
-    virtual void getEyeOffset(int whichEye, LLVector3& offsetOut) const;
-
-    virtual void resetOrientation();
+    virtual const LLQuaternion  getHMDRotation()  const { return mEyeRotation; }
+    virtual LLVector3           getHeadPosition() const;
+    virtual void                getEyeOffset(int whichEye, LLVector3& offsetOut) const;
+    virtual void                getEyeProjection(int whichEye, glh::matrix4f& proj, float zNear, float zFar) const;
+    virtual void                getStereoCullProjection(glh::matrix4f& projOut, float zNear, float zFar) const;
 
     virtual BOOL beginFrame();
-    virtual BOOL bindEyeRT(int which);
-    virtual BOOL releaseEyeRT(int which);
+    virtual BOOL bounceEyeRenderTarget(int which_eye, LLRenderTarget& source);
+    virtual BOOL copyToEyeRenderTarget(int which_eye, LLRenderTarget& source, int mask);
+    virtual BOOL bindEyeRenderTarget(int which_eye);
+    virtual BOOL flushEyeRenderTarget(int which_eye);
+    virtual BOOL releaseEyeRenderTarget(int which_eye);
     virtual BOOL endFrame();
     virtual BOOL postSwap();
 
-    virtual BOOL releaseAllEyeRT();
+    // Release to OS...
+    virtual BOOL releaseAllEyeRenderTargets();
 
     virtual void resetFrameIndex();
-    virtual U32  getFrameIndex();
-    virtual void incrementFrameIndex();
-
-    virtual U32  getSubmittedFrameIndex();
-    virtual void incrementSubmittedFrameIndex();
-
-    virtual LLVector3 getHeadPosition() const;
-
-    virtual BOOL calculateViewportSettings();
+    virtual U32  getFrameIndex();    
 
 private:
+    virtual void incrementFrameIndex();
+    virtual BOOL calculateViewportSettings();
+
     BOOL initSwapChains();
     BOOL initSwapChain(int eyeIndex);
     void destroySwapChains();
@@ -97,7 +92,6 @@ private:
     LLQuaternion mEyeRotation;
 
     U32 mFrameIndex;
-    U32 mSubmittedFrameIndex;
     U32 mTrackingCaps;
     F32 mInterpupillaryDistance;
     F32 mEyeToScreenDistance;
@@ -105,7 +99,8 @@ private:
     F32 mAspect;
 
     // Targets w/ depth in which to render eye data
-    LLRenderTarget* mEyeRT[2][3];
+    LLRenderTarget* mEyeRenderTarget[2][3];
+    
     GLint mSwapTexture[2][3];
 
     // wraps Oculus FBO so we can copy without screwing up
@@ -114,6 +109,7 @@ private:
 
     struct OculusData;
     OculusData* mOculus;
+    BOOL mNsightDebugMode;
 };
 #endif // LL_HMD_SUPPORTED
 #endif // LL_LLHMDIMPL_OCULUS_H

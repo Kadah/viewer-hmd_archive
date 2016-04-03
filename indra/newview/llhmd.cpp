@@ -501,7 +501,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 
                 case RenderMode_None:
                 default:
-                        windowp->enableVSync(FALSE);
+                    windowp->enableVSync(FALSE);
                     break;
                 }
             }
@@ -615,106 +615,6 @@ void LLHMD::resetOrientation()
     }
 }
 
-void LLHMD::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
-{
-    if (mImpl)
-    {
-        mImpl->getHMDRollPitchYaw(roll, pitch, yaw);
-    }
-    else
-    {
-        roll = 0.0f;
-        pitch = 0.0f;
-        yaw = 0.0f;
-    }
-}
-
-void LLHMD::getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
-{
-    roll = mLastRollPitchYaw[VX];
-    pitch = mLastRollPitchYaw[VY];
-    yaw = mLastRollPitchYaw[VZ];
-}
-
-void LLHMD::getHMDDeltaRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
-{
-    if (mImpl)
-    {
-        roll = mImpl->getRoll() - mLastRollPitchYaw[VX];
-        pitch = mImpl->getPitch() - mLastRollPitchYaw[VY];
-        yaw = mImpl->getYaw() - mLastRollPitchYaw[VZ];
-    }
-    else
-    {
-        roll = pitch = yaw = 0.0f;
-    }
-}
-
-
-F32 LLHMD::getHMDRoll() const
-{ 
-    return mImpl ? mImpl->getRoll() : 0.0f;
-}
-
-F32 LLHMD::getHMDLastRoll() const
-{
-    return mLastRollPitchYaw[VX];
-}
-
-F32 LLHMD::getHMDDeltaRoll() const
-{
-    if (mImpl)
-    {
-        return mImpl->getRoll() - mLastRollPitchYaw[VX];
-    }
-    else
-    {
-        return 0.0f;
-    }
-}
-
-F32 LLHMD::getHMDPitch() const
-{
-    return mImpl ? mImpl->getPitch() : 0.0f;
-}
-
-F32 LLHMD::getHMDLastPitch() const
-{
-    return mLastRollPitchYaw[VY];
-}
-
-F32 LLHMD::getHMDDeltaPitch() const
-{
-    if (mImpl)
-    {
-        return mImpl->getPitch() - mLastRollPitchYaw[VY];
-    }
-    else
-    {
-        return 0.0f;
-    }
-}
-
-F32 LLHMD::getHMDYaw() const
-{
-    return mImpl ? mImpl->getYaw() : 0.0f;
-}
-
-F32 LLHMD::getHMDLastYaw() const
-{
-    return mLastRollPitchYaw[VZ];
-}
-
-F32 LLHMD::getHMDDeltaYaw() const
-{
-    if (mImpl)
-    {
-        return mImpl->getYaw() - mLastRollPitchYaw[VZ];
-    }
-
-    return 0.0f;
-}
-
 LLVector3 LLHMD::getHeadPosition() const
 {
     if (mImpl)
@@ -763,19 +663,6 @@ void LLHMD::calculateUIEyeDepth()
         mUIEyeDepth = ((mImpl->getEyeToScreenDistance() - 0.083f) * eyeDepthMult);
     }
 }
-
-
-void LLHMD::setBaseModelView(F32* m)
-{
-    glh::matrix4f bmvInv(m);
-    bmvInv = bmvInv.inverse();
-    for (int i = 0; i < 16; ++i)
-    {
-        mBaseModelView[i] = m[i];
-        mBaseModelViewInv[i] = bmvInv.m[i];
-    }
-}
-
 
 void LLHMD::setUIModelView(F32* m)
 {
@@ -1129,11 +1016,12 @@ void LLHMD::setupStereoValues()
 {
     // Remember default mono camera details.
     LLViewerCamera* cam = LLViewerCamera::getInstance();
-    mStereoCameraFOV = cam->getView();
+
+    mStereoCameraFOV      = cam->getView();
     mStereoCameraPosition = cam->getOrigin();
 
     // Stereo culling frustum camera parameters.
-    mStereoCullCameraFOV = mStereoCameraFOV;
+    mStereoCullCameraFOV    = mImpl->getVerticalFOV();
     mStereoCullCameraAspect = mImpl->getAspect();
 }
 
@@ -1145,57 +1033,86 @@ void LLHMD::setupStereoCullFrustum()
     mProjection.make_identity();
 
     LLViewerCamera* cam = LLViewerCamera::getInstance();
-
-    cam->setView(mStereoCullCameraFOV, TRUE);
-    cam->setAspect(mStereoCullCameraAspect);
-
-    LLVector3 new_position = mStereoCameraPosition;
     
-    cam->setOrigin(new_position);
-}
+    mImpl->getStereoCullProjection(mProjection, cam->getNear(), MAX_FAR_CLIP * 2.0f);
 
+    cam->setOrigin(getHeadPosition() + mStereoCameraPosition);    
+#if HACK
+    cam->setProjectionMatrix(mProjection);
+#endif
+
+}
 
 void LLHMD::setupEye(int which)
 {
     LLViewerCamera* cam = LLViewerCamera::getInstance();
 
     mEyeProjection[which].make_identity();
-    mImpl->getEyeProjection(which, mEyeProjection[which], 0.25f, 1536.0f);
+    mImpl->getEyeProjection(which, mEyeProjection[which], cam->getNear(), MAX_FAR_CLIP * 2.0f);
 
     mEyeOffset[which].setZero();
     mImpl->getEyeOffset(which, mEyeOffset[which]);
 
     cam->setView(mStereoCameraFOV, FALSE);
     cam->setAspect(mImpl->getAspect());
-    cam->setOrigin(mEyeOffset[which] + mStereoCameraPosition);
+    cam->setOrigin(mEyeOffset[which] + getHeadPosition() + mStereoCameraPosition);
 }
 
-BOOL LLHMD::bindEyeRT(int eye)
+BOOL LLHMD::bindEyeRenderTarget(int which_eye)
 {
     if (mImpl)
     {
-        return mImpl->bindEyeRT(eye);
+        return mImpl->bindEyeRenderTarget(which_eye);
     }
 
     return FALSE;
 }
 
-
-BOOL LLHMD::releaseEyeRT(int eye)
+BOOL LLHMD::flushEyeRenderTarget(int which_eye)
 {
     if (mImpl)
     {
-        return mImpl->releaseEyeRT(eye);
+        return mImpl->flushEyeRenderTarget(which_eye);
     }
 
     return FALSE;
 }
 
-BOOL LLHMD::releaseAllEyeRT()
+BOOL LLHMD::copyToEyeRenderTarget(int which_eye, LLRenderTarget& source, int mask)
 {
     if (mImpl)
     {
-        return mImpl->releaseAllEyeRT();
+        return mImpl->copyToEyeRenderTarget(which_eye, source, mask);
+    }
+
+    return FALSE;
+}
+
+BOOL LLHMD::releaseEyeRenderTarget(int which_eye)
+{
+    if (mImpl)
+    {
+        return mImpl->releaseEyeRenderTarget(which_eye);
+    }
+
+    return FALSE;
+}
+
+BOOL LLHMD::bounceEyeRenderTarget(int which_eye, LLRenderTarget& source)
+{
+    if (mImpl)
+    {
+        return mImpl->bounceEyeRenderTarget(which_eye, source);
+    }
+
+    return FALSE;
+}
+
+BOOL LLHMD::releaseAllEyeRenderTargets()
+{
+    if (mImpl)
+    {
+        return mImpl->releaseAllEyeRenderTargets();
     }
 
     return FALSE;
@@ -1210,7 +1127,11 @@ void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset)
 
 void LLHMD::setup3DRender(int which_eye)
 {
-    LLViewerCamera::getInstance()->setProjectionMatrix(mEyeProjection[which_eye]);
+
+#if HACK
+   LLViewerCamera::getInstance()->setProjectionMatrix(mEyeProjection[which_eye]);
+#endif
+
 }
 
 void LLHMD::setup2DRender()
@@ -1222,6 +1143,9 @@ void LLHMD::setup2DRender()
 
 void LLHMD::renderCursor2D()
 {
+
+#if WANT_SLOW_BUGGY_CURSOR_CODE
+
     if (isHMDMode() && (!gAgentCamera.cameraMouselook() || gAgent.leftButtonGrabbed()))
     {
         LLWindow* window = gViewerWindow->getWindow();
@@ -1263,11 +1187,16 @@ void LLHMD::renderCursor2D()
             }
         }
     }
+
+#endif
+
 }
 
 
 void LLHMD::renderCursor3D()
 {
+
+#if WANT_SLOW_BUGGY_CURSOR_CODE
     if (isHMDMode() && !cursorIntersectsUI() && (!gAgentCamera.cameraMouselook() || gAgent.leftButtonGrabbed()))
     {
         LLWindow* window = gViewerWindow->getWindow();
@@ -1383,11 +1312,16 @@ void LLHMD::renderCursor3D()
         gGL.matrixMode(LLRender::MM_MODELVIEW);
         gGL.popMatrix();
     }
+
+#endif
+
 }
 
 
 void LLHMD::render3DUI()
 {
+
+#if WANT_SLOW_BUGGY_CURSOR_CODE
     LLViewerDisplay::pop_state_gl();
 
 #if 0
@@ -1466,33 +1400,8 @@ void LLHMD::render3DUI()
     }
 
     LLViewerDisplay::push_state_gl_identity();
-}
+#endif
 
-void LLHMD::prerender2DUI()
-{
-    gPipeline.mUIScreen.bindTarget();
-    gGL.setColorMask(true, true);
-    glClearColor(0.0f,0.0f,0.0f,0.0f);
-    gPipeline.mUIScreen.clear();
-    gGL.color4f(1,1,1,1);
-    LLUI::setDestIsRenderTarget(TRUE);
-    // this is necessary even though it theoretically already is using that blend type due to
-    // setting the DestIsRenderTarget flag
-    gGL.setSceneBlendType(LLRender::BT_ALPHA);
-}
-
-void LLHMD::postRender2DUI()
-{
-    gHMD.renderCursor2D();
-    gPipeline.mUIScreen.flush();
-    if (LLRenderTarget::sUseFBO && !gHMD.isHMDMode())
-    {
-        //copy depth buffer from mScreen to framebuffer
-        LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(), 
-                                                                    0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
-                                                                    GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-    }
-    LLUI::setDestIsRenderTarget(FALSE);
 }
 
 BOOL LLHMD::beginFrame()
@@ -1512,38 +1421,7 @@ BOOL LLHMD::beginFrame()
     if (mImpl && isHMDMode())
     {
         beginFrameResult = mImpl->beginFrame();
-
-        mLastRollPitchYaw.setVec(mImpl->getRoll(), mImpl->getPitch(), mImpl->getYaw());
-
-        if (gAgentCamera.cameraMouselook() && getMouselookControlMode() == (S32)kMouselookControl_Linked)
-        {
-            LLVector3 atLeveled = gAgent.getAtAxis();
-            atLeveled[VZ] = 0.0f;
-            atLeveled.normalize();
-            gAgent.resetAxes(atLeveled);
-
-            if (!gHMD.isMouselookYawOnly())
-{
-                gAgent.pitch(mImpl->getPitch());
-}
-
-            LLVector3 skyward = gAgent.getReferenceUpVector();
-            F32 yaw = mImpl->getYaw();
-            F32 dy = yaw - mLastRollPitchYaw[VZ];
-            if (yaw < -mMouselookRotThreshold || yaw > mMouselookRotThreshold)
-{
-                F32 yt = llclamp(llabs(yaw) - mMouselookRotThreshold, 0.0f, mMouselookRotMax) * ((yaw >= 0.0f) ? 1.0f : -1.0f);
-                F32 v = llclamp(gAgent.getVelocity().lengthSquared(), 0.0f, 16.0f);
-                if (v <= 1.0f)
-    {
-                    // rotate faster when stopped or moving very slowly.
-                    yt *= 2.0f;
-                }
-                dy += (mMouselookTurnSpeedMax * ((1.0f / mMouselookRotMax) * yt));
-            }
-            gAgent.rotate(dy, skyward[VX], skyward[VY], skyward[VZ]);
     }
-}
 
     return beginFrameResult;
 }

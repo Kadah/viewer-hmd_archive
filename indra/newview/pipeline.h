@@ -282,10 +282,10 @@ public:
 	void setupSpotLight(LLGLSLShader& shader, LLDrawable* drawablep);
 
 	void unbindDeferredShader(LLGLSLShader& shader);
-	void renderDeferredLighting();
-	void renderDeferredLightingToRT(LLRenderTarget* target);
+    void renderDeferredLighting(BOOL for_hmd, int which_eye);
+    void renderDeferredLightingToRT(LLRenderTarget* target, BOOL for_hmd, int which_eye);
 	
-	void generateWaterReflection(LLCamera& camera);
+    void generateWaterReflection(LLCamera& camera);
 	void generateSunShadow(LLCamera& camera);
 	void generateHighlight(LLCamera& camera);
 	void renderHighlight(const LLViewerObject* obj, F32 fade);
@@ -596,9 +596,6 @@ public:
 	U32 					mScreenWidth;
 	U32 					mScreenHeight;
 	
-	LLRenderTarget			mLeftEye;
-	LLRenderTarget			mRightEye;
-
 	LLRenderTarget			mScreen;
 	LLRenderTarget			mUIScreen;
 	LLRenderTarget			mDeferredScreen;

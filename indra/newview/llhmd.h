@@ -209,48 +209,13 @@ public:
     void calculateUIEyeDepth();
 
     // Get the current HMD orientation
-    void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     LLQuaternion getHMDRotation() const;
-    void getHMDLastRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
-    void getHMDDeltaRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
-
-    F32 getHMDRoll() const;
-    F32 getHMDLastRoll() const;
-    F32 getHMDDeltaRoll() const;
-    F32 getHMDPitch() const;
-    F32 getHMDLastPitch() const;
-    F32 getHMDDeltaPitch() const;
-    F32 getHMDYaw() const;
-    F32 getHMDLastYaw() const;
-    F32 getHMDDeltaYaw() const;
 
     void resetOrientation();
 
-    void setBaseModelView(F32* m);
-    F32* getBaseModelView() { return mBaseModelView; }
-    F32* getBaseModelViewInv() { return mBaseModelViewInv; }
-    void setBaseProjection(F32* m) { for (int i = 0; i < 16; ++i) { mBaseProjection[i] = m[i]; } }
-    F32* getBaseProjection() { return mBaseProjection; }
     void setUIModelView(F32* m);
     F32* getUIModelView() { return mUIModelView; }
     F32* getUIModelViewInv() { return mUIModelViewInv; }
-
-#if 0    
-    LLCoordScreen getMainWindowPos() const { return mMainWindowPos; }
-    void setMainWindowPos(LLCoordScreen pos) { mMainWindowPos = pos; }
-    S32 getMainWindowWidth() const { return mMainWindowSize.mX; }
-    void setMainWindowWidth(S32 w) { mMainWindowSize.mX = w; }
-    S32 getMainWindowHeight() const { return mMainWindowSize.mY; }
-    void setMainWindowHeight(S32 h) { mMainWindowSize.mY = h; }
-    LLCoordScreen getMainWindowSize() const { return mMainWindowSize; }
-    S32 getMainClientWidth() const { return mMainClientSize.mX; }
-    void setMainClientWidth(S32 w) { mMainClientSize.mX = w; }
-    S32 getMainClientHeight() const { return mMainClientSize.mY; }
-    void setMainClientHeight(S32 h) { mMainClientSize.mY = h; }
-
-    LLCoordWindow getMainClientSize() const { return mMainClientSize; }
-    LLCoordWindow getHMDClientSize() const { return LLCoordWindow(getHMDWidth(), getHMDHeight()); }
-#endif
 
     std::string getUIShapeName() const;
     F32 getUISurfaceArcHorizontal() const { return mUIShape.mArcHorizontal; }
@@ -321,13 +286,12 @@ public:
     void setupStereoCullFrustum();
     void setupEye(int which);
 
+    void getStereoCullProjection(glh::matrix4f& projOut)        const { projOut = mProjection;               }
     void getEyeProjection(int whichEye, glh::matrix4f& projOut) const { projOut  = mEyeProjection[whichEye]; }
     void getEyeOffset(int whichEye, LLVector3& offsetOut)       const { offsetOut= mEyeOffset[whichEye];     }
 
     void setup2DRender();
     void render3DUI();
-    void prerender2DUI();
-    void postRender2DUI();
 
     // defaults
     S32 getUIShapePresetIndexDefault() const { return 1; }
@@ -335,12 +299,15 @@ public:
     BOOL isMouselookYawOnlyDefault() const { return TRUE; }
 
     BOOL beginFrame();
-    BOOL bindEyeRT(int which);
-    BOOL releaseEyeRT(int which);
+    BOOL bounceEyeRenderTarget(int which_eye, LLRenderTarget& source);
+    BOOL copyToEyeRenderTarget(int which_eye, LLRenderTarget& source, int mask);
+    BOOL bindEyeRenderTarget(int which_eye);
+    BOOL flushEyeRenderTarget(int which_eye);
+    BOOL releaseEyeRenderTarget(int which_eye);
     BOOL endFrame();
     BOOL postSwap();
 
-    BOOL releaseAllEyeRT();
+    BOOL releaseAllEyeRenderTargets();
 
     void setup3DViewport(S32 x_offset, S32 y_offset);
     void setup3DRender(int which_eye);
@@ -360,12 +327,12 @@ public:
     static void onChangeRenderSettings();
     static void onChangeAllowTextRoll();
 
-private:
-    void setUISurfaceParam(F32* p, F32 f);
     void renderCursor2D();
     void renderCursor3D();
 
 private:
+    void setUISurfaceParam(F32* p, F32 f);
+
     LLHMDImpl* mImpl;
     U32 mFlags;
     U32 mRenderMode;
@@ -374,9 +341,7 @@ private:
     F32 mUIEyeDepth;
     S32 mUIShapePreset;
     U32 mNextUserPresetIndex;
-    F32 mBaseModelView[16];
-    F32 mBaseModelViewInv[16];
-    F32 mBaseProjection[16];
+
     F32 mUIModelView[16];
     F32 mUIModelViewInv[16];
     LLCoordScreen mMainWindowPos;
@@ -462,33 +427,39 @@ public:
     virtual F32 getAspect()               const { return kDefaultAspect;               }
     virtual F32 getInterpupillaryOffset() const { return kDefaultInterpupillaryOffset; }
 
-    virtual F32 getRoll()  const { return 0.0f; }
-    virtual F32 getPitch() const { return 0.0f; }
-    virtual F32 getYaw()   const { return 0.0f; }
+    //virtual F32 getRoll()  const { return 0.0f; }
+    //virtual F32 getPitch() const { return 0.0f; }
+    //virtual F32 getYaw()   const { return 0.0f; }
 
-    virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = pitch = yaw = 0.0f; }
-    virtual const LLQuaternion getHMDRotation() const { return LLQuaternion(0.0f, LLVector3(0.0f)); };
+    //virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = pitch = yaw = 0.0f; }
+
+    virtual LLVector3          getHeadPosition() const { return LLVector3::zero;                     }
+    virtual const LLQuaternion getHMDRotation()  const { return LLQuaternion(0.0f, LLVector3(0.0f)); }
     
+    virtual void getStereoCullProjection(glh::matrix4f& proj, float zNear, float zFar) const { (void)proj, (void)zNear, (void)zFar; }
+
     virtual void getEyeProjection(int whichEye, glh::matrix4f& proj, float zNear, float zFar) const { (void)proj, (void)whichEye, (void)zNear, (void)zFar; }
     virtual void getEyeOffset(int whichEye, LLVector3& offsetOut)    const { (void)offsetOut, (void)whichEye; }
 
     virtual void resetOrientation() {}
-    virtual LLVector3 getHeadPosition() const { return LLVector3::zero; }
-    
-    virtual void setup3DRender(int which)   { (void)which;  }
-    virtual BOOL beginFrame()               { return FALSE; }
-    virtual BOOL bindEyeRT(int whichEye)    { return FALSE; }
-    virtual BOOL releaseEyeRT(int whichEye) { return FALSE; }
-    virtual BOOL endFrame()                 { return FALSE; }
-    virtual BOOL postSwap()                 { return FALSE; }
-    virtual BOOL releaseAllEyeRT()          { return FALSE; } // release to OS, not flush!
 
-    virtual U32  getFrameIndex()            { return 0;     }
-    virtual U32  getSubmittedFrameIndex()   { return 0;     }
+    virtual void setup3DRender(int which)               { (void)which;  }
+    virtual BOOL beginFrame()                                               { return FALSE; }
+    virtual BOOL bounceEyeRenderTarget(int whichEye,LLRenderTarget& source) { return FALSE; }
+    virtual BOOL copyToEyeRenderTarget(int which_eye, LLRenderTarget& source, int mask) { return FALSE; }
+    virtual BOOL bindEyeRenderTarget(int which_eye)                         { return FALSE; }
+    virtual BOOL flushEyeRenderTarget(int which_eye)                        { return FALSE; }
+    virtual BOOL releaseEyeRenderTarget(int which_eye)                      { return FALSE; }
+    virtual BOOL endFrame()                                                 { return FALSE; }
+    virtual BOOL postSwap()                                                 { return FALSE; }
 
-    virtual void resetFrameIndex()              {}
-    virtual void incrementFrameIndex()          {}    
-    virtual void incrementSubmittedFrameIndex() {}
+    // release to OS, not flush!
+    virtual BOOL releaseAllEyeRenderTargets()                               { return FALSE; }
+
+    virtual U32  getFrameIndex()       { return 0; }
+    virtual void resetFrameIndex()     {}
+    virtual void incrementFrameIndex() {}    
+
 };
 
 #endif // LL_LLHMD_H

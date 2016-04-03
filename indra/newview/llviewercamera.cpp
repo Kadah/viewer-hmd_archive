@@ -383,24 +383,6 @@ void LLViewerCamera::setProjectionMatrix(glh::matrix4f& proj_mat)
     gGL.matrixMode(LLRender::MM_PROJECTION);
     gGL.loadIdentity();
 
-    // May be okay, but...ooof.
-    if (!gHMD.isHMDMode())
-    {
-        if (mZoomFactor > 1.f)
-        {
-            float offset = mZoomFactor - 1.f;
-            int pos_y = mZoomSubregion / llceil(mZoomFactor);
-            int pos_x = mZoomSubregion - (pos_y*llceil(mZoomFactor));
-            glh::matrix4f translate;
-            translate.set_translate(glh::vec3f(offset - (F32)pos_x * 2.f, offset - (F32)pos_y * 2.f, 0.f));
-            glh::matrix4f scale;
-            scale.set_scale(glh::vec3f(mZoomFactor, mZoomFactor, 1.f));
-
-            proj_mat = scale*proj_mat;
-            proj_mat = translate*proj_mat;
-        }
-    }
-
     gGL.loadMatrix(proj_mat.m);
 
     /*for (U32 i = 0; i < 16; i++)
@@ -412,22 +394,24 @@ void LLViewerCamera::setProjectionMatrix(glh::matrix4f& proj_mat)
 
     LLMatrix4 mdlv = getModelview();
 
-    glh::matrix4f modelview((GLfloat*)mdlv.mMatrix);
-
     if (gHMD.isHMDMode())
     {
-        gHMD.setBaseModelView(modelview.m);
+        LLMatrix4 hip_rotation  = LLMatrix4(gAgent.getFrameAgent().getQuaternion());
+        LLMatrix4 head_rotation = LLMatrix4(gHMD.getHMDRotation());
+        mdlv *= hip_rotation;
+        mdlv *= head_rotation;
     }
+
+    glh::matrix4f modelview((GLfloat*)mdlv.mMatrix);
 
     gGL.loadMatrix(modelview.m);
 
-    // Save GL matrices for access elsewhere in code, especially project_world_to_screen
     /*for (U32 i = 0; i < 16; i++)
     {
         gGLModelView[i] = modelview.m[i];
-    }*/
+    }
 
-    updateFrustumPlanes(*this);
+    updateFrustumPlanes(*this);*/
 }
 
 void LLViewerCamera::setPerspective(BOOL for_selection,
@@ -501,10 +485,6 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 		proj_mat = translate*proj_mat;
 	}
 
-    if (gHMD.isHMDMode())
-    {
-        gHMD.setBaseProjection(proj_mat.m);
-    }
 	proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far, !for_selection);
 
 	gGL.loadMatrix(proj_mat.m);
@@ -520,11 +500,6 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
     LLMatrix4 mdlv = getModelview();
 
 	glh::matrix4f modelview((GLfloat*) mdlv.mMatrix);
-
-    if (gHMD.isHMDMode())
-    {
-        gHMD.setBaseModelView(modelview.m);
-    }
 	
 	gGL.loadMatrix(modelview.m);
 	

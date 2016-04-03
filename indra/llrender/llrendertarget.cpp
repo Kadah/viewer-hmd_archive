@@ -622,12 +622,21 @@ void LLRenderTarget::release()
 
 void LLRenderTarget::bindTarget()
 {
+    llassert(!mPreviousTarget);
+
+    mPreviousTarget = sBoundTarget;
+
 	if (mFBO)
 	{
 		stop_glerror();
 		
+        if (sCurFBO == 0)
+        {
+            int q = 0;
+            q++;
+        }
+
 		mPreviousFBO = sCurFBO;
-        mPreviousTarget = sBoundTarget;
 
 		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
 		sCurFBO = mFBO;
@@ -658,6 +667,8 @@ void LLRenderTarget::bindTarget()
 	glViewport(0, 0, mResX, mResY);
 	sCurResX = mResX;
 	sCurResY = mResY;
+
+    llassert(sBoundTarget != this);
 
 	sBoundTarget = this;
 }
@@ -698,26 +709,10 @@ U32 LLRenderTarget::getTexture(U32 attachment) const
 	return mTex[attachment];
 }
 
-//Replaces texID at index 
-BOOL LLRenderTarget::setTexture(U32 index, U32 texID)
-{
-	//SPATTERS TODO:  Probably leaks existing texture.  Check and fix if needed.
-	if (index < 0 || index > mTex.size()-1 )
-	{
-		return FALSE;
-	}
-	else
-	{
-		mTex[index] = texID;
-	}
-	return TRUE;
-}
-
 U32 LLRenderTarget::getNumTextures() const
 {
 	return mTex.size();
 }
-
 
 void LLRenderTarget::bindTexture(U32 index, S32 channel)
 {
@@ -750,7 +745,6 @@ void LLRenderTarget::flush(bool fetch_depth)
 		stop_glerror();
 		glBindFramebuffer(GL_FRAMEBUFFER, mPreviousFBO);
 		sCurFBO = mPreviousFBO;
-        sBoundTarget = mPreviousTarget;
 
 		if (mPreviousFBO)
 		{
@@ -767,6 +761,12 @@ void LLRenderTarget::flush(bool fetch_depth)
 						
 		stop_glerror();
 	}
+
+    llassert(sBoundTarget != mPreviousTarget);
+
+    sBoundTarget = mPreviousTarget;
+
+    mPreviousTarget = NULL;
 }
 
 void LLRenderTarget::copyContents(LLRenderTarget& source, S32 srcX0, S32 srcY0, S32 srcX1, S32 srcY1,
@@ -795,6 +795,12 @@ void LLRenderTarget::copyContents(LLRenderTarget& source, S32 srcX0, S32 srcY0, 
 		stop_glerror();
 		glCopyTexSubImage2D(LLTexUnit::getInternalType(mUsage), 0, srcX0, srcY0, dstX0, dstY0, dstX1, dstY1);
 		stop_glerror();
+
+        if (sCurFBO == 0)
+        {
+            int q = 0;
+            q++;
+        }
 		glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
 		stop_glerror();
 	}
@@ -812,9 +818,40 @@ void LLRenderTarget::copyContents(LLRenderTarget& source, S32 srcX0, S32 srcY0, 
 		stop_glerror();
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		stop_glerror();
+        if (sCurFBO == 0)
+        {
+            int q = 0;
+            q++;
+        }
 		glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
 		stop_glerror();
 	}
+}
+
+void LLRenderTarget::copyContentsToBoundTarget(LLRenderTarget& source, S32 srcX0, S32 srcY0, S32 srcX1, S32 srcY1,
+    S32 dstX0, S32 dstY0, S32 dstX1, S32 dstY1, U32 mask, U32 filter)
+{
+    llassert(sBoundTarget && source.mFBO);
+
+    GLboolean write_depth = mask & GL_DEPTH_BUFFER_BIT ? TRUE : FALSE;
+
+    LLGLDepthTest depth(write_depth, write_depth);
+
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, source.mFBO);
+    stop_glerror();
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, sBoundTarget->getFBO());
+    stop_glerror();
+    check_framebuffer_status();
+    stop_glerror();
+    glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
+    stop_glerror();
+    if (sCurFBO == 0)
+    {
+        int q = 0;
+        q++;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
+    stop_glerror();
 }
 
 //static
@@ -827,11 +864,17 @@ void LLRenderTarget::copyContentsToFramebuffer(LLRenderTarget& source, S32 srcX0
 		return;
 	}
 
-    if (sBoundTarget && sBoundTarget != &source)
+    
+    /* This is WTF waiting to happen and not actually used AFAICT - Graham
+       99.9999% of the time, this is caused by you, programmer, forgetting to flush an RT you bound.
+    if (sBoundTarget && (sBoundTarget != &source))
     { //unbeknownst to the caller, some other target is masquerading as the framebuffer
         sBoundTarget->copyContents(source, srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
     }
-    else
+    else*/
+
+    llassert(!sBoundTarget);
+
 	{
 		GLboolean write_depth = mask & GL_DEPTH_BUFFER_BIT ? TRUE : FALSE;
 
@@ -845,6 +888,12 @@ void LLRenderTarget::copyContentsToFramebuffer(LLRenderTarget& source, S32 srcX0
 		stop_glerror();
 		glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
 		stop_glerror();
+
+        if (sCurFBO == 0)
+        {
+            int q = 0;
+            q++;
+        }
 		glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
 		stop_glerror();
 	}

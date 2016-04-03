@@ -30,9 +30,9 @@
 class LLPostProcess;
 class LLCullResult;
 
-struct ui_render_options
+struct render_options
 {
-    ui_render_options()
+    render_options()
         : zoom_factor(1.0f)
         , subfield(0)
         , do_hud_elements(FALSE)
@@ -40,7 +40,6 @@ struct ui_render_options
         , render_3d_ui(FALSE)
         , for_hmd(FALSE)
         , hmd_eye(-1)
-        , hmd_pre_post(FALSE)
     {
     }
 
@@ -51,7 +50,6 @@ struct ui_render_options
     BOOL render_3d_ui;
     BOOL for_hmd;
     int  hmd_eye;
-    BOOL hmd_pre_post;
 };
 
 class LLViewerDisplay
@@ -60,7 +58,7 @@ public:
     static void display_startup();
     static void update_camera(int whichEye = -1); // -1 == not for HMD
     static void display(BOOL rebuild = TRUE, F32 zoom_factor = 1.f, int subfield = 0, BOOL for_snapshot = FALSE);
-    static void render_ui(ui_render_options& options);    
+    static void render_ui(BOOL to_texture, render_options& options);    
     static void swap(BOOL doSwap, BOOL newSwap);
 
     // Utility
@@ -82,9 +80,9 @@ private:
     static void display_imagery();
     static void update_images();
     static void state_sort(BOOL rebuild, LLCullResult& cullResult);
-    static void render_start(BOOL to_texture);
+    static void render_start(BOOL to_texture, render_options& options);
     static void render_geom();
-    static void render_flush(BOOL to_texture);
+    static void render_flush(BOOL to_texture, render_options& options);
     static void render_hud_attachments();
     static BOOL setup_hud_matrices();
     static void renderCoordinateAxes();

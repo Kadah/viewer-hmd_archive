@@ -1339,21 +1339,6 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
         }
     }
 
-    if (rebuild_hud_color && getPoolType() != LLDrawPool::POOL_ALPHA && gHMD.isHMDMode())
-    {
-        LLMaterial* mat = tep->getMaterialParams().get();
-        U8 mode = mat ? mat->getDiffuseAlphaMode() : LLMaterial::DIFFUSE_ALPHA_MODE_NONE;
-        if (mode == LLMaterial::DIFFUSE_ALPHA_MODE_NONE || mode == LLMaterial::DIFFUSE_ALPHA_MODE_EMISSIVE)
-        {
-            // RIFT-71: HACK!  HMD mode HUD rendering causes conflicts with shiny using the
-            // alpha channel and normally opaque textures using alpha modes of "none" or "emissive"
-            // are not rendered.  The only solution I've been able to figure out is to basically
-            // disable shiny for HUDs at this very low level.  I really dislike this hack, but it's
-            // the only solution I've found that works.
-            color.mV[3] = 255;
-        }
-    }
-
 	// INDICES
 	if (full_rebuild)
 	{

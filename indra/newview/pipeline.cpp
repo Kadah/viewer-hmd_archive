@@ -942,10 +942,10 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 
 		//allocate deferred rendering color buffers
 		if (!mDeferredScreen.allocate(resX, resY, GL_SRGB8_ALPHA8, TRUE, TRUE, LLTexUnit::TT_RECT_TEXTURE, FALSE, samples)) return false;
+                if (!addDeferredAttachments(mDeferredScreen)) return false;
 		if (!mDeferredDepth.allocate(resX, resY, 0, TRUE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE, samples)) return false;
 		if (!mOcclusionDepth.allocate(resX/occlusion_divisor, resY/occlusion_divisor, 0, TRUE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE, samples)) return false;
-		if (!addDeferredAttachments(mDeferredScreen)) return false;
-	
+
 		GLuint screenFormat = GL_RGBA16;
 		if (gGLManager.mIsATI)
 		{
@@ -1224,7 +1224,6 @@ void LLPipeline::releaseScreenBuffers()
 	mDeferredDepth.release();
 	mDeferredLight.release();
 	mOcclusionDepth.release();
-		
 	for (U32 i = 0; i < 6; i++)
 	{
 		mShadow[i].release();
@@ -8123,13 +8122,14 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		}
 	}
 
-	
-	if (LLRenderTarget::sUseFBO)
+    if (gHMD.isHMDMode())
+    {
+        LLRenderTarget::copyContentsToBoundTarget(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    }
+    else if (LLRenderTarget::sUseFBO)
 	{ //copy depth buffer from mScreen to framebuffer
-		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
-			0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 	}
-	
 
 	gGL.matrixMode(LLRender::MM_PROJECTION);
 	gGL.popMatrix();
@@ -8380,12 +8380,17 @@ static LLTrace::BlockTimerStatHandle FTM_PROJECTORS("Projectors");
 static LLTrace::BlockTimerStatHandle FTM_POST("Post");
 
 
-void LLPipeline::renderDeferredLighting()
+void LLPipeline::renderDeferredLighting(BOOL for_hmd, int hmd_eye)
 {
 	if (!sCull)
 	{
 		return;
 	}
+
+    if (for_hmd)
+    {
+        gHMD.bindEyeRenderTarget(hmd_eye);
+    }
 
 	{
 		LL_RECORD_BLOCK_TIME(FTM_RENDER_DEFERRED);
@@ -8394,7 +8399,7 @@ void LLPipeline::renderDeferredLighting()
 		{
 			LLGLDepthTest depth(GL_TRUE);
 			mDeferredDepth.copyContents(mDeferredScreen, 0, 0, mDeferredScreen.getWidth(), mDeferredScreen.getHeight(),
-							0, 0, mDeferredDepth.getWidth(), mDeferredDepth.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);	
+							                             0, 0, mDeferredDepth.getWidth(),  mDeferredDepth.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);	
 		}
 
 		LLGLEnable multisample(RenderFSAASamples > 0 ? GL_MULTISAMPLE_ARB : 0);
@@ -8602,7 +8607,7 @@ void LLPipeline::renderDeferredLighting()
 										LLPipeline::END_RENDER_TYPES);
 								
 			
-			renderGeomPostDeferred(*LLViewerCamera::getInstance(), false);
+            renderGeomPostDeferred(*LLViewerCamera::getInstance(), false);
 			gPipeline.popRenderTypeMask();
 		}
 
@@ -8826,7 +8831,7 @@ void LLPipeline::renderDeferredLighting()
 						gDeferredMultiLightProgram[idx].uniform1f(LLShaderMgr::MULTI_LIGHT_FAR_Z, far_z);
 						far_z = 0.f;
 						count = 0; 
-      mDeferredVB->setBuffer(LLVertexBuffer::MAP_VERTEX);
+                        mDeferredVB->setBuffer(LLVertexBuffer::MAP_VERTEX);
 						mDeferredVB->drawArrays(LLRender::TRIANGLES, 0, 3);
 						unbindDeferredShader(gDeferredMultiLightProgram[idx]);
 					}
@@ -8990,10 +8995,14 @@ void LLPipeline::renderDeferredLighting()
 	}
 
 	mScreen.flush();
-						
+
+    if (for_hmd)
+    {
+        gHMD.flushEyeRenderTarget(hmd_eye);
+    }
 }
 
-void LLPipeline::renderDeferredLightingToRT(LLRenderTarget* target)
+void LLPipeline::renderDeferredLightingToRT(LLRenderTarget* target, BOOL for_hmd, int hmd_eye)
 {
 	if (!sCull)
 	{
@@ -9841,15 +9850,15 @@ void LLPipeline::generateWaterReflection(LLCamera& camera_in)
 
 						gPipeline.grabReferences(result);
 						gPipeline.mDeferredScreen.bindTarget();
-						gGL.setColorMask(true, true);						
-						glClearColor(0,0,0,0);
-						gPipeline.mDeferredScreen.clear();
+                        gGL.setColorMask(true, true);
+                        glClearColor(0, 0, 0, 0);
+                        gPipeline.mDeferredScreen.clear();
 
 						renderGeomDeferred(camera);						
 					}
 					else
 					{
-					renderGeom(camera, TRUE);
+					    renderGeom(camera, TRUE);
 					}					
 
 					gPipeline.popRenderTypeMask();
@@ -9907,8 +9916,8 @@ void LLPipeline::generateWaterReflection(LLCamera& camera_in)
 
 				if (LLPipeline::sRenderDeferred && materials_in_water)
 				{
-					gPipeline.mDeferredScreen.flush();
-					renderDeferredLightingToRT(&mWaterRef);
+                    gPipeline.mDeferredScreen.flush();
+					renderDeferredLightingToRT(&mWaterRef, false, -1);
 				}
 
 				gPipeline.popRenderTypeMask();
@@ -9983,13 +9992,13 @@ void LLPipeline::generateWaterReflection(LLCamera& camera_in)
 				}
 				else
 				{
-				renderGeom(camera);
+				    renderGeom(camera);
 				}
 
 				if (LLPipeline::sRenderDeferred && materials_in_water)
 				{
-					gPipeline.mDeferredScreen.flush();
-					renderDeferredLightingToRT(&mWaterDis);
+                    gPipeline.mDeferredScreen.flush();
+                    renderDeferredLightingToRT(&mWaterDis, false, -1);
 				}
 			}
 
@@ -11626,12 +11635,12 @@ void LLPipeline::postRender(BOOL writeAlpha, BOOL forHMD, int whichEye)
         return;
     }
 
+// GG
     if (forHMD)
     {
-        gHMD.releaseEyeRT(whichEye);
+        gHMD.copyToEyeRenderTarget(whichEye, mScreen, GL_DEPTH_BUFFER_BIT);
     }
-
-    if (LLRenderTarget::sUseFBO && !gHMD.isHMDMode())
+    else if (LLRenderTarget::sUseFBO)
 	{
         //copy depth buffer from mScreen to framebuffer
 		LLRenderTarget::copyContentsToFramebuffer(

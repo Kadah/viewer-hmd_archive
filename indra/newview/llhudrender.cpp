@@ -125,8 +125,13 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
     LLVector4 uit((F32) winX*1.0f/LLFontGL::sScaleX, (F32) winY*1.0f/(LLFontGL::sScaleY), -(((F32) winZ*2.f)-1.f), 1.0f);
     if (!orthographic && keepLevel && gHMD.isHMDMode())
     {
-        LLMatrix4 mat_neg_roll(0.0f, 0.0f, gHMD.getHMDRoll());
-        LLMatrix4 mat_roll(0.0f, 0.0f, -gHMD.getHMDRoll());
+        LLQuaternion q = gHMD.getHMDRotation();
+        F32 roll;
+        F32 pitch;
+        F32 yaw;
+        q.getEulerAngles(&roll,&pitch,&yaw);
+        LLMatrix4 mat_neg_roll(0.0f, 0.0f, roll);
+        LLMatrix4 mat_roll(0.0f, 0.0f,    -roll);
         uit = uit * mat_roll;
         gGL.multMatrix((GLfloat*)mat_neg_roll.mMatrix);
     }

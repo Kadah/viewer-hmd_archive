@@ -49,7 +49,6 @@ public:
 
     static BOOL HasHeadMountedDisplay();
 
-
     virtual S32 getViewportWidth() const;
     virtual S32 getViewportHeight() const;
 
@@ -66,33 +65,31 @@ public:
     virtual F32 getVerticalFOV() const { return mVerticalFovRadians; }
     virtual F32 getAspect()      const { return mAspect;             }
 
-    virtual F32 getRoll()  const;
-    virtual F32 getPitch() const;
-    virtual F32 getYaw()   const;
-
-    virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const;
     virtual const LLQuaternion getHMDRotation() const { return mEyeRotation; }
+    virtual LLVector3 getHeadPosition() const;
 
+    virtual void getStereoCullProjection(glh::matrix4f& proj, float zNear, float zFar) const;
     virtual void getEyeProjection(int whichEye, glh::matrix4f& proj, float zNear, float zFar) const;
     virtual void getEyeOffset(int whichEye, LLVector3& offsetOut) const;
 
     virtual void resetOrientation();
-    virtual LLVector3 getHeadPosition() const;
+    
 
     virtual BOOL beginFrame();
-    virtual BOOL bindEyeRT(int which);
-    virtual BOOL releaseEyeRT(int which);
+    
+    virtual BOOL copyToEyeRenderTarget(int which_eye, LLRenderTarget& source, int mask);
+    virtual BOOL bindEyeRenderTarget(int which_eye);
+    virtual BOOL flushEyeRenderTarget(int which_eye);
+    virtual BOOL bounceEyeRenderTarget(int which, LLRenderTarget& source);
+    virtual BOOL releaseEyeRenderTarget(int which_eye);
     virtual BOOL endFrame();
     virtual BOOL postSwap();
 
-    virtual BOOL releaseAllEyeRT();
+    virtual BOOL releaseAllEyeRenderTargets();
 
     virtual void resetFrameIndex();
     virtual U32  getFrameIndex();
     virtual void incrementFrameIndex();
-
-    virtual U32  getSubmittedFrameIndex();
-    virtual void incrementSubmittedFrameIndex();
 
 private:
     void createRenderTargets();
@@ -114,7 +111,7 @@ private:
     LLVector3       mHeadPosition;
     LLMatrix4       mProjection[2];
     LLMatrix4       mEyeViewOffset[2];
-    LLRenderTarget* mEyeRT[2];
+    LLRenderTarget* mEyeRenderTarget[2];
 
     struct OpenVRData;
     OpenVRData* mOpenVR;

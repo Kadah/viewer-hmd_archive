@@ -97,8 +97,7 @@ void FromSteamVRTransform(const vr::HmdMatrix34_t& matIn, LLQuaternion& eyeRotat
 LLHMDImplOpenVR::LLHMDImplOpenVR()
 : mOpenVR(NULL)
 , mFrameIndex(0)
-, mSubmittedFrameIndex(0)
-    , mTrackingCaps(0)
+, mTrackingCaps(0)
 , mEyeToScreenDistance(kDefaultEyeToScreenDistance)
 , mInterpupillaryDistance(kDefaultInterpupillaryOffset)
 , mVerticalFovRadians(kDefaultVerticalFOVRadians)
@@ -109,7 +108,7 @@ LLHMDImplOpenVR::LLHMDImplOpenVR()
     mHeadPosition.set(LLVector4::zero);
     for (int i = 0; i < 2; ++i)
     {
-        mEyeRT[i] = nullptr;
+        mEyeRenderTarget[i] = nullptr;
         mEyeViewOffset[i].setZero();
         mProjection[i].setIdentity();
     }
@@ -183,18 +182,18 @@ void LLHMDImplOpenVR::createRenderTargets()
     S32 w = getViewportWidth();
     S32 h = getViewportHeight();
 
-    mEyeRT[0] = new LLRenderTarget();
-    mEyeRT[0]->allocate(w, h, GL_SRGB8_ALPHA8, true, true, LLTexUnit::TT_TEXTURE, TRUE);
-    mEyeRT[1] = new LLRenderTarget();
-    mEyeRT[1]->allocate(w, h, GL_SRGB8_ALPHA8, true, true, LLTexUnit::TT_TEXTURE, TRUE);
+    mEyeRenderTarget[0] = new LLRenderTarget();
+    mEyeRenderTarget[0]->allocate(w, h, GL_SRGB8_ALPHA8, true, true, LLTexUnit::TT_TEXTURE, TRUE);
+    mEyeRenderTarget[1] = new LLRenderTarget();
+    mEyeRenderTarget[1]->allocate(w, h, GL_SRGB8_ALPHA8, true, true, LLTexUnit::TT_TEXTURE, TRUE);
 }
 
 void LLHMDImplOpenVR::destroyRenderTargets()
 {
-    delete mEyeRT[0];
-    mEyeRT[0] = NULL;
-    delete mEyeRT[1];
-    mEyeRT[1] = NULL;
+    delete mEyeRenderTarget[0];
+    mEyeRenderTarget[0] = NULL;
+    delete mEyeRenderTarget[1];
+    mEyeRenderTarget[1] = NULL;
 }
 
 S32 LLHMDImplOpenVR::getViewportWidth() const
@@ -227,16 +226,6 @@ U32 LLHMDImplOpenVR::getFrameIndex()
 void LLHMDImplOpenVR::incrementFrameIndex()
 {
     ++mFrameIndex;
-}
-
-U32 LLHMDImplOpenVR::getSubmittedFrameIndex()
-{
-    return mSubmittedFrameIndex;
-}
-
-void LLHMDImplOpenVR::incrementSubmittedFrameIndex()
-{
-    ++mSubmittedFrameIndex;
 }
 
 void LLHMDImplOpenVR::resetOrientation()
@@ -280,7 +269,7 @@ BOOL LLHMDImplOpenVR::beginFrame()
         }
     }
 
-    if (!mEyeRT[0])
+    if (!mEyeRenderTarget[0])
     {
         createRenderTargets();
     }
@@ -298,27 +287,53 @@ BOOL LLHMDImplOpenVR::beginFrame()
     }
 
     // Get projection mats for each eye for current near/far settings
-    mProjection[0] = ToMatrix4(mOpenVR->mHMD->GetProjectionMatrix(vr::Eye_Left,  0.25f, 4096.0f, vr::API_OpenGL));
-    mProjection[1] = ToMatrix4(mOpenVR->mHMD->GetProjectionMatrix(vr::Eye_Right, 0.25f, 4096.0f, vr::API_OpenGL));
-    mProjection[0].invert(); // clipspace to left eyespace
+    mProjection[0] = ToMatrix4(mOpenVR->mHMD->GetProjectionMatrix(vr::Eye_Left,  0.25f, 1536.0f, vr::API_OpenGL));
+    mProjection[1] = ToMatrix4(mOpenVR->mHMD->GetProjectionMatrix(vr::Eye_Right, 0.25f, 1536.0f, vr::API_OpenGL));
+    mProjection[0].invert(); // clipspace to left  eyespace
     mProjection[1].invert(); // clipspace to right eyespace
 
     return TRUE;
 }
 
-BOOL LLHMDImplOpenVR::bindEyeRT(int eyeIndex)
+BOOL LLHMDImplOpenVR::bindEyeRenderTarget(int which_eye)
 {
-    if (mEyeRT[eyeIndex])
+    if (mEyeRenderTarget[which_eye])
     {
-        mEyeRT[eyeIndex]->bindTarget();
+        mEyeRenderTarget[which_eye]->bindTarget();
         return TRUE;
     }
     return FALSE;
 }
 
-BOOL LLHMDImplOpenVR::releaseEyeRT(int eyeIndex)
+BOOL LLHMDImplOpenVR::flushEyeRenderTarget(int which_eye)
 {
-    if (mEyeRT[eyeIndex])
+    if (mEyeRenderTarget[which_eye])
+    {
+        mEyeRenderTarget[which_eye]->flush();
+        return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL LLHMDImplOpenVR::copyToEyeRenderTarget(int which_eye, LLRenderTarget& source, int mask)
+{
+    if (mEyeRenderTarget[which_eye])
+    {
+        BOOL do_depth = (mask & GL_DEPTH_BUFFER_BIT) > 0;
+        LLGLDepthTest depth(do_depth ? GL_TRUE : GL_FALSE, do_depth ? GL_TRUE : GL_FALSE);
+        mEyeRenderTarget[which_eye]->copyContents(
+            source,
+            0, 0, source.getWidth(),  source.getHeight(),
+            0, 0, getViewportWidth(), getViewportHeight(),
+            mask, GL_NEAREST);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+BOOL LLHMDImplOpenVR::releaseEyeRenderTarget(int which_eye)
+{
+    if (mEyeRenderTarget[which_eye])
     {
         // Bind default FBO, unbinding our eye FBO implicitly
         //
@@ -326,12 +341,12 @@ BOOL LLHMDImplOpenVR::releaseEyeRT(int eyeIndex)
 
         // Bind the RTs texture so we can let the compositor
         // copy that subimage data to the Vive
-        mEyeRT[eyeIndex]->bindTexture(0, 0);
+        mEyeRenderTarget[which_eye]->bindTexture(0, 0);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL,  0);
 
-        GLint texId = mEyeRT[eyeIndex]->getTexture();
+        GLint texId = mEyeRenderTarget[which_eye]->getTexture();
 
         vr::Texture_t eyeTexture;
 
@@ -339,15 +354,53 @@ BOOL LLHMDImplOpenVR::releaseEyeRT(int eyeIndex)
         eyeTexture.eType = vr::API_OpenGL;
         eyeTexture.eColorSpace = vr::ColorSpace_Gamma;
 
-        vr::VRCompositor()->Submit(vr::EVREye(eyeIndex), &eyeTexture);
+        vr::VRCompositor()->Submit(vr::EVREye(which_eye), &eyeTexture);
+
+        return TRUE;
     }
 
-    return TRUE;
+    return FALSE;
+}
+
+BOOL LLHMDImplOpenVR::bounceEyeRenderTarget(int which_eye, LLRenderTarget& source)
+{
+    if (mEyeRenderTarget[which_eye])
+    {
+        LLGLDepthTest depth(GL_FALSE, GL_FALSE);
+        mEyeRenderTarget[which_eye]->copyContents(
+            source,
+            0, 0, source.getWidth(), source.getHeight(),
+            0, 0, getViewportWidth(), getViewportHeight(),
+            GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+        // Bind default FBO, unbinding our eye FBO implicitly
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // Bind the RTs texture so we can let the compositor
+        // copy that subimage data to the Vive
+        mEyeRenderTarget[which_eye]->bindTexture(0, 0);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+
+        GLint texId = mEyeRenderTarget[which_eye]->getTexture();
+
+        vr::Texture_t eyeTexture;
+
+        eyeTexture.handle       = (void*)uintptr_t(texId);
+        eyeTexture.eType        = vr::API_OpenGL;
+        eyeTexture.eColorSpace  = vr::ColorSpace_Gamma;
+
+        vr::VRCompositor()->Submit(vr::EVREye(which_eye), &eyeTexture);
+
+        return TRUE;
+    }
+    return FALSE;
 }
 
 BOOL LLHMDImplOpenVR::endFrame()
 {
-    incrementSubmittedFrameIndex();
+    incrementFrameIndex();
     return TRUE;
 }
 
@@ -357,7 +410,7 @@ BOOL LLHMDImplOpenVR::postSwap()
     return TRUE;
 }
 
-BOOL LLHMDImplOpenVR::releaseAllEyeRT()
+BOOL LLHMDImplOpenVR::releaseAllEyeRenderTargets()
 {
     destroyRenderTargets();
     return true;
@@ -378,6 +431,31 @@ void LLHMDImplOpenVR::onDeviceUpdated(int trackedDeviceIndex)
     (void)trackedDeviceIndex;
 }
 
+void LLHMDImplOpenVR::getStereoCullProjection(glh::matrix4f& proj, float z_near, float z_far) const
+{
+    float leftL;
+    float rightL;
+    float topL;
+    float bottomL;
+    float leftR;
+    float rightR;
+    float topR;
+    float bottomR;
+
+    // construct projection encompassing both eyes (used for culling etc)
+    mOpenVR->mHMD->GetProjectionRaw(vr::Eye_Left,  &leftL, &rightL, &topL, &bottomL);
+    mOpenVR->mHMD->GetProjectionRaw(vr::Eye_Right, &leftR, &rightR, &topR, &bottomR);
+
+    F32 maxLeft  = llmax(fabs(leftL), fabs(leftR));
+    F32 maxRight = llmax(rightL, rightR);
+    F32 maxUp    = llmax(fabs(topL), fabs(topR));
+    F32 maxDown  = llmax(bottomL, bottomR);
+    F32 aspect   = (maxLeft + maxRight) / (maxDown + maxUp);
+    F32 fov      = (maxDown + maxUp);
+
+    proj = gl_perspective(fov, aspect, z_near, z_far, false);
+}
+
 void LLHMDImplOpenVR::getEyeProjection(int whichEye, glh::matrix4f& proj, float zNear, float zFar) const
 {
     FromSteamVRProjection(mOpenVR->mHMD->GetProjectionMatrix(vr::EVREye(whichEye), zNear, zFar, vr::API_OpenGL), proj);
@@ -394,39 +472,6 @@ void LLHMDImplOpenVR::getEyeOffset(int whichEye, LLVector3& offsetOut) const
 LLVector3 LLHMDImplOpenVR::getHeadPosition() const
 {
     return mHeadPosition;
-}
-
-F32 LLHMDImplOpenVR::getRoll() const
-{
-    float roll;
-    float pitch;
-    float yaw;
-    mEyeRotation.getEulerAngles(&roll, &pitch, &yaw);
-    return roll;
-}
-
-F32 LLHMDImplOpenVR::getPitch() const
-{
-    float roll;
-    float pitch;
-    float yaw;
-    mEyeRotation.getEulerAngles(&roll, &pitch, &yaw);
-    return pitch;
-}
-
-F32 LLHMDImplOpenVR::getYaw() const
-{
-    float roll;
-    float pitch;
-    float yaw;
-    mEyeRotation.getEulerAngles(&roll, &pitch, &yaw);
-    return yaw;
-
-}
-
-void LLHMDImplOpenVR::getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const
-{
-    mEyeRotation.getEulerAngles(&roll, &pitch, &yaw);
 }
 
 #endif // LL_HMD_OPENVR_SUPPORTED && LL_HMD_SUPPORTED

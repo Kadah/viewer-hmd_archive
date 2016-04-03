@@ -91,8 +91,8 @@ public:
 	//limit of 4 color attachments per render target
 	bool addColorAttachment(U32 color_fmt);
 
-        //set color buffer attachment to specified texture, use with caution...
-        bool setAttachment(int which, int textureId);
+    //set color buffer attachment to specified texture, use with caution...
+    bool setAttachment(int which, int textureId);
 
 	//allocate a depth texture
 	bool allocateDepth();
@@ -123,7 +123,6 @@ public:
 
 	LLTexUnit::eTextureType getUsage(void) const { return mUsage; }
 
-	BOOL setTexture(U32 index, U32 texID);
 	U32 getTexture(U32 attachment = 0) const;
 	U32 getNumTextures() const;
 
@@ -138,13 +137,16 @@ public:
 	// call bindTarget once, do all your rendering, call flush once
 	// if fetch_depth is TRUE, every effort will be made to copy the depth buffer into 
 	// the current depth texture.  A depth texture will be allocated if needed.
-	void flush(bool fetch_depth = FALSE);
+    void flush(bool fetch_depth = FALSE);
 
 	void copyContents(LLRenderTarget& source, S32 srcX0, S32 srcY0, S32 srcX1, S32 srcY1,
 						S32 dstX0, S32 dstY0, S32 dstX1, S32 dstY1, U32 mask, U32 filter);
 
 	static void copyContentsToFramebuffer(LLRenderTarget& source, S32 srcX0, S32 srcY0, S32 srcX1, S32 srcY1,
 						S32 dstX0, S32 dstY0, S32 dstX1, S32 dstY1, U32 mask, U32 filter);
+
+    static void copyContentsToBoundTarget(LLRenderTarget& source, S32 srcX0, S32 srcY0, S32 srcX1, S32 srcY1,
+        S32 dstX0, S32 dstY0, S32 dstX1, S32 dstY1, U32 mask, U32 filter);
 
 	//Returns TRUE if target is ready to be rendered into.
 	//That is, if the target has been allocated with at least
