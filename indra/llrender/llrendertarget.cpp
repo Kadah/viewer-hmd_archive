@@ -622,6 +622,7 @@ void LLRenderTarget::release()
 
 void LLRenderTarget::bindTarget()
 {
+    // hitting this implies you did two binds back to back with no flush between. not a valid use.
     llassert(!mPreviousTarget);
 
     mPreviousTarget = sBoundTarget;
@@ -629,13 +630,6 @@ void LLRenderTarget::bindTarget()
 	if (mFBO)
 	{
 		stop_glerror();
-		
-        if (sCurFBO == 0)
-        {
-            int q = 0;
-            q++;
-        }
-
 		mPreviousFBO = sCurFBO;
 
 		glBindFramebuffer(GL_FRAMEBUFFER, mFBO);
@@ -668,6 +662,7 @@ void LLRenderTarget::bindTarget()
 	sCurResX = mResX;
 	sCurResY = mResY;
 
+    // hitting this also implies you've done a bind without necessary paired flush.
     llassert(sBoundTarget != this);
 
 	sBoundTarget = this;
@@ -762,8 +757,6 @@ void LLRenderTarget::flush(bool fetch_depth)
 		stop_glerror();
 	}
 
-    llassert(sBoundTarget != mPreviousTarget);
-
     sBoundTarget = mPreviousTarget;
 
     mPreviousTarget = NULL;
@@ -795,12 +788,6 @@ void LLRenderTarget::copyContents(LLRenderTarget& source, S32 srcX0, S32 srcY0, 
 		stop_glerror();
 		glCopyTexSubImage2D(LLTexUnit::getInternalType(mUsage), 0, srcX0, srcY0, dstX0, dstY0, dstX1, dstY1);
 		stop_glerror();
-
-        if (sCurFBO == 0)
-        {
-            int q = 0;
-            q++;
-        }
 		glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
 		stop_glerror();
 	}
@@ -818,11 +805,6 @@ void LLRenderTarget::copyContents(LLRenderTarget& source, S32 srcX0, S32 srcY0, 
 		stop_glerror();
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		stop_glerror();
-        if (sCurFBO == 0)
-        {
-            int q = 0;
-            q++;
-        }
 		glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
 		stop_glerror();
 	}
@@ -831,6 +813,7 @@ void LLRenderTarget::copyContents(LLRenderTarget& source, S32 srcX0, S32 srcY0, 
 void LLRenderTarget::copyContentsToBoundTarget(LLRenderTarget& source, S32 srcX0, S32 srcY0, S32 srcX1, S32 srcY1,
     S32 dstX0, S32 dstY0, S32 dstX1, S32 dstY1, U32 mask, U32 filter)
 {
+    // need a bound target in order to copy into same.
     llassert(sBoundTarget && source.mFBO);
 
     GLboolean write_depth = mask & GL_DEPTH_BUFFER_BIT ? TRUE : FALSE;
@@ -845,11 +828,6 @@ void LLRenderTarget::copyContentsToBoundTarget(LLRenderTarget& source, S32 srcX0
     stop_glerror();
     glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
     stop_glerror();
-    if (sCurFBO == 0)
-    {
-        int q = 0;
-        q++;
-    }
     glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
     stop_glerror();
 }
@@ -865,14 +843,7 @@ void LLRenderTarget::copyContentsToFramebuffer(LLRenderTarget& source, S32 srcX0
 	}
 
     
-    /* This is WTF waiting to happen and not actually used AFAICT - Graham
-       99.9999% of the time, this is caused by you, programmer, forgetting to flush an RT you bound.
-    if (sBoundTarget && (sBoundTarget != &source))
-    { //unbeknownst to the caller, some other target is masquerading as the framebuffer
-        sBoundTarget->copyContents(source, srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
-    }
-    else*/
-
+    // looks like you forgot to flush a render target you bound, chief.
     llassert(!sBoundTarget);
 
 	{
@@ -888,12 +859,6 @@ void LLRenderTarget::copyContentsToFramebuffer(LLRenderTarget& source, S32 srcX0
 		stop_glerror();
 		glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter);
 		stop_glerror();
-
-        if (sCurFBO == 0)
-        {
-            int q = 0;
-            q++;
-        }
 		glBindFramebuffer(GL_FRAMEBUFFER, sCurFBO);
 		stop_glerror();
 	}

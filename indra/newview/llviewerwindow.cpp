@@ -725,11 +725,12 @@ public:
 			addText(xpos, ypos, "View Matrix");
 			ypos += y_inc;
 		}
-		if (gSavedSettings.getBOOL("DebugShowColor"))
+        // use of glReadPixels breaks compat for nSight shader debugging
+		if (gSavedSettings.getBOOL("DebugShowColor") && !gSavedSettings.getBOOL("NsightDebug"))
 		{
 			U8 color[4];
 			LLCoordGL coord = gViewerWindow->getCurrentMouse();
-			//glReadPixels(coord.mX, coord.mY, 1,1,GL_RGBA, GL_UNSIGNED_BYTE, color);
+			glReadPixels(coord.mX, coord.mY, 1,1,GL_RGBA, GL_UNSIGNED_BYTE, color);
 			addText(xpos, ypos, llformat("%d %d %d %d", color[0], color[1], color[2], color[3]));
 			ypos += y_inc;
 		}
@@ -4676,8 +4677,8 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 
 	S32 output_buffer_offset_y = 0;
 
-	//F32 depth_conversion_factor_1 = (LLViewerCamera::getInstance()->getFar() + LLViewerCamera::getInstance()->getNear()) / (2.f * LLViewerCamera::getInstance()->getFar() * LLViewerCamera::getInstance()->getNear());
-	//F32 depth_conversion_factor_2 = (LLViewerCamera::getInstance()->getFar() - LLViewerCamera::getInstance()->getNear()) / (2.f * LLViewerCamera::getInstance()->getFar() * LLViewerCamera::getInstance()->getNear());
+	F32 depth_conversion_factor_1 = (LLViewerCamera::getInstance()->getFar() + LLViewerCamera::getInstance()->getNear()) / (2.f * LLViewerCamera::getInstance()->getFar() * LLViewerCamera::getInstance()->getNear());
+	F32 depth_conversion_factor_2 = (LLViewerCamera::getInstance()->getFar() - LLViewerCamera::getInstance()->getNear()) / (2.f * LLViewerCamera::getInstance()->getFar() * LLViewerCamera::getInstance()->getNear());
 
 	gObjectList.generatePickList(*LLViewerCamera::getInstance());
 
@@ -4723,13 +4724,13 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 				
 				for (U32 out_y = 0; out_y < read_height ; out_y++)
 				{
-					/*S32 output_buffer_offset = ( 
+					S32 output_buffer_offset = ( 
 												(out_y * (raw->getWidth())) // ...plus iterated y...
 												+ (window_width * subimage_x) // ...plus subimage start in x...
 												+ (raw->getWidth() * window_height * subimage_y) // ...plus subimage start in y...
 												- output_buffer_offset_x // ...minus buffer padding x...
 												- (output_buffer_offset_y * (raw->getWidth()))  // ...minus buffer padding y...
-												) * raw->getComponents();*/
+												) * raw->getComponents();
 				
 					// Ping the watchdog thread every 100 lines to keep us alive (arbitrary number, feel free to change)
 					if (out_y % 100 == 0)
@@ -4739,35 +4740,43 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 				
 					if (type == SNAPSHOT_TYPE_COLOR)
 					{
-						/*glReadPixels(
-									 subimage_x_offset, out_y + subimage_y_offset,
-									 read_width, 1,
-									 GL_RGB, GL_UNSIGNED_BYTE,
-									 raw->getData() + output_buffer_offset
-									 );*/
+                        // glReadPixels spoils the shader debugging party...
+                        if (!gSavedSettings.getBOOL("NsightDebug"))
+                        {
+						    glReadPixels(
+									     subimage_x_offset, out_y + subimage_y_offset,
+									     read_width, 1,
+									     GL_RGB, GL_UNSIGNED_BYTE,
+									     raw->getData() + output_buffer_offset
+									     );
+                        }
 					}
 					else // SNAPSHOT_TYPE_DEPTH
 					{
-						/*LLPointer<LLImageRaw> depth_line_buffer = new LLImageRaw(read_width, 1, sizeof(GL_FLOAT)); // need to store floating point values
-						glReadPixels(
-									 subimage_x_offset, out_y + subimage_y_offset,
-									 read_width, 1,
-									 GL_DEPTH_COMPONENT, GL_FLOAT,
-									 depth_line_buffer->getData()// current output pixel is beginning of buffer...
-									 );
+                        // glReadPixels spoils the shader debugging party...
+                        if (!gSavedSettings.getBOOL("NsightDebug"))
+                        {
+						    LLPointer<LLImageRaw> depth_line_buffer = new LLImageRaw(read_width, 1, sizeof(GL_FLOAT)); // need to store floating point values
+						    glReadPixels(
+									     subimage_x_offset, out_y + subimage_y_offset,
+									     read_width, 1,
+									     GL_DEPTH_COMPONENT, GL_FLOAT,
+									     depth_line_buffer->getData()// current output pixel is beginning of buffer...
+									     );
 
-						for (S32 i = 0; i < (S32)read_width; i++)
-						{
-							F32 depth_float = *(F32*)(depth_line_buffer->getData() + (i * sizeof(F32)));
+						    for (S32 i = 0; i < (S32)read_width; i++)
+						    {
+							    F32 depth_float = *(F32*)(depth_line_buffer->getData() + (i * sizeof(F32)));
 					
-							F32 linear_depth_float = 1.f / (depth_conversion_factor_1 - (depth_float * depth_conversion_factor_2));
-							U8 depth_byte = F32_to_U8(linear_depth_float, LLViewerCamera::getInstance()->getNear(), LLViewerCamera::getInstance()->getFar());
-							// write converted scanline out to result image
-							for (S32 j = 0; j < raw->getComponents(); j++)
-							{
-								*(raw->getData() + output_buffer_offset + (i * raw->getComponents()) + j) = depth_byte;
-							}
-						}*/
+							    F32 linear_depth_float = 1.f / (depth_conversion_factor_1 - (depth_float * depth_conversion_factor_2));
+							    U8 depth_byte = F32_to_U8(linear_depth_float, LLViewerCamera::getInstance()->getNear(), LLViewerCamera::getInstance()->getFar());
+							    // write converted scanline out to result image
+							    for (S32 j = 0; j < raw->getComponents(); j++)
+							    {
+								    *(raw->getData() + output_buffer_offset + (i * raw->getComponents()) + j) = depth_byte;
+							    }
+						    }
+                        }
 					}
 				}
 			}
