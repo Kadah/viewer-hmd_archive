@@ -395,7 +395,7 @@ void LLViewerCamera::setProjectionMatrix(glh::matrix4f& proj_mat)
     if (gHMD.isHMDMode())
     {
         LLMatrix4 hip_rotation  = LLMatrix4(gAgent.getFrameAgent().getQuaternion());
-        LLMatrix4 head_rotation = LLMatrix4(gHMD.getHMDRotation());
+        LLMatrix4 head_rotation = LLMatrix4(gHMD.getHMDRotation());       
         mdlv *= hip_rotation;
         mdlv *= head_rotation;
     }
@@ -496,18 +496,17 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
 
-    
     LLMatrix4 mdlv = getModelview();
 
+    glh::matrix4f modelview((GLfloat*)mdlv.mMatrix);
+	gGL.loadMatrix(modelview.m);
+	
     if (gHMD.isHMDMode())
     {
         LLMatrix4 head_rotation = LLMatrix4(~gHMD.getHMDRotation());
         mdlv *= head_rotation;
     }
 
-    glh::matrix4f modelview((GLfloat*)mdlv.mMatrix);
-	gGL.loadMatrix(modelview.m);
-	
 	if (for_selection && (width > 1 || height > 1))
 	{
 		// NB: as of this writing, i believe the code below is broken (doesn't take into account the world view, assumes entire window)
@@ -977,4 +976,3 @@ void LLViewerCamera::updateCameraAngle( void* user_data, const LLSD& value)
 	LLViewerCamera* self=(LLViewerCamera*)user_data;
 	self->setDefaultFOV(value.asReal());	
 }
-

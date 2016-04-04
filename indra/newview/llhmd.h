@@ -366,8 +366,9 @@ private:
     F32 mMouselookRotMax;
     F32 mMouselookTurnSpeedMax;
     LLVector3 mLastRollPitchYaw;
-    F32 mStereoCameraFOV;
-    LLVector3 mStereoCameraPosition;
+    F32 mMonoCameraFOV;
+    F32 mMonoCameraAspect;
+    LLVector3 mMonoCameraPosition;
     LLVector3 mCameraOffset;
     LLVector3 mEyeOffset[2];
     glh::matrix4f mEyeProjection[2];

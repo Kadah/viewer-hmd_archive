@@ -108,7 +108,9 @@ LLHMD::LLHMD()
     , mMouselookRotThreshold(45.0f * DEG_TO_RAD)
     , mMouselookRotMax(30.0f * DEG_TO_RAD)
     , mMouselookTurnSpeedMax(0.1f)
-    , mStereoCameraFOV(DEFAULT_FIELD_OF_VIEW)
+    , mMonoCameraFOV(DEFAULT_FIELD_OF_VIEW)
+    , mMonoCameraAspect(1.0f)
+    , mMonoCameraPosition(LLVector3())
     , mStereoCullCameraFOV(0.0f)
     , mStereoCullCameraAspect(0.0f)
 {
@@ -1014,11 +1016,13 @@ BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
 
 void LLHMD::setupStereoValues()
 {
-    // Remember default mono camera details.
+    
     LLViewerCamera* cam = LLViewerCamera::getInstance();
 
-    mStereoCameraFOV      = cam->getView();
-    mStereoCameraPosition = cam->getOrigin();
+    // Remember default mono camera details.
+    mMonoCameraFOV      = cam->getView();
+    mMonoCameraAspect   = cam->getAspect();
+    mMonoCameraPosition = cam->getOrigin();
 
     // Stereo culling frustum camera parameters.
     mStereoCullCameraFOV    = mImpl->getVerticalFOV();
@@ -1034,7 +1038,7 @@ void LLHMD::setupStereoCullFrustum()
 
     LLViewerCamera* cam = LLViewerCamera::getInstance();
     
-    LLVector3 headPosWorld = getHeadPosition() + mStereoCameraPosition;
+    LLVector3 headPosWorld = getHeadPosition() + mMonoCameraPosition;
 
     cam->setOrigin(headPosWorld);
     cam->setPerspective(!FOR_SELECTION, 0, 0, getViewportWidth() * 2, getViewportHeight(), FALSE, cam->getNear(), cam->getFar());
@@ -1114,13 +1118,14 @@ void LLHMD::setup3DRender(int which_eye)
     mEyeOffset[which_eye].setZero();
     mImpl->getEyeOffset(which_eye, mEyeOffset[which_eye]);
 
-    LLVector3 eyePos = mStereoCameraPosition + getHeadPosition() + mEyeOffset[which_eye];
+    LLVector3 eyePos = mMonoCameraPosition + getHeadPosition() + mEyeOffset[which_eye];
 
     mEyeProjection[which_eye].make_identity();
     mImpl->getEyeProjection(which_eye, mEyeProjection[which_eye], cam->getNear(), cam->getFar());
 
-    cam->setView(mImpl->getVerticalFOV(), FALSE);
-    cam->setAspect(mImpl->getAspect());
+    //cam->setView(mImpl->getVerticalFOV(), FALSE);
+    //cam->setAspect(mImpl->getAspect());
+
     cam->setOrigin(eyePos);
     cam->setProjectionMatrix(mEyeProjection[which_eye]);
 }
