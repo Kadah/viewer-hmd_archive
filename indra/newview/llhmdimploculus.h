@@ -63,10 +63,8 @@ public:
     virtual LLVector3           getHeadPosition() const;
     virtual void                getEyeOffset(int whichEye, LLVector3& offsetOut) const;
     virtual void                getEyeProjection(int whichEye, glh::matrix4f& proj, float zNear, float zFar) const;
-    virtual void                getStereoCullProjection(glh::matrix4f& projOut, float zNear, float zFar) const;
 
     virtual BOOL beginFrame();
-    virtual BOOL bounceEyeRenderTarget(int which_eye, LLRenderTarget& source);
     virtual BOOL copyToEyeRenderTarget(int which_eye, LLRenderTarget& source, int mask);
     virtual BOOL bindEyeRenderTarget(int which_eye);
     virtual BOOL flushEyeRenderTarget(int which_eye);

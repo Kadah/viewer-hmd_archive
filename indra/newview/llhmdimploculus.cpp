@@ -168,7 +168,7 @@ BOOL LLHMDImplOculus::init()
 void LLHMDImplOculus::destroy()
 {
     gHMD.isHMDConnected(false);
-    gHMD.setRenderMode(LLHMD::RenderMode_None);
+    gHMD.setRenderMode(LLHMD::RenderMode_Normal);
 
     destroySwapChains();
 
@@ -473,28 +473,6 @@ BOOL LLHMDImplOculus::releaseAllEyeRenderTargets()
     return true;
 }
 
-BOOL LLHMDImplOculus::bounceEyeRenderTarget(int which, LLRenderTarget& source)
-{
-    if (!mEyeRenderTarget[0][0])
-    {
-        return FALSE;
-    }
-
-    if (!mNsightDebugMode)
-    {
-        int texIndex = getFrameIndex() % 3;
-        S32 w = getViewportWidth();
-        S32 h = getViewportHeight();
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, source.getFBO());
-        glBindTexture(GL_TEXTURE_2D, mSwapTexture[which][texIndex]);
-        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, w, h);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        ovr_CommitTextureSwapChain(mOculus->mHMD, mOculus->mSwapChain[which]);
-    }
-
-    return true;
-}
-
 BOOL LLHMDImplOculus::endFrame()
 {
     if (!mEyeRenderTarget[0][0])
@@ -592,21 +570,6 @@ F32 LLHMDImplOculus::getAspect() const
 LLVector3 LLHMDImplOculus::getHeadPosition() const
 {
     return mHeadPos;
-}
-
-void LLHMDImplOculus::getStereoCullProjection(glh::matrix4f& projOut, float zNear, float zFar) const
-{
-    ovrFovPort wideView;
-
-    // we want to create a "double-wide" frustum encompassing things likely to be found in either eye...
-    wideView.LeftTan  = mOculus->mHMDDesc.DefaultEyeFov[0].LeftTan;
-    wideView.RightTan = mOculus->mHMDDesc.DefaultEyeFov[1].RightTan;
-    wideView.UpTan    = mOculus->mHMDDesc.DefaultEyeFov[0].UpTan;
-    wideView.DownTan  = mOculus->mHMDDesc.DefaultEyeFov[0].DownTan;
-
-    ovrMatrix4f proj = ovrMatrix4f_Projection(wideView, zNear, zFar, ovrProjection_ClipRangeOpenGL);
-
-    projOut = glh::matrix4f(&proj.M[0][0]);
 }
 
 void LLHMDImplOculus::getEyeProjection(int whichEye, glh::matrix4f& projOut, float zNear, float zFar) const

@@ -643,7 +643,7 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
             gHMD.beginFrame();
         }
 
-        if (render_mode == LLHMD::RenderMode_None || for_snapshot_original)
+        if (render_mode == LLHMD::RenderMode_Normal || for_snapshot_original)
         {
             render_frame(rebuild, FALSE, -1);
         }
@@ -773,8 +773,7 @@ S32 LLViewerDisplay::cull(LLCullResult& cullResult)
 	}
 	gDepthDirty = FALSE;
 
-// GG
-    if (gHMD.isHMDMode() && !LLPipeline::sRenderDeferred)
+    if (gHMD.isHMDMode())
     {
         LLPipeline::sUseOcclusion = 0;
     }
@@ -1635,7 +1634,7 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
         gHMD.bindEyeRenderTarget(options.hmd_eye);
     }
 
-	if (to_texture)
+	if (to_texture && !options.for_hmd)
 	{
         push_state_gl_identity();		
         gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
@@ -1666,13 +1665,13 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
         LLGLState::checkStates();
     }
 
+    render_ui_2d();
+    LLGLState::checkStates();
+
     if (options.for_hmd)
     {
         gHMD.flushEyeRenderTarget(options.hmd_eye);
     }
-
-    render_ui_2d();
-    LLGLState::checkStates();
 
     gPipeline.postRender(FALSE, options.for_hmd, options.hmd_eye);
     
@@ -1723,6 +1722,7 @@ void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
     {
         gHMD.setup3DRender(whichEye);
         update_camera(whichEye); // fix proj mats...
+        occlusion = 0;
     }
 
     BOOL to_texture = (gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow);

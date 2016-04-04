@@ -157,7 +157,7 @@ BOOL LLHMDImplOpenVR::init()
 void LLHMDImplOpenVR::destroy()
 {
     gHMD.isHMDConnected(false);
-    gHMD.setRenderMode(LLHMD::RenderMode_None);
+    gHMD.setRenderMode(LLHMD::RenderMode_Normal);
 
     destroyRenderTargets();
 
@@ -362,42 +362,6 @@ BOOL LLHMDImplOpenVR::releaseEyeRenderTarget(int which_eye)
     return FALSE;
 }
 
-BOOL LLHMDImplOpenVR::bounceEyeRenderTarget(int which_eye, LLRenderTarget& source)
-{
-    if (mEyeRenderTarget[which_eye])
-    {
-        LLGLDepthTest depth(GL_FALSE, GL_FALSE);
-        mEyeRenderTarget[which_eye]->copyContents(
-            source,
-            0, 0, source.getWidth(), source.getHeight(),
-            0, 0, getViewportWidth(), getViewportHeight(),
-            GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-        // Bind default FBO, unbinding our eye FBO implicitly
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        // Bind the RTs texture so we can let the compositor
-        // copy that subimage data to the Vive
-        mEyeRenderTarget[which_eye]->bindTexture(0, 0);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
-
-        GLint texId = mEyeRenderTarget[which_eye]->getTexture();
-
-        vr::Texture_t eyeTexture;
-
-        eyeTexture.handle       = (void*)uintptr_t(texId);
-        eyeTexture.eType        = vr::API_OpenGL;
-        eyeTexture.eColorSpace  = vr::ColorSpace_Gamma;
-
-        vr::VRCompositor()->Submit(vr::EVREye(which_eye), &eyeTexture);
-
-        return TRUE;
-    }
-    return FALSE;
-}
-
 BOOL LLHMDImplOpenVR::endFrame()
 {
     incrementFrameIndex();
@@ -429,31 +393,6 @@ void LLHMDImplOpenVR::onDeviceDeactivated(int trackedDeviceIndex)
 void LLHMDImplOpenVR::onDeviceUpdated(int trackedDeviceIndex)
 {
     (void)trackedDeviceIndex;
-}
-
-void LLHMDImplOpenVR::getStereoCullProjection(glh::matrix4f& proj, float z_near, float z_far) const
-{
-    float leftL;
-    float rightL;
-    float topL;
-    float bottomL;
-    float leftR;
-    float rightR;
-    float topR;
-    float bottomR;
-
-    // construct projection encompassing both eyes (used for culling etc)
-    mOpenVR->mHMD->GetProjectionRaw(vr::Eye_Left,  &leftL, &rightL, &topL, &bottomL);
-    mOpenVR->mHMD->GetProjectionRaw(vr::Eye_Right, &leftR, &rightR, &topR, &bottomR);
-
-    F32 maxLeft  = llmax(fabs(leftL), fabs(leftR));
-    F32 maxRight = llmax(rightL, rightR);
-    F32 maxUp    = llmax(fabs(topL), fabs(topR));
-    F32 maxDown  = llmax(bottomL, bottomR);
-    F32 aspect   = (maxLeft + maxRight) / (maxDown + maxUp);
-    F32 fov      = (maxDown + maxUp);
-
-    proj = gl_perspective(fov, aspect, z_near, z_far, false);
 }
 
 void LLHMDImplOpenVR::getEyeProjection(int whichEye, glh::matrix4f& proj, float zNear, float zFar) const

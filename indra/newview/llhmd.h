@@ -56,24 +56,9 @@ class LLHMD
 public:
     enum eRenderMode
     {
-        RenderMode_None = 0,        // Do not render to HMD
-        RenderMode_HMD,             // render to HMD  (Direct Mode)
-        RenderMode_ScreenStereo,    // render to main window in stereoscopic mode (Debugging or Extended Mode)
-        RenderMode_Last = RenderMode_ScreenStereo,
-    };
-
-    enum eCameraEye
-    {
-        CENTER_EYE  = 0,
-        LEFT_EYE    = 1,
-        RIGHT_EYE   = 2,
-    };
-
-    enum eRPY
-    {
-        ROLL = 0,
-        PITCH = 1,
-        YAW = 2,
+        RenderMode_Normal = 0, // Do not render to HMD
+        RenderMode_HMD,        // render to HMD w/ main framebuffer fisheye mirror
+        RenderMode_Last = RenderMode_HMD,
     };
 
     enum eFlags
@@ -83,23 +68,14 @@ public:
         kFlag_Post_Initialized          = 1 << 1,
         kFlag_FailedInit                = 1 << 2,
         kFlag_HMDConnected              = 1 << 3,
-        kFlag_MainIsFullScreen          = 1 << 4,
-        kFlag_CursorIntersectsWorld     = 1 << 5,
-        kFlag_CursorIntersectsUI        = 1 << 6,
-        kFlag_AdvancedMode              = 1 << 7,
-        kFlag_ChangingRenderContext     = 1 << 8,
-        kFlag_HMDAllowed                = 1 << 9,
-        kFlag_MainIsMaximized           = 1 << 10,
-        kFlag_HMDMirror                 = 1 << 11,
-        kFlag_SavingSettings            = 1 << 12,
-        kFlag_UsingDebugHMD             = 1 << 13,
-        kFlag_HMDDisplayEnabled         = 1 << 14,
-        kFlag_HMDDirectMode             = 1 << 15,
-        kFlag_PositionTrackingEnabled   = 1 << 16,
-        kFlag_FrameInProgress           = 1 << 17,
-        kFlag_SettingsChanged           = 1 << 18,
-        kFlag_MouselookYawOnly          = 1 << 19,
-        kFlag_AllowTextRoll             = 1 << 20
+        kFlag_CursorIntersectsWorld     = 1 << 4,
+        kFlag_CursorIntersectsUI        = 1 << 5,
+        kFlag_AdvancedMode              = 1 << 6,
+        kFlag_MainIsMaximized           = 1 << 7,
+        kFlag_SavingSettings            = 1 << 8,
+        kFlag_SettingsChanged           = 1 << 9,
+        kFlag_MouselookYawOnly          = 1 << 10,
+        kFlag_AllowTextRoll             = 1 << 11
     };
 
     enum eUIPresetType
@@ -167,6 +143,7 @@ public:
 
     BOOL cursorIntersectsWorld() const { return ((mFlags & kFlag_CursorIntersectsWorld) != 0) ? TRUE : FALSE; }
     void cursorIntersectsWorld(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsWorld; } else { mFlags &= ~kFlag_CursorIntersectsWorld; } }
+
     BOOL cursorIntersectsUI() const { return ((mFlags & kFlag_CursorIntersectsUI) != 0) ? TRUE : FALSE; }
     void cursorIntersectsUI(BOOL b) { if (b) { mFlags |= kFlag_CursorIntersectsUI; } else { mFlags &= ~kFlag_CursorIntersectsUI; } }
 
@@ -174,15 +151,12 @@ public:
     void renderSettingsChanged(BOOL b) { if (b) { mFlags |= kFlag_SettingsChanged; } else { mFlags &= ~kFlag_SettingsChanged; } }
 
 
-    // True if render mode != RenderMode_None
-    BOOL isHMDMode() const { return mRenderMode != RenderMode_None; }
+    // True if render mode != RenderMode_Normal
+    BOOL isHMDMode() const { return mRenderMode != RenderMode_Normal; }
 
     // get/set current HMD rendering mode
     U32 getRenderMode() const { return mRenderMode; }
     void setRenderMode(U32 mode, bool setFocusWindow = true);
-
-    void onAppFocusGained();
-    void onAppFocusLost();
 
     U32 suspendHMDMode();
     void resumeHMDMode(U32 prevRenderMode);
@@ -285,12 +259,11 @@ public:
     void setupStereoValues();
     void setupStereoCullFrustum();
 
-    void getStereoCullProjection(glh::matrix4f& projOut)        const { projOut = mProjection;               }
     void getEyeProjection(int whichEye, glh::matrix4f& projOut) const { projOut  = mEyeProjection[whichEye]; }
     void getEyeOffset(int whichEye, LLVector3& offsetOut)       const { offsetOut= mEyeOffset[whichEye];     }
 
     void setup2DRender();
-    void render3DUI();
+    void render3DUI(int which_eye);
 
     // defaults
     S32 getUIShapePresetIndexDefault() const { return 1; }
@@ -298,7 +271,6 @@ public:
     BOOL isMouselookYawOnlyDefault() const { return TRUE; }
 
     BOOL beginFrame();
-    BOOL bounceEyeRenderTarget(int which_eye, LLRenderTarget& source);
     BOOL copyToEyeRenderTarget(int which_eye, LLRenderTarget& source, int mask);
     BOOL bindEyeRenderTarget(int which_eye);
     BOOL flushEyeRenderTarget(int which_eye);
@@ -327,7 +299,7 @@ public:
     static void onChangeAllowTextRoll();
 
     void renderCursor2D();
-    void renderCursor3D();
+    void renderCursor3D(int which_eye);
 
 private:
     void setUISurfaceParam(F32* p, F32 f);
@@ -343,11 +315,10 @@ private:
 
     F32 mUIModelView[16];
     F32 mUIModelViewInv[16];
-    LLCoordScreen mMainWindowPos;
-    LLCoordScreen mMainWindowSize;
-    LLCoordWindow mMainClientSize;
-    F32 mMainWindowFOV;
-    F32 mMainWindowAspect;
+    //LLCoordScreen mMainWindowPos;
+    //LLCoordScreen mMainWindowSize;
+    //LLCoordWindow mMainClientSize;
+
     // in-world coordinates of mouse pointer on the UI surface
     LLVector3 mMouseWorld;
     // in-world coordinates of raycast from viewpoint into world, assuming no collisions.
@@ -369,12 +340,8 @@ private:
     F32 mMonoCameraFOV;
     F32 mMonoCameraAspect;
     LLVector3 mMonoCameraPosition;
-    LLVector3 mCameraOffset;
     LLVector3 mEyeOffset[2];
     glh::matrix4f mEyeProjection[2];
-    glh::matrix4f mProjection;
-
-    LLVector3 mStereoCullCameraDeltaForwards;
     F32 mStereoCullCameraFOV;
     F32 mStereoCullCameraAspect;
     LLQuaternion mAgentRot;
@@ -436,30 +403,29 @@ public:
     virtual LLVector3          getHeadPosition() const { return LLVector3::zero;                     }
     virtual const LLQuaternion getHMDRotation()  const { return LLQuaternion(0.0f, LLVector3(0.0f)); }
     
-    virtual void getStereoCullProjection(glh::matrix4f& proj, float zNear, float zFar) const { (void)proj, (void)zNear, (void)zFar; }
-
     virtual void getEyeProjection(int whichEye, glh::matrix4f& proj, float zNear, float zFar) const { (void)proj, (void)whichEye, (void)zNear, (void)zFar; }
     virtual void getEyeOffset(int whichEye, LLVector3& offsetOut)    const { (void)offsetOut, (void)whichEye; }
 
     virtual void resetOrientation() {}
 
     virtual void setup3DRender(int which)               { (void)which;  }
-    virtual BOOL beginFrame()                                               { return FALSE; }
-    virtual BOOL bounceEyeRenderTarget(int whichEye,LLRenderTarget& source) { return FALSE; }
-    virtual BOOL copyToEyeRenderTarget(int which_eye, LLRenderTarget& source, int mask) { return FALSE; }
-    virtual BOOL bindEyeRenderTarget(int which_eye)                         { return FALSE; }
-    virtual BOOL flushEyeRenderTarget(int which_eye)                        { return FALSE; }
-    virtual BOOL releaseEyeRenderTarget(int which_eye)                      { return FALSE; }
-    virtual BOOL endFrame()                                                 { return FALSE; }
-    virtual BOOL postSwap()                                                 { return FALSE; }
+    virtual BOOL beginFrame()                           { return FALSE; }
+    virtual BOOL copyToEyeRenderTarget(
+                    int which_eye,
+                    LLRenderTarget& source,
+                    int mask)                           { return FALSE; }
+    virtual BOOL bindEyeRenderTarget(int which_eye)     { return FALSE; }
+    virtual BOOL flushEyeRenderTarget(int which_eye)    { return FALSE; }
+    virtual BOOL releaseEyeRenderTarget(int which_eye)  { return FALSE; }
+    virtual BOOL endFrame()                             { return FALSE; }
+    virtual BOOL postSwap()                             { return FALSE; }
 
     // release to OS, not flush!
-    virtual BOOL releaseAllEyeRenderTargets()                               { return FALSE; }
+    virtual BOOL releaseAllEyeRenderTargets()           { return FALSE; }
 
-    virtual U32  getFrameIndex()       { return 0; }
-    virtual void resetFrameIndex()     {}
-    virtual void incrementFrameIndex() {}    
-
+    virtual U32  getFrameIndex()                        { return 0;     }
+    virtual void resetFrameIndex()                      {}
+    virtual void incrementFrameIndex()                  {}    
 };
 
 #endif // LL_LLHMD_H

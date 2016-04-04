@@ -4656,7 +4656,7 @@ void LLAppViewer::saveFinalSnapshot()
         if (gHMD.isHMDMode())
         {
             // Final snapshot should never be from HMD mode
-            gHMD.setRenderMode(LLHMD::RenderMode_None);
+            gHMD.setRenderMode(LLHMD::RenderMode_Normal);
         }
 
         mIsSavingFinalSnapshot = TRUE;

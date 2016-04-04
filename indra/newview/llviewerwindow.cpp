@@ -1373,8 +1373,6 @@ void LLViewerWindow::handleFocus(LLWindow *window)
 		gKeyboard->resetMaskKeys();
 	}
 
-    gHMD.onAppFocusGained();
-
 	// resume foreground running timer
 	// since we artificially limit framerate when not frontmost
 	gForegroundTime.unpause();
@@ -1383,10 +1381,6 @@ void LLViewerWindow::handleFocus(LLWindow *window)
 // The top-level window has lost focus (e.g. via ALT-TAB)
 void LLViewerWindow::handleFocusLost(LLWindow *window)
 {
-    // This should stay first so that we avoid BSODs as things try to access the HMD
-    // window (which is no longer accessible!)
-    gHMD.onAppFocusLost();
-
 	gFocusMgr.setAppHasFocus(FALSE);
 
 	//LLModalDialog::onAppFocusLost();
@@ -5324,7 +5318,7 @@ BOOL LLViewerWindow::changeDisplaySettings(LLCoordScreen size, BOOL disable_vsyn
 
 F32	LLViewerWindow::getWorldViewAspectRatio() const
 {
-    F32 world_aspect = gHMD.isHMDMode() ? gHMD.getAspect() : ((F32)getWorldViewWidthRaw() / (F32)getWorldViewHeightRaw());
+    F32 world_aspect = ((F32)getWorldViewWidthRaw() / (F32)getWorldViewHeightRaw());
 	return world_aspect;
 }
 

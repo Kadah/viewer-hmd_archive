@@ -4235,10 +4235,10 @@ class LLViewCycleDisplay : public view_listener_t
     {
 #if LL_HMD_SUPPORTED
         U32 curRenderMode = gHMD.getRenderMode();
-        U32 nextRenderMode = LLHMD::RenderMode_None;
+        U32 nextRenderMode = LLHMD::RenderMode_Normal;
         switch (curRenderMode)
         {
-        case LLHMD::RenderMode_None:
+        case LLHMD::RenderMode_Normal:
             {
                 if (!gHMD.isInitialized())
                 {
@@ -4251,12 +4251,11 @@ class LLViewCycleDisplay : public view_listener_t
             break;
 
         case LLHMD::RenderMode_HMD:
-            nextRenderMode = LLHMD::RenderMode_None;
+            nextRenderMode = LLHMD::RenderMode_Normal;
             break;
 
-        case LLHMD::RenderMode_ScreenStereo:
         default:
-            nextRenderMode = LLHMD::RenderMode_None;
+            nextRenderMode = LLHMD::RenderMode_Normal;
             break;
         }
         gHMD.setRenderMode(nextRenderMode);
