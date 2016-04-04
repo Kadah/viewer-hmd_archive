@@ -1034,28 +1034,10 @@ void LLHMD::setupStereoCullFrustum()
 
     LLViewerCamera* cam = LLViewerCamera::getInstance();
     
-    mImpl->getStereoCullProjection(mProjection, cam->getNear(), MAX_FAR_CLIP * 2.0f);
+    LLVector3 headPosWorld = getHeadPosition() + mStereoCameraPosition;
 
-    cam->setOrigin(getHeadPosition() + mStereoCameraPosition);    
-#if HACK
-    cam->setProjectionMatrix(mProjection);
-#endif
-
-}
-
-void LLHMD::setupEye(int which)
-{
-    LLViewerCamera* cam = LLViewerCamera::getInstance();
-
-    mEyeProjection[which].make_identity();
-    mImpl->getEyeProjection(which, mEyeProjection[which], cam->getNear(), MAX_FAR_CLIP * 2.0f);
-
-    mEyeOffset[which].setZero();
-    mImpl->getEyeOffset(which, mEyeOffset[which]);
-
-    cam->setView(mStereoCameraFOV, FALSE);
-    cam->setAspect(mImpl->getAspect());
-    cam->setOrigin(mEyeOffset[which] + getHeadPosition() + mStereoCameraPosition);
+    cam->setOrigin(headPosWorld);
+    cam->setPerspective(!FOR_SELECTION, 0, 0, getViewportWidth() * 2, getViewportHeight(), FALSE, cam->getNear(), cam->getFar());
 }
 
 BOOL LLHMD::bindEyeRenderTarget(int which_eye)
@@ -1091,7 +1073,7 @@ BOOL LLHMD::copyToEyeRenderTarget(int which_eye, LLRenderTarget& source, int mas
 BOOL LLHMD::releaseEyeRenderTarget(int which_eye)
 {
     if (mImpl)
-    {
+    {        
         return mImpl->releaseEyeRenderTarget(which_eye);
     }
 
@@ -1127,11 +1109,20 @@ void LLHMD::setup3DViewport(S32 x_offset, S32 y_offset)
 
 void LLHMD::setup3DRender(int which_eye)
 {
+    LLViewerCamera* cam = LLViewerCamera::getInstance();
 
-#if HACK
-   LLViewerCamera::getInstance()->setProjectionMatrix(mEyeProjection[which_eye]);
-#endif
+    mEyeOffset[which_eye].setZero();
+    mImpl->getEyeOffset(which_eye, mEyeOffset[which_eye]);
 
+    LLVector3 eyePos = mStereoCameraPosition + getHeadPosition() + mEyeOffset[which_eye];
+
+    mEyeProjection[which_eye].make_identity();
+    mImpl->getEyeProjection(which_eye, mEyeProjection[which_eye], cam->getNear(), cam->getFar());
+
+    cam->setView(mImpl->getVerticalFOV(), FALSE);
+    cam->setAspect(mImpl->getAspect());
+    cam->setOrigin(eyePos);
+    cam->setProjectionMatrix(mEyeProjection[which_eye]);
 }
 
 void LLHMD::setup2DRender()

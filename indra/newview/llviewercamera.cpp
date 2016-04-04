@@ -290,7 +290,7 @@ void LLViewerCamera::updateFrustumPlanes(LLCamera& camera, BOOL ortho, BOOL zfli
 	for (U32 i = 0; i < 16; i++)
 	{
         model[i] = (F64)gGLModelView[i];
-        proj[i] = (F64)gGLProjection[i];
+        proj[i]  = (F64)gGLProjection[i];
 	}
 
 	GLdouble objX,objY,objZ;
@@ -390,8 +390,6 @@ void LLViewerCamera::setProjectionMatrix(glh::matrix4f& proj_mat)
         gGLProjection[i] = proj_mat.m[i];
     }*/
 
-    gGL.matrixMode(LLRender::MM_MODELVIEW);
-
     LLMatrix4 mdlv = getModelview();
 
     if (gHMD.isHMDMode())
@@ -401,6 +399,8 @@ void LLViewerCamera::setProjectionMatrix(glh::matrix4f& proj_mat)
         mdlv *= hip_rotation;
         mdlv *= head_rotation;
     }
+
+    gGL.matrixMode(LLRender::MM_MODELVIEW);
 
     glh::matrix4f modelview((GLfloat*)mdlv.mMatrix);
 
@@ -499,8 +499,13 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
     
     LLMatrix4 mdlv = getModelview();
 
-	glh::matrix4f modelview((GLfloat*) mdlv.mMatrix);
-	
+    if (gHMD.isHMDMode())
+    {
+        LLMatrix4 head_rotation = LLMatrix4(~gHMD.getHMDRotation());
+        mdlv *= head_rotation;
+    }
+
+    glh::matrix4f modelview((GLfloat*)mdlv.mMatrix);
 	gGL.loadMatrix(modelview.m);
 	
 	if (for_selection && (width > 1 || height > 1))

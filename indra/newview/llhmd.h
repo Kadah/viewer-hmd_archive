@@ -284,7 +284,6 @@ public:
 
     void setupStereoValues();
     void setupStereoCullFrustum();
-    void setupEye(int which);
 
     void getStereoCullProjection(glh::matrix4f& projOut)        const { projOut = mProjection;               }
     void getEyeProjection(int whichEye, glh::matrix4f& projOut) const { projOut  = mEyeProjection[whichEye]; }

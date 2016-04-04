@@ -4950,7 +4950,6 @@ void LLViewerWindow::setup3DRender(S32 x_offset, S32 y_offset, int whichEye)
     if (gHMD.isHMDMode() && (whichEye >= 0))
     {
         gHMD.setup3DRender(whichEye);
-        gHMD.setup3DViewport(x_offset, y_offset);
     }
     else
     {
@@ -4963,12 +4962,13 @@ void LLViewerWindow::setup3DRender(S32 x_offset, S32 y_offset, int whichEye)
                                         getWorldViewHeightRaw(),
                                         FALSE,
                                         LLViewerCamera::getInstance()->getNear(),
-                                        MAX_FAR_CLIP * 2.0f);
-        setup3DViewport(x_offset, y_offset);
+                                        MAX_FAR_CLIP * 2.0f);        
     }	
+
+    setup3DViewport(x_offset, y_offset, whichEye);
 }
 
-void LLViewerWindow::setup3DViewport(S32 x_offset, S32 y_offset)
+void LLViewerWindow::setup3DViewport(S32 x_offset, S32 y_offset, int whichEye)
 {
     if (gHMD.isHMDMode())
     {

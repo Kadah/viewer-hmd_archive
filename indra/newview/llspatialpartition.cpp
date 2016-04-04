@@ -967,7 +967,7 @@ LLSpatialGroup *LLSpatialPartition::put(LLDrawable *drawablep, BOOL was_visible)
 	}	
 	
 	LLSpatialGroup* group = drawablep->getSpatialGroup();
-	llassert(group != NULL);
+	//llassert(group != NULL);
 
 	if (group && was_visible && group->isOcclusionState(LLSpatialGroup::QUERY_PENDING))
 	{
@@ -1029,12 +1029,14 @@ void LLSpatialPartition::move(LLDrawable *drawablep, LLSpatialGroup *curp, BOOL 
 
 	//keep drawable from being garbage collected
 	LLPointer<LLDrawable> ptr = drawablep;
-	if (curp && !remove(drawablep, curp))
-	{
-		OCT_ERRS << "Move couldn't find existing spatial group!" << LL_ENDL;
-	}
+    if (put(drawablep, was_visible))
+    {
+        if (curp && !remove(drawablep, curp))
+        {
+            OCT_ERRS << "Move couldn't find existing spatial group!" << LL_ENDL;
+        }
+    }
 
-	put(drawablep, was_visible);
 }
 
 class LLSpatialShift : public OctreeTraveler

@@ -612,7 +612,8 @@ void LLHMDImplOculus::getStereoCullProjection(glh::matrix4f& projOut, float zNea
 void LLHMDImplOculus::getEyeProjection(int whichEye, glh::matrix4f& projOut, float zNear, float zFar) const
 {
     ovrMatrix4f proj = ovrMatrix4f_Projection(mOculus->mHMDDesc.DefaultEyeFov[whichEye], zNear, zFar, ovrProjection_ClipRangeOpenGL);
-    projOut = glh::matrix4f(&proj.M[0][0]);
+    glh::matrix4f p = glh::matrix4f(&proj.M[0][0]);
+    projOut = p.transpose();
 }
 
 void LLHMDImplOculus::getEyeOffset(int whichEye, LLVector3& offsetOut) const

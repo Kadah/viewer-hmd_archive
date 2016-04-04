@@ -1711,19 +1711,13 @@ void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
         gHMD.setupStereoCullFrustum();
     }
 
-    gViewerWindow->setup3DViewport();
+    gViewerWindow->setup3DViewport(0, 0, whichEye);
 
     update();
 
     static LLCullResult cullResult;
 
     S32 occlusion = cull(cullResult);
-
-    if (forHMD)
-    {
-        gHMD.setupEye(whichEye);	    
-        update_camera(whichEye); // fix proj mats...
-    }
 
     BOOL to_texture = (gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow);
 
