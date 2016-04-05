@@ -99,6 +99,32 @@ static const GLenum sGLBlendFactor[] =
 	GL_ZERO // 'BF_UNDEF'
 };
 
+void push_state_gl_identity()
+{
+    gGL.matrixMode(LLRender::MM_PROJECTION);
+    gGL.pushMatrix();
+    gGL.loadIdentity();
+    gGL.matrixMode(LLRender::MM_MODELVIEW);
+    gGL.pushMatrix();
+    gGL.loadIdentity();
+}
+
+void push_state_gl()
+{
+    gGL.matrixMode(LLRender::MM_PROJECTION);
+    gGL.pushMatrix();
+    gGL.matrixMode(LLRender::MM_MODELVIEW);
+    gGL.pushMatrix();
+}
+
+void pop_state_gl()
+{
+    gGL.matrixMode(LLRender::MM_PROJECTION);
+    gGL.popMatrix();
+    gGL.matrixMode(LLRender::MM_MODELVIEW);
+    gGL.popMatrix();
+}
+
 LLTexUnit::LLTexUnit(S32 index)
 	: mCurrTexType(TT_NONE), mCurrBlendType(TB_MULT), 
 	mCurrColorOp(TBO_MULT), mCurrAlphaOp(TBO_MULT),

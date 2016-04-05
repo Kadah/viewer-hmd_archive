@@ -60,12 +60,6 @@ public:
     static void display(BOOL rebuild = TRUE, F32 zoom_factor = 1.f, int subfield = 0, BOOL for_snapshot = FALSE);
     static void render_ui(BOOL to_texture, render_options& options);    
     static void swap(BOOL doSwap, BOOL newSwap);
-
-    // Utility
-    static void push_state_gl_identity();
-    static void push_state_gl();
-    static void pop_state_gl();
-
     static void display_cleanup();
 
 private:

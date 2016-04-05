@@ -378,13 +378,13 @@ BOOL LLHMDImplOculus::beginFrame()
 
     mHeadPos.set(tracking_state.HeadPose.ThePose.Position.x, tracking_state.HeadPose.ThePose.Position.y, tracking_state.HeadPose.ThePose.Position.z);
 
-    glClearColor(1, 0, 1, 1);
+    glClearColor(0.5, 0, 0, 1);
     mEyeRenderTarget[0][texIndex]->bindTarget();
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mEyeRenderTarget[0][texIndex]->getFBO());
     mEyeRenderTarget[0][texIndex]->clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     mEyeRenderTarget[0][texIndex]->flush();
 
-    glClearColor(0, 0, 1, 1);
+    glClearColor(0, 0, 0.5, 1);
     mEyeRenderTarget[1][texIndex]->bindTarget();
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mEyeRenderTarget[1][texIndex]->getFBO());    
     mEyeRenderTarget[1][texIndex]->clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

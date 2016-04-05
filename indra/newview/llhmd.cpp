@@ -72,6 +72,9 @@
 
 // external methods
 void drawBox(const LLVector3& c, const LLVector3& r);
+void push_state_gl();
+void push_state_gl_identity();
+void pop_state_gl();
 
 const S32 LLHMDImpl::kDefaultHResolution = 1280;
 const S32 LLHMDImpl::kDefaultVResolution = 800;
@@ -1021,7 +1024,10 @@ void LLHMD::setup3DRender(int which_eye)
 
     LLVector3 eyePos = mMonoCameraPosition + getHeadPosition() + mEyeOffset[which_eye];
 
-    //cam->setView(mImpl->getVerticalFOV(), FALSE);
+// setting this here somehow breaks returning from VR to 2D mode leaving the
+// camera in a very messed up state. I can only assume the ossm-ly stateful
+// nature of the camera matrix management code is to blame.
+//cam->setView(mImpl->getVerticalFOV(), FALSE);
 
     cam->setOrigin(eyePos);    
     cam->setAspect(mImpl->getAspect());
@@ -1032,6 +1038,7 @@ void LLHMD::setup2DRender()
 {
     S32 w = getViewportWidth();
     S32 h = getViewportHeight();
+    gl_state_for_2d(w, h, 0, 0);
     glViewport(0, 0, w, h);
 }
 
@@ -1307,7 +1314,9 @@ void LLHMD::renderCursor3D(int which_eye)
 
 void LLHMD::render3DUI(int which_eye)
 {
-    LLViewerDisplay::pop_state_gl();
+
+#if DEAL_WITH_THIS_BOGOSITY_LATER
+    push_state_gl();
 
     renderCursor3D(which_eye);
 
@@ -1364,16 +1373,18 @@ void LLHMD::render3DUI(int which_eye)
             {
                 gUIProgram.bind();
             }
-            LLViewerDisplay::push_state_gl();
+            push_state_gl();
             gHMD.setup2DRender();
             gun->drawCrosshairs((gHMD.getViewportWidth() / 2), gHMD.getViewportHeight() / 2);
-            LLViewerDisplay::pop_state_gl();
             if (LLGLSLShader::sNoFixedFunction)
             {
                 gUIProgram.unbind();
             }
+            pop_state_gl();
         }
     }
     copyToEyeRenderTarget(which_eye, gPipeline.mUIScreen, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    LLViewerDisplay::push_state_gl_identity();
+    pop_state_gl();
+#endif
+
 }

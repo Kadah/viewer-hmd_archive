@@ -131,31 +131,9 @@ static LLTrace::BlockTimerStatHandle FTM_TELEPORT_DISPLAY("Teleport Display");
 static LLTrace::BlockTimerStatHandle FTM_SWAP("Swap");
 static LLTrace::BlockTimerStatHandle FTM_UPDATE_CAMERA("Update Camera");
 
-void LLViewerDisplay::push_state_gl_identity()
-{
-    gGL.matrixMode(LLRender::MM_PROJECTION);
-    gGL.pushMatrix();
-    gGL.loadIdentity();
-    gGL.matrixMode(LLRender::MM_MODELVIEW);
-    gGL.pushMatrix();
-    gGL.loadIdentity();
-}
-
-void LLViewerDisplay::push_state_gl()
-{
-    gGL.matrixMode(LLRender::MM_PROJECTION);
-    gGL.pushMatrix();
-    gGL.matrixMode(LLRender::MM_MODELVIEW);
-    gGL.pushMatrix();
-}
-
-void LLViewerDisplay::pop_state_gl()
-{
-    gGL.matrixMode(LLRender::MM_PROJECTION);
-    gGL.popMatrix();
-    gGL.matrixMode(LLRender::MM_MODELVIEW);
-    gGL.popMatrix();
-}
+void push_state_gl_identity();
+void push_state_gl();
+void pop_state_gl();
 
 void LLViewerDisplay::display_startup()
 {
@@ -826,7 +804,7 @@ void LLViewerDisplay::display_swap()
 		LLGLState::checkClientArrays();
 
         glh::matrix4f proj = glh_get_current_projection();
-        glh::matrix4f mod = glh_get_current_modelview();
+        glh::matrix4f mod  = glh_get_current_modelview();
 		glViewport(0,0,512,512);
 		LLVOAvatar::updateFreezeCounter() ;
 
@@ -1082,7 +1060,7 @@ void LLViewerDisplay::render_geom()
 			gGLLastModelView[i] = gGLModelView[i];
 			gGLLastProjection[i] = gGLProjection[i];
 		}
-		stop_glerror();
+        stop_glerror();
 	}
 
 	{
@@ -1154,7 +1132,7 @@ void LLViewerDisplay::render_flush(BOOL to_texture, render_options& options)
 void LLViewerDisplay::render_hud_attachments()
 {
     push_state_gl();
-		
+
 	glh::matrix4f current_proj = glh_get_current_projection();
 	glh::matrix4f current_mod = glh_get_current_modelview();
 
@@ -1681,7 +1659,7 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
     gViewerWindow->setup2DRender();
     gViewerWindow->updateDebugText();
     gViewerWindow->drawDebugText();
-
+    
     if (options.for_hmd)
     {
         gHMD.renderCursor2D();
@@ -1727,14 +1705,20 @@ void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
 
     BOOL to_texture = (gPipeline.canUseVertexShaders() && LLPipeline::sRenderGlow);
 
-    if (!forHMD)
+    if (options.for_hmd)
     {
-        // NOTE: nothing to do with buffer swap...
-        display_swap();
+        gHMD.bindEyeRenderTarget(options.hmd_eye);
     }
 
+    display_swap();
     display_imagery();
     update_images();
+
+    if (options.for_hmd)
+    {
+        gHMD.flushEyeRenderTarget(options.hmd_eye);
+    }
+
     state_sort(rebuild, cullResult);
 
     LLPipeline::sUseOcclusion = occlusion;

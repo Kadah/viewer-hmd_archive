@@ -117,6 +117,9 @@
 #include "llprogressview.h"
 #include "llhmd.h"
 
+void push_state_gl();
+void pop_state_gl();
+
 #ifdef _DEBUG
 // Debug indices is disabled for now for debug performance - djs 4/24/02
 //#define DEBUG_INDICES
@@ -2398,7 +2401,7 @@ BOOL LLPipeline::getVisibleExtents(LLCamera& camera, LLVector3& min, LLVector3& 
 static LLTrace::BlockTimerStatHandle FTM_CULL("Object Culling");
 
 void LLPipeline::updateCull(LLCamera& camera, LLCullResult& result, S32 water_clip, LLPlane* planep)
-{
+{    
 	static LLCachedControl<bool> use_occlusion(gSavedSettings,"UseOcclusion");
 	static bool can_use_occlusion = LLGLSLShader::sNoFixedFunction
 									&& LLFeatureManager::getInstance()->isFeatureAvailable("UseOcclusion") 
@@ -2436,10 +2439,12 @@ void LLPipeline::updateCull(LLCamera& camera, LLCullResult& result, S32 water_cl
 	gGL.matrixMode(LLRender::MM_PROJECTION);
 	gGL.pushMatrix();
 	gGL.loadMatrix(gGLLastProjection);
+
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
 	gGL.pushMatrix();
-	gGLLastMatrix = NULL;
 	gGL.loadMatrix(gGLLastModelView);
+
+        gGLLastMatrix = NULL;
 
 	LLGLDisable blend(GL_BLEND);
 	LLGLDisable test(GL_ALPHA_TEST);
@@ -10149,7 +10154,7 @@ void LLPipeline::renderShadow(glh::matrix4f& view, glh::matrix4f& proj, LLCamera
 
 	stateSort(shadow_cam, result);
 	
-	
+
 	//generate shadow map
 	gGL.matrixMode(LLRender::MM_PROJECTION);
 	gGL.pushMatrix();
@@ -10248,7 +10253,7 @@ void LLPipeline::renderShadow(glh::matrix4f& view, glh::matrix4f& proj, LLCamera
 	}
 	
 	gGL.setColorMask(true, true);
-			
+
 	gGL.matrixMode(LLRender::MM_PROJECTION);
 	gGL.popMatrix();
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
@@ -11213,7 +11218,7 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 			glh_set_current_projection(proj[i+4]);
 
 			mSunShadowMatrix[i+4] = trans*proj[i+4]*view[i+4]*inv_view;
-			
+
 			for (U32 j = 0; j < 16; j++)
 			{
 				gGLLastModelView[j] = mShadowModelview[i+4].m[j];
@@ -11260,14 +11265,16 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 	else
 	{
 		glh_set_current_modelview(view[1]);
-		glh_set_current_projection(proj[1]);
-		gGL.loadMatrix(view[1].m);
+		glh_set_current_projection(proj[1]);		
 		gGL.matrixMode(LLRender::MM_PROJECTION);
 		gGL.loadMatrix(proj[1].m);
 		gGL.matrixMode(LLRender::MM_MODELVIEW);
+                gGL.loadMatrix(view[1].m);
 	}
+
 	gGL.setColorMask(true, false);
 
+// Restore "last" matrices we stepped on above
 	for (U32 i = 0; i < 16; i++)
 	{
 		gGLLastModelView[i] = last_modelview[i];
