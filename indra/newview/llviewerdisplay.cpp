@@ -1451,14 +1451,14 @@ void LLViewerDisplay::render_ui_2d(BOOL forHMD)
 	//  Disable wireframe mode below here, as this is HUD/menus
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+    S32 w = gHMD.isHMDMode() ? gHMD.getViewportWidth() : gViewerWindow->getWindowWidthScaled();
+    S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWindowHeightScaled();
+
 	//  Menu overlays, HUD, etc
     gViewerWindow->setup2DRender(0, 0, 0, 0);
 
 	F32 zoom_factor = LLViewerCamera::getInstance()->getZoomFactor();
 	S16 sub_region  = LLViewerCamera::getInstance()->getZoomSubRegion();
-
-    S32 w = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWindowWidthScaled();
-    S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWindowHeightScaled();
 
 	if (zoom_factor > 1.f)
 	{
@@ -1643,7 +1643,10 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
         LLGLState::checkStates();
     }
 
+    push_state_gl();
     render_ui_2d();
+    pop_state_gl();
+
     LLGLState::checkStates();
 
     if (options.for_hmd)
@@ -1655,6 +1658,8 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
     
     gGL.flush();
 
+    push_state_gl();
+
     // debugging text
     gViewerWindow->setup2DRender();
     gViewerWindow->updateDebugText();
@@ -1665,7 +1670,8 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
         gHMD.renderCursor2D();
     }
 
-    // copy 
+    pop_state_gl();
+
 	LLVertexBuffer::unbind();
 	if (!gSnapshot)
 	{

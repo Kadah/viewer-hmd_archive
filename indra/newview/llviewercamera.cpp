@@ -385,10 +385,8 @@ void LLViewerCamera::setProjectionMatrix(glh::matrix4f& proj_mat)
 
     gGL.loadMatrix(proj_mat.m);
 
-    /*for (U32 i = 0; i < 16; i++)
-    {
-        gGLProjection[i] = proj_mat.m[i];
-    }*/
+    // why does setting this here screw everything up?
+    //glh_set_current_projection(proj_mat);
 
     LLMatrix4 mdlv = getModelview();
 
@@ -403,15 +401,12 @@ void LLViewerCamera::setProjectionMatrix(glh::matrix4f& proj_mat)
     gGL.matrixMode(LLRender::MM_MODELVIEW);
 
     glh::matrix4f modelview((GLfloat*)mdlv.mMatrix);
-
     gGL.loadMatrix(modelview.m);
 
-    /*for (U32 i = 0; i < 16; i++)
-    {
-        gGLModelView[i] = modelview.m[i];
-    }
+    // why does setting this here screw everything up?
+    //glh_set_current_modelview(modelview);
 
-    updateFrustumPlanes(*this);*/
+    //updateFrustumPlanes(*this);
 }
 
 void LLViewerCamera::setPerspective(BOOL for_selection,
@@ -488,11 +483,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 	proj_mat *= gl_perspective(fov_y, aspect, z_near, z_far, !for_selection);
 
 	gGL.loadMatrix(proj_mat.m);
-
-	for (U32 i = 0; i < 16; i++)
-	{
-		gGLProjection[i] = proj_mat.m[i];
-	}
+    glh_set_current_projection(proj_mat);
 
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
 
@@ -500,7 +491,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 
     glh::matrix4f modelview((GLfloat*)mdlv.mMatrix);
 	gGL.loadMatrix(modelview.m);
-	
+
     if (gHMD.isHMDMode())
     {
         LLMatrix4 head_rotation = LLMatrix4(~gHMD.getHMDRotation());
@@ -520,14 +511,12 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 								(F32)(y_from_bot + height / 2) / (F32)gViewerWindow->getWindowHeightScaled() - 0.5f);
 	}
 
+    
+
 	// if not picking and not doing a snapshot, cache various GL matrices
 	if (!for_selection && mZoomFactor == 1.f)
 	{
-		// Save GL matrices for access elsewhere in code, especially project_world_to_screen
-		for (U32 i = 0; i < 16; i++)
-		{
-			gGLModelView[i] = modelview.m[i];
-		}
+        glh_set_current_modelview(modelview);
 	}
 
     updateFrustumPlanes(*this);
