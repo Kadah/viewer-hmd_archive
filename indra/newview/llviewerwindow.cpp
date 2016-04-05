@@ -2501,9 +2501,12 @@ void LLViewerWindow::draw()
 	LLUI::setLineWidth(1.f);
 
 	LLUI::setLineWidth(1.f);
-	// Reset any left-over transforms
-	gGL.matrixMode(LLRender::MM_MODELVIEW);
-	
+
+	// Reset any left-over MODEL transforms
+    // Note that modifying the projection here causes issues. More kwality.
+    //push_state_gl_identity();
+    gGL.matrixMode(LLRender::MM_MODELVIEW);	
+    gGL.pushMatrix();
 	gGL.loadIdentity();
 
 	//S32 screen_x, screen_y;
@@ -2537,8 +2540,7 @@ void LLViewerWindow::draw()
 	{
 		gUIProgram.bind();
 	}
-
-	gGL.pushMatrix();
+		
 	LLUI::pushMatrix();
 	{
 		
@@ -2609,7 +2611,7 @@ void LLViewerWindow::draw()
 
 		LLUI::setScaleFactor(old_scale_factor);
 	}
-	LLUI::popMatrix();
+	LLUI::popMatrix();	
 	gGL.popMatrix();
 
 	if (LLGLSLShader::sNoFixedFunction)
