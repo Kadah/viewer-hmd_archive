@@ -1091,7 +1091,7 @@ void LLViewerDisplay::render_flush(BOOL to_texture, render_options& options)
 
             if (options.for_hmd)
             {
-                gHMD.copyToEyeRenderTarget(options.hmd_eye, gPipeline.mDeferredScreen, GL_DEPTH_BUFFER_BIT);
+                gHMD.copyToEyeRenderTarget(options.hmd_eye, gPipeline.mDeferredScreen, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             }
 
             if(LLRenderTarget::sUseFBO)
@@ -1109,7 +1109,7 @@ void LLViewerDisplay::render_flush(BOOL to_texture, render_options& options)
 
             if (options.for_hmd)
             {
-                gHMD.copyToEyeRenderTarget(options.hmd_eye, gPipeline.mScreen, GL_DEPTH_BUFFER_BIT);
+                gHMD.copyToEyeRenderTarget(options.hmd_eye, gPipeline.mScreen, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             }
 
             if (LLRenderTarget::sUseFBO)

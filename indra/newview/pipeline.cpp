@@ -11583,7 +11583,7 @@ void LLPipeline::postRender(BOOL writeAlpha, BOOL forHMD, int whichEye)
 
     if (forHMD)
     {
-        gHMD.copyToEyeRenderTarget(whichEye, mScreen, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gHMD.copyToEyeRenderTarget(whichEye, mScreen, GL_DEPTH_BUFFER_BIT);
     }
     else if (LLRenderTarget::sUseFBO)
 	{
