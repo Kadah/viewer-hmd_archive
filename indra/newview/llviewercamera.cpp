@@ -384,8 +384,6 @@ void LLViewerCamera::setProjectionMatrix(glh::matrix4f& proj_mat)
     gGL.loadIdentity();
 
     gGL.loadMatrix(proj_mat.m);
-
-    // why does setting this here screw everything up?
     glh_set_current_projection(proj_mat);
 
     LLMatrix4 mdlv = getModelview();
@@ -405,7 +403,6 @@ void LLViewerCamera::setProjectionMatrix(glh::matrix4f& proj_mat)
 
     // why does setting this here screw everything up?
     //glh_set_current_modelview(modelview);
-
     //updateFrustumPlanes(*this);
 }
 

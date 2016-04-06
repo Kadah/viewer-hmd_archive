@@ -311,9 +311,6 @@ private:
 
     F32 mUIModelView[16];
     F32 mUIModelViewInv[16];
-    //LLCoordScreen mMainWindowPos;
-    //LLCoordScreen mMainWindowSize;
-    //LLCoordWindow mMainClientSize;
 
     // in-world coordinates of mouse pointer on the UI surface
     LLVector3 mMouseWorld;
@@ -333,13 +330,9 @@ private:
     F32 mMouselookRotMax;
     F32 mMouselookTurnSpeedMax;
     LLVector3 mLastRollPitchYaw;
-    F32 mMonoCameraFOV;
-    F32 mMonoCameraAspect;
     LLVector3 mMonoCameraPosition;
     LLVector3 mEyeOffset[2];
     glh::matrix4f mEyeProjection[2];
-    F32 mStereoCullCameraFOV;
-    F32 mStereoCullCameraAspect;
     LLQuaternion mAgentRot;
 };
 
@@ -352,19 +345,8 @@ class LLHMDImpl
 public:
     static const S32 kDefaultHResolution;
     static const S32 kDefaultVResolution;
-    static const F32 kDefaultHScreenSize;
-    static const F32 kDefaultVScreenSize;
     static const F32 kDefaultInterpupillaryOffset;
-    static const F32 kDefaultLenSeparationDistance;
     static const F32 kDefaultEyeToScreenDistance;
-    static const F32 kDefaultDistortionConstant0;
-    static const F32 kDefaultDistortionConstant1;
-    static const F32 kDefaultDistortionConstant2;
-    static const F32 kDefaultDistortionConstant3;
-    static const F32 kDefaultXCenterOffset;
-    static const F32 kDefaultYCenterOffset;
-    static const F32 kDefaultDistortionScale;
-    static const F32 kDefaultOrthoPixelOffset;
     static const F32 kDefaultVerticalFOVRadians;
     static const F32 kDefaultAspect;
 
@@ -376,33 +358,24 @@ public:
     virtual BOOL init() { return FALSE; }
     virtual void shutdown() {}
 
-    virtual S32 getViewportWidth() const { return 0; }
-    virtual S32 getViewportHeight() const { return 0; }
-    virtual F32 getPixelDensity() const { return 1.0f; }
+    virtual void resetOrientation() {}
     virtual void setPixelDensity(F32 pixelDensity) { (void)pixelDensity; }
-
     virtual BOOL calculateViewportSettings() { return FALSE; }
-
-    virtual F32 getEyeToScreenDistance() const { return kDefaultEyeToScreenDistance; }
     virtual void setEyeToScreenDistance(F32 f) {}
 
-    virtual F32 getVerticalFOV()          const { return kDefaultVerticalFOVRadians;   }
-    virtual F32 getAspect()               const { return kDefaultAspect;               }
-    virtual F32 getInterpupillaryOffset() const { return kDefaultInterpupillaryOffset; }
-
-    //virtual F32 getRoll()  const { return 0.0f; }
-    //virtual F32 getPitch() const { return 0.0f; }
-    //virtual F32 getYaw()   const { return 0.0f; }
-
-    //virtual void getHMDRollPitchYaw(F32& roll, F32& pitch, F32& yaw) const { roll = pitch = yaw = 0.0f; }
+    virtual S32 getViewportWidth()          const { return 0;                            }
+    virtual S32 getViewportHeight()         const { return 0;                            }
+    virtual F32 getPixelDensity()           const { return 1.0f;                         }
+    virtual F32 getEyeToScreenDistance()    const { return kDefaultEyeToScreenDistance;  }
+    virtual F32 getVerticalFOV()            const { return kDefaultVerticalFOVRadians;   }
+    virtual F32 getAspect()                 const { return kDefaultAspect;               }
+    virtual F32 getInterpupillaryOffset()   const { return kDefaultInterpupillaryOffset; }
 
     virtual LLVector3          getHeadPosition() const { return LLVector3::zero;                     }
     virtual const LLQuaternion getHMDRotation()  const { return LLQuaternion(0.0f, LLVector3(0.0f)); }
     
     virtual void getEyeProjection(int whichEye, glh::matrix4f& proj, float zNear, float zFar) const { (void)proj, (void)whichEye, (void)zNear, (void)zFar; }
     virtual void getEyeOffset(int whichEye, LLVector3& offsetOut)    const { (void)offsetOut, (void)whichEye; }
-
-    virtual void resetOrientation() {}
 
     virtual void setup3DRender(int which)               { (void)which;  }
     virtual BOOL beginFrame()                           { return FALSE; }

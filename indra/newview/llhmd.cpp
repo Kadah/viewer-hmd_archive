@@ -78,19 +78,8 @@ void pop_state_gl();
 
 const S32 LLHMDImpl::kDefaultHResolution = 1280;
 const S32 LLHMDImpl::kDefaultVResolution = 800;
-const F32 LLHMDImpl::kDefaultHScreenSize = 0.14976f;
-const F32 LLHMDImpl::kDefaultVScreenSize = 0.0936f;
 const F32 LLHMDImpl::kDefaultInterpupillaryOffset = 0.064f;
-const F32 LLHMDImpl::kDefaultLenSeparationDistance = 0.0635f;
 const F32 LLHMDImpl::kDefaultEyeToScreenDistance = 0.047f;  // A lens = 0.047f, B lens = 0.044f, C lens = 0.040f.   Default of 0.041f from the SDK is just WRONG and will cause visual distortion (Rift-46)
-const F32 LLHMDImpl::kDefaultDistortionConstant0 = 1.0f;
-const F32 LLHMDImpl::kDefaultDistortionConstant1 = 0.22f;
-const F32 LLHMDImpl::kDefaultDistortionConstant2 = 0.24f;
-const F32 LLHMDImpl::kDefaultDistortionConstant3 = 0.0f;
-const F32 LLHMDImpl::kDefaultXCenterOffset = 0.152f;
-const F32 LLHMDImpl::kDefaultYCenterOffset = 0.0f;
-const F32 LLHMDImpl::kDefaultDistortionScale = 1.7146f;
-const F32 LLHMDImpl::kDefaultOrthoPixelOffset = 0.1775f; // -0.1775f Right Eye
 const F32 LLHMDImpl::kDefaultVerticalFOVRadians = 2.196863;
 const F32 LLHMDImpl::kDefaultAspect = 0.8f;
 
@@ -109,11 +98,7 @@ LLHMD::LLHMD()
     , mMouselookRotThreshold(45.0f * DEG_TO_RAD)
     , mMouselookRotMax(30.0f * DEG_TO_RAD)
     , mMouselookTurnSpeedMax(0.1f)
-    , mMonoCameraFOV(DEFAULT_FIELD_OF_VIEW)
-    , mMonoCameraAspect(1.0f)
     , mMonoCameraPosition(LLVector3())
-    , mStereoCullCameraFOV(0.0f)
-    , mStereoCullCameraAspect(0.0f)
 {
     memset(&mUIShape, 0, sizeof(UISurfaceShapeSettings));
     mUIShape.mPresetType = (U32)LLHMD::kCustom;
@@ -969,17 +954,7 @@ BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
 
 void LLHMD::setupStereoValues()
 {
-    
-    LLViewerCamera* cam = LLViewerCamera::getInstance();
-
-    // Remember default mono camera details.
-    mMonoCameraFOV      = cam->getView();
-    mMonoCameraAspect   = cam->getAspect();
-    mMonoCameraPosition = cam->getOrigin();
-
-    // Stereo culling frustum camera parameters.
-    mStereoCullCameraFOV    = mImpl->getVerticalFOV();
-    mStereoCullCameraAspect = mImpl->getAspect();
+    mMonoCameraPosition = LLViewerCamera::getInstance()->getOrigin();
 }
 
 void LLHMD::setupStereoCullFrustum()

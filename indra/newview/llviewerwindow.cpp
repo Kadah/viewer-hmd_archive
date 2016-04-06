@@ -2282,12 +2282,12 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
         }
 
 		// update our window rectangle
-		mWindowRectRaw.mRight = mWindowRectRaw.mLeft + width;
-		mWindowRectRaw.mTop = mWindowRectRaw.mBottom + height;
+		mWindowRectRaw.mRight = mWindowRectRaw.mLeft   + width;
+		mWindowRectRaw.mTop   = mWindowRectRaw.mBottom + height;
 
         if (only_ui)
         {
-            mWorldViewRectRaw = getWindowRectRaw();
+            mWorldViewRectRaw    = getWindowRectRaw();
             mWorldViewRectScaled = mWorldViewRectRaw;
         }
 
@@ -2300,15 +2300,15 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
         BOOL display_scale_changed = FALSE;
         if (!only_ui)
         {
-		calcDisplayScale();
+		    calcDisplayScale();
             display_scale_changed = !only_ui && mDisplayScale != LLUI::getScaleFactor();
-		LLUI::setScaleFactor(mDisplayScale);
+		    LLUI::setScaleFactor(mDisplayScale);
             LLView::sForceReshape = display_scale_changed;
         }
 
 		// update our window rectangle
-		mWindowRectScaled.mRight = mWindowRectScaled.mLeft + ll_round((F32)width / mDisplayScale.mV[VX]);
-		mWindowRectScaled.mTop = mWindowRectScaled.mBottom + ll_round((F32)height / mDisplayScale.mV[VY]);
+		mWindowRectScaled.mRight = mWindowRectScaled.mLeft   + ll_round((F32)width  / mDisplayScale.mV[VX]);
+		mWindowRectScaled.mTop   = mWindowRectScaled.mBottom + ll_round((F32)height / mDisplayScale.mV[VY]);
 
 		setup2DViewport();
 
@@ -2322,7 +2322,7 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
         else
         {
             setup2DViewport();
-		mRootView->reshape(llceil((F32)width / mDisplayScale.mV[VX]), llceil((F32)height / mDisplayScale.mV[VY]));
+		    mRootView->reshape(llceil((F32)width / mDisplayScale.mV[VX]), llceil((F32)height / mDisplayScale.mV[VY]));
         }
 		LLView::sForceReshape = FALSE;
 
