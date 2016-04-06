@@ -75,7 +75,7 @@ private:
     static void update_images();
     static void state_sort(BOOL rebuild, LLCullResult& cullResult);
     static void render_start(BOOL to_texture, render_options& options);
-    static void render_geom();
+    static void render_geom(render_options& options);
     static void render_flush(BOOL to_texture, render_options& options);
     static void render_hud_attachments();
     static BOOL setup_hud_matrices();

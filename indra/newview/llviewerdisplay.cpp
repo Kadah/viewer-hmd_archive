@@ -1013,7 +1013,7 @@ void LLViewerDisplay::render_start(BOOL to_texture, render_options& options)
 	}
 }
 
-void LLViewerDisplay::render_geom()
+void LLViewerDisplay::render_geom(render_options& options)
 {
 	LLAppViewer::instance()->pingMainloopTimeout("Display:RenderGeom");
 	if (!(LLAppViewer::instance()->logoutRequestSent() && LLAppViewer::instance()->hasSavedFinalSnapshot())
@@ -1053,13 +1053,16 @@ void LLViewerDisplay::render_geom()
 			
 		gGL.setColorMask(true, true);
 
-		//store this frame's modelview matrix for use
-		//when rendering next frame's occlusion queries
-		for (U32 i = 0; i < 16; i++)
-		{
-			gGLLastModelView[i] = gGLModelView[i];
-			gGLLastProjection[i] = gGLProjection[i];
-		}
+        if (!options.for_hmd)
+        {
+		    //store this frame's modelview matrix for use
+		    //when rendering next frame's occlusion queries
+		    for (U32 i = 0; i < 16; i++)
+		    {
+			    gGLLastModelView[i] = gGLModelView[i];
+			    gGLLastProjection[i] = gGLProjection[i];
+		    }
+        }
         stop_glerror();
 	}
 
@@ -1730,7 +1733,7 @@ void LLViewerDisplay::render_frame(BOOL rebuild, BOOL forHMD, int whichEye)
     LLPipeline::sUseOcclusion = occlusion;
 
     render_start(to_texture, options);
-    render_geom();
+    render_geom(options);
     render_flush(to_texture, options);
 
     if (!gSnapshot)
