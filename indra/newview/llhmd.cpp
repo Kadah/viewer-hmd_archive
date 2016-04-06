@@ -985,11 +985,7 @@ void LLHMD::setup3DRender(int which_eye)
 
     LLVector3 eyePos = mMonoCameraPosition + getHeadPosition() + mEyeOffset[which_eye];
 
-// setting this here somehow breaks returning from VR to 2D mode leaving the
-// camera in a very messed up state. I can only assume the ossm-ly stateful
-// nature of the camera matrix management code is to blame.
-//cam->setView(mImpl->getVerticalFOV(), FALSE);
-
+    cam->setView(mImpl->getVerticalFOV(), FALSE);
     cam->setOrigin(eyePos);    
     cam->setAspect(mImpl->getAspect());
     cam->setProjectionMatrix(mEyeProjection[which_eye]);

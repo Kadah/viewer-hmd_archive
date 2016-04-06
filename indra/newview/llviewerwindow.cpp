@@ -2500,8 +2500,6 @@ void LLViewerWindow::draw()
 	
 	LLUI::setLineWidth(1.f);
 
-	LLUI::setLineWidth(1.f);
-
 	// Reset any left-over MODEL transforms
     // Note that modifying the projection here causes issues. More kwality.
     //push_state_gl_identity();
@@ -2543,11 +2541,11 @@ void LLViewerWindow::draw()
 		
 	LLUI::pushMatrix();
 	{
-		
-		// scale view by UI global scale factor and aspect ratio correction factor
-		gGL.scaleUI(mDisplayScale.mV[VX], mDisplayScale.mV[VY], 1.f);
+        LLVector2 old_scale_factor = LLUI::getScaleFactor();
 
-		LLVector2 old_scale_factor = LLUI::getScaleFactor();
+		// scale view by UI global scale factor and aspect ratio correction factor
+        gGL.scaleUI(mDisplayScale.mV[VX], mDisplayScale.mV[VY], 1.f);        
+
 		// apply camera zoom transform (for high res screenshots)
 		F32 zoom_factor = LLViewerCamera::getInstance()->getZoomFactor();
 		S16 sub_region = LLViewerCamera::getInstance()->getZoomSubRegion();
@@ -2612,6 +2610,8 @@ void LLViewerWindow::draw()
 		LLUI::setScaleFactor(old_scale_factor);
 	}
 	LLUI::popMatrix();	
+
+    gGL.matrixMode(LLRender::MM_MODELVIEW);
 	gGL.popMatrix();
 
 	if (LLGLSLShader::sNoFixedFunction)

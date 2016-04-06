@@ -1629,12 +1629,12 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
         LLGLState::checkTextureChannels();
     }
 
-    if (do_hud_elements_render)
+    if (do_hud_elements_render && !options.for_hmd)
     {
         render_hud_elements();
     }
 
-    if (do_hud_attachments_render)
+    if (do_hud_attachments_render && !options.for_hmd)
     {
         render_hud_attachments();
     }
