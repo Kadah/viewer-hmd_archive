@@ -37,10 +37,6 @@
     //#define LL_HMD_OPENVR_SUPPORTED 1
 #endif
 
-#if LL_HMD_OCULUS_SUPPORTED || LL_HMD_OPENVR_SUPPORTED
-    #define LL_HMD_SUPPORTED 1
-#endif
-
 #include "llpointer.h"
 #include "glh/glh_linear.h"
 

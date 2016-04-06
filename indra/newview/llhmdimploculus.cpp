@@ -29,10 +29,11 @@
 
 
 #include "llviewerprecompiledheaders.h"
+
+#include "llhmd.h"
+
+#if LL_HMD_OCULUS_SUPPORTED
 #include "llhmdimploculus.h"
-
-#if LL_HMD_SUPPORTED
-
 #include "llviewerwindow.h"
 #include "llviewercontrol.h"
 #include "llui.h"
@@ -605,4 +606,4 @@ S32 LLHMDImplOculus::getViewportHeight() const
     return mOculus->mViewport.h;
 }
 
-#endif // LL_HMD_SUPPORTED
+#endif // LL_HMD_SUPPORTED_OCULUS

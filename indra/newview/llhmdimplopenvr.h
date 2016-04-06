@@ -29,7 +29,7 @@
 
 #include "llhmd.h"
 
-#if LL_HMD_OPENVR_SUPPORTED && LL_HMD_SUPPORTED
+#if LL_HMD_OPENVR_SUPPORTED
 
 #include "llpointer.h"
 #include "v4math.h"

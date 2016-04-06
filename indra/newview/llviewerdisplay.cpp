@@ -1454,7 +1454,7 @@ void LLViewerDisplay::render_ui_2d(BOOL forHMD)
 	//  Disable wireframe mode below here, as this is HUD/menus
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    S32 w = gHMD.isHMDMode() ? gHMD.getViewportWidth() : gViewerWindow->getWindowWidthScaled();
+    S32 w = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWindowWidthScaled();
     S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWindowHeightScaled();
 
 	//  Menu overlays, HUD, etc
@@ -1478,6 +1478,7 @@ void LLViewerDisplay::render_ui_2d(BOOL forHMD)
 	// render outline for HUD
 	if (isAgentAvatarValid() && gAgentCamera.mHUDCurZoom < 0.98f)
 	{
+        gGL.matrixMode(LLRender::MM_MODELVIEW);
 		gGL.pushMatrix();
 
         S32 half_width  = w >> 1;
@@ -1489,6 +1490,8 @@ void LLViewerDisplay::render_ui_2d(BOOL forHMD)
 		gGL.scalef(zoom,zoom,1.f);
 		gGL.color4fv(LLColor4::white.mV);
 		gl_rect_2d(-half_width, half_height, half_width, -half_height, FALSE);
+
+        gGL.matrixMode(LLRender::MM_MODELVIEW);
 		gGL.popMatrix();
 		stop_glerror();
 	}

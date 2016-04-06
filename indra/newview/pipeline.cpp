@@ -11219,7 +11219,7 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 		gGL.matrixMode(LLRender::MM_PROJECTION);
 		gGL.loadMatrix(proj[1].m);
 		gGL.matrixMode(LLRender::MM_MODELVIEW);
-                gGL.loadMatrix(view[1].m);
+        gGL.loadMatrix(view[1].m);
 	}
 
 	gGL.setColorMask(true, false);

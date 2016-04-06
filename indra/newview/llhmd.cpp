@@ -146,8 +146,6 @@ BOOL LLHMD::init()
 
     BOOL initResult = FALSE;
 
-#if LL_HMD_SUPPORTED
-
 #if LL_HMD_OPENVR_SUPPORTED
     if (!mImpl)
     {
@@ -322,7 +320,6 @@ BOOL LLHMD::init()
         isInitialized(TRUE);
     }
     else
-#endif
     {
         isInitialized(FALSE);
         isHMDConnected(FALSE);
@@ -480,7 +477,6 @@ void LLHMD::shutdown()
 
 void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 {
-#if LL_HMD_SUPPORTED
     U32 newRenderMode = llclamp(mode, (U32)RenderMode_Normal, (U32)RenderMode_Last);
     if (newRenderMode != mRenderMode)
     {
@@ -508,12 +504,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 
             case RenderMode_Normal:
             default:
-            {
-                // clear the main window and save off size settings
-                //windowp->getFramePos(&mMainWindowPos);
-                //windowp->getSize(&mMainWindowSize);
-                //windowp->getSize(&mMainClientSize);
-               
+            {               
                 switch (mRenderMode)
                 {
                     case RenderMode_HMD:
@@ -533,9 +524,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
             mImpl->resetOrientation();
         }
     }
-#else
-    mRenderMode = RenderMode_Normal;
-#endif
 }
 
 F32 LLHMD::getPixelDensity() const { return mImpl ? mImpl->getPixelDensity() : 1.0f; }
@@ -939,9 +927,7 @@ void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
 
 void LLHMD::updateHMDMouseInfo()
 {
-#if LL_HMD_SUPPORTED
     calculateMouseWorld(gViewerWindow->getCurrentMouse().mX, gViewerWindow->getCurrentMouse().mY, mMouseWorld);
-#endif // LL_HMD_SUPPORTED
 }
 
 BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)

@@ -4233,7 +4233,6 @@ class LLViewCycleDisplay : public view_listener_t
 {
     bool handleEvent(const LLSD& userdata)
     {
-#if LL_HMD_SUPPORTED
         U32 curRenderMode = gHMD.getRenderMode();
         U32 nextRenderMode = LLHMD::RenderMode_Normal;
         switch (curRenderMode)
@@ -4259,7 +4258,6 @@ class LLViewCycleDisplay : public view_listener_t
             break;
         }
         gHMD.setRenderMode(nextRenderMode);
-#endif
         return true;
     }
 };

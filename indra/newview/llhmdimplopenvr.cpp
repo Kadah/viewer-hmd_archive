@@ -26,12 +26,11 @@
 */
 
 #include "llviewerprecompiledheaders.h"
-
-#include "llhmdimplopenvr.h"
 #include "llhmd.h"
 
-#if LL_HMD_OPENVR_SUPPORTED && LL_HMD_SUPPORTED
+#if LL_HMD_OPENVR_SUPPORTED
 
+#include "llhmdimplopenvr.h"
 #include "llviewerwindow.h"
 #include "llviewercontrol.h"
 #include "llui.h"
@@ -413,4 +412,4 @@ LLVector3 LLHMDImplOpenVR::getHeadPosition() const
     return mHeadPosition;
 }
 
-#endif // LL_HMD_OPENVR_SUPPORTED && LL_HMD_SUPPORTED
+#endif // LL_HMD_OPENVR_SUPPORTED

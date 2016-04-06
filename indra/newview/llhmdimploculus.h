@@ -29,7 +29,6 @@
 
 #include "llhmd.h"
 
-#if LL_HMD_SUPPORTED
 #include "llpointer.h"
 #include "v4math.h"
 #include "llviewertexture.h"
@@ -109,5 +108,5 @@ private:
     OculusData* mOculus;
     BOOL mNsightDebugMode;
 };
-#endif // LL_HMD_SUPPORTED
+
 #endif // LL_LLHMDIMPL_OCULUS_H
