@@ -985,7 +985,9 @@ void LLHMD::setup3DRender(int which_eye)
 
     LLVector3 eyePos = mMonoCameraPosition + getHeadPosition() + mEyeOffset[which_eye];
 
-    cam->setView(mImpl->getVerticalFOV(), FALSE);
+    // nope, ossm matrix management still screws up returning to 2D from HMD mode
+    //cam->setView(mImpl->getVerticalFOV(), FALSE);
+
     cam->setOrigin(eyePos);    
     cam->setAspect(mImpl->getAspect());
     cam->setProjectionMatrix(mEyeProjection[which_eye]);

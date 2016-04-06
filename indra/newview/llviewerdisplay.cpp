@@ -1445,6 +1445,8 @@ void LLViewerDisplay::render_ui_3d(BOOL showAxes)
 
 void LLViewerDisplay::render_ui_2d(BOOL forHMD)
 {
+    push_state_gl();
+
 	LLGLSUIDefault gls_ui;
 
 	/////////////////////////////////////////////////////////////
@@ -1497,6 +1499,8 @@ void LLViewerDisplay::render_ui_2d(BOOL forHMD)
 	}
 
     gViewerWindow->draw();
+
+    pop_state_gl();
 
 	// reset current origin for font rendering, in case of tiling render
 	LLFontGL::sCurOrigin.set(0, 0);
@@ -1606,11 +1610,13 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
 
 	if(LLSceneMonitor::getInstance()->needsUpdate())
 	{
-		gGL.pushMatrix();
-		gViewerWindow->setup2DRender();
-		LLSceneMonitor::getInstance()->compare();
-		gViewerWindow->setup3DRender();
-		gGL.popMatrix();
+        push_state_gl();
+        {
+		    gViewerWindow->setup2DRender();
+		    LLSceneMonitor::getInstance()->compare();
+		    gViewerWindow->setup3DRender();
+        }
+        pop_state_gl();
 	}
 	
     if (options.for_hmd)
@@ -1619,11 +1625,9 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
     }
 
 	if (to_texture && !options.for_hmd)
-	{
-        push_state_gl_identity();		
+	{        
         gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
-        pop_state_gl();
-
+     
         LLVertexBuffer::unbind();
         LLGLState::checkStates();
         LLGLState::checkTextureChannels();
@@ -1649,9 +1653,7 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
         LLGLState::checkStates();
     }
 
-    push_state_gl();
     render_ui_2d();
-    pop_state_gl();
 
     LLGLState::checkStates();
 
@@ -1665,17 +1667,17 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
     gGL.flush();
 
     push_state_gl();
-
-    // debugging text
-    gViewerWindow->setup2DRender();
-    gViewerWindow->updateDebugText();
-    gViewerWindow->drawDebugText();
-    
-    if (options.for_hmd)
     {
-        gHMD.renderCursor2D();
+        // debugging text
+        gViewerWindow->setup2DRender();
+        gViewerWindow->updateDebugText();
+        gViewerWindow->drawDebugText();
+    
+        if (options.for_hmd)
+        {
+            gHMD.renderCursor2D();
+        }
     }
-
     pop_state_gl();
 
 	LLVertexBuffer::unbind();

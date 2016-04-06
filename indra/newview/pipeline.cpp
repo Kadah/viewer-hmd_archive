@@ -7532,13 +7532,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 	
 	enableLightsFullbright(LLColor4(1,1,1,1));
 
-	gGL.matrixMode(LLRender::MM_PROJECTION);
-	gGL.pushMatrix();
-	gGL.loadIdentity();
-
-	gGL.matrixMode(LLRender::MM_MODELVIEW);
-	gGL.pushMatrix();
-	gGL.loadIdentity();
+    push_state_gl_identity();
 
 	LLGLDisable test(GL_ALPHA_TEST);
 
@@ -8126,17 +8120,17 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 
     if (gHMD.isHMDMode())
     {
-        LLRenderTarget::copyContentsToBoundTarget(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+        S32 w = gHMD.getViewportWidth();
+        S32 h = gHMD.getViewportHeight();
+
+        LLRenderTarget::copyContentsToBoundTarget(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
     }
     else if (LLRenderTarget::sUseFBO)
 	{ //copy depth buffer from mScreen to framebuffer
 		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 	}
 
-	gGL.matrixMode(LLRender::MM_PROJECTION);
-	gGL.popMatrix();
-	gGL.matrixMode(LLRender::MM_MODELVIEW);
-	gGL.popMatrix();
+    pop_state_gl();
 
 	LLVertexBuffer::unbind();
 
