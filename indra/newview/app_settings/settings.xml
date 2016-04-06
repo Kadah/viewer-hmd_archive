@@ -3,7 +3,6 @@
   xsi:noNamespaceSchemaLocation="llsd.xsd">
 <map>
     <key>NsightDebug</key>
-
     <map>
       <key>Comment</key>
       <string>Disable use of APIs that break use of nVidia nSight debugging.</string>

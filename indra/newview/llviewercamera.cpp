@@ -386,7 +386,7 @@ void LLViewerCamera::setProjectionMatrix(glh::matrix4f& proj_mat)
     gGL.loadMatrix(proj_mat.m);
 
     // why does setting this here screw everything up?
-    //glh_set_current_projection(proj_mat);
+    glh_set_current_projection(proj_mat);
 
     LLMatrix4 mdlv = getModelview();
 
