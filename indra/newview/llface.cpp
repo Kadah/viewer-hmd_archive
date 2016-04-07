@@ -1282,7 +1282,7 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 	
         bool isHudAttachment = mVObjp->isHUDAttachment();
 	bool rebuild_pos = full_rebuild || mDrawablep->isState(LLDrawable::REBUILD_POSITION);
-        bool rebuild_hud_color = isHudAttachment;
+    bool rebuild_hud_color = isHudAttachment && gHMD.isHMDMode();
 	bool rebuild_color = full_rebuild || mDrawablep->isState(LLDrawable::REBUILD_COLOR);
 	bool rebuild_emissive = rebuild_color && mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_EMISSIVE);
 	bool rebuild_tcoord = full_rebuild || mDrawablep->isState(LLDrawable::REBUILD_TCOORD);

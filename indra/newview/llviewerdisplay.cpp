@@ -751,7 +751,7 @@ S32 LLViewerDisplay::cull(LLCullResult& cullResult)
 	}
 	gDepthDirty = FALSE;
 
-    if (gHMD.isHMDMode())
+    if (gHMD.isHMDMode() && !LLPipeline::sRenderDeferred)
     {
         LLPipeline::sUseOcclusion = 0;
     }
@@ -1443,7 +1443,7 @@ void LLViewerDisplay::render_ui_3d(BOOL showAxes)
     }
 }
 
-void LLViewerDisplay::render_ui_2d(BOOL forHMD)
+void LLViewerDisplay::render_ui_2d(render_options& options)
 {
     push_state_gl();
 
@@ -1460,7 +1460,7 @@ void LLViewerDisplay::render_ui_2d(BOOL forHMD)
     S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWindowHeightScaled();
 
 	//  Menu overlays, HUD, etc
-    gViewerWindow->setup2DRender(0, 0, 0, 0);
+    gViewerWindow->setup2DRender(0, 0, w, h);
 
 	F32 zoom_factor = LLViewerCamera::getInstance()->getZoomFactor();
 	S16 sub_region  = LLViewerCamera::getInstance()->getZoomSubRegion();
@@ -1498,7 +1498,78 @@ void LLViewerDisplay::render_ui_2d(BOOL forHMD)
 		stop_glerror();
 	}
 
-    gViewerWindow->draw();
+
+	if (gSavedSettings.getBOOL("RenderUIBuffer"))
+	{
+		if (LLUI::sDirty)
+		{
+			LLUI::sDirty = FALSE;
+			LLRect t_rect;
+
+			gPipeline.mUIScreen.bindTarget();
+			gGL.setColorMask(true, true);
+			{
+				static const S32 pad = 8;
+
+				LLUI::sDirtyRect.mLeft -= pad;
+				LLUI::sDirtyRect.mRight += pad;
+				LLUI::sDirtyRect.mBottom -= pad;
+				LLUI::sDirtyRect.mTop += pad;
+
+				LLGLEnable scissor(GL_SCISSOR_TEST);
+				static LLRect last_rect = LLUI::sDirtyRect;
+
+				//union with last rect to avoid mouse poop
+				last_rect.unionWith(LLUI::sDirtyRect);
+								
+				t_rect = LLUI::sDirtyRect;
+				LLUI::sDirtyRect = last_rect;
+				last_rect = t_rect;
+			
+				last_rect.mLeft = LLRect::tCoordType(last_rect.mLeft / LLUI::getScaleFactor().mV[0]);
+				last_rect.mRight = LLRect::tCoordType(last_rect.mRight / LLUI::getScaleFactor().mV[0]);
+				last_rect.mTop = LLRect::tCoordType(last_rect.mTop / LLUI::getScaleFactor().mV[1]);
+				last_rect.mBottom = LLRect::tCoordType(last_rect.mBottom / LLUI::getScaleFactor().mV[1]);
+
+				LLRect clip_rect(last_rect);
+				
+				glClear(GL_COLOR_BUFFER_BIT);
+
+				gViewerWindow->draw();
+			}
+
+			gPipeline.mUIScreen.flush();
+			gGL.setColorMask(true, false);
+
+			LLUI::sDirtyRect = t_rect;
+		}
+
+		LLGLDisable cull(GL_CULL_FACE);
+		LLGLDisable blend(GL_BLEND);
+
+        S32 width = options.for_hmd ?  gHMD.getViewportWidth() : gViewerWindow->getWindowWidthScaled();
+        S32 height = options.for_hmd ? gHMD.getViewportWidth() : gViewerWindow->getWindowHeightScaled();
+
+        if (options.for_hmd)
+        {
+            gHMD.copyToEyeRenderTarget(options.hmd_eye, gPipeline.mUIScreen, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        }
+        else
+        {
+		    gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+    		gGL.begin(LLRender::TRIANGLE_STRIP);
+    		gGL.color4f(1,1,1,1);
+    		gGL.texCoord2f(0, 0);			gGL.vertex2i(0, 0);
+    		gGL.texCoord2f(width, 0);		gGL.vertex2i(width, 0);
+    		gGL.texCoord2f(0, height);		gGL.vertex2i(0, height);
+    		gGL.texCoord2f(width, height);	gGL.vertex2i(width, height);
+    		gGL.end();
+         }
+	}
+	else
+	{
+        gViewerWindow->draw();
+	}
 
     pop_state_gl();
 
@@ -1628,6 +1699,11 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
 	{        
         gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
      
+        if (options.for_hmd)
+        {
+            gHMD.render3DUI(options.hmd_eye);
+        }
+
         LLVertexBuffer::unbind();
         LLGLState::checkStates();
         LLGLState::checkTextureChannels();
@@ -1638,7 +1714,7 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
         render_hud_elements();
     }
 
-    if (do_hud_attachments_render && !options.for_hmd)
+    if (do_hud_attachments_render)
     {
         render_hud_attachments();
     }
@@ -1653,7 +1729,7 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
         LLGLState::checkStates();
     }
 
-    render_ui_2d();
+    render_ui_2d(options);
 
     LLGLState::checkStates();
 

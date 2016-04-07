@@ -3355,15 +3355,12 @@ LLSD LLAppViewer::getViewerInfo() const
 	info["GRAPHICS_CARD_VENDOR"] = (const char*)(glGetString(GL_VENDOR));
 	info["GRAPHICS_CARD"] = (const char*)(glGetString(GL_RENDERER));
 
-    LLSD driver_info;
-#if LL_USE_DX
-	driver_info = gDXHardware.getDisplayInfo();
+#if LL_WINDOWS
+	LLSD driver_info = gDXHardware.getDisplayInfo();
 	if (driver_info.has("DriverVersion"))
 	{
 		info["GRAPHICS_DRIVER_VERSION"] = driver_info["DriverVersion"];
 	}
-#elif LL_WINDOWS
-	info["GRAPHICS_DRIVER_VERSION"] = driver_info["DriverVersion"];
 #endif
 
 	info["OPENGL_VERSION"] = (const char*)(glGetString(GL_VERSION));

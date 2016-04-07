@@ -64,7 +64,7 @@ public:
 
 private:
     static void render_ui_3d(BOOL showAxes = FALSE);
-    static void render_ui_2d(BOOL forHMD = FALSE);
+    static void render_ui_2d(render_options& options);
 
     // Rendering stuff
     static void display_stats();

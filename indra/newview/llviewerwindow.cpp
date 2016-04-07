@@ -870,10 +870,10 @@ public:
             }
             else
             {
-			LLFontGL::getFontMonospace()->renderUTF8(line.text, 0, (F32)line.x, (F32)line.y, mTextColor,
+			    LLFontGL::getFontMonospace()->renderUTF8(line.text, 0, (F32)line.x, (F32)line.y, mTextColor,
 											 LLFontGL::LEFT, LLFontGL::TOP,
 											 LLFontGL::NORMAL, LLFontGL::NO_SHADOW, S32_MAX, S32_MAX, NULL, FALSE);
-		}
+		    }
         }
 		mLineList.clear();
 	}

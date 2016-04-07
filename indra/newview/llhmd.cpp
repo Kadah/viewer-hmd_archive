@@ -1273,24 +1273,13 @@ void LLHMD::renderCursor3D(int which_eye)
 
 void LLHMD::render3DUI(int which_eye)
 {
-
-#if DEAL_WITH_THIS_BOGOSITY_LATER
     push_state_gl();
 
     renderCursor3D(which_eye);
 
-    if (!gPipeline.mUIScreen.isComplete())
+    if (gPipeline.mHMDUISurface.isNull())
     {
-        if (!gPipeline.mUIScreen.allocate(gHMD.getViewportWidth(), gHMD.getViewportHeight(), GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, TRUE))
-        {
-            LL_WARNS() << "could not allocate UI buffer for HMD render mode" << LL_ENDL;
-            return;
-        }
-
-        if (gPipeline.mHMDUISurface.isNull())
-        {
-            gPipeline.mHMDUISurface = createUISurface();
-        }
+        gPipeline.mHMDUISurface = createUISurface();
     }
 
     gGL.matrixMode(LLRender::MM_MODELVIEW);
@@ -1303,7 +1292,7 @@ void LLHMD::render3DUI(int which_eye)
     gGL.loadMatrix((GLfloat*)m1.mMatrix);
     gOneTextureNoColorProgram.bind();
     gGL.setColorMask(true, true);
-    gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+
     LLVertexBuffer* buff = gPipeline.mHMDUISurface;
     {
         LLGLDisable cull(GL_CULL_FACE);
@@ -1342,8 +1331,5 @@ void LLHMD::render3DUI(int which_eye)
             pop_state_gl();
         }
     }
-    copyToEyeRenderTarget(which_eye, gPipeline.mUIScreen, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     pop_state_gl();
-#endif
-
 }
