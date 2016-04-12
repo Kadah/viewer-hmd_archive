@@ -18,9 +18,9 @@
             <key>archive</key>
             <map>
               <key>hash</key>
-              <string>4cda507b1477766b3e2e2b8f33be52f4</string>
+              <string>0c9d304ec886e20fc3646b95092e20c8</string>
               <key>url</key>
-              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-openvr/rev/314159/arch/CYGWIN/installer/libopenvr-0.9.19-windows-joejim.tar.bz2</string>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-openvr/rev/313210/arch/CYGWIN/installer/libopenvr-0.9.19-windows-313210.tar.bz2</string>
             </map>
             <key>name</key>
             <string>windows</string>
@@ -42,9 +42,9 @@
             <key>archive</key>
             <map>
               <key>hash</key>
-              <string>a4d52bbc4415904814f1c014a49a1c55</string>
+              <string>edbb1e8f7f2345ab61fabb4d7d35f5d2</string>
               <key>url</key>
-              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-libovr-1.3.0/rev/314159/arch/CYGWIN/installer/libovr-1.3.0-windows-1.3.0.tar.bz2</string>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-libovr-1.3.0/rev/313845/arch/CYGWIN/installer/libovr-1.3.0-windows-313845.tar.bz2</string>
             </map>
             <key>name</key>
             <string>windows</string>
