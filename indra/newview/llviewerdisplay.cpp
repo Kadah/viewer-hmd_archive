@@ -1498,7 +1498,6 @@ void LLViewerDisplay::render_ui_2d(render_options& options)
 		stop_glerror();
 	}
 
-
 	if (gSavedSettings.getBOOL("RenderUIBuffer"))
 	{
 		if (LLUI::sDirty)

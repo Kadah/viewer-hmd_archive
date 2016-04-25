@@ -144,7 +144,6 @@ void LLFloaterHardwareSettings::refreshEnabledState()
 			fsaa_restart->setVisible(FALSE);
 		}
 	}
-
 }
 
 //============================================================================
