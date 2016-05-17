@@ -462,7 +462,7 @@ void LLHMD::shutdown()
 
 void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 {
-    U32 newRenderMode = llclamp(mode, (U32)RenderMode_Normal, (U32)RenderMode_Last); //SPATTRES Normal was None
+    U32 newRenderMode = llclamp(mode, (U32)RenderMode_Normal, (U32)RenderMode_Last);
     if (newRenderMode != mRenderMode)
     {
         LLWindow* windowp = gViewerWindow->getWindow();
