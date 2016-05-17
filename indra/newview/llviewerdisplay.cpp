@@ -1460,6 +1460,7 @@ void LLViewerDisplay::render_ui_2d(render_options& options)
     S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWindowHeightScaled();
 
 	//  Menu overlays, HUD, etc
+
     gViewerWindow->setup2DRender(0, 0, w, h);
 
 	F32 zoom_factor = LLViewerCamera::getInstance()->getZoomFactor();
@@ -1729,6 +1730,7 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
         LLGLState::checkStates();
     }
 
+	
     render_ui_2d(options);
 
     LLGLState::checkStates();

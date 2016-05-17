@@ -789,6 +789,7 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
 		return;
 	}
 	
+    //RIFT check mouse  BOOL use3D = gHMD.isHMDMode() && !isMouseIntersectInUISpace();
 	//LLBBox bbox = LLSelectMgr::getInstance()->getBBoxOfSelection();
 	LLMatrix4 projMatrix = LLViewerCamera::getInstance()->getProjection();
 	LLMatrix4 modelView = LLViewerCamera::getInstance()->getModelview();
@@ -1457,16 +1458,16 @@ void LLManipTranslate::renderSnapGuides()
                 }
                 else
                 {
-				std::string help_text = LLTrans::getString("manip_hint1");
-				LLColor4 help_text_color = LLColor4::white;
-				help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
-				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
-				help_text = LLTrans::getString("manip_hint2");
-				help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapOffsetMeters * 0.2f;
-				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
-			}
-		}
-	}
+                    std::string help_text = LLTrans::getString("manip_hint1");
+                    LLColor4 help_text_color = LLColor4::white;
+                    help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+                    help_text = LLTrans::getString("manip_hint2");
+                    help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapOffsetMeters * 0.2f;
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+                }
+            }
+        }
 	}
 	else
 	{

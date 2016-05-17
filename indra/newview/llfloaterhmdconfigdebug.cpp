@@ -241,6 +241,7 @@ void LLFloaterHMDConfigDebug::onOpen(const LLSD& key)
         pPanel->mUISurfaceShapePresetSliderCtrl->setValue(pPanel->mUISurfaceShapePresetOriginal);
         pPanel->updateUIShapePresetLabel(TRUE);
     }
+
     if (pPanel->mMouselookYawOnlyCheckBoxCtrl)
     {
         pPanel->mMouselookYawOnlyCheckedOriginal = gHMD.isMouselookYawOnly();
@@ -317,6 +318,7 @@ void LLFloaterHMDConfigDebug::onClickCancel()
     onSetUISurfaceToroidArcVertical();
     mUISurfaceShapePresetSliderCtrl->setValue(mUISurfaceShapePresetOriginal);
     onSetUIShapePreset();
+
     mMouselookYawOnlyCheckBoxCtrl->setValue(mMouselookYawOnlyCheckedOriginal);
     onCheckMouselookYawOnly();
     mDirty = FALSE;

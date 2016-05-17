@@ -4797,7 +4797,7 @@ void LLAppViewer::idle()
 		LL_RECORD_BLOCK_TIME(FTM_NETWORK);
 		// Update spaceserver timeinfo
 	    LLWorld::getInstance()->setSpaceTimeUSec(LLWorld::getInstance()->getSpaceTimeUSec() + LLUnits::Seconds::fromValue(dt_raw));
-    
+
 	    //////////////////////////////////////
 	    //
 	    // Update simulator agent state

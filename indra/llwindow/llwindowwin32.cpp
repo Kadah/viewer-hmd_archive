@@ -881,7 +881,7 @@ BOOL LLWindowWin32::getFullscreen()
 
 BOOL LLWindowWin32::getCurrentClientRect(RECT& r, RECT* pActualRect)
 {
-    if (!mWindowHandle[mCurRCIdx] || !GetClientRect(mWindowHandle[mCurRCIdx], &r))
+	if (!mWindowHandle[mCurRCIdx] || !GetClientRect(mWindowHandle[mCurRCIdx], &r))
     {
         return FALSE;
     }
@@ -891,6 +891,7 @@ BOOL LLWindowWin32::getCurrentClientRect(RECT& r, RECT* pActualRect)
     }
     if (mHMDMode)
     {
+
         r.right = (LONG)llmin((S32)r.right, (S32)(r.left + mHMDWidth));
         r.top = (LONG)llmax((S32)r.top, (S32)(r.bottom - mHMDHeight));
     }
@@ -911,7 +912,7 @@ BOOL LLWindowWin32::getCurrentWindowRect(RECT& r, RECT* pActualRect)
     {
         r.right = (LONG)llmin((S32)r.right, (S32)(r.left + mHMDWidth));
         r.top = (LONG)llmax((S32)r.top, (S32)(r.bottom - mHMDHeight));
-    }
+	}
     return TRUE;
 }
 
@@ -1791,13 +1792,13 @@ void LLWindowWin32::hideCursor()
 void LLWindowWin32::showCursor()
 {
 	// makes sure the cursor shows up
-    if (!mHMDMode)
-    {
+//    if (!mHMDMode)
+//    {
 	while (ShowCursor(TRUE) < 0)
 	{
 		// do nothing, wait for cursor to pop out
 	}
-    }
+//    }
 	mCursorHidden = FALSE;
 	mHideCursorPermanent = FALSE;
 }
@@ -2754,8 +2755,9 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
                         window_imp->adjustHMDScale(width, height);
                         if (!window_imp->mHMDMirrored)
                         {
-                            width = llmax(window_imp->mHMDWidth, width);
+							width = llmax(window_imp->mHMDWidth, width);
                             height = llmax(window_imp->mHMDHeight, height);
+
                         }
                     }
 
@@ -2811,6 +2813,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 BOOL LLWindowWin32::convertCoords(LLCoordGL from, LLCoordWindow *to)
 {
 	RECT	client_rect;
+
     if ((NULL == to) || !getCurrentClientRect(client_rect))
 	{
 		return FALSE;
@@ -2825,7 +2828,8 @@ BOOL LLWindowWin32::convertCoords(LLCoordGL from, LLCoordWindow *to)
 BOOL LLWindowWin32::convertCoords(LLCoordWindow from, LLCoordGL* to)
 {
 	RECT	client_rect;
-    if ((NULL == to) || !getCurrentClientRect(client_rect))
+
+	if ((NULL == to) || !getCurrentClientRect(client_rect))
 	{
 		return FALSE;
 	}
@@ -2838,7 +2842,7 @@ BOOL LLWindowWin32::convertCoords(LLCoordWindow from, LLCoordGL* to)
 
 BOOL LLWindowWin32::convertCoords(LLCoordScreen from, LLCoordWindow* to)
 {	
-    if (!mWindowHandle[mCurRCIdx] || NULL == to)
+	if (!mWindowHandle[mCurRCIdx] || NULL == to)
     {
         return FALSE;
     }
@@ -4076,107 +4080,6 @@ BOOL LLWindowWin32::testMainDisplayIsMirrored(S32 left, S32 top, S32 width, S32 
     return FALSE;
 }
 
-
-BOOL LLWindowWin32::initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL forceMirror, BOOL& isMirror)
-{
-    mHMDWidth = width;
-    mHMDHeight = height;
-
-    LL_DEBUGS("Window") << "Destroying Window" << LL_ENDL;
-    if (mWindowHandle[1] && mhDC[1] && !ReleaseDC(mWindowHandle[1], mhDC[1]))
-    {
-        LL_WARNS("Window") << "Release of ghDC failed" << LL_ENDL;
-        mhDC[1] = NULL;
-    }
-    if (mWindowHandle[1])
-    {
-        // Don't process events in our mainWindowProc any longer.
-        SetWindowLong(mWindowHandle[1], GWL_USERDATA, NULL);
-        // Make sure we don't leave a blank toolbar button.
-        ShowWindow(mWindowHandle[1], SW_HIDE);
-        // This causes WM_DESTROY to be sent *immediately*
-        mPostQuit = FALSE;
-        if (!DestroyWindow(mWindowHandle[1]))
-        {
-            LL_WARNS("Window") << "Window Destroy Failed: " << mCallbacks->translateString("MBDestroyWinFailed") << " :: " << mCallbacks->translateString("MBShutdownErr") << LL_ENDL;
-        }
-        mPostQuit = TRUE;
-    }
-
-    mHMDMirrored = isMirror = testMainDisplayIsMirrored(left, top, width, height);
-    if (forceMirror || isMirror)
-    {
-        // don't create a window in this case since we just want to use the "advanced" HMD mode in this case
-        return TRUE;
-    }
-
-    // create window
-    WNDCLASS wc;
-    memset(&wc, 0, sizeof(wc));
-    wc.lpszClassName    = L"HMDWindow";
-    wc.style            = CS_OWNDC | CS_DBLCLKS;
-    wc.lpfnWndProc      = (WNDPROC)mainWindowProc;
-    wc.cbClsExtra       = 0;
-    wc.cbWndExtra       = 0;
-    wc.hInstance        = mhInstance;
-    wc.hIcon            = LoadIcon(mhInstance, mIconResource);
-    wc.hCursor          = NULL;
-    wc.hbrBackground    = (HBRUSH)NULL;
-    wc.lpszMenuName     = NULL;
-    if (!RegisterClass(&wc))
-    {
-        std::string s = WindowsErrorString("LLWindowWin32::InitHMDWindow::RegisterClass");
-        LL_WARNS("Window") << s << LL_ENDL;
-        //OSMessageBox(mCallbacks->translateString("MBRegClassFailed"), mCallbacks->translateString("MBError"), OSMB_OK);
-        return FALSE;
-    }
-
-    mWindowHandle[1] = CreateWindowEx(  mDwExStyle[1],
-                                        L"HMDWindow",
-                                        L"AppHMDWindow",
-                                        mDwStyle[1],
-                                        left,			// x pos
-                                        top,			// y pos
-                                        width,			// width
-                                        height,			// height
-                                        NULL,
-                                        NULL,
-                                        mhInstance,
-                                        NULL);
-    LL_INFOS("Window") << "window is created." << LL_ENDL ;
-    if (!(mhDC[1] = GetDC(mWindowHandle[1])))
-    {
-        LL_WARNS("Window") << "HMD Window Create Failed: " << mCallbacks->translateString("MBDevContextErr") << " :: " << mCallbacks->translateString("MBError") << LL_ENDL;
-        return FALSE;
-    }
-    LL_INFOS("Window") << "Device context retrieved." << LL_ENDL ;
-    if (!SetPixelFormat(mhDC[1], mPixelFormat, &mPixelFormatDescriptor))
-    {
-        LL_WARNS("Window") << "HMD Window Create Failed: " << mCallbacks->translateString("MBPixelFmtSetErr") << " :: " << mCallbacks->translateString("MBError") << LL_ENDL;
-        return FALSE;
-    }
-    SetWindowLong(mWindowHandle[1], GWL_USERDATA, (U32)this);
-    ShowWindow(mWindowHandle[1], SW_SHOW);
-    wglSwapIntervalEXT(1);
-
-    if (mWindowHandle[0])
-    {
-        // the above just lost focus to the main window.   It DID gain focus on the secondary window, but because
-        // the SetWindowLong hadn't happened yet, the message was ignored.  Thus, we are focused on the secondary
-        // window, so we still accept keyboard input, but until we do something to focus on the main window again
-        // the focus is on the HMD window.  This state will cause confusion in the HMD code and will mean that 
-        // changing to HMD mode via keyboard then clicking will actually cause a focuslost message to be sent with
-        // gHMD.isChangingRenderContext set to FALSE...which will cause us to shift out of HMD mode as if we had
-        // alt-tabbed.  *sigh*  To prevent this, we just need to make sure that we set the focus to the main
-        // window here, which ensures that the app focus is correct.
-        SetForegroundWindow(mWindowHandle[0]);
-        SetFocus(mWindowHandle[0]);
-    }
-
-    return TRUE;
-}
-
-
 BOOL LLWindowWin32::destroyHMDWindow()
 {
     if (mhDC[1] && !ReleaseDC(mWindowHandle[1], mhDC[1]))
@@ -4246,15 +4149,30 @@ BOOL LLWindowWin32::setFocusWindow(S32 idx)
 
 void LLWindowWin32::setHMDMode(BOOL mode, U32 min_width, U32 min_height)
 {
-    mHMDMode = mode;
+	//Called when entering HMD mode.
+   mHMDMode = mode;
     if (mHMDMode)
     {
+		mHMDWidth = min_width;
+		mHMDHeight = min_height;
+
         while (ShowCursor(FALSE) >= 0) {}
+		adjustHMDScale();
     }
-    else if (!isCursorHidden())
+	else
+	{
+		mHMDWidth = 0;
+		mHMDHeight = 0;
+	}
+  /*  else if (!isCursorHidden())
     {
         showCursor();
-    }
+    }*/
+
+	if (!isCursorHidden())
+	{
+		showCursor();
+	}
     setMinSize(min_width, min_height, false);
 }
 
@@ -4277,16 +4195,18 @@ void LLWindowWin32::adjustHMDScale()
 
 void LLWindowWin32::adjustHMDScale(S32 w, S32 h)
 {
+	//Called when entering HMD mode.
     mHMDClientHeightDiff = 0;
     mHMDScale[0] = mHMDScale[1] = 1.0f;
+	mHMDHalfWidth = w / 2;
     if (mHMDMode && mCurRCIdx == 0 && mWindowHandle[mCurRCIdx])
     {
-        if (mHMDWidth > 0 && w > 0 && w < mHMDWidth)
+        if (mHMDWidth > 0 && w > 0) 
         {
-            mHMDScale[0] = (F32)((F32)w / (F32)mHMDWidth);
+			mHMDScale[0] = (F32)((F32)w / (F32)(mHMDWidth * 2));
         }
-
-        if (mHMDHeight > 0 && h > 0 && h < mHMDHeight)
+		
+        if (mHMDHeight > 0 && h > 0) 
         {
             mHMDScale[1] = (F32)((F32)h / (F32)mHMDHeight);
         }
@@ -4294,7 +4214,6 @@ void LLWindowWin32::adjustHMDScale(S32 w, S32 h)
         {
             mHMDClientHeightDiff = llmax(0, h - mHMDHeight);
         }
-        //LL_INFOS("HMD") << std::setprecision(6) << "hmd = {" << mHMDWidth << "," << mHMDHeight << "}, wh = {" << w << "," << h  << "}, scale = {" << mHMDScale[0] << "," << mHMDScale[1] << "}, hd = " << mHMDClientHeightDiff << LL_ENDL;
     }
 }
 
@@ -4303,11 +4222,15 @@ void LLWindowWin32::adjustPosForHMDScaling(LLCoordGL& pt)
 {
     if (mHMDMode && mCurRCIdx == 0)
     {
-        if (mHMDScale[0] > 0.0f && mHMDScale[0] < 1.0f)
+        if (mHMDScale[0] != 0.0f)
         {
+			if (pt.mX > mHMDHalfWidth)
+			{
+				pt.mX -= mHMDHalfWidth;
+			}
             pt.mX = ll_round((F32)pt.mX / mHMDScale[0]);
         }
-        if (mHMDScale[1] > 0.0f && mHMDScale[1] < 1.0f)
+        if (mHMDScale[1] != 0.0f) 
         {
             pt.mY = ll_round((F32)pt.mY / mHMDScale[1]);
         }

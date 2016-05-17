@@ -432,12 +432,16 @@ BOOL LLHMDImplOculus::copyToEyeRenderTarget(int which_eye, LLRenderTarget& sourc
         return FALSE;
     }
 
-    int texIndex = getFrameIndex() % 3;
     S32 w        = getViewportWidth();
     S32 h        = getViewportHeight();
-    BOOL do_depth = (mask & GL_DEPTH_BUFFER_BIT) > 0;
-    LLGLDepthTest depthTest(do_depth ? GL_TRUE : GL_FALSE, do_depth ? GL_TRUE : GL_FALSE);
-    mEyeRenderTarget[which_eye][texIndex]->copyContents(
+
+	//GLboolean write_depth = mask & GL_DEPTH_BUFFER_BIT ? TRUE : FALSE;
+	//LLGLDepthTest depthTest(write_depth, write_depth);
+
+	U32 texIndex = getFrameIndex() % 3;
+
+	//mEyeRenderTarget[which_eye][(getFrameIndex() % 3)]->copyContentsToFramebuffer( //RIFT TODO causes interesting breakage.
+	mEyeRenderTarget[which_eye][texIndex]->copyContents(
                                                 source,
                                                 0, 0, source.getWidth(), source.getHeight(),
                                                 0, 0, w,                 h,
@@ -603,7 +607,8 @@ S32 LLHMDImplOculus::getViewportWidth() const
 
 S32 LLHMDImplOculus::getViewportHeight() const
 {
-    return mOculus->mViewport.h;
+	return gViewerWindow->getWindowHeightRaw();  //RIFT TODO:  Fixes some 2D rendering issues but feels wrong.
+    //return mOculus->mViewport.h;
 }
 
 #endif // LL_HMD_SUPPORTED_OCULUS

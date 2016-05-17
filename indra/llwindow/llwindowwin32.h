@@ -113,7 +113,6 @@ public:
 	LLWindowCallbacks::DragNDropResult completeDragNDropRequest( const LLCoordGL gl_coord, const MASK mask, LLWindowCallbacks::DragNDropAction action, const std::string url );
 
     // HMD support
-    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL forceMirror, BOOL& isMirror);
     /*virtual*/ BOOL destroyHMDWindow();
     /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
     /*virtual*/ BOOL setFocusWindow(S32 idx);
@@ -211,6 +210,7 @@ protected:
     BOOL        mHMDMirrored;
     S32         mHMDWidth;
     S32         mHMDHeight;
+	S32         mHMDHalfWidth;
     S32         mHMDClientHeightDiff;
     F32         mHMDScale[2];
     DWORD       mDwExStyle[2];

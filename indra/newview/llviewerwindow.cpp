@@ -917,11 +917,6 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
     // Up-clicks, though, are always handled as far as the OS is concerned.
     BOOL r = !down;
 
-    //if (gHMD.isHMDMode())
-    //{
-    //    gHMD.reshapeUI(TRUE);
-    //}
-
 	// only send mouse clicks to UI if UI is visible
 	if(gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
 	{	
@@ -1058,10 +1053,6 @@ BOOL LLViewerWindow::handleAnyMouseClick(LLWindow *window,  LLCoordGL pos, MASK 
             handled = r = TRUE;
 	}
 
-        //if (gHMD.isHMDMode())
-        //{
-        //    gHMD.reshapeUI(FALSE);
-        //}
         
         return r;
     }
@@ -1984,7 +1975,6 @@ void LLViewerWindow::initWorldUI()
 	S32 width = mRootView->getRect().getWidth();
 	LLRect full_window(0, height, width, 0);
 
-
 	gIMMgr = LLIMMgr::getInstance();
 
 	//getRootView()->sendChildToFront(gFloaterView);
@@ -2274,6 +2264,7 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
 	// reshape messages.  We don't care about these, and we
 	// don't want to send messages because the message system
 	// may have been destructed.
+
 	if (!LLApp::isExiting())
 	{
         if (!only_ui)
@@ -2282,6 +2273,7 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
         }
 
 		// update our window rectangle
+
 		mWindowRectRaw.mRight = mWindowRectRaw.mLeft   + width;
 		mWindowRectRaw.mTop   = mWindowRectRaw.mBottom + height;
 
@@ -2310,14 +2302,17 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
 		mWindowRectScaled.mRight = mWindowRectScaled.mLeft   + ll_round((F32)width  / mDisplayScale.mV[VX]);
 		mWindowRectScaled.mTop   = mWindowRectScaled.mBottom + ll_round((F32)height / mDisplayScale.mV[VY]);
 
-		setup2DViewport();
+		//setup2DViewport();
 
 		// Inform lower views of the change
 		// round up when converting coordinates to make sure there are no gaps at edge of window
         if (gHMD.isHMDMode())
         {
-            setup2DViewport(0, 0, gHMD.getViewportWidth(), gHMD.getViewportHeight());
-            mRootView->reshape(llceil((F32)gHMD.getViewportWidth() / mDisplayScale.mV[VX]), llceil((F32)gHMD.getViewportHeight() / mDisplayScale.mV[VY]));
+			S32 w = gHMD.getViewportWidth();
+			S32 h = gHMD.getViewportHeight();
+
+           setup2DViewport(0, 0, w,h);
+            mRootView->reshape(llceil((F32)w / mDisplayScale.mV[VX]), llceil((F32)h / mDisplayScale.mV[VY]));
         }
         else
         {
@@ -2541,10 +2536,9 @@ void LLViewerWindow::draw()
 		
 	LLUI::pushMatrix();
 	{
-        LLVector2 old_scale_factor = LLUI::getScaleFactor();
+		LLVector2 old_scale_factor = LLUI::getScaleFactor();
 
-		// scale view by UI global scale factor and aspect ratio correction factor
-        gGL.scaleUI(mDisplayScale.mV[VX], mDisplayScale.mV[VY], 1.f);        
+		gGL.scaleUI(mDisplayScale.mV[VX], mDisplayScale.mV[VY], 1.f);
 
 		// apply camera zoom transform (for high res screenshots)
 		F32 zoom_factor = LLViewerCamera::getInstance()->getZoomFactor();
@@ -4282,6 +4276,16 @@ BOOL LLViewerWindow::mousePointOnPlaneGlobal(LLVector3d& point, const S32 x, con
 // Returns global position
 BOOL LLViewerWindow::mousePointOnLandGlobal(const S32 x, const S32 y, LLVector3d *land_position_global, BOOL ignore_distance)
 {
+	//RIFT TODO fix world-click position for HMD mode.  This is probably not really the right place to fix this.
+	//S32 lx = x;
+	//S32 ly = y;
+	//if (gHMD.isHMDMode())
+	//{
+	//	F32 rh = (F32)getWindowHeightRaw();
+	//	lx = x * 2;
+	//	ly = (S32)((F32)y * (gHMD.getViewportHeight() / rh));
+	//}
+	//LLVector3		mouse_direction_global = mouseDirectionGlobal(lx,ly);
 	LLVector3		mouse_direction_global = mouseDirectionGlobal(x,y);
 	F32				mouse_dir_scale;
 	BOOL			hit_land = FALSE;
@@ -5219,105 +5223,6 @@ void LLViewerWindow::restartDisplay(BOOL show_progress_bar)
 	}
 }
 
-BOOL LLViewerWindow::changeDisplaySettings(LLCoordScreen size, BOOL disable_vsync, BOOL show_progress_bar)
-{
-	//BOOL was_maximized = gSavedSettings.getBOOL("WindowMaximized");
-
-	//U32 fsaa = gSavedSettings.getU32("RenderFSAASamples");
-	//U32 old_fsaa = mWindow->getFSAASamples();
-
-	// if not maximized, use the request size
-	if (!mWindow->getMaximized())
-	{
-		mWindow->setSize(size);
-	}
-
-	//if (fsaa == old_fsaa)
-	{
-		return TRUE;
-	}
-
-/*
-
-	// Close floaters that don't handle settings change
-	LLFloaterReg::hideInstance("snapshot");
-	
-	BOOL result_first_try = FALSE;
-	BOOL result_second_try = FALSE;
-
-	LLFocusableElement* keyboard_focus = gFocusMgr.getKeyboardFocus();
-	send_agent_pause();
-	LL_INFOS() << "Stopping GL during changeDisplaySettings" << LL_ENDL;
-	stopGL();
-	mIgnoreActivate = TRUE;
-	LLCoordScreen old_size;
-	LLCoordScreen old_pos;
-	mWindow->getSize(&old_size);
-
-	//mWindow->setFSAASamples(fsaa);
-
-	result_first_try = mWindow->switchContext(false, size, disable_vsync);
-	if (!result_first_try)
-	{
-		// try to switch back
-		//mWindow->setFSAASamples(old_fsaa);
-		result_second_try = mWindow->switchContext(false, old_size, disable_vsync);
-
-		if (!result_second_try)
-		{
-			// we are stuck...try once again with a minimal resolution?
-			send_agent_resume();
-			mIgnoreActivate = FALSE;
-			return FALSE;
-		}
-	}
-	send_agent_resume();
-
-	LL_INFOS() << "Restoring GL during resolution change" << LL_ENDL;
-	if (show_progress_bar)
-	{
-		restoreGL(LLTrans::getString("ProgressChangingResolution"));
-	}
-	else
-	{
-		restoreGL();
-	}
-
-	if (!result_first_try)
-	{
-		LLSD args;
-		args["RESX"] = llformat("%d",size.mX);
-		args["RESY"] = llformat("%d",size.mY);
-		LLNotificationsUtil::add("ResolutionSwitchFail", args);
-		size = old_size; // for reshape below
-	}
-
-	BOOL success = result_first_try || result_second_try;
-
-	if (success)
-	{
-		// maximize window if was maximized, else reposition
-		if (was_maximized)
-		{
-			mWindow->maximize();
-		}
-		else
-		{
-			S32 windowX = gSavedSettings.getS32("WindowX");
-			S32 windowY = gSavedSettings.getS32("WindowY");
-
-			mWindow->setPosition(LLCoordScreen ( windowX, windowY ) );
-		}
-	}
-
-	mIgnoreActivate = FALSE;
-	gFocusMgr.setKeyboardFocus(keyboard_focus);
-	
-	return success;
-
-	*/
-}
-
 F32	LLViewerWindow::getWorldViewAspectRatio() const
 {
     F32 world_aspect = ((F32)getWorldViewWidthRaw() / (F32)getWorldViewHeightRaw());
@@ -5328,16 +5233,16 @@ void LLViewerWindow::calcDisplayScale()
 {
 	F32 ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
 	LLVector2 display_scale;
-    if (gHMD.isHMDMode())
-    {
-        // In HMD mode, the world should not be scaled as the resolution is fixed and too many calculations depend on that
-        // fixed resolution.   The UI could be scaled by adjusting the resolution of the rendertarget that the UI is sent
-        // to, but because the current setup has the world and UI scaling so intermingled, getting scaling to work for just
-        // the UI would be painful and probably take a week or more.  Thus, for now, just disable "UI" scaling in HMD mode.
-	    ui_scale_factor = 1.0f;
-	    display_scale.setVec(1.0f, 1.0f);
-    }
-    else
+    //if (gHMD.isHMDMode())
+    //{
+    //    // In HMD mode, the world should not be scaled as the resolution is fixed and too many calculations depend on that
+    //    // fixed resolution.   The UI could be scaled by adjusting the resolution of the rendertarget that the UI is sent
+    //    // to, but because the current setup has the world and UI scaling so intermingled, getting scaling to work for just
+    //    // the UI would be painful and probably take a week or more.  Thus, for now, just disable "UI" scaling in HMD mode.
+	   // ui_scale_factor = 1.0f;
+	   // display_scale.setVec(1.0f, 1.0f);
+    //}
+    //else
     {
 	    ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
 	display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));

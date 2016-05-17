@@ -168,7 +168,6 @@ public:
 	virtual LLSD getNativeKeyData() { return LLSD::emptyMap(); }
 
     // HMD support
-    virtual BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL forceMirror, BOOL& isMirror) { isMirror = FALSE; return FALSE; }
     virtual BOOL destroyHMDWindow() { return FALSE; };
     S32 getRenderWindow(BOOL& fullScreen) const { fullScreen = mFullscreen; return mCurRCIdx; }
     virtual BOOL setRenderWindow(S32 idx, BOOL fullscreen) { return FALSE; };
