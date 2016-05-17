@@ -82,6 +82,8 @@ const S32 LLHMDImpl::kDefaultHResolution = 1280;
 const S32 LLHMDImpl::kDefaultVResolution = 800;
 const F32 LLHMDImpl::kDefaultInterpupillaryOffset = 0.064f;
 const F32 LLHMDImpl::kDefaultEyeToScreenDistance = 0.047f;  // A lens = 0.047f, B lens = 0.044f, C lens = 0.040f.   Default of 0.041f from the SDK is just WRONG and will cause visual distortion (Rift-46)
+const F32 LLHMDImpl::kDefaultVerticalFOVRadians = 2.196863;
+const F32 LLHMDImpl::kDefaultAspect = 0.8f;
 
 LLHMD gHMD;
 
