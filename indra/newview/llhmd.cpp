@@ -64,7 +64,9 @@
 #define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
 #endif
 
+#if LL_WINDOWS
 #include "OVR_CAPI_GL.h"
+#endif
 
 #include "llviewerdisplay.h"
 #include "pipeline.h"
@@ -80,8 +82,6 @@ const S32 LLHMDImpl::kDefaultHResolution = 1280;
 const S32 LLHMDImpl::kDefaultVResolution = 800;
 const F32 LLHMDImpl::kDefaultInterpupillaryOffset = 0.064f;
 const F32 LLHMDImpl::kDefaultEyeToScreenDistance = 0.047f;  // A lens = 0.047f, B lens = 0.044f, C lens = 0.040f.   Default of 0.041f from the SDK is just WRONG and will cause visual distortion (Rift-46)
-const F32 LLHMDImpl::kDefaultVerticalFOVRadians = 2.196863;
-const F32 LLHMDImpl::kDefaultAspect = 0.8f;
 
 LLHMD gHMD;
 
@@ -462,7 +462,7 @@ void LLHMD::shutdown()
 
 void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
 {
-    U32 newRenderMode = llclamp(mode, (U32)RenderMode_Normal, (U32)RenderMode_Last);
+    U32 newRenderMode = llclamp(mode, (U32)RenderMode_Normal, (U32)RenderMode_Last); //SPATTRES Normal was None
     if (newRenderMode != mRenderMode)
     {
         LLWindow* windowp = gViewerWindow->getWindow();
@@ -954,7 +954,6 @@ BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
 
     return FALSE;
 }
-
 
 void LLHMD::setupStereoValues()
 {
