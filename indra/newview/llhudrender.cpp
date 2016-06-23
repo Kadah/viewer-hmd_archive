@@ -37,6 +37,9 @@
 #include "llglheaders.h"
 #include "llviewerwindow.h"
 #include "llui.h"
+#include "llhmd.h"
+#include "llviewerdisplay.h"
+
 
 void hud_render_utf8text(const std::string &str, const LLVector3 &pos_agent,
 					 const LLFontGL &font,
@@ -44,10 +47,11 @@ void hud_render_utf8text(const std::string &str, const LLVector3 &pos_agent,
 					 const LLFontGL::ShadowType shadow,
 					 const F32 x_offset, const F32 y_offset,
 					 const LLColor4& color,
-					 const BOOL orthographic)
+					 const BOOL orthographic,
+                     BOOL keepLevel)
 {
 	LLWString wstr(utf8str_to_wstring(str));
-	hud_render_text(wstr, pos_agent, font, style, shadow, x_offset, y_offset, color, orthographic);
+	hud_render_text(wstr, pos_agent, font, style, shadow, x_offset, y_offset, color, orthographic, keepLevel);
 }
 
 void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
@@ -56,7 +60,8 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 					const LLFontGL::ShadowType shadow,
 					const F32 x_offset, const F32 y_offset,
 					const LLColor4& color,
-					const BOOL orthographic)
+					const BOOL orthographic,
+                    BOOL keepLevel)
 {
 	LLViewerCamera* camera = LLViewerCamera::getInstance();
 	// Do cheap plane culling
@@ -72,41 +77,21 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	LLVector3 up_axis;
 	if (orthographic)
 	{
-		right_axis.setVec(0.f, -1.f / gViewerWindow->getWorldViewHeightScaled(), 0.f);
-		up_axis.setVec(0.f, 0.f, 1.f / gViewerWindow->getWorldViewHeightScaled());
+        right_axis.setVec(0.f,  -1.f / (F32)(gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWorldViewWidthScaled()), 0.f);
+        up_axis.setVec(0.f, 0.f, 1.f / (F32)(gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewHeightScaled())); //HUD text
 	}
 	else
 	{
-		camera->getPixelVectors(pos_agent, up_axis, right_axis);
+		camera->getPixelVectors(pos_agent, up_axis, right_axis, keepLevel);
 	}
-	LLCoordFrame render_frame = *camera;
-	LLQuaternion rot;
-	if (!orthographic)
-	{
-		rot = render_frame.getQuaternion();
-		rot = rot * LLQuaternion(-F_PI_BY_TWO, camera->getYAxis());
-		rot = rot * LLQuaternion(F_PI_BY_TWO, camera->getXAxis());
-	}
-	else
-	{
-		rot = LLQuaternion(-F_PI_BY_TWO, LLVector3(0.f, 0.f, 1.f));
-		rot = rot * LLQuaternion(-F_PI_BY_TWO, LLVector3(0.f, 1.f, 0.f));
-	}
-	F32 angle;
-	LLVector3 axis;
-	rot.getAngleAxis(&angle, axis);
 
 	LLVector3 render_pos = pos_agent + (floorf(x_offset) * right_axis) + (floorf(y_offset) * up_axis);
 
 	//get the render_pos in screen space
 	
 	F64 winX, winY, winZ;
-	LLRect world_view_rect = gViewerWindow->getWorldViewRectRaw();
 	S32	viewport[4];
-	viewport[0] = world_view_rect.mLeft;
-	viewport[1] = world_view_rect.mBottom;
-	viewport[2] = world_view_rect.getWidth();
-	viewport[3] = world_view_rect.getHeight();
+    gViewerWindow->getWorldViewportRaw(viewport);
 
 	F64 mdlv[16];
 	F64 proj[16];
@@ -121,24 +106,37 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 				mdlv, proj, (GLint*) viewport,
 				&winX, &winY, &winZ);
 		
-	//fonts all render orthographically, set up projection``
+	//fonts all render orthographically, set up projection
 	gGL.matrixMode(LLRender::MM_PROJECTION);
 	gGL.pushMatrix();
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
 	gGL.pushMatrix();
 	LLUI::pushMatrix();
-		
-	gl_state_for_2d(world_view_rect.getWidth(), world_view_rect.getHeight());
-	gViewerWindow->setup3DViewport();
+
+    // setup ortho camera
+    gl_state_for_2d(viewport[2], viewport[3]);
+    glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
 	
-	winX -= world_view_rect.mLeft;
-	winY -= world_view_rect.mBottom;
+	winX -= viewport[0];
+	winY -= viewport[1];
 	LLUI::loadIdentity();
 	gGL.loadIdentity();
-	LLUI::translate((F32) winX*1.0f/LLFontGL::sScaleX, (F32) winY*1.0f/(LLFontGL::sScaleY), -(((F32) winZ*2.f)-1.f));
-	F32 right_x;
-	
-	font.render(wstr, 0, 0, 1, color, LLFontGL::LEFT, LLFontGL::BASELINE, style, shadow, wstr.length(), 1000, &right_x);
+
+    LLVector4 uit((F32) winX*1.0f/LLFontGL::sScaleX, (F32) winY*1.0f/(LLFontGL::sScaleY), -(((F32) winZ*2.f)-1.f), 1.0f);
+    if (!orthographic && keepLevel && gHMD.isHMDMode())
+    {
+        LLQuaternion q = gHMD.getHMDRotation();
+        F32 roll;
+        F32 pitch;
+        F32 yaw;
+        q.getEulerAngles(&roll,&pitch,&yaw);
+        LLMatrix4 mat_neg_roll(0.0f, 0.0f, roll);
+        LLMatrix4 mat_roll(0.0f, 0.0f,    -roll);
+        uit = uit * mat_roll;
+        gGL.multMatrix((GLfloat*)mat_neg_roll.mMatrix);
+    }
+    LLUI::translate(uit[VX], uit[VY], uit[VZ]);
+	font.render(wstr, 0, 0, 1, color, LLFontGL::LEFT, LLFontGL::BASELINE, style, shadow, wstr.length(), 1000);
 
 	LLUI::popMatrix();
 	gGL.popMatrix();
