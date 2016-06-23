@@ -223,6 +223,16 @@
              function="View.ShowHUDAttachments" />
          </menu_item_check>
 
+<menu_item_check
+           label="Toggle HMD Mode"
+           name="Toggle HMD Mode"
+           shortcut="control|shift|D">
+             <menu_item_check.on_check
+               function="View.CheckHMDMode" />
+             <menu_item_check.on_click
+               function="View.CycleDisplay" />
+         </menu_item_check>
+
         <menu_item_separator/>
 
         <menu_item_call
@@ -3536,19 +3546,7 @@
                 <menu_item_check.on_click
                  function="Advanced.ToggleInfoDisplay"
                  parameter="agent target" />
-            </menu_item_check>
-            <!-- Appears not to exist anymore
-            <menu_item_check
-             label="Debug Rotation"
-             name="Debug Rotation">
-                <menu_item_check.on_check
-                 function="CheckControl"
-                 parameter="DebugAvatarRotation" />
-                <menu_item_check.on_click
-                 function="ToggleControl"
-                 parameter="DebugAvatarRotation" />
-            </menu_item_check> -->
-            <menu_item_call
+            </menu_item_check>         <menu_item_call
              label="Dump Attachments"
              name="Dump Attachments">
                 <menu_item_call.on_click
