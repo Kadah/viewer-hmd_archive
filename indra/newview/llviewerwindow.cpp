@@ -1312,17 +1312,12 @@ void LLViewerWindow::handleMouseMove(LLWindow *window,  LLCoordGL pos, MASK mask
 
 	LLCoordGL mouse_point(x, y);
 
-    //if (LLView::sDebugMouseHandling)
-    //{
-    //    LL_INFOS("Window") << "MouseMove [pos.mX,pos.mY] = {" << pos.mX << "," << pos.mY << "}, [x,y] = {" << x << "," << y << "}, mouse_point = {" << mouse_point.mX << "," << mouse_point.mY << "}" << LL_ENDL;
-    //}
-
 	if (mouse_point != mCurrentMousePoint)
 	{
 		LLUI::resetMouseIdleTimer();
 	}
 
-	saveLastMouse(mouse_point, FALSE);
+	saveLastMouse(mouse_point, TRUE);// FALSE);
 
 	mWindow->showCursorFromMouseMove();
 
@@ -2339,14 +2334,15 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
 			S32 w = gHMD.getViewportWidth();
 			S32 h = gHMD.getViewportHeight();
 
-           setup2DViewport(0, 0, w,h);
+            setup2DViewport(0, 0, w,h);
             mRootView->reshape(llceil((F32)w / mDisplayScale.mV[VX]), llceil((F32)h / mDisplayScale.mV[VY]));
         }
         else
         {
             setup2DViewport();
-		mRootView->reshape(llceil((F32)width / mDisplayScale.mV[VX]), llceil((F32)height / mDisplayScale.mV[VY]));
+		    mRootView->reshape(llceil((F32)width / mDisplayScale.mV[VX]), llceil((F32)height / mDisplayScale.mV[VY]));
         }
+
 		LLView::sForceReshape = FALSE;
 
 		// clear font width caches
@@ -3668,8 +3664,8 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 	if (use_full_window == false && mWorldViewPlaceholder.get())
 	{
         if (mWorldViewPlaceholder.get() && !gHMD.isHMDMode())
-	{
-		new_world_rect = mWorldViewPlaceholder.get()->calcScreenRect();
+	    {
+		    new_world_rect = mWorldViewPlaceholder.get()->calcScreenRect();
         }
 		// clamp to at least a 1x1 rect so we don't try to allocate zero width gl buffers
 		new_world_rect.mTop = llmax(new_world_rect.mTop, new_world_rect.mBottom + 1);
@@ -4307,16 +4303,6 @@ BOOL LLViewerWindow::mousePointOnPlaneGlobal(LLVector3d& point, const S32 x, con
 // Returns global position
 BOOL LLViewerWindow::mousePointOnLandGlobal(const S32 x, const S32 y, LLVector3d *land_position_global, BOOL ignore_distance)
 {
-	//RIFT TODO fix world-click position for HMD mode.  This is probably not really the right place to fix this.
-	//S32 lx = x;
-	//S32 ly = y;
-	//if (gHMD.isHMDMode())
-	//{
-	//	F32 rh = (F32)getWindowHeightRaw();
-	//	lx = x * 2;
-	//	ly = (S32)((F32)y * (gHMD.getViewportHeight() / rh));
-	//}
-	//LLVector3		mouse_direction_global = mouseDirectionGlobal(lx,ly);
 	LLVector3		mouse_direction_global = mouseDirectionGlobal(x,y);
 	F32				mouse_dir_scale;
 	BOOL			hit_land = FALSE;
@@ -5312,7 +5298,20 @@ void LLViewerWindow::calcDisplayScale()
 {
 	F32 ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
 	LLVector2 display_scale;
-	display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+    if (gHMD.isHMDMode())
+    {
+        // In HMD mode, the world should not be scaled as the resolution is fixed and too many calculations depend on that
+        // fixed resolution.   The UI could be scaled by adjusting the resolution of the rendertarget that the UI is sent
+        // to, but because the current setup has the world and UI scaling so intermingled, getting scaling to work for just
+        // the UI would be painful and probably take a week or more.  Thus, for now, just disable "UI" scaling in HMD mode.
+	    ui_scale_factor = 1.0f;
+	    display_scale.setVec(1.0f, 1.0f);
+    }
+    else
+    {
+	    ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
+	    display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+    }
 	display_scale *= ui_scale_factor;
 
 	// limit minimum display scale
@@ -5393,7 +5392,7 @@ void LLViewerWindow::setUIVisibility(bool visible)
 	{
         if (gAgentCamera.getCameraMode() != CAMERA_MODE_FIRST_PERSON)
         {
-		gAgentCamera.changeCameraToThirdPerson(FALSE);
+		    gAgentCamera.changeCameraToThirdPerson(FALSE);
         }
         else
         {
@@ -5666,12 +5665,10 @@ void LLPickInfo::getSurfaceInfo()
 			mNormal.set(normal.getF32ptr());
 			mTangent.set(tangent.getF32ptr());
 
-			//extrapoloate binormal from normal and tangent
-			
+			//extrapoloate binormal from normal and tangent			
 			LLVector4a binormal;
 			binormal.setCross3(normal, tangent);
 			binormal.mul(tangent.getF32ptr()[3]);
-
 			mBinormal.set(binormal.getF32ptr());
 
 			mBinormal.normalize();

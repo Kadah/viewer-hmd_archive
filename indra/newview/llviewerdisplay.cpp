@@ -751,7 +751,7 @@ S32 LLViewerDisplay::cull(LLCullResult& cullResult)
 	}
 	gDepthDirty = FALSE;
 
-    if (gHMD.isHMDMode() && !LLPipeline::sRenderDeferred)
+    if (gHMD.isHMDMode())
     {
         LLPipeline::sUseOcclusion = 0;
     }
@@ -1008,7 +1008,7 @@ void LLViewerDisplay::render_start(BOOL to_texture, render_options& options)
 			}
 			gPipeline.mScreen.clear();
 		}
-			
+
 		gGL.setColorMask(true, false);
 	}
 }
