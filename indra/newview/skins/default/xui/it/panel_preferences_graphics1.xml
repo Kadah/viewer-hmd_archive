@@ -23,9 +23,9 @@
 	</text>
 	<text name="BetterText">
 		Migliore
-	</text>
+		</text>
 	<check_box initial_value="true" label="Shader atmosfera..." name="WindLightUseAtmosShaders"/>
-	<check_box initial_value="true" label="Modello illuminazione avanzato" name="UseLightShaders"/>
+		<check_box initial_value="true" label="Modello illuminazione avanzato" name="UseLightShaders"/>
 	<button label="Salva impostazioni come valori predefiniti..." name="PrefSaveButton"/>
 	<button label="Carica valore predefinito..." name="PrefLoadButton"/>
 	<button label="Elimina valore predefinito..." name="PrefDeleteButton"/>

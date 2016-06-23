@@ -21,11 +21,11 @@
 	<text name="FasterText">
 		Schneller
 	</text>
-	<text name="BetterText">
+		<text name="BetterText">
 		Besser
-	</text>
-	<check_box initial_value="true" label="Atmosphären-Shader" name="WindLightUseAtmosShaders"/>
-	<check_box initial_value="true" label="Erweitertes Beleuchtungsmodell" name="UseLightShaders"/>
+		</text>
+		<check_box initial_value="true" label="Atmosphären-Shader" name="WindLightUseAtmosShaders"/>
+		<check_box initial_value="true" label="Erweitertes Beleuchtungsmodell" name="UseLightShaders"/>
 	<button label="Einstellungen als Voreinstellung speichern..." name="PrefSaveButton"/>
 	<button label="Voreinstellung laden..." name="PrefLoadButton"/>
 	<button label="Voreinstellung löschen..." name="PrefDeleteButton"/>

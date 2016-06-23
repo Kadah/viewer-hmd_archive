@@ -1353,9 +1353,9 @@ void LLGLManager::initExtensions()
 	if (mHasVertexShader)
 	{
 		LL_INFOS() << "initExtensions() VertexShader-related procs..." << LL_ENDL;
-        glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC)GLH_EXT_GET_PROC_ADDRESS("glGetAttribLocation");	
-		glBindAttribLocation = (PFNGLBINDATTRIBLOCATIONARBPROC) GLH_EXT_GET_PROC_ADDRESS("glBindAttribLocation");
-		glGetActiveAttrib = (PFNGLGETACTIVEATTRIBARBPROC) GLH_EXT_GET_PROC_ADDRESS("glGetActiveAttrib");
+		glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC) GLH_EXT_GET_PROC_ADDRESS("glGetAttribLocation");
+		glBindAttribLocation = (PFNGLBINDATTRIBLOCATIONPROC) GLH_EXT_GET_PROC_ADDRESS("glBindAttribLocation");
+		glGetActiveAttrib = (PFNGLGETACTIVEATTRIBPROC) GLH_EXT_GET_PROC_ADDRESS("glGetActiveAttrib");
 		glVertexAttrib1dARB = (PFNGLVERTEXATTRIB1DARBPROC) GLH_EXT_GET_PROC_ADDRESS("glVertexAttrib1dARB");
 		glVertexAttrib1dvARB = (PFNGLVERTEXATTRIB1DVARBPROC) GLH_EXT_GET_PROC_ADDRESS("glVertexAttrib1dvARB");
 		glVertexAttrib1fARB = (PFNGLVERTEXATTRIB1FARBPROC) GLH_EXT_GET_PROC_ADDRESS("glVertexAttrib1fARB");

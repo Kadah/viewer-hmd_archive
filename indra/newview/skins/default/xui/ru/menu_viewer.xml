@@ -2,6 +2,7 @@
 <menu_bar name="Main Menu">
 	<menu label="Я" name="Me">
 		<menu_item_call label="Профиль…" name="Profile"/>
+		<menu_item_call label="Опубликовать в Facebook..." name="PostToFacebook"/>
 		<menu_item_call label="Внешность..." name="ChangeOutfit"/>
 		<menu_item_call label="Выберите аватар..." name="Avatar Picker"/>
 		<menu_item_check label="Инвентарь..." name="Inventory"/>
@@ -13,6 +14,7 @@
 		<menu label="Движение" name="Movement">
 			<menu_item_call label="Сесть" name="Sit Down Here"/>
 			<menu_item_check label="Полет" name="Fly"/>
+			<menu_item_call label="Прекратить полет" name="Stop flying"/>
 			<menu_item_check label="Всегда бегать" name="Always Run"/>
 			<menu_item_call label="Остановить анимацию" name="Stop Animating My Avatar"/>
 			<menu_item_call label="Ходьба / бег / полет..." name="WalkRunFly"/>
@@ -29,6 +31,8 @@
 		<menu_item_call label="Кнопки панели инструментов..." name="Toolbars"/>
 		<menu_item_call label="Скрыть все элементы управления" name="Hide UI"/>
 		<menu_item_check label="Показывать присоединения HUD" name="Show HUD Attachments"/>
+		<menu_item_call label="Перекл. режим ГД" name="Toggle HMD Mode"/>
+		<menu_item_call label="Добавить монитор" name="Add Extra Monitor"/>
 		<menu_item_call label="Выход из [APP_NAME]" name="Quit"/>
 	</menu>
 	<menu label="Общение" name="Communicate">
@@ -229,6 +233,7 @@
 		<menu_item_call label="Очистить кэш группы" name="ClearGroupCache"/>
 		<menu_item_check label="Сглаживание мышью" name="Mouse Smoothing"/>
 		<menu_item_call label="Освободить клавиши" name="Release Keys"/>
+		<menu_item_check label="Расширенный режим ГД" name="Advanced HMD Mode"/>
 		<menu label="Горячие клавиши" name="Shortcuts">
 			<menu_item_check label="Показать меню «Дополнительно» - старое сочетание клавиш" name="Show Advanced Menu - legacy shortcut"/>
 			<menu_item_call label="Закрыть окно" name="Close Window"/>
@@ -268,12 +273,15 @@
 			<menu_item_check label="Показать время" name="Show Time"/>
 			<menu_item_check label="Показывать цену передачи" name="Show Upload Cost"/>
 			<menu_item_check label="Показать данные по отрисовке" name="Show Render Info"/>
+			<menu_item_check label="Показать данные по отрисовке аватара" name="Show Avatar Render Info"/>
 			<menu_item_check label="Показать данные о текстурах" name="Show Texture Info"/>
 			<menu_item_check label="Показать матрицы" name="Show Matrices"/>
 			<menu_item_check label="Показать цвет под курсором" name="Show Color Under Cursor"/>
 			<menu_item_check label="Показать память" name="Show Memory"/>
 			<menu_item_check label="Показать закрытые данные о памяти" name="Show Private Mem Info"/>
 			<menu_item_check label="Показать изменения объектов" name="Show Updates"/>
+			<menu_item_check label="Показать данные ориентации ГД" name="Show HMD Orientation"/>
+			<menu_item_check label="Показать данные теста задержки ГД" name="Show HMD Latency"/>
 		</menu>
 		<menu label="Принудительно вызвать ошибку" name="Force Errors">
 			<menu_item_call label="Принудительно перейти в точку останова" name="Force Breakpoint"/>
@@ -354,6 +362,9 @@
 		</menu>
 		<menu_item_call label="Дамп камеры со скриптами" name="Dump Scripted Camera"/>
 		<menu label="Диктофон" name="Recorder">
+			<menu_item_call label="Начать запись события" name="Start event recording"/>
+			<menu_item_call label="Остановить запись события" name="Stop event recording"/>
+			<menu_item_call label="Воспроизвести запись события" name="Playback event recording"/>
 			<menu_item_call label="Начать воспроизведение" name="Start Playback"/>
 			<menu_item_call label="Остановить воспроизведение" name="Stop Playback"/>
 			<menu_item_check label="Зациклить воспроизведение" name="Loop Playback"/>
@@ -368,6 +379,7 @@
 		<menu label="Интерфейс пользователя" name="UI">
 			<menu_item_call label="Проверка медиабраузера" name="Web Browser Test"/>
 			<menu_item_call label="Браузер для просмотра веб-контента" name="Web Content Browser"/>
+			<menu_item_call label="Тест подключения к FB" name="FB Connect Test"/>
 			<menu_item_call label="Вывод SelectMgr" name="Dump SelectMgr"/>
 			<menu_item_call label="Вывод инвентаря" name="Dump Inventory"/>
 			<menu_item_call label="Вывод таймеров" name="Dump Timers"/>

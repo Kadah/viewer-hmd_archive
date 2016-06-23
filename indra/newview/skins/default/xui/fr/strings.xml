@@ -997,7 +997,7 @@ Veuillez réessayer de vous connecter dans une minute.
 		Hors ligne
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		[AREA] m² [PRICE] L$
+		[AREA] m² [PRICE] ([SQMPRICE] L$/m²)
 	</string>
 	<string name="worldmap_results_none_found">
 		Aucun résultat.
@@ -1401,6 +1401,24 @@ Veuillez réessayer de vous connecter dans une minute.
 	</string>
 	<string name="LeaveMouselook">
 		Appuyez sur ESC pour quitter la vue subjective
+	</string>
+	<string name="HMDPresetCustom">
+		Personnalisée
+	</string>
+	<string name="HMDPresetDefault">
+		Valeur par défaut [INDEX]
+	</string>
+	<string name="HMDPresetUser">
+		Utilisateur [INDEX]
+	</string>
+	<string name="HMDConfigUnitsMillimeters">
+		[VAL] mm
+	</string>
+	<string name="HMDConfigUnitsMilliseconds">
+		[VAL] ms
+	</string>
+	<string name="HMDConfigUnitsRadians">
+		[VAL] PI
 	</string>
 	<string name="InventoryNoMatchingItems">
 		Vous n&apos;avez pas trouvé ce que vous cherchiez ? Essayez [secondlife:///app/search/all/[SEARCH_TERM] Rechercher].
@@ -2102,7 +2120,19 @@ Veuillez réessayer de vous connecter dans une minute.
 		Résidents autorisés : ([ALLOWEDAGENTS], max. [MAXACCESS])
 	</string>
 	<string name="RegionInfoAllowedGroups">
-		Groupes autorisés : ([ALLOWEDGROUPS], max. [MAXACCESS])
+		Groupes autorisés : ([ALLOWEDGROUPS], max [MAXACCESS])
+	</string>
+	<string name="RegionInfoEstateManagers">
+		Gérants du domaine : ([ESTATEMANAGERS], max. [MAXMANAGERS])
+	</string>
+	<string name="RegionInfoBannedResidents">
+		Résidents bannis : ([BANNEDAGENTS], max. [MAXBANNED])
+	</string>
+	<string name="RegionInfoListTypeAllowedAgents">
+		Résidents autorisés
+	</string>
+	<string name="RegionInfoListTypeBannedAgents">
+		Résidents bannis
 	</string>
 	<string name="ScriptLimitsParcelScriptMemory">
 		Mémoire des scripts de parcelles
@@ -5187,6 +5217,9 @@ Essayez avec le chemin d&apos;accès à l&apos;éditeur entre guillemets doubles
 	<string name="Command_Gestures_Label">
 		Gestes
 	</string>
+	<string name="Command_HMD_Mode_Label">
+		Mode HMD
+	</string>
 	<string name="Command_HowTo_Label">
 		Aide rapide
 	</string>
@@ -5231,6 +5264,9 @@ Essayez avec le chemin d&apos;accès à l&apos;éditeur entre guillemets doubles
 	</string>
 	<string name="Command_Snapshot_Label">
 		Photo
+	</string>
+	<string name="Command_Social_Label">
+		Facebook
 	</string>
 	<string name="Command_Speak_Label">
 		Parler
@@ -5277,6 +5313,9 @@ Essayez avec le chemin d&apos;accès à l&apos;éditeur entre guillemets doubles
 	<string name="Command_Gestures_Tooltip">
 		Gestes de votre avatar
 	</string>
+	<string name="Command_HMD_Mode_Tooltip">
+		Utiliser le mode de rendu HMD
+	</string>
 	<string name="Command_HowTo_Tooltip">
 		Comment effectuer les opérations courantes
 	</string>
@@ -5321,6 +5360,9 @@ Essayez avec le chemin d&apos;accès à l&apos;éditeur entre guillemets doubles
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		Prendre une photo
+	</string>
+	<string name="Command_Social_Tooltip">
+		Publier sur Facebook
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Parler aux personnes près de vous en utilisant votre micro

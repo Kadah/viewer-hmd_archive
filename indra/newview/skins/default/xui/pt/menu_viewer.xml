@@ -31,6 +31,8 @@
 		<menu_item_call label="Botões da barra de ferramentas..." name="Toolbars"/>
 		<menu_item_call label="Ocultar todos os controles" name="Hide UI"/>
 		<menu_item_check label="Exibir anexos de HUD" name="Show HUD Attachments"/>
+		<menu_item_call label="Ativar modo HMD" name="Toggle HMD Mode"/>
+		<menu_item_call label="Adicionar monitor extra" name="Add Extra Monitor"/>
 		<menu_item_call label="Sair do [APP_NAME]" name="Quit"/>
 	</menu>
 	<menu label="Comunicar" name="Communicate">
@@ -231,6 +233,7 @@
 		<menu_item_call label="Limpar cache de grupo" name="ClearGroupCache"/>
 		<menu_item_check label="Smoothing de mouse" name="Mouse Smoothing"/>
 		<menu_item_call label="Liberar teclas" name="Release Keys"/>
+		<menu_item_check label="Modo HMD avançado" name="Advanced HMD Mode"/>
 		<menu label="Atalhos" name="Shortcuts">
 			<menu_item_check label="Mostrar menu avançado - atalho antigo" name="Show Advanced Menu - legacy shortcut"/>
 			<menu_item_call label="Fechar janela" name="Close Window"/>
@@ -267,11 +270,14 @@
 			<menu_item_check label="Mostrar hora" name="Show Time"/>
 			<menu_item_check label="Mostar custo do upload" name="Show Upload Cost"/>
 			<menu_item_check label="Dados de renderização" name="Show Render Info"/>
+			<menu_item_check label="Exibir informações de renderização do avatar" name="Show Avatar Render Info"/>
 			<menu_item_check label="Mostrar info da textura" name="Show Texture Info"/>
 			<menu_item_check label="Mostrar cor sob o cursor" name="Show Color Under Cursor"/>
 			<menu_item_check label="Mostrar memória" name="Show Memory"/>
 			<menu_item_check label="Exibir informações de memória privadas" name="Show Private Mem Info"/>
 			<menu_item_check label="Mostrar mudanças a objetos" name="Show Updates"/>
+			<menu_item_check label="Exibir informações de orientação de HMD" name="Show HMD Orientation"/>
+			<menu_item_check label="Exibir informações de teste de latência do HMD" name="Show HMD Latency"/>
 		</menu>
 		<menu label="Force an Error" name="Force Errors">
 			<menu_item_call label="Force Breakpoint" name="Force Breakpoint"/>
@@ -326,6 +332,12 @@
 		<menu label="Rede" name="Network">
 			<menu_item_check label="Pausar avatar" name="AgentPause"/>
 			<menu_item_call label="Drop a Packet" name="Drop a Packet"/>
+		</menu>
+		<menu_item_call label="Empurrões, trombadas e tapas" name="Bumps, Pushes &amp;amp; Hits"/>
+		<menu label="Recorder" name="Recorder">
+			<menu_item_call label="Iniciar gravação de evento" name="Start event recording"/>
+			<menu_item_call label="Parar gravação de evento" name="Stop event recording"/>
+			<menu_item_call label="Reproduzir gravação de evento" name="Playback event recording"/>
 		</menu>
 		<menu label="Mundo" name="DevelopWorld">
 			<menu_item_check label="Impor sobre sol de simulação" name="Sim Sun Override"/>

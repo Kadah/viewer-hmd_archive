@@ -1312,6 +1312,11 @@ void LLViewerWindow::handleMouseMove(LLWindow *window,  LLCoordGL pos, MASK mask
 
 	LLCoordGL mouse_point(x, y);
 
+    //if (LLView::sDebugMouseHandling)
+    //{
+    //    LL_INFOS("Window") << "MouseMove [pos.mX,pos.mY] = {" << pos.mX << "," << pos.mY << "}, [x,y] = {" << x << "," << y << "}, mouse_point = {" << mouse_point.mX << "," << mouse_point.mY << "}" << LL_ENDL;
+    //}
+
 	if (mouse_point != mCurrentMousePoint)
 	{
 		LLUI::resetMouseIdleTimer();
@@ -1396,6 +1401,7 @@ void LLViewerWindow::handleFocus(LLWindow *window)
 void LLViewerWindow::handleFocusLost(LLWindow *window)
 {
 	gFocusMgr.setAppHasFocus(FALSE);
+
 	//LLModalDialog::onAppFocusLost();
 	LLToolMgr::getInstance()->onAppFocusLost();
 	gFocusMgr.setMouseCapture( NULL );
@@ -2273,8 +2279,8 @@ void LLViewerWindow::sendShapeToSim()
 	msg->addU32Fast(_PREHASH_CircuitCode, gMessageSystem->mOurCircuitCode);
 	msg->nextBlockFast(_PREHASH_HeightWidthBlock);
 	msg->addU32Fast(_PREHASH_GenCounter, 0);
-	U16 height16 = (U16) mWorldViewRectRaw.getHeight();
-	U16 width16 = (U16) mWorldViewRectRaw.getWidth();
+	U16 height16 = (U16)getWorldViewHeightRaw();
+	U16 width16 = (U16)getWindowWidthRaw();
 	msg->addU16Fast(_PREHASH_Height, height16);
 	msg->addU16Fast(_PREHASH_Width, width16);
 	gAgent.sendReliableMessage();
@@ -2297,6 +2303,7 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
         }
 
 		// update our window rectangle
+
 		mWindowRectRaw.mRight = mWindowRectRaw.mLeft + width;
 		mWindowRectRaw.mTop = mWindowRectRaw.mBottom + height;
 
@@ -2340,9 +2347,8 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
         else
         {
             setup2DViewport();
-		    mRootView->reshape(llceil((F32)width / mDisplayScale.mV[VX]), llceil((F32)height / mDisplayScale.mV[VY]));
+		mRootView->reshape(llceil((F32)width / mDisplayScale.mV[VX]), llceil((F32)height / mDisplayScale.mV[VY]));
         }
-
 		LLView::sForceReshape = FALSE;
 
 		// clear font width caches
@@ -3287,10 +3293,10 @@ void LLViewerWindow::updateUI()
 
             if (handled)
             {
-                if (LLView::sDebugMouseHandling)
-    			{
-    				LL_INFOS() << "Hover handled by captor " << mouse_captor->getName() << LL_ENDL;
-			    }
+			if (LLView::sDebugMouseHandling)
+			{
+				LL_INFOS() << "Hover handled by captor " << mouse_captor->getName() << LL_ENDL;
+			}
                 gHMD.handleMouseIntersectOverride(mouse_captor);
             }
 			else
@@ -3665,7 +3671,7 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 	{
         if (mWorldViewPlaceholder.get() && !gHMD.isHMDMode())
 	    {
-		    new_world_rect = mWorldViewPlaceholder.get()->calcScreenRect();
+		new_world_rect = mWorldViewPlaceholder.get()->calcScreenRect();
         }
 		// clamp to at least a 1x1 rect so we don't try to allocate zero width gl buffers
 		new_world_rect.mTop = llmax(new_world_rect.mTop, new_world_rect.mBottom + 1);
@@ -4196,21 +4202,21 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
     }
     else
     {
-    	// find vertical field of view
+	// find vertical field of view
 	    F32			fov = camera->getView();
 
-    	// find world view center in scaled ui coordinates
-	    F32			center_x = getWorldViewRectScaled().getCenterX();
-	    F32			center_y = getWorldViewRectScaled().getCenterY();
+	// find world view center in scaled ui coordinates
+	F32			center_x = getWorldViewRectScaled().getCenterX();
+	F32			center_y = getWorldViewRectScaled().getCenterY();
 
-    	// calculate pixel distance to screen
-	    F32			distance = ((F32)getWorldViewHeightScaled() * 0.5f) / (tan(fov / 2.f));
+	// calculate pixel distance to screen
+	F32			distance = ((F32)getWorldViewHeightScaled() * 0.5f) / (tan(fov / 2.f));
 
-    	// calculate click point relative to middle of screen
-	    F32			click_x = x - center_x;
-    	F32			click_y = y - center_y;
+	// calculate click point relative to middle of screen
+	F32			click_x = x - center_x;
+	F32			click_y = y - center_y;
 
-    	// compute mouse vector
+	// compute mouse vector
 	    mouse_vector =	distance * camera->getAtAxis()
 						- click_x * camera->getLeftAxis()
 						+ click_y * camera->getUpAxis();
@@ -4983,16 +4989,16 @@ void LLViewerWindow::getWorldViewportRaw(S32* v, S32 w, S32 h, S32 xOffset, S32 
 void LLViewerWindow::setup2DRender(S32 x_offset, S32 y_offset, S32 width, S32 height)
 {
     if (gHMD.isHMDMode())
-    {
+{
         gHMD.setup2DRender();
-    }
+}
     else
-    {
+{
         width = (width > 0) ? width : getWindowWidthRaw();
         height = (height > 0) ? height : getWindowHeightRaw();
 	    gl_state_for_2d(width, height, 0, x_offset);
 	    setup2DViewport(x_offset, y_offset, width, height);
-    }
+}
 }
 
 void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset, S32 width, S32 height)
@@ -5006,12 +5012,12 @@ void LLViewerWindow::setup2DViewport(S32 x_offset, S32 y_offset, S32 width, S32 
 void LLViewerWindow::setup3DRender(S32 x_offset, S32 y_offset, int whichEye)
 {
     if (gHMD.isHMDMode() && (whichEye >= 0))
-    {
+{
         gHMD.setup3DRender(whichEye);
         gHMD.setup3DViewport(x_offset, y_offset);
-    }
+}
     else
-    {
+{ 
 	    // setup perspective camera
 	    LLViewerCamera::getInstance()->setPerspective(
                                         !FOR_SELECTION,
@@ -5023,22 +5029,22 @@ void LLViewerWindow::setup3DRender(S32 x_offset, S32 y_offset, int whichEye)
                                         LLViewerCamera::getInstance()->getNear(),
                                         MAX_FAR_CLIP * 2.0f);        
         setup3DViewport(x_offset, y_offset);
-    }	
+}
 
-    
+
 }
 
 void LLViewerWindow::setup3DViewport(S32 x_offset, S32 y_offset)
-{
+{ 
     if (gHMD.isHMDMode())
-    {
+{
         gHMD.setup3DViewport(x_offset, y_offset);
-    }
+}
     else
-    { 
+{
         getWorldViewportRaw(gGLViewport, 0, 0, x_offset, y_offset);
-	    glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
-    }
+	glViewport(gGLViewport[0], gGLViewport[1], gGLViewport[2], gGLViewport[3]);
+}
 }
 
 void LLViewerWindow::revealIntroPanel()
@@ -5310,7 +5316,7 @@ void LLViewerWindow::calcDisplayScale()
     else
     {
 	    ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
-	    display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
+	display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
     }
 	display_scale *= ui_scale_factor;
 
@@ -5392,7 +5398,7 @@ void LLViewerWindow::setUIVisibility(bool visible)
 	{
         if (gAgentCamera.getCameraMode() != CAMERA_MODE_FIRST_PERSON)
         {
-		    gAgentCamera.changeCameraToThirdPerson(FALSE);
+		gAgentCamera.changeCameraToThirdPerson(FALSE);
         }
         else
         {
@@ -5665,7 +5671,7 @@ void LLPickInfo::getSurfaceInfo()
 			mNormal.set(normal.getF32ptr());
 			mTangent.set(tangent.getF32ptr());
 
-			//extrapoloate binormal from normal and tangent			
+			//extrapoloate binormal from normal and tangent
 			LLVector4a binormal;
 			binormal.setCross3(normal, tangent);
 			binormal.mul(tangent.getF32ptr()[3]);

@@ -1,4 +1,4 @@
-﻿/** 
+/** 
  * @File llvoavatar.cpp
  * @brief Implementation of LLVOAvatar class which is a derivation of LLViewerObject
  *
@@ -97,6 +97,7 @@
 #include "llanimstatelabels.h"
 #include "lltrans.h"
 #include "llappearancemgr.h"
+#include "llhmd.h"
 
 #include "llgesturemgr.h" //needed to trigger the voice gesticulations
 #include "llvoiceclient.h"
@@ -778,9 +779,9 @@ LLVOAvatar::LLVOAvatar(const LLUUID& id,
 	mDebugExistenceTimer.reset();
 	mLastAppearanceMessageTimer.reset();
 
-	if(LLSceneMonitor::getInstance()->isEnabled())
+    if(LLSceneMonitor::getInstance()->isEnabled())
 	{
-	    LLSceneMonitor::getInstance()->freezeAvatar((LLCharacter*)this);
+		    LLSceneMonitor::getInstance()->freezeAvatar((LLCharacter*)this);
 	}
 }
 
@@ -2163,7 +2164,7 @@ void LLVOAvatar::idleUpdateVoiceVisualizer(bool voice_enabled)
 	// Don't render the user's own voice visualizer when in mouselook, or when opening the mic is disabled.
 	if(isSelf())
 	{
-		if(gAgentCamera.cameraMouselook() || gSavedSettings.getBOOL("VoiceDisableMic"))
+		if(gAgentCamera.cameraMouselook() || gAgentCamera.cameraFirstPerson() || gSavedSettings.getBOOL("VoiceDisableMic"))
 		{
 			render_visualizer = false;
 		}
@@ -2499,14 +2500,14 @@ void LLVOAvatar::idleUpdateLoadingEffect()
 			{
 				mFirstFullyVisible = FALSE;
 				if (isSelf())
-				{
-					LL_INFOS("Avatar") << avString() << "self isFullyLoaded, mFirstFullyVisible" << LL_ENDL;
-					LLAppearanceMgr::instance().onFirstFullyVisible();
-				}
+		{
+			LL_INFOS("Avatar") << avString() << "self isFullyLoaded, mFirstFullyVisible" << LL_ENDL;
+				LLAppearanceMgr::instance().onFirstFullyVisible();
+			}
 				else
-				{
-					LL_INFOS("Avatar") << avString() << "other isFullyLoaded, mFirstFullyVisible" << LL_ENDL;
-				}
+		{
+			LL_INFOS("Avatar") << avString() << "other isFullyLoaded, mFirstFullyVisible" << LL_ENDL;
+		}
 			}
 
 			deleteParticleSource();
@@ -2633,6 +2634,7 @@ void LLVOAvatar::idleUpdateNameTag(const LLVector3& root_pos_last)
 	{
 		render_name = render_name
 			&& !gAgentCamera.cameraMouselook()
+            && !gAgentCamera.cameraFirstPerson()
 			&& (visible_chat || (gSavedSettings.getBOOL("RenderNameShowSelf") 
 								 && gSavedSettings.getS32("AvatarNameTagMode") ));
 	}
@@ -3091,10 +3093,10 @@ bool LLVOAvatar::isVisuallyMuted()
 {
 	bool muted = false;
 
-	// Priority order (highest priority first)
-	// * own avatar is never visually muted
-	// * if on the "always draw normally" list, draw them normally
-	// * if on the "always visually mute" list, mute them
+			// Priority order (highest priority first)
+			// * own avatar is never visually muted
+			// * if on the "always draw normally" list, draw them normally
+			// * if on the "always visually mute" list, mute them
 	// * check against the render cost and attachment limits
 	if (!isSelf())
 	{
@@ -3103,18 +3105,18 @@ bool LLVOAvatar::isVisuallyMuted()
 			muted = false;
 		}
 		else if (mVisuallyMuteSetting == AV_DO_NOT_RENDER)
-		{	// Always want to see this AV as an impostor
-			muted = true;
-		}
+			{	// Always want to see this AV as an impostor
+				muted = true;
+			}
         else if (isInMuteList())
-        {
+			{
             muted = true;
-        }
-		else
-		{
+				}
+				else
+						{
 			muted = isTooComplex();
-		}
-	}
+						}
+					}
 
 	return muted;
 }
@@ -3283,9 +3285,9 @@ BOOL LLVOAvatar::updateCharacter(LLAgent &agent)
 		}
 		else if (   ! shouldImpostor()
 				 || mDrawable->mDistanceWRTCamera < 1.f + mag)
-		{   // first 25% of max visible avatars are not impostored
-			// also, don't impostor avatars whose bounding box may be penetrating the 
-			// impostor camera near clip plane
+		{ //first 25% of max visible avatars are not impostored
+			//also, don't impostor avatars whose bounding box may be penetrating the 
+			//impostor camera near clip plane
 			mUpdatePeriod = 1;
 		}
 		else if ( shouldImpostor(4) )
@@ -3467,7 +3469,7 @@ BOOL LLVOAvatar::updateCharacter(LLAgent &agent)
 				}
 			}
 			LLVector3 fwdDir = lerp(primDir, velDir, clamp_rescale(speed, 0.5f, 2.0f, 0.0f, 1.0f));
-			if (isSelf() && gAgentCamera.cameraMouselook())
+			if (isSelf() && gAgentCamera.cameraMouselook() && !gHMD.isHMDMode())
 			{
 				// make sure fwdDir stays in same general direction as primdir
 				if (gAgent.getFlying())
@@ -3497,7 +3499,7 @@ BOOL LLVOAvatar::updateCharacter(LLAgent &agent)
 			// When moving very slow, the pelvis is allowed to deviate from the
 			// forward direction to allow it to hold it's position while the torso
 			// and head turn.  Once in motion, it must conform however.
-			BOOL self_in_mouselook = isSelf() && gAgentCamera.cameraMouselook();
+			BOOL self_in_mouselook = isSelf() && (gAgentCamera.cameraMouselook() || gAgentCamera.cameraFirstPerson());
 
 			LLVector3 pelvisDir( mRoot->getWorldMatrix().getFwdRow4().mV );
 
@@ -6494,7 +6496,7 @@ BOOL LLVOAvatar::processFullyLoadedChange(bool loading)
 	mPreviousFullyLoaded = mFullyLoaded;
 	mFullyLoadedInitialized = TRUE;
 	mFullyLoadedFrameCounter++;
-
+	
     if (changed && isSelf())
     {
         // to know about outfit switching
@@ -8149,12 +8151,12 @@ U32 LLVOAvatar::getPartitionType() const
 }
 
 //static
-void LLVOAvatar::updateImpostors()
+void LLVOAvatar::updateImpostors() 
 {
-	LLCharacter::sAllowInstancesChange = FALSE;
+	LLCharacter::sAllowInstancesChange = FALSE ;
 
 	for (std::vector<LLCharacter*>::iterator iter = LLCharacter::sInstances.begin();
-		iter != LLCharacter::sInstances.end(); ++iter)
+		 iter != LLCharacter::sInstances.end(); ++iter)
 	{
 		LLVOAvatar* avatar = (LLVOAvatar*) *iter;
 		if (!avatar->isDead() && avatar->isVisible()
@@ -8167,7 +8169,7 @@ void LLVOAvatar::updateImpostors()
 		}
 	}
 
-	LLCharacter::sAllowInstancesChange = TRUE;
+	LLCharacter::sAllowInstancesChange = TRUE ;
 }
 
 BOOL LLVOAvatar::isImpostor()
@@ -8228,7 +8230,7 @@ void LLVOAvatar::updateImpostorRendering(U32 newMaxNonImpostorsValue)
 {
 	U32  oldmax = sMaxNonImpostors;
 	bool oldflg = sUseImpostors;
-	
+
 	if (IMPOSTORS_OFF <= newMaxNonImpostorsValue)
 	{
 		sMaxNonImpostors = 0;
@@ -8246,7 +8248,7 @@ void LLVOAvatar::updateImpostorRendering(U32 newMaxNonImpostorsValue)
             << "now " << (sUseImpostors ? "use" : "don't use" ) << " impostors (max " << sMaxNonImpostors << "); "
             << LL_ENDL;
     }
-}
+	}
 
 
 void LLVOAvatar::idleUpdateRenderComplexity()
@@ -8268,7 +8270,7 @@ void LLVOAvatar::idleUpdateRenderComplexity()
 			mText->setFadeDistance(20.0, 5.0); // limit clutter in large crowds
 		}
 		else
-		{
+	{
 			mText->clearString(); // clear debug text
 		}
 
@@ -8319,17 +8321,17 @@ void LLVOAvatar::idleUpdateRenderComplexity()
 		{
 			info_color.set(LLColor4::grey);
 			info_style = LLFontGL::NORMAL;
-		}
+	}
 		mText->addLine(info_line, info_color, info_style);
 
 		updateText(); // corrects position
 	}
 }
-
+	
 void LLVOAvatar::addAttachmentArea(F32 delta_area)
-{
+	{
     mAttachmentSurfaceArea   += delta_area;
-}
+	}
 
 void LLVOAvatar::subtractAttachmentArea(F32 delta_area)
 {
@@ -8531,23 +8533,23 @@ void LLVOAvatar::calcMutedAVColor()
         change_msg = " blocked: color is grey4";
     }
     else if ( mMutedAVColor == LLColor4::white || mMutedAVColor == LLColor4::grey3 || mMutedAVColor == LLColor4::grey4 )
-    {
+{
         // select a color based on the first byte of the agents uuid so any muted agent is always the same color
         F32 color_value = (F32) (av_id.mData[0]);
         F32 spectrum = (color_value / 256.0);		// spectrum is between 0 and 1.f
 
-        // Array of colors.  These are arranged so only one RGB color changes between each step, 
-        // and it loops back to red so there is an even distribution.  It is not a heat map
-        const S32 NUM_SPECTRUM_COLORS = 7;              
-        static LLColor4 * spectrum_color[NUM_SPECTRUM_COLORS] = { &LLColor4::red, &LLColor4::magenta, &LLColor4::blue, &LLColor4::cyan, &LLColor4::green, &LLColor4::yellow, &LLColor4::red };
+	// Array of colors.  These are arranged so only one RGB color changes between each step, 
+	// and it loops back to red so there is an even distribution.  It is not a heat map
+	const S32 NUM_SPECTRUM_COLORS = 7;              
+	static LLColor4 * spectrum_color[NUM_SPECTRUM_COLORS] = { &LLColor4::red, &LLColor4::magenta, &LLColor4::blue, &LLColor4::cyan, &LLColor4::green, &LLColor4::yellow, &LLColor4::red };
  
-        spectrum = spectrum * (NUM_SPECTRUM_COLORS - 1);		// Scale to range of number of colors
-        S32 spectrum_index_1  = floor(spectrum);				// Desired color will be after this index
-        S32 spectrum_index_2  = spectrum_index_1 + 1;			//    and before this index (inclusive)
-        F32 fractBetween = spectrum - (F32)(spectrum_index_1);  // distance between the two indexes (0-1)
+	spectrum = spectrum * (NUM_SPECTRUM_COLORS - 1);		// Scale to range of number of colors
+	S32 spectrum_index_1  = floor(spectrum);				// Desired color will be after this index
+	S32 spectrum_index_2  = spectrum_index_1 + 1;			//    and before this index (inclusive)
+	F32 fractBetween = spectrum - (F32)(spectrum_index_1);  // distance between the two indexes (0-1)
  
         new_color = lerp(*spectrum_color[spectrum_index_1], *spectrum_color[spectrum_index_2], fractBetween);
-        new_color.normalize();
+	new_color.normalize();
         new_color *= 0.28f;		// Tone it down
 
         change_msg = " over limit color ";

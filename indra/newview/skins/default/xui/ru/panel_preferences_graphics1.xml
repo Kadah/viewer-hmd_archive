@@ -23,9 +23,9 @@
 	</text>
 	<text name="BetterText">
 		Качественней
-	</text>
-	<check_box initial_value="true" label="Атмосферные шейдеры" name="WindLightUseAtmosShaders"/>
-	<check_box initial_value="true" label="Расширенная модель освещения" name="UseLightShaders"/>
+		</text>
+		<check_box initial_value="true" label="Атмосферные шейдеры" name="WindLightUseAtmosShaders"/>
+		<check_box initial_value="true" label="Расширенная модель освещения" name="UseLightShaders"/>
 	<button label="Сохранить настройки как пресет..." name="PrefSaveButton"/>
 	<button label="Загрузить пресет..." name="PrefLoadButton"/>
 	<button label="Удалить пресет..." name="PrefDeleteButton"/>

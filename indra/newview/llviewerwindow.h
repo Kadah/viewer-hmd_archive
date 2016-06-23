@@ -272,7 +272,7 @@ public:
 	const LLPickInfo&	getLastPick() const { return mLastPick; }
 
 	void			setup2DViewport(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0, S32 height = 0);
-    void			setup3DViewport(S32 x_offset = 0, S32 y_offset = 0);
+	void			setup3DViewport(S32 x_offset = 0, S32 y_offset = 0);
 	void			setup3DRender(S32 x_offset = 0, S32 y_offset = 0, int whichEye = -1);
 	void			setup2DRender(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0, S32 height = 0);
 
@@ -311,9 +311,9 @@ public:
 	void			updateObjectUnderCursor();
 
 	void			updateUI();		// Once per frame, update UI based on mouse position, calls following update* functions
-	void			updateLayout();						
-	void			updateMouseDelta();		
-	void			updateKeyboardFocus();		
+	void				updateLayout();						
+	void				updateMouseDelta();		
+	void				updateKeyboardFocus();		
 
 	void			updateWorldViewRect(bool use_full_window=false);
 	LLView*			getToolBarHolder() { return mToolBarHolder.get(); }

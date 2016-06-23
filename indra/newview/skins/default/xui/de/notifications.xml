@@ -1131,7 +1131,7 @@ Dies ist ein temporärer Fehler. Bitte passen Sie das Kleidungsstück in einigen
 	<notification name="YouHaveBeenLoggedOut">
 		Es tut uns leid! Sie wurden von [SECOND_LIFE] abgemeldet.
 
-[MESSAGE]
+            [MESSAGE]
 		<usetemplate name="okcancelbuttons" notext="Beenden" yestext="IM &amp; Chat anzeigen"/>
 	</notification>
 	<notification name="OnlyOfficerCanBuyLand">
@@ -1615,12 +1615,12 @@ Sie können dieses Update von http://www.secondlife.com/downloads herunterladen 
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		Für Ihre [APP_NAME]-Installation wurde ein Update heruntergeladen.
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Informationen zu diesem Update]
+Version [VERSION] [[INFO_URL] Infos zu diesem Update]
 		<usetemplate name="okcancelbuttons" notext="Später..." yestext="Jetzt installieren und [APP_NAME] neu starten"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		Für Ihre [APP_NAME]-Installation wurde ein Update heruntergeladen.
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Informationen zu diesem Update]
+    Version [VERSION] [[INFO_URL] Infos zu diesem Update]
 		<usetemplate name="okcancelbuttons" notext="Später..." yestext="Jetzt installieren und [APP_NAME] neu starten"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1881,6 +1881,13 @@ Versuchen Sie es später erneut.
 			<input name="message">
 				Triff mich in [REGION]
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Abbrechen"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Teleport an [NAME] mit folgender Nachricht anfordern
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="Abbrechen"/>
 		</form>
@@ -2796,6 +2803,9 @@ Hier funktionieren nur Skripts, die dem Landeigentümer gehören.
 	<notification name="RegionTPAccessBlocked">
 		Die Region, die Sie besuchen möchten, enthält Inhalte, die Ihre aktuellen Einstellungen überschreiten. Sie können Ihre Einstellungen unter „Ich“ &gt; „Einstellungen“ &gt; „Allgemein“ ändern.
 	</notification>
+	<notification name="RegionAboutToShutdown">
+		Die Region, die Sie zu betreten versuchen, wird in Kürze heruntergefahren.
+	</notification>
 	<notification name="URBannedFromRegion">
 		Sie dürfen diese Region nicht betreten.
 	</notification>
@@ -2938,6 +2948,16 @@ Diese Region enthält jedoch Inhalte, die nur für Erwachsene zugänglich sind.
 	<notification name="TeleportOfferSent">
 		Ein Teleportangebot wurde an [TO_NAME] geschickt
 	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] fordert den Teleport an Ihren Standort an.
+[MESSAGE]
+
+Teleport anbieten?
+		<form name="form">
+			<button name="Yes" text="Ja"/>
+			<button name="No" text="Nein"/>
+		</form>
+	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
 [URL]
@@ -2990,11 +3010,11 @@ In Ihrem Inventar wird ein Lesezeichen erstellt, damit Sie diesem Einwohner schn
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		Diese Region wird in [MINUTES] neu gestartet.
+		Die Region „[NAME]“ wird in [MINUTES] Minuten neu gestartet.
 Wenn Sie in dieser Region bleiben, werden Sie abgemeldet.
 	</notification>
 	<notification name="RegionRestartSeconds">
-		Diese Region wird in [SECONDS] neu gestartet.
+		Die Region „[NAME]“ wird in [SECONDS] Sekunden neu gestartet.
 Wenn Sie in dieser Region bleiben, werden Sie abgemeldet.
 	</notification>
 	<notification name="LoadWebPage">
@@ -3310,7 +3330,7 @@ Die Schaltfläche wird angezeigt, wenn genügend Platz vorhanden ist.
 		Wählen Sie Einwohner aus, für die Sie das Objekt freigeben möchten.
 	</notification>
 	<notification name="MeshUploadError">
-		[LABEL] konnte nicht hochgeladen werden: [MESSAGE] [IDENTIFIER]
+		[LABEL] konnte nicht hochgeladen werden: [MESSAGE] [IDENTIFIER] 
 [DETAILS]Details finden Sie in SecondLife.log.
 	</notification>
 	<notification name="MeshUploadPermError">
@@ -4089,6 +4109,9 @@ Warten Sie kurz und versuchen Sie es noch einmal.
 	<notification name="CantAttachNotEnoughScriptResources">
 		Nicht genügend Skriptressourcen verfügbar, um Objekt anzuhängen.
 	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		Sie können das Objekt nicht anhängen, da es gerade entfernt wird.
+	</notification>
 	<notification name="CantDropItemTrialUser">
 		Ablegen von Objekten hier nicht möglich; versuchen Sie es mit dem kostenlosen Testbereich.
 	</notification>
@@ -4338,5 +4361,23 @@ Wählen Sie eine kleinere Landfläche aus.
 	<notification name="ChatHistoryIsBusyAlert">
 		Chatverlaufsdatei ist noch mit vorheriger Operation beschäftigt. Versuchen Sie es in ein paar Minuten noch einmal oder chatten Sie mit einer anderen Person.
 		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		Internes Problem: Kein Übergang in HMD-Modus möglich, da die Vorinitialisierung des HMD-Gerätemanagers fehlgeschlagen ist. Wahrscheinlich ist die HMD-Gerätebibliothek nicht installiert oder liegt in einer anderen Version vor als erwartet. Installieren Sie den Second Life-Client neu, um das Problem zu beheben.
+	</notification>
+	<notification name="HMDModeErrorALM">
+		Kein Übergang in HMD-Modus möglich, da erweitertes Beleuchtungsmodell nicht aktiviert ist.  Zur korrekten Darstellung im HMD-Modus ist das erweiterte Beleuchtungsmodell erforderlich.
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		Kein Übergang in HMD-Modus möglich, da keine HMD-Hardware erkannt wird. Stellen Sie sicher, dass das HMD-Monitorkabel fest eingesteckt ist.
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		Kein Übergang in HMD-Modus möglich, da keine HMD-Sensor-Hardware erkannt wird. Stellen Sie sicher, dass Ihr HMD-Gerät angeschlossen und das USB-Kabel sicher eingesteckt ist.
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		Internes Problem: Kein Übergang in HMD-Modus möglich, da das HMD-Darstellungsfenster nicht erstellt werden konnte. Starten Sie den Client neu, um das Problem zu beheben.
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		Die Funktion „[NAME]“ ist gegenwärtig deaktiviert.
 	</notification>
 </notifications>

@@ -994,7 +994,7 @@ support@secondlife.com.
 		Не в сети
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		[AREA] м² L$[PRICE]
+		[AREA] м² L$[PRICE] ([SQMPRICE] L$/м²)
 	</string>
 	<string name="worldmap_results_none_found">
 		Ничего не найдено.
@@ -1398,6 +1398,24 @@ support@secondlife.com.
 	</string>
 	<string name="LeaveMouselook">
 		Нажмите ESC, чтобы вернуться к обычному обзору
+	</string>
+	<string name="HMDPresetCustom">
+		Задать
+	</string>
+	<string name="HMDPresetDefault">
+		Стандартная [INDEX]
+	</string>
+	<string name="HMDPresetUser">
+		Пользовательская [INDEX]
+	</string>
+	<string name="HMDConfigUnitsMillimeters">
+		[VAL] мм
+	</string>
+	<string name="HMDConfigUnitsMilliseconds">
+		[VAL] мс
+	</string>
+	<string name="HMDConfigUnitsRadians">
+		[VAL] PI
 	</string>
 	<string name="InventoryNoMatchingItems">
 		Не нашли того, что вам нужно? Воспользуйтесь [secondlife:///app/search/all/[SEARCH_TERM] поиском].
@@ -2100,6 +2118,18 @@ support@secondlife.com.
 	</string>
 	<string name="RegionInfoAllowedGroups">
 		Допущенные группы: ([ALLOWEDGROUPS], не более [MAXACCESS])
+	</string>
+	<string name="RegionInfoEstateManagers">
+		Менеджеры землевладения: ([ESTATEMANAGERS], не более [MAXMANAGERS])
+	</string>
+	<string name="RegionInfoBannedResidents">
+		Забаненные жители: ([BANNEDAGENTS], не более [MAXBANNED])
+	</string>
+	<string name="RegionInfoListTypeAllowedAgents">
+		Допущенные жители
+	</string>
+	<string name="RegionInfoListTypeBannedAgents">
+		Забаненные жители
 	</string>
 	<string name="ScriptLimitsParcelScriptMemory">
 		Память под скрипты на участке
@@ -5199,6 +5229,9 @@ support@secondlife.com.
 	<string name="Command_Gestures_Label">
 		Жесты
 	</string>
+	<string name="Command_HMD_Mode_Label">
+		Режим ГД
+	</string>
 	<string name="Command_HowTo_Label">
 		Инструкции
 	</string>
@@ -5243,6 +5276,9 @@ support@secondlife.com.
 	</string>
 	<string name="Command_Snapshot_Label">
 		Снимок
+	</string>
+	<string name="Command_Social_Label">
+		Facebook
 	</string>
 	<string name="Command_Speak_Label">
 		Говорить
@@ -5289,6 +5325,9 @@ support@secondlife.com.
 	<string name="Command_Gestures_Tooltip">
 		Жесты для аватара
 	</string>
+	<string name="Command_HMD_Mode_Tooltip">
+		Использовать режим визуализации головного дисплея (ГД)
+	</string>
 	<string name="Command_HowTo_Tooltip">
 		Выполнение типичных задач
 	</string>
@@ -5333,6 +5372,9 @@ support@secondlife.com.
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		Сделать снимок
+	</string>
+	<string name="Command_Social_Tooltip">
+		Опубликовать в Facebook
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Говорите с людьми вокруг вас с помощью микрофона

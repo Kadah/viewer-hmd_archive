@@ -1143,9 +1143,9 @@ L$ は返金されません。
 通常これは一時的なエラーです。 数分後にもう一度着用物をカスタマイズ・保存してください。
 	</notification>
 	<notification name="YouHaveBeenLoggedOut">
-		しまった、[SECOND_LIFE] からログアウトされてしまいました。
+		しまった、 [SECOND_LIFE] からログアウトされてしまいました。
 
-[MESSAGE]
+            [MESSAGE]
 		<usetemplate name="okcancelbuttons" notext="終了" yestext="IMとチャットを表示"/>
 	</notification>
 	<notification name="OnlyOfficerCanBuyLand">
@@ -1632,12 +1632,12 @@ http://secondlife.com/download から最新バージョンをダウンロード�
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		お使いの [APP_NAME] に必要なアップデートをダウンロードしました。
-バージョン [VERSION] [[RELEASE_NOTES_FULL_URL] このアップデートに関する情報]
+バージョン [VERSION] [[INFO_URL] このアップデートに関する情報]
 		<usetemplate name="okcancelbuttons" notext="後で実行" yestext="今すぐインストールして [APP_NAME] を再起動"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		お使いの [APP_NAME] に必要なアップデートをダウンロードしました。
-バージョン [VERSION] [[RELEASE_NOTES_FULL_URL] このアップデートに関する情報]
+バージョン [VERSION] [[INFO_URL] このアップデートに関する情報]
 		<usetemplate name="okcancelbuttons" notext="後で実行" yestext="今すぐインストールして [APP_NAME] を再起動"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1901,6 +1901,13 @@ http://wiki.secondlife.com/wiki/Setting_your_display_name を参照してくだ�
 			<input name="message">
 				[REGION] に来ませんか？
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="取り消し"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		次のメッセージ付きで [NAME] にテレポートをリクエスト
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="取り消し"/>
 		</form>
@@ -2826,6 +2833,9 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 	<notification name="RegionTPAccessBlocked">
 		訪問しようとしている地域（リージョン）には現在の環境設定を超えるコンテンツが含まれています。「ミー」 &gt; 「環境設定」 &gt; 「一般」を選択して、環境設定を変更できます。
 	</notification>
+	<notification name="RegionAboutToShutdown">
+		入ろうとしている地域は、まもなくシャットダウンします。
+	</notification>
 	<notification name="URBannedFromRegion">
 		あなたはリージョンへの立入が禁止されています。
 	</notification>
@@ -2968,6 +2978,16 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 	<notification name="TeleportOfferSent">
 		[TO_NAME] にテレポートを送りました。
 	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] があなたの場所にテレポートされるようにリクエストしています。
+[MESSAGE]
+
+テレポートを送りますか?
+		<form name="form">
+			<button name="Yes" text="はい"/>
+			<button name="No" text="いいえ"/>
+		</form>
+	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
 [URL]
@@ -3020,11 +3040,11 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		このリージョンは [SECONDS] 分後に再起動されます。
+		このリージョン &quot;[NAME]&quot; は [MINUTES] 分後に再起動されます。
 このままここにいるとログアウトされます。
 	</notification>
 	<notification name="RegionRestartSeconds">
-		このリージョンは [SECONDS] 秒後に再起動されます。.
+		このリージョン &quot;[NAME]&quot; は [SECONDS] 秒後に再起動されます。
 このままここにいるとログアウトされます。
 	</notification>
 	<notification name="LoadWebPage">
@@ -3116,7 +3136,7 @@ Web ページにリンクすると、他人がこの場所に簡単にアクセ�
 
 この体験に関連付けられたスクリプトにより、この体験が有効なリージョンで以下のことを実行できます：  
 
-[QUESTIONS] よろしいですか？
+[QUESTIONS]よろしいですか？
 		<form name="form">
 			<button name="BlockExperience" text="体験をブロック"/>
 			<button name="Mute" text="オブジェクトをブロックする"/>
@@ -3336,7 +3356,7 @@ M キーを押して変更します。
 		共有する住人を選択します。
 	</notification>
 	<notification name="MeshUploadError">
-		[LABEL] をアップロードできませんでした：[MESSAGE] [IDENTIFIER]
+		[LABEL] をアップロードできませんでした：[MESSAGE] [IDENTIFIER] 
 [DETAILS] 詳しくは、SecondLife.log をご覧ください。
 	</notification>
 	<notification name="MeshUploadPermError">
@@ -4111,6 +4131,9 @@ M キーを押して変更します。
 	<notification name="CantAttachNotEnoughScriptResources">
 		オブジェクトの着用に使用できるスクリプトリソースが足りません。
 	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		オブジェクトはすでに削除されているため、添付できません。
+	</notification>
 	<notification name="CantDropItemTrialUser">
 		オブジェクトをここにドロップできません。フリートライアル領域をお試しください。
 	</notification>
@@ -4360,5 +4383,23 @@ M キーを押して変更します。
 	<notification name="ChatHistoryIsBusyAlert">
 		チャット履歴ファイルが前の操作でビジーです。2、3 分経ってからもう一度試すか、別の人とのチャットを選択してください。
 		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		内部エラー: HMD デバイス マネージャのプレ初期化が失敗したため、HMD モードに移行できません。これは、おそらく、HMD デバイスライブラリがインストールされていないか、予期されるバージョンと異なることが原因です。Second Life クライアントを再インストールすれば、解決される可能性があります。
+	</notification>
+	<notification name="HMDModeErrorALM">
+		高度なライティングモデルが有効になっていないため、HMD モードに移行できません。HMD モードで適切にレンダリングするには、高度なライティングモデルが必要です。
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		HMD ハードウェアが検出されないため、HMD モードに移行できません。HMD モニタ ケーブルがしっかりと接続されているか確認してください。
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		HMD センサ ハードウェアが検出されないため、HMD モードに移行できません。HMD デバイスに電源が入っていて、USB ケーブルがしっかりと接続されていることを確認してください。
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		内部エラー: 内部の問題: HMD レンダリング ウィンドウを作成できなかったため、HMD モードに移行できません。この問題は、おそらくクライアントを再起動すれば、解決されます。
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		[NAME] 機能は現在無効になっています。
 	</notification>
 </notifications>

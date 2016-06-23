@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<floater name="floater_hmd_config_debug" title="Debug configurazione HMD">
+	<layout_stack>
+		<layout_panel>
+			<layout_stack>
+				<layout_panel>
+					<text name="hmd_config_debug_interpupillary_offset_slider_amount">
+						64.0 mm
+					</text>
+					<slider_bar initial_value="64" name="hmd_config_debug_interpupillary_offset_slider" tool_tip="Distanza configurata tra i centri degli occhi dell&apos;utente, in millimetri"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_shape_preset_value">
+						1
+					</text>
+					<slider_bar initial_value="1.0" name="hmd_config_debug_uisurface_shape_preset_slider" tool_tip="Forma della superficie dell&apos;interfaccia utente in modalità HMD"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_ui_magnification_slider_amount">
+						600
+					</text>
+					<slider_bar initial_value="600.0" name="hmd_config_debug_ui_magnification_slider" tool_tip="Ingrandimento interfaccia utente alla distanza predefinita tra occhi e schermo"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_offset_depth_slider_amount">
+						0.0
+					</text>
+					<slider_bar initial_value="0.0" name="hmd_config_debug_uisurface_offset_depth_slider" tool_tip="Spostamento in avanti per la superficie dell&apos;interfaccia utente"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_radius_width_slider_amount">
+						0.3
+					</text>
+					<slider_bar initial_value="0.3" name="hmd_config_debug_uisurface_toroid_radius_width_slider" tool_tip="Raggio toroide (larghezza)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_radius_depth_slider_amount">
+						0.6
+					</text>
+					<slider_bar initial_value="0.6" name="hmd_config_debug_uisurface_toroid_radius_depth_slider" tool_tip="Raggio toroide (profondità)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_cross_section_radius_width_slider_amount">
+						0.5
+					</text>
+					<slider_bar initial_value="0.5" name="hmd_config_debug_uisurface_toroid_cross_section_radius_width_slider" tool_tip="Raggio sezione toroide (larghezza)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_cross_section_radius_height_slider_amount">
+						0.7
+					</text>
+					<slider_bar initial_value="0.7" name="hmd_config_debug_uisurface_toroid_cross_section_radius_height_slider" tool_tip="Raggio sezione sezione toroide (altezza)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_arc_horizontal_slider_amount">
+						1.0 PI
+					</text>
+					<slider_bar initial_value="1.0" name="hmd_config_debug_uisurface_toroid_arc_horizontal_slider" tool_tip="Arco superficie interfaccia utente (orizzontale)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_arc_vertical_slider_amount">
+						0.7
+					</text>
+					<slider_bar initial_value="0.6" name="hmd_config_debug_uisurface_toroid_arc_vertical_slider" tool_tip="Arco superficie interfaccia utente (verticale)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_eye_to_screen_distance_slider_amount">
+						41.0 mm
+					</text>
+					<slider_bar initial_value="41" name="hmd_config_debug_eye_to_screen_distance_slider" tool_tip="Distanza tra l&apos;occhio e la superficie dello schermo, in millimetri"/>
+				</layout_panel>
+				<layout_panel>
+					<check_box initial_value="true" name="hmd_config_debug_hmd_motion_prediction" tool_tip="La previsione del movimento cerca di prevedere il movimento della cuffia per ottenere un&apos;esperienza più uniforme, con meno scossoni"/>
+					<text name="hmd_config_debug_motion_prediction_delta_slider_amount">
+						30 ms
+					</text>
+					<slider_bar initial_value="30" name="hmd_config_debug_motion_prediction_delta_slider" tool_tip="Specifica il livello di previsione da applicare, in millisecondi; in generale deve essere minore del valore medio di latenza"/>
+				</layout_panel>
+			</layout_stack>
+		</layout_panel>
+		<layout_panel>
+			<layout_stack>
+				<layout_panel>
+					<button label="Aggiungi predefinito" name="hmd_config_debug_hmd_add_preset"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="Rimuovi predefinito" name="hmd_config_debug_hmd_remove_preset"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="Ripristina valori" name="hmd_config_debug_hmd_reset_values_button"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="Annulla" name="hmd_config_debug_hmd_cancel_button"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="Salva" name="hmd_config_debug_hmd_save_button"/>
+				</layout_panel>
+			</layout_stack>
+		</layout_panel>
+	</layout_stack>
+</floater>

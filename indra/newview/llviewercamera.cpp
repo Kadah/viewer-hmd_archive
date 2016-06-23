@@ -137,8 +137,8 @@ F32 LLViewerCamera::getUIAspect() const
     return gHMD.isHMDMode() ? gHMD.getAspect() : mAspect;
 }
 
-void LLViewerCamera::updateCameraLocation(  const LLVector3& center,
-											const LLVector3& up_direction,
+void LLViewerCamera::updateCameraLocation(const LLVector3 &center,
+											const LLVector3 &up_direction,
 											const LLVector3& point_of_interest,
                                             const LLVector3& original_up_direction,
                                             const LLVector3& original_point_of_interest)
@@ -217,11 +217,11 @@ void LLViewerCamera::updateCameraLocation(  const LLVector3& center,
     }
     else
     {
-        setOriginAndLookAt(origin, up_direction, point_of_interest);
+	setOriginAndLookAt(origin, up_direction, point_of_interest);
     }
 
 	mVelocityDir = origin - last_position ; 
-	F32 dpos = mVelocityDir.normVec();
+	F32 dpos = mVelocityDir.normVec() ;
 	LLQuaternion rotation;
 	rotation.shortestArc(last_axis, getAtAxis());
 
@@ -289,8 +289,8 @@ void LLViewerCamera::updateFrustumPlanes(LLCamera& camera, BOOL ortho, BOOL zfli
 
 	for (U32 i = 0; i < 16; i++)
 	{
-        model[i] = (F64)gGLModelView[i];
-        proj[i]  = (F64)gGLProjection[i];
+		model[i] = (F64) gGLModelView[i];
+		proj[i] = (F64) gGLProjection[i];
 	}
 
 	GLdouble objX,objY,objZ;
@@ -442,7 +442,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
         viewport[1] = viewRect.mBottom;
         viewport[2] = viewRect.getWidth();
         viewport[3] = viewRect.getHeight();
-
+		
 		proj_mat = gl_pick_matrix(x+width/2.f, y_from_bot+height/2.f, (GLfloat) width, (GLfloat) height, viewport);
 
 		if (limit_select_distance)
@@ -500,7 +500,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
         LLMatrix4 head_rotation = LLMatrix4(~gHMD.getHMDRotation());
         mdlv *= head_rotation;
     }
-
+	
 	if (for_selection && (width > 1 || height > 1))
 	{
 		// NB: as of this writing, i believe the code below is broken (doesn't take into account the world view, assumes entire window)
@@ -514,7 +514,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 								(F32)(y_from_bot + height / 2) / (F32)gViewerWindow->getWindowHeightScaled() - 0.5f);
 	}
 
-    
+
 
 	// if not picking and not doing a snapshot, cache various GL matrices
 	if (!for_selection && mZoomFactor == 1.f)
@@ -522,7 +522,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
         glh_set_current_modelview(modelview);
 	}
 
-    updateFrustumPlanes(*this);
+	updateFrustumPlanes(*this);
 }
 
 
@@ -833,7 +833,7 @@ void LLViewerCamera::getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, 
 {
 	LLVector3 to_vec = pos_agent - getOrigin();
 	F32 at_dist = to_vec * getAtAxis();
-	F32 height_meters = at_dist * (F32)tan(getView()/2.f);
+	F32 height_meters = at_dist* (F32)tan(getView()/2.f);
 	F32 height_pixels = (F32)(gHMD.isHMDMode() ? gHMD.getViewportHeight() : getViewHeightInPixels()) / 2.0f;
 	F32 pixel_aspect = gViewerWindow->getWindow()->getPixelAspectRatio();
 	F32 meters_per_pixel = height_meters / height_pixels;
@@ -841,14 +841,14 @@ void LLViewerCamera::getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, 
     LLVector3 up_axis = keepLevel ? LLVector3::z_axis : getUpAxis();
     LLVector3 left_axis = getLeftAxis();
     if (keepLevel)
-    {
+	{
         LLVector3 leveledAt = getAtAxis();
         leveledAt[VZ] = 0.0f;
         leveledAt.normalize();
         LLCoordFrame f;
         f.lookDir(leveledAt);
         left_axis = f.getLeftAxis();
-    }
+	}
 
 	up = up_axis * meters_per_pixel * gViewerWindow->getDisplayScale().mV[VY];
 	right = -1.f * pixel_aspect * meters_per_pixel * left_axis * gViewerWindow->getDisplayScale().mV[VX];
@@ -941,19 +941,19 @@ void LLViewerCamera::setView(F32 vertical_fov_rads, BOOL stereo_update_simulator
     {
         simulatorFOV = vertical_fov_rads;
 
-	    // send the new value to the simulator
-	    LLMessageSystem* msg = gMessageSystem;
-	    msg->newMessageFast(_PREHASH_AgentFOV);
-	    msg->nextBlockFast(_PREHASH_AgentData);
-	    msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
-	    msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
-	    msg->addU32Fast(_PREHASH_CircuitCode, gMessageSystem->mOurCircuitCode);
+	// send the new value to the simulator
+	LLMessageSystem* msg = gMessageSystem;
+	msg->newMessageFast(_PREHASH_AgentFOV);
+	msg->nextBlockFast(_PREHASH_AgentData);
+	msg->addUUIDFast(_PREHASH_AgentID, gAgent.getID());
+	msg->addUUIDFast(_PREHASH_SessionID, gAgent.getSessionID());
+	msg->addU32Fast(_PREHASH_CircuitCode, gMessageSystem->mOurCircuitCode);
 
-	    msg->nextBlockFast(_PREHASH_FOVBlock);
-	    msg->addU32Fast(_PREHASH_GenCounter, 0);
-	    msg->addF32Fast(_PREHASH_VerticalAngle, vertical_fov_rads);
+	msg->nextBlockFast(_PREHASH_FOVBlock);
+	msg->addU32Fast(_PREHASH_GenCounter, 0);
+	msg->addF32Fast(_PREHASH_VerticalAngle, vertical_fov_rads);
 
-	    gAgent.sendReliableMessage();
+	gAgent.sendReliableMessage();
     }
 
 	// sync the camera with the new value

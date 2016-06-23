@@ -1118,7 +1118,7 @@
 	<notification name="YouHaveBeenLoggedOut">
 		Черт! Вас выкинуло из [SECOND_LIFE].
 
-[MESSAGE]
+            [MESSAGE]
 		<usetemplate name="okcancelbuttons" notext="Выйти" yestext="Просмотреть IM и чат"/>
 	</notification>
 	<notification name="OnlyOfficerCanBuyLand">
@@ -1603,12 +1603,12 @@ http://secondlife.com/download.
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		Загружено обновление для вашей версии [APP_NAME].
-Версия [VERSION]. [[RELEASE_NOTES_FULL_URL] Сведения об этом обновлении]
+Версия [VERSION]. [[INFO_URL] Сведения об этом обновлении]
 		<usetemplate name="okcancelbuttons" notext="Позже..." yestext="Установите обновление и перезапустите [APP_NAME]"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		Загружено обновление для вашей версии [APP_NAME].
-Версия [VERSION]. [[RELEASE_NOTES_FULL_URL] Сведения об этом обновлении]
+    Версия [VERSION]. [[INFO_URL] Сведения об этом обновлении]
 		<usetemplate name="okcancelbuttons" notext="Позже..." yestext="Установите обновление и перезапустите [APP_NAME]"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1869,6 +1869,13 @@ http://secondlife.com/download.
 			<input name="message">
 				Присоединиться ко мне в [REGION]
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Отмена"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Предложить телепортацию к [NAME] с отправкой сообщения
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="Отмена"/>
 		</form>
@@ -2782,6 +2789,9 @@ http://secondlife.com/download.
 	<notification name="RegionTPAccessBlocked">
 		Вы пытаетесь посетить регион, контент в котором не соответствует вашим настройкам.  Попробуйте изменить настройки в меню «Я &gt; Настройки &gt; Общие».
 	</notification>
+	<notification name="RegionAboutToShutdown">
+		Вы пытаетесь войти в регион, который скоро выключится.
+	</notification>
 	<notification name="URBannedFromRegion">
 		Вы забанены в регионе.
 	</notification>
@@ -2924,6 +2934,16 @@ http://secondlife.com/download.
 	<notification name="TeleportOfferSent">
 		Предложение телепортации отправлено [TO_NAME]
 	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] хочет телепортироваться к вам.
+[MESSAGE]
+
+Предложить телепортацию?
+		<form name="form">
+			<button name="Yes" text="Да"/>
+			<button name="No" text="Нет"/>
+		</form>
+	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
 [URL]
@@ -2976,12 +2996,12 @@ http://secondlife.com/download.
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		Этот регион будет перезапущен через [MINUTES] мин.
-Если вы останетесь в этом регионе, вы выйдете из программы.
+		Регион «[NAME]» будет перезапущен через [MINUTES] мин.
+Если вы останетесь в этом регионе, вы выйдете из системы.
 	</notification>
 	<notification name="RegionRestartSeconds">
-		Этот регион будет перезапущен через [SECONDS] сек.
-Если вы останетесь в этом регионе, вы выйдете из программы.
+		Регион «[NAME]» будет перезапущен через [SECONDS] с.
+Если вы останетесь в этом регионе, вы выйдете из системы.
 	</notification>
 	<notification name="LoadWebPage">
 		Загрузить веб-страницу [URL]?
@@ -3295,7 +3315,7 @@ http://secondlife.com/download.
 		Выберите жителей, чтобы поделиться с ними.
 	</notification>
 	<notification name="MeshUploadError">
-		Не удалось передать [LABEL]: [MESSAGE] [IDENTIFIER]
+		Не удалось передать [LABEL]: [MESSAGE] [IDENTIFIER] 
 [DETAILS]Подробности см. в файле SecondLife.log
 	</notification>
 	<notification name="MeshUploadPermError">
@@ -4075,6 +4095,9 @@ http://secondlife.com/download.
 	<notification name="CantAttachNotEnoughScriptResources">
 		Недостаточно свободных ресурсов скриптинга для присоединения объекта!
 	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		Невозможно присоединить объект: он уже удаляется.
+	</notification>
 	<notification name="CantDropItemTrialUser">
 		Здесь нельзя сбрасывать объекты; перейдите в бесплатную область для гостей.
 	</notification>
@@ -4324,5 +4347,23 @@ http://secondlife.com/download.
 	<notification name="ChatHistoryIsBusyAlert">
 		Файл журнала чата занят предыдущей операцией. Повторите попытку через несколько минут или выберите чат с другим лицом.
 		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		Внутренняя неполадка: невозможно перейти в режим ГД – не удалось провести прединициализацию диспетчера устройств ГД. Вероятно, библиотека устройств ГД не установлена или имеет неподдерживаемую версию. Для устранения неполадки переустановите клиент Second Life.
+	</notification>
+	<notification name="HMDModeErrorALM">
+		Невозможно перейти в режим ГД – не включена расширенная модель освещения.  Расширенная модель освещения необходима для правильной визуализации в режиме ГД.
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		Невозможно перейти в режим ГД – не обнаружено оборудование ГД. Проверьте, надежно ли подключен кабель монитора ГД.
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		Невозможно перейти в режим ГД – не обнаружен датчик ГД. Проверьте, подается ли на устройство ГД питание и надежно ли подключен USB-кабель.
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		Внутренняя неполадка: невозможно перейти в режим ГД – не удалось создать окно визуализации ГД. Для устранения неполадки перезапустите клиент.
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		Функция [NAME] сейчас отключена.
 	</notification>
 </notifications>

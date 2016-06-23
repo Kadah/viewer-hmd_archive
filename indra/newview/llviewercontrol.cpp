@@ -167,6 +167,11 @@ static bool handleRenderPerfTestChanged(const LLSD& newvalue)
        return true;
 }
 
+bool handleRenderAvatarComplexityLimitChanged(const LLSD& newvalue)
+{
+	return true;
+}
+
 bool handleRenderTransparentWaterChanged(const LLSD& newvalue)
 {
 	LLWorld::getInstance()->updateWaterObjects();
@@ -216,6 +221,12 @@ static bool handleAvatarLODChanged(const LLSD& newvalue)
 static bool handleAvatarPhysicsLODChanged(const LLSD& newvalue)
 {
 	LLVOAvatar::sPhysicsLODFactor = (F32) newvalue.asReal();
+	return true;
+}
+
+static bool handleAvatarMaxVisibleChanged(const LLSD& newvalue)
+{
+	LLVOAvatar::sMaxVisible = (U32) newvalue.asInteger();
 	return true;
 }
 
@@ -409,6 +420,12 @@ static bool handleRenderBumpChanged(const LLSD& newval)
 		gPipeline.resetVertexBuffers();
 		LLViewerShaderMgr::instance()->setShaders();
 	}
+	return true;
+}
+
+static bool handleRenderUseImpostorsChanged(const LLSD& newvalue)
+{
+	LLVOAvatar::sUseImpostors = newvalue.asBoolean();
 	return true;
 }
 

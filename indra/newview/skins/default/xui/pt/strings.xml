@@ -946,7 +946,7 @@ Pessoas com contas gratuitas não poderão acessar o Second Life no momento para
 		Offline
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		L$[PRICE] por [AREA] m²
+		L$[PRICE] por [AREA] m² ([SQMPRICE] L$/m²)
 	</string>
 	<string name="worldmap_results_none_found">
 		Nenhum encontrado.
@@ -1347,6 +1347,24 @@ Pessoas com contas gratuitas não poderão acessar o Second Life no momento para
 	</string>
 	<string name="LeaveMouselook">
 		Pressione ESC para retornar para visão do mundo
+	</string>
+	<string name="HMDPresetCustom">
+		Customizado
+	</string>
+	<string name="HMDPresetDefault">
+		Padrão [INDEX]
+	</string>
+	<string name="HMDPresetUser">
+		Usuário [INDEX]
+	</string>
+	<string name="HMDConfigUnitsMillimeters">
+		[VAL] mm
+	</string>
+	<string name="HMDConfigUnitsMilliseconds">
+		[VAL] ms
+	</string>
+	<string name="HMDConfigUnitsRadians">
+		[VAL] PI
 	</string>
 	<string name="InventoryNoMatchingItems">
 		Não encontrou o que procura? Tente buscar no [secondlife:///app/search/people/[SEARCH_TERM] Search].
@@ -2043,6 +2061,18 @@ Pessoas com contas gratuitas não poderão acessar o Second Life no momento para
 	</string>
 	<string name="RegionInfoAllowedGroups">
 		Grupos permitidos: ([ALLOWEDGROUPS], max [MAXACCESS])
+	</string>
+	<string name="RegionInfoEstateManagers">
+		Gerentes: ([ESTATEMANAGERS], máx. [MAXMANAGERS])
+	</string>
+	<string name="RegionInfoBannedResidents">
+		Residentes banidos: ([BANNEDAGENTS], máx. [MAXBANNED])
+	</string>
+	<string name="RegionInfoListTypeAllowedAgents">
+		Residentes autorizados
+	</string>
+	<string name="RegionInfoListTypeBannedAgents">
+		Residentes banidos
 	</string>
 	<string name="ScriptLimitsParcelScriptMemory">
 		Memória de scripts no lote
@@ -5057,6 +5087,9 @@ Tente colocar o caminho do editor entre aspas.
 	<string name="Command_Gestures_Label">
 		Gestos
 	</string>
+	<string name="Command_HMD_Mode_Label">
+		Modo HMD
+	</string>
 	<string name="Command_HowTo_Label">
 		Como
 	</string>
@@ -5101,6 +5134,9 @@ Tente colocar o caminho do editor entre aspas.
 	</string>
 	<string name="Command_Snapshot_Label">
 		Foto
+	</string>
+	<string name="Command_Social_Label">
+		Facebook
 	</string>
 	<string name="Command_Speak_Label">
 		Falar
@@ -5147,6 +5183,9 @@ Tente colocar o caminho do editor entre aspas.
 	<string name="Command_Gestures_Tooltip">
 		Gestos para seu avatar
 	</string>
+	<string name="Command_HMD_Mode_Tooltip">
+		Usar modo de renderização HMD (Head-Mounted Display)
+	</string>
 	<string name="Command_HowTo_Tooltip">
 		Como executar tarefas comuns
 	</string>
@@ -5191,6 +5230,9 @@ Tente colocar o caminho do editor entre aspas.
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		Tirar uma foto
+	</string>
+	<string name="Command_Social_Tooltip">
+		Publicar no Facebook
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Fale com pessoas próximas usando seu microfone

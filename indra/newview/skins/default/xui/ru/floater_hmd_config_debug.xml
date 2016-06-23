@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<floater name="floater_hmd_config_debug" title="Отладка конфигурации ГД">
+	<layout_stack>
+		<layout_panel>
+			<layout_stack>
+				<layout_panel>
+					<text name="hmd_config_debug_interpupillary_offset_slider_amount">
+						64.0 мм
+					</text>
+					<slider_bar initial_value="64" name="hmd_config_debug_interpupillary_offset_slider" tool_tip="Заданное расстояние между центрами глаз пользователя в миллиметрах"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_shape_preset_value">
+						1
+					</text>
+					<slider_bar initial_value="1.0" name="hmd_config_debug_uisurface_shape_preset_slider" tool_tip="Форма поверхности интерфейса в режиме ГД"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_ui_magnification_slider_amount">
+						600
+					</text>
+					<slider_bar initial_value="600.0" name="hmd_config_debug_ui_magnification_slider" tool_tip="Увеличение интерфейса при стандартном расстоянии глаз-экран"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_offset_depth_slider_amount">
+						0.0
+					</text>
+					<slider_bar initial_value="0.0" name="hmd_config_debug_uisurface_offset_depth_slider" tool_tip="Смещение поверхности интерфейса вперед"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_radius_width_slider_amount">
+						0.3
+					</text>
+					<slider_bar initial_value="0.3" name="hmd_config_debug_uisurface_toroid_radius_width_slider" tool_tip="Радиус тороида (ширина)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_radius_depth_slider_amount">
+						0.6
+					</text>
+					<slider_bar initial_value="0.6" name="hmd_config_debug_uisurface_toroid_radius_depth_slider" tool_tip="Радиус тороида (глубина)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_cross_section_radius_width_slider_amount">
+						0.5
+					</text>
+					<slider_bar initial_value="0.5" name="hmd_config_debug_uisurface_toroid_cross_section_radius_width_slider" tool_tip="Радиус сечения тороида (ширина)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_cross_section_radius_height_slider_amount">
+						0.7
+					</text>
+					<slider_bar initial_value="0.7" name="hmd_config_debug_uisurface_toroid_cross_section_radius_height_slider" tool_tip="Радиус сечения тороида (глубина)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_arc_horizontal_slider_amount">
+						1.0 PI
+					</text>
+					<slider_bar initial_value="1.0" name="hmd_config_debug_uisurface_toroid_arc_horizontal_slider" tool_tip="Дуга поверхности инт. (по горизонтали)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_arc_vertical_slider_amount">
+						0.7
+					</text>
+					<slider_bar initial_value="0.6" name="hmd_config_debug_uisurface_toroid_arc_vertical_slider" tool_tip="Дуга поверхности инт. (по вертикали)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_eye_to_screen_distance_slider_amount">
+						41.0 мм
+					</text>
+					<slider_bar initial_value="41" name="hmd_config_debug_eye_to_screen_distance_slider" tool_tip="Расстояние от глаза до поверхности экрана в миллиметрах"/>
+				</layout_panel>
+				<layout_panel>
+					<check_box initial_value="true" name="hmd_config_debug_hmd_motion_prediction" tool_tip="Функция прогноза движения гарнитуры обеспечивает более плавные перемещения без рывков"/>
+					<text name="hmd_config_debug_motion_prediction_delta_slider_amount">
+						30 мс
+					</text>
+					<slider_bar initial_value="30" name="hmd_config_debug_motion_prediction_delta_slider" tool_tip="Указывает период прогноза в миллисекундах; обычно он должен быть меньше средней задержки визуализации"/>
+				</layout_panel>
+			</layout_stack>
+		</layout_panel>
+		<layout_panel>
+			<layout_stack>
+				<layout_panel>
+					<button label="Добавить настройку" name="hmd_config_debug_hmd_add_preset"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="Удалить настройку" name="hmd_config_debug_hmd_remove_preset"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="Сброс значений" name="hmd_config_debug_hmd_reset_values_button"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="Отмена" name="hmd_config_debug_hmd_cancel_button"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="Сохранить" name="hmd_config_debug_hmd_save_button"/>
+				</layout_panel>
+			</layout_stack>
+		</layout_panel>
+	</layout_stack>
+</floater>

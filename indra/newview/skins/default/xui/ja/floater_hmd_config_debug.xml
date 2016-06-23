@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<floater name="floater_hmd_config_debug" title="HMD 設定をデバッグ">
+	<layout_stack>
+		<layout_panel>
+			<layout_stack>
+				<layout_panel>
+					<text name="hmd_config_debug_interpupillary_offset_slider_amount">
+						64.0 mm
+					</text>
+					<slider_bar initial_value="64" name="hmd_config_debug_interpupillary_offset_slider" tool_tip="ユーザーの両目の中心の間の設定された間隔 (mm)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_shape_preset_value">
+						1
+					</text>
+					<slider_bar initial_value="1.0" name="hmd_config_debug_uisurface_shape_preset_slider" tool_tip="HMD モードの UI 面の形状"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_ui_magnification_slider_amount">
+						600
+					</text>
+					<slider_bar initial_value="600.0" name="hmd_config_debug_ui_magnification_slider" tool_tip="デフォルトの目から画面までの間隔での UI 倍率"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_offset_depth_slider_amount">
+						0.0
+					</text>
+					<slider_bar initial_value="0.0" name="hmd_config_debug_uisurface_offset_depth_slider" tool_tip="UI 面のフォワードオフセット"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_radius_width_slider_amount">
+						0.3
+					</text>
+					<slider_bar initial_value="0.3" name="hmd_config_debug_uisurface_toroid_radius_width_slider" tool_tip="トロイド半径 (幅)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_radius_depth_slider_amount">
+						0.6
+					</text>
+					<slider_bar initial_value="0.6" name="hmd_config_debug_uisurface_toroid_radius_depth_slider" tool_tip="トロイド半径 (奥行き)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_cross_section_radius_width_slider_amount">
+						0.5
+					</text>
+					<slider_bar initial_value="0.5" name="hmd_config_debug_uisurface_toroid_cross_section_radius_width_slider" tool_tip="トロイド横断面半径 (幅)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_cross_section_radius_height_slider_amount">
+						0.7
+					</text>
+					<slider_bar initial_value="0.7" name="hmd_config_debug_uisurface_toroid_cross_section_radius_height_slider" tool_tip="トロイド横断面半径 (高さ)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_arc_horizontal_slider_amount">
+						1.0 PI
+					</text>
+					<slider_bar initial_value="1.0" name="hmd_config_debug_uisurface_toroid_arc_horizontal_slider" tool_tip="UI 面円弧 (水平)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_uisurface_toroid_arc_vertical_slider_amount">
+						0.7
+					</text>
+					<slider_bar initial_value="0.6" name="hmd_config_debug_uisurface_toroid_arc_vertical_slider" tool_tip="UI 面円円弧 (垂直)"/>
+				</layout_panel>
+				<layout_panel>
+					<text name="hmd_config_debug_eye_to_screen_distance_slider_amount">
+						41.0 mm
+					</text>
+					<slider_bar initial_value="41" name="hmd_config_debug_eye_to_screen_distance_slider" tool_tip="目から画面までの間隔 (mm)"/>
+				</layout_panel>
+				<layout_panel>
+					<check_box initial_value="true" name="hmd_config_debug_hmd_motion_prediction" tool_tip="運動予測はヘッドセットの動きを予測して、よりスムーズで滑らかな体験を実現しようとします"/>
+					<text name="hmd_config_debug_motion_prediction_delta_slider_amount">
+						30 ms
+					</text>
+					<slider_bar initial_value="30" name="hmd_config_debug_motion_prediction_delta_slider" tool_tip="ミリ秒単位で適用される予測量を指定します。通常は平均レンダリング レイテンシ以下になるはずです"/>
+				</layout_panel>
+			</layout_stack>
+		</layout_panel>
+		<layout_panel>
+			<layout_stack>
+				<layout_panel>
+					<button label="プリセットを追加" name="hmd_config_debug_hmd_add_preset"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="プリセットを削除" name="hmd_config_debug_hmd_remove_preset"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="値をリセット" name="hmd_config_debug_hmd_reset_values_button"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="取り消し" name="hmd_config_debug_hmd_cancel_button"/>
+				</layout_panel>
+				<layout_panel>
+					<button label="保存" name="hmd_config_debug_hmd_save_button"/>
+				</layout_panel>
+			</layout_stack>
+		</layout_panel>
+	</layout_stack>
+</floater>

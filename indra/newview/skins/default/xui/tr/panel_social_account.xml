@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<panel name="panel_social_account">
+	<string name="facebook_connected" value="Facebook ile şu kimlikle bağlantı kurmuş durumdasınız:"/>
+	<string name="facebook_disconnected" value="Facebook&apos;a bağlantılı değil"/>
+	<text name="account_caption_label">
+		Facebook&apos;a bağlantılı değil.
+	</text>
+	<panel name="panel_buttons">
+		<button label="Bağlan..." name="connect_btn"/>
+		<button label="Bağlantıyı kes" name="disconnect_btn"/>
+		<text name="account_learn_more_label">
+			[http://community.secondlife.com/t5/English-Knowledge-Base/Second-Life-Share/ta-p/2149711 Facebook&apos;ta içerik yayınlama hakkında bilgi edinin]
+		</text>
+	</panel>
+</panel>

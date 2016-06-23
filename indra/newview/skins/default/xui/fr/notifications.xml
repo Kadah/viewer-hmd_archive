@@ -1119,7 +1119,7 @@ Cette erreur est généralement temporaire. Veuillez modifier et sauvegarder l&a
 	<notification name="YouHaveBeenLoggedOut">
 		Zut. Vous avez été déconnecté(e) de [SECOND_LIFE].
 
-[MESSAGE]
+            [MESSAGE]
 		<usetemplate name="okcancelbuttons" notext="Quitter" yestext="Afficher IM et chat"/>
 	</notification>
 	<notification name="OnlyOfficerCanBuyLand">
@@ -1600,12 +1600,12 @@ Vous pouvez également l&apos;installer dès maintenant.
 	</notification>
 	<notification name="DownloadBackgroundTip">
 		Nous avons téléchargé une mise à jour de votre installation [APP_NAME].
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Informations relatives à cette mise à jour]
+Version [VERSION] [Informations au sujet de cette mise à jour [INFO_URL]]
 		<usetemplate name="okcancelbuttons" notext="Ultérieurement..." yestext="Installer maintenant et redémarrer [APP_NAME]"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
 		Nous avons téléchargé une mise à jour de votre installation [APP_NAME].
-Version [VERSION] [[RELEASE_NOTES_FULL_URL] Informations relatives à cette mise à jour]
+    Version [VERSION] [Informations au sujet de cette mise à jour [INFO_URL]]
 		<usetemplate name="okcancelbuttons" notext="Ultérieurement..." yestext="Installer maintenant et redémarrer [APP_NAME]"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1866,6 +1866,13 @@ Veuillez réessayer ultérieurement.
 			<input name="message">
 				On se rejoint à [REGION] ?
 			</input>
+			<button name="OK" text="OK"/>
+			<button name="Cancel" text="Annuler"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Demander la téléportation à [NAME] avec le message suivant
+		<form name="form">
 			<button name="OK" text="OK"/>
 			<button name="Cancel" text="Annuler"/>
 		</form>
@@ -2782,6 +2789,9 @@ Aucun script ne marche ici à part ceux du propriétaire du terrain.
 	<notification name="RegionTPAccessBlocked">
 		La région que vous essayez de visiter comporte du contenu dont le niveau dépasse celui de vos préférences actuelles. Vous pouvez modifier vos préférences en accédant à Moi &gt; Préférences &gt; Général.
 	</notification>
+	<notification name="RegionAboutToShutdown">
+		La région dans laquelle vous essayez d’entrer est sur le point de fermer.
+	</notification>
 	<notification name="URBannedFromRegion">
 		Vous avez été banni de cette région.
 	</notification>
@@ -2924,6 +2934,16 @@ Toutefois, cette région comporte du contenu uniquement accessible aux adultes.
 	<notification name="TeleportOfferSent">
 		Offre de téléportation envoyée à [TO_NAME]
 	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] demande à être téléporté là où vous vous trouvez.
+[MESSAGE]
+
+Proposer une téléportation ?
+		<form name="form">
+			<button name="Yes" text="Oui"/>
+			<button name="No" text="Non"/>
+		</form>
+	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
 [URL]
@@ -2976,11 +2996,11 @@ Un signet sera ajouté dans votre inventaire afin que vous puissiez envoyer rapi
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		La région va redémarrer dans [MINUTES] minutes.
+		La région « [NAME] » va redémarrer dans [MINUTES] minutes.
 Si vous restez dans cette région, vous serez déconnecté(e).
 	</notification>
 	<notification name="RegionRestartSeconds">
-		La région va redémarrer dans [SECONDS] secondes.
+		La région « [NAME] » va redémarrer dans [SECONDS] secondes.
 Si vous restez dans cette région, vous serez déconnecté(e).
 	</notification>
 	<notification name="LoadWebPage">
@@ -3295,7 +3315,7 @@ Le bouton sera affiché quand il y aura suffisamment de place.
 		Sélectionnez les résidents avec lesquels partager l&apos;élément.
 	</notification>
 	<notification name="MeshUploadError">
-		Échec de chargement de [LABEL] : [MESSAGE] [IDENTIFIER]
+		Échec de chargement de [LABEL] : [MESSAGE] [IDENTIFIER] 
 [DETAILS]Consultez SecondLife.log pour de plus amples détails
 	</notification>
 	<notification name="MeshUploadPermError">
@@ -4075,6 +4095,9 @@ Veuillez réessayer dans une minute.
 	<notification name="CantAttachNotEnoughScriptResources">
 		Ressources de script insuffisantes pour attacher cet objet.
 	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		Impossible d’attacher l’objet car il est déjà en cours de suppression.
+	</notification>
 	<notification name="CantDropItemTrialUser">
 		Vous ne pouvez pas déposer d&apos;objets ici. Essayez la zone de période d&apos;essai gratuite.
 	</notification>
@@ -4324,5 +4347,23 @@ Veuillez sélectionner un terrain plus petit.
 	<notification name="ChatHistoryIsBusyAlert">
 		Le fichier d&apos;historique des chats est occupé à traiter l&apos;opération précédente. Réessayez dans quelques minutes ou choisissez une autre personne pour le chat.
 		<usetemplate name="okbutton" yestext="OK"/>
+	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		Problème interne : Impossible de passer en mode HMD car la pré-initialisation du gestionnaire du périphérique HMD a échoué. Cela signifie probablement que la bibilothèque de périphériques HMD n&apos;est pas installée ou n&apos;est pas la version attendue. Pour résoudre ce problème, essayez de réinstaller le client Second Life.
+	</notification>
+	<notification name="HMDModeErrorALM">
+		Impossible de passer en mode HMD car le modèle d&apos;éclairage avancé n&apos;est pas activé.  Le modèle d&apos;éclairage avancé est nécessaire pour obtenir un rendu adéquat en mode HMD.
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		Impossible de passer en mode HMD car aucun matériel HMD n&apos;a été détecté. Vérifiez que votre câble de moniteur HMD est bien branché.
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		Impossible de passer en mode HMD car aucun matériel de capteur HMD n&apos;a été détecté. Vérifiez que votre périphérique HMD est sous tension et que le câble USB est bien connecté.
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		Problème interne : Impossible de passer en mode HMD car la création de la fenêtre de rendu HMD a échoué. Pour résoudre ce problème, essayez de redémarrer le client.
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		La fonctionnalité [NAME] est désactivée.
 	</notification>
 </notifications>

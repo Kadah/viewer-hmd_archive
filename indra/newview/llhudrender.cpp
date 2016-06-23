@@ -110,7 +110,7 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
     viewport[1] = viewRect.mBottom;
     viewport[2] = viewRect.getWidth();
     viewport[3] = viewRect.getHeight();
-
+		
 	gluProject(render_pos.mV[0], render_pos.mV[1], render_pos.mV[2], mdlv, proj, (GLint*) viewport, &winX, &winY, &winZ);
 
 	//fonts all render orthographically, set up projection
@@ -119,7 +119,7 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
 	gGL.pushMatrix();
 	LLUI::pushMatrix();
-
+		
     // setup ortho camera
     gl_state_for_2d(viewport[2], viewport[3]);
     glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
@@ -128,7 +128,7 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	winY -= viewport[1];
 	LLUI::loadIdentity();
 	gGL.loadIdentity();
-
+	
     LLVector4 uit((F32) winX*1.0f/LLFontGL::sScaleX, (F32) winY*1.0f/(LLFontGL::sScaleY), -(((F32) winZ*2.f)-1.f), 1.0f);
     if (!orthographic && keepLevel && gHMD.isHMDMode())
     {

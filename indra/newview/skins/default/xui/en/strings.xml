@@ -56,7 +56,7 @@ Voice Server Version: [VOICE_VERSION]
 	<string name="AboutTraffic">Packets Lost: [PACKETS_LOST,number,0]/[PACKETS_IN,number,0] ([PACKETS_PCT,number,1]%)</string>
 	<string name="ErrorFetchingServerReleaseNotesURL">Error fetching server release notes URL.</string>
 	<string name="BuildConfiguration">Build Configuration</string>
-
+	
 	<!--  progress -->
 	<string name="ProgressRestoring">Restoring...</string>
 	<string name="ProgressChangingResolution">Changing resolution...</string>
@@ -2264,6 +2264,14 @@ For AI Character: Get the closest navigable point to the point provided.
 	<!-- mouselook -->
 	<string name="LeaveMouselook">Press ESC to return to World View</string>
 
+    <!-- HMD -->
+    <string name="HMDPresetCustom">Custom</string>
+    <string name="HMDPresetDefault">Default [INDEX]</string>
+    <string name="HMDPresetUser">User [INDEX]</string>
+    <string name="HMDConfigUnitsMillimeters">[VAL] mm</string>
+    <string name="HMDConfigUnitsMilliseconds">[VAL] ms</string>
+    <string name="HMDConfigUnitsRadians">[VAL] PI</string>
+
 	<!-- inventory -->
 	<string name="InventoryNoMatchingItems">Didn't find what you're looking for? Try [secondlife:///app/search/all/[SEARCH_TERM] Search].</string>
 	<string name="PlacesNoMatchingItems">Didn't find what you're looking for? Try [secondlife:///app/search/places/[SEARCH_TERM] Search].</string>
@@ -4003,6 +4011,7 @@ Try enclosing path to the editor with double quotes.
   <string name="Command_Facebook_Label">Facebook</string>
   <string name="Command_Flickr_Label">Flickr</string>
   <string name="Command_Gestures_Label">Gestures</string>
+  <string name="Command_HMD_Mode_Label">HMD Mode</string>
   <string name="Command_HowTo_Label">How to</string>
   <string name="Command_Inventory_Label">Inventory</string>
   <string name="Command_Map_Label">Map</string>
@@ -4034,6 +4043,7 @@ Try enclosing path to the editor with double quotes.
   <string name="Command_Facebook_Tooltip">Post to Facebook</string>
   <string name="Command_Flickr_Tooltip">Upload to Flickr</string>
   <string name="Command_Gestures_Tooltip">Gestures for your avatar</string>
+  <string name="Command_HMD_Mode_Tooltip">Use Head-Mounted Display (HMD) Rendering Mode</string>
   <string name="Command_HowTo_Tooltip">How to do common tasks</string>
   <string name="Command_Inventory_Tooltip">View and use your belongings</string>
   <string name="Command_Map_Tooltip">Map of the world</string>

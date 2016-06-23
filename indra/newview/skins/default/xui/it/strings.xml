@@ -991,7 +991,7 @@ Prova ad accedere nuovamente tra un minuto.
 		Offline
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		L$ [PRICE] - [AREA] m²
+		[AREA] m² L$[PRICE] ([SQMPRICE] L$/m²)
 	</string>
 	<string name="worldmap_results_none_found">
 		Nessun risultato.
@@ -1392,6 +1392,24 @@ Prova ad accedere nuovamente tra un minuto.
 	</string>
 	<string name="LeaveMouselook">
 		Premi ESC per tornare in visualizzazione normale
+	</string>
+	<string name="HMDPresetCustom">
+		Personalizzato
+	</string>
+	<string name="HMDPresetDefault">
+		Predefinito [INDEX]
+	</string>
+	<string name="HMDPresetUser">
+		Utente [INDEX]
+	</string>
+	<string name="HMDConfigUnitsMillimeters">
+		[VAL] mm
+	</string>
+	<string name="HMDConfigUnitsMilliseconds">
+		[VAL] ms
+	</string>
+	<string name="HMDConfigUnitsRadians">
+		[VAL] PI
 	</string>
 	<string name="InventoryNoMatchingItems">
 		Non riesci a trovare quello che cerchi? Prova [secondlife:///app/search/all/[SEARCH_TERM] Cerca].
@@ -2088,6 +2106,18 @@ Prova ad accedere nuovamente tra un minuto.
 	</string>
 	<string name="RegionInfoAllowedGroups">
 		Gruppi ammessi: ([ALLOWEDGROUPS], massimo [MAXACCESS])
+	</string>
+	<string name="RegionInfoEstateManagers">
+		Gestori delle proprietà immobiliari: ([ESTATEMANAGERS], max [MAXMANAGERS])
+	</string>
+	<string name="RegionInfoBannedResidents">
+		Residenti con divieto: ([BANNEDAGENTS], max [MAXBANNED])
+	</string>
+	<string name="RegionInfoListTypeAllowedAgents">
+		Residenti consentiti
+	</string>
+	<string name="RegionInfoListTypeBannedAgents">
+		Residenti con divieto
 	</string>
 	<string name="ScriptLimitsParcelScriptMemory">
 		Memoria dello script del lotto
@@ -5100,6 +5130,9 @@ Prova a racchiudere il percorso dell&apos;editor in doppie virgolette.
 	<string name="Command_Gestures_Label">
 		Gesture
 	</string>
+	<string name="Command_HMD_Mode_Label">
+		Modalità HMD
+	</string>
 	<string name="Command_HowTo_Label">
 		Istruzioni
 	</string>
@@ -5144,6 +5177,9 @@ Prova a racchiudere il percorso dell&apos;editor in doppie virgolette.
 	</string>
 	<string name="Command_Snapshot_Label">
 		Istantanea
+	</string>
+	<string name="Command_Social_Label">
+		Facebook
 	</string>
 	<string name="Command_Speak_Label">
 		Parla
@@ -5190,6 +5226,9 @@ Prova a racchiudere il percorso dell&apos;editor in doppie virgolette.
 	<string name="Command_Gestures_Tooltip">
 		Gesti per il tuo avatar
 	</string>
+	<string name="Command_HMD_Mode_Tooltip">
+		Usa modalità di rendering per Head-Mounted Display (HMD)
+	</string>
 	<string name="Command_HowTo_Tooltip">
 		Come eseguire le attività più comuni
 	</string>
@@ -5234,6 +5273,9 @@ Prova a racchiudere il percorso dell&apos;editor in doppie virgolette.
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		Scatta una foto
+	</string>
+	<string name="Command_Social_Tooltip">
+		Pubblica su Facebook
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Parla con persone vicine usando il microfono

@@ -997,7 +997,7 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 		Offline
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		[PRICE] L$ für [AREA] m²
+		[AREA] m² L$ [PRICE] ([SQMPRICE] L$/m²)
 	</string>
 	<string name="worldmap_results_none_found">
 		Nicht gefunden.
@@ -1401,6 +1401,24 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 	</string>
 	<string name="LeaveMouselook">
 		ESC drücken, um zur Normalansicht zurückzukehren
+	</string>
+	<string name="HMDPresetCustom">
+		Benutzerdefiniert
+	</string>
+	<string name="HMDPresetDefault">
+		Standard [INDEX]
+	</string>
+	<string name="HMDPresetUser">
+		Benutzer [INDEX]
+	</string>
+	<string name="HMDConfigUnitsMillimeters">
+		[VAL] mm
+	</string>
+	<string name="HMDConfigUnitsMilliseconds">
+		[VAL] ms
+	</string>
+	<string name="HMDConfigUnitsRadians">
+		[VAL] PI
 	</string>
 	<string name="InventoryNoMatchingItems">
 		Sie haben nicht das Richtige gefunden? Versuchen Sie es mit der [secondlife:///app/search/all/[SEARCH_TERM] Suche].
@@ -2102,7 +2120,19 @@ Warten Sie kurz und versuchen Sie dann noch einmal, sich anzumelden.
 		Zulässige Einwohner: ([ALLOWEDAGENTS], max [MAXACCESS])
 	</string>
 	<string name="RegionInfoAllowedGroups">
-		Zulässige Gruppen: ([ALLOWEDGROUPS], max [MAXACCESS])
+		Zulässige Gruppen: ([ALLOWEDGROUPS], maximal [MAXACCESS])
+	</string>
+	<string name="RegionInfoEstateManagers">
+		Grundbesitzsverwalter: ([ESTATEMANAGERS], max. [MAXMANAGERS])
+	</string>
+	<string name="RegionInfoBannedResidents">
+		Verbannte Einwohner: ([BANNEDAGENTS], max. [MAXBANNED])
+	</string>
+	<string name="RegionInfoListTypeAllowedAgents">
+		Zulässige Einwohner
+	</string>
+	<string name="RegionInfoListTypeBannedAgents">
+		Verbannte Einwohner
 	</string>
 	<string name="ScriptLimitsParcelScriptMemory">
 		Parzellenskript-Speicher
@@ -5187,6 +5217,9 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	<string name="Command_Gestures_Label">
 		Gesten
 	</string>
+	<string name="Command_HMD_Mode_Label">
+		HMD-Modus
+	</string>
 	<string name="Command_HowTo_Label">
 		Infos
 	</string>
@@ -5231,6 +5264,9 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	</string>
 	<string name="Command_Snapshot_Label">
 		Foto
+	</string>
+	<string name="Command_Social_Label">
+		Facebook
 	</string>
 	<string name="Command_Speak_Label">
 		Sprechen
@@ -5277,6 +5313,9 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	<string name="Command_Gestures_Tooltip">
 		Gesten für Ihren Avatar
 	</string>
+	<string name="Command_HMD_Mode_Tooltip">
+		Darstellungsmodus für Head-Mounted Displays (HMD) verwenden
+	</string>
 	<string name="Command_HowTo_Tooltip">
 		Wie führe ich gängige Aufgaben aus?
 	</string>
@@ -5321,6 +5360,9 @@ Setzen Sie den Editorpfad in Anführungszeichen
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		Foto aufnehmen
+	</string>
+	<string name="Command_Social_Tooltip">
+		Auf Facebook posten
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Über Ihr Mikrofon mit Leuten in der Nähe sprechen

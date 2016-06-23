@@ -23,9 +23,9 @@
 	</text>
 	<text name="BetterText">
 		最佳
-	</text>
-	<check_box initial_value="true" label="大氣著色" name="WindLightUseAtmosShaders"/>
-	<check_box initial_value="true" label="進階照明模型" name="UseLightShaders"/>
+		</text>
+		<check_box initial_value="true" label="大氣著色" name="WindLightUseAtmosShaders"/>
+		<check_box initial_value="true" label="進階照明模型" name="UseLightShaders"/>
 	<button label="將設定存為預設值 …" name="PrefSaveButton"/>
 	<button label="載入預設..." name="PrefLoadButton"/>
 	<button label="刪除自訂配置…" name="PrefDeleteButton"/>

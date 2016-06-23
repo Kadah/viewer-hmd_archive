@@ -994,7 +994,7 @@ Lütfen bir dakika içerisinde tekrar oturum açmayı deneyin.
 		Çevrimdışı
 	</string>
 	<string name="worldmap_item_tooltip_format">
-		[AREA] m² L$[PRICE]
+		[AREA] m² L$[PRICE] ([SQMPRICE] L$/m²)
 	</string>
 	<string name="worldmap_results_none_found">
 		Hiçbiri bulunamadı.
@@ -1399,6 +1399,24 @@ Lütfen bir dakika içerisinde tekrar oturum açmayı deneyin.
 	<string name="LeaveMouselook">
 		Dünya Görünümüne dönmek için ESC&apos;e basın
 	</string>
+	<string name="HMDPresetCustom">
+		Özel
+	</string>
+	<string name="HMDPresetDefault">
+		Varsayılan [INDEX]
+	</string>
+	<string name="HMDPresetUser">
+		Kullanıcı [INDEX]
+	</string>
+	<string name="HMDConfigUnitsMillimeters">
+		[VAL] mm
+	</string>
+	<string name="HMDConfigUnitsMilliseconds">
+		[VAL] ms
+	</string>
+	<string name="HMDConfigUnitsRadians">
+		[VAL] PI
+	</string>
 	<string name="InventoryNoMatchingItems">
 		Aradığınızı bulamadınız mı? [secondlife:///app/search/all/[SEARCH_TERM] Arama] ile bulmayı deneyin.
 	</string>
@@ -1421,7 +1439,7 @@ Lütfen bir dakika içerisinde tekrar oturum açmayı deneyin.
 		https://marketplace.[MARKETPLACE_DOMAIN_NAME]/
 	</string>
 	<string name="MarketplaceURL_CreateStore">
-		http://community.secondlife.com/t5/English-Knowledge-Base/Selling-in-the-Marketplace/ta-p/700193#Section_.3
+		http://community.secondlife.com/t5/English-Knowledge-Base/Selling-in-the-Marketplace/ta-p/700193#Section_.4
 	</string>
 	<string name="MarketplaceURL_Dashboard">
 		https://marketplace.[MARKETPLACE_DOMAIN_NAME]/merchants/store/dashboard
@@ -2099,7 +2117,19 @@ Lütfen bir dakika içerisinde tekrar oturum açmayı deneyin.
 		İzin verilen Sakinler: ([ALLOWEDAGENTS], maks [MAXACCESS])
 	</string>
 	<string name="RegionInfoAllowedGroups">
-		İzin verilen gruplar: ([ALLOWEDGROUPS], maks [MAXACCESS])
+		İzin verilen Gruplar: ([ALLOWEDGROUPS], maks [MAXACCESS])
+	</string>
+	<string name="RegionInfoEstateManagers">
+		Gayrimenkul Yöneticileri: ([ESTATEMANAGERS], maks [MAXMANAGERS])
+	</string>
+	<string name="RegionInfoBannedResidents">
+		Yasaklı Sakinler: ([BANNEDAGENTS], maks [MAXBANNED])
+	</string>
+	<string name="RegionInfoListTypeAllowedAgents">
+		İzin Verilen Sakinler
+	</string>
+	<string name="RegionInfoListTypeBannedAgents">
+		Yasaklı Sakinler
 	</string>
 	<string name="ScriptLimitsParcelScriptMemory">
 		Parsel Komut Dosyası Belleği
@@ -5194,6 +5224,9 @@ Düzenleyici yolunu çift tırnakla çevrelemeyi deneyin.
 	<string name="Command_Gestures_Label">
 		Mimikler
 	</string>
+	<string name="Command_HMD_Mode_Label">
+		HMD Modu
+	</string>
 	<string name="Command_HowTo_Label">
 		Nasıl yapılır
 	</string>
@@ -5238,6 +5271,9 @@ Düzenleyici yolunu çift tırnakla çevrelemeyi deneyin.
 	</string>
 	<string name="Command_Snapshot_Label">
 		Anlık görüntü
+	</string>
+	<string name="Command_Social_Label">
+		Facebook
 	</string>
 	<string name="Command_Speak_Label">
 		Konuş
@@ -5284,6 +5320,9 @@ Düzenleyici yolunu çift tırnakla çevrelemeyi deneyin.
 	<string name="Command_Gestures_Tooltip">
 		Avatarınız için mimikler
 	</string>
+	<string name="Command_HMD_Mode_Tooltip">
+		Kafaya Monte Ekran (HMD) İşleme Modu
+	</string>
 	<string name="Command_HowTo_Tooltip">
 		Genel görevleri nasıl yapacağınız
 	</string>
@@ -5328,6 +5367,9 @@ Düzenleyici yolunu çift tırnakla çevrelemeyi deneyin.
 	</string>
 	<string name="Command_Snapshot_Tooltip">
 		Resim çekin
+	</string>
+	<string name="Command_Social_Tooltip">
+		Facebook&apos;ta Yayınla
 	</string>
 	<string name="Command_Speak_Tooltip">
 		Mikrofonunuzu kullanarak yakındaki kişilerle konuşun

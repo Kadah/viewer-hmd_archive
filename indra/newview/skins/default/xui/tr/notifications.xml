@@ -1118,7 +1118,7 @@ Bu genellikle geçici bir arızadır. Lütfen giyilebilir öğeyi birkaç dakika
 	<notification name="YouHaveBeenLoggedOut">
 		Üzgünüz. [SECOND_LIFE] oturumunuz kapandı.
 
-[MESSAGE]
+            [MESSAGE]
 		<usetemplate name="okcancelbuttons" notext="Çık" yestext="Anlık İleti ve Sohbeti Görüntüle"/>
 	</notification>
 	<notification name="OnlyOfficerCanBuyLand">
@@ -1602,13 +1602,13 @@ veya şimdi kurabilirsiniz.
 		<usetemplate name="okcancelbuttons" notext="Second Life&apos;tan çık" yestext="Karşıdan yükle ve şimdi kur"/>
 	</notification>
 	<notification name="DownloadBackgroundTip">
-		[APP_NAME] kurulumunuz için bir güncellemeyi karşıdan yükledik.
-Sürüm [VERSION] [[RELEASE_NOTES_FULL_URL] Bu güncelleme hakkında ayrıntılı bilgi]
+		[APP_NAME] kurulumunuz için bir güncelleme indirdik.
+Sürüm [VERSION] [[INFO_URL] Bu güncelleme hakkında ayrıntılı bilgi]
 		<usetemplate name="okcancelbuttons" notext="Sonra..." yestext="Şimdi kur ve [APP_NAME] uygulamasını yeniden başlat"/>
 	</notification>
 	<notification name="DownloadBackgroundDialog">
-		[APP_NAME] kurulumunuz için bir güncellemeyi karşıdan yükledik.
-Sürüm [VERSION] [[RELEASE_NOTES_FULL_URL] Bu güncelleme hakkında ayrıntılı bilgi]
+		[APP_NAME] kurulumunuz için bir güncelleme indirdik.
+    Sürüm [VERSION] [[INFO_URL] Bu güncelleme hakkında ayrıntılı bilgi]
 		<usetemplate name="okcancelbuttons" notext="Sonra..." yestext="Şimdi kur ve [APP_NAME] uygulamasını yeniden başlat"/>
 	</notification>
 	<notification name="RequiredUpdateDownloadedVerboseDialog">
@@ -1869,6 +1869,13 @@ Lütfen daha sonra tekrar deneyin.
 			<input name="message">
 				[REGION] bölgesinde bana katılır mısın?
 			</input>
+			<button name="OK" text="Tamam"/>
+			<button name="Cancel" text="İptal"/>
+		</form>
+	</notification>
+	<notification name="TeleportRequestPrompt">
+		Aşağıdaki iletiyle [NAME] konumuna ışınlanma talep edin
+		<form name="form">
 			<button name="OK" text="Tamam"/>
 			<button name="Cancel" text="İptal"/>
 		</form>
@@ -2782,6 +2789,9 @@ Arazi sahibine ait olanlar dışında hiçbir komut dosyası çalışmayacak.
 	<notification name="RegionTPAccessBlocked">
 		Ziyaret etmeye çalıştığınız bölge, mevcut tercihlerinizi aşan içeriğe sahip.  Ben &gt; Tercihler &gt; Genel sekmesini kullanarak tercihlerinizi değiştirebilirsiniz.
 	</notification>
+	<notification name="RegionAboutToShutdown">
+		Girmeye çalıştığınız bölge kapatılmak üzere.
+	</notification>
 	<notification name="URBannedFromRegion">
 		Bu bölgeye erişiminiz yasaklandı.
 	</notification>
@@ -2894,7 +2904,7 @@ Lütfen biraz sonra tekrar deneyin.
 	<notification name="TeleportOffered">
 		[NAME_SLURL] size kendi konumuna ışınlanmayı teklif etti:
 
-“[MESSAGE]”
+&quot;[MESSAGE]”
 &lt;icon&gt;[MATURITY_ICON]&lt;/icon&gt; - [MATURITY_STR]
 		<form name="form">
 			<button name="Teleport" text="Işınla"/>
@@ -2923,6 +2933,16 @@ Ancak bu bölge sadece yetişkinlerin erişebileceği içeriğe sahip.
 	</notification>
 	<notification name="TeleportOfferSent">
 		Işınlanma teklifi [TO_NAME] adlı kişiye gönderildi
+	</notification>
+	<notification name="TeleportRequest">
+		[NAME_SLURL] konumunuza ışınlanmayı talep ediyor.
+[MESSAGE]
+
+Işınlama teklif edilsin mi?
+		<form name="form">
+			<button name="Yes" text="Evet"/>
+			<button name="No" text="Hayır"/>
+		</form>
 	</notification>
 	<notification name="GotoURL">
 		[MESSAGE]
@@ -2976,11 +2996,11 @@ Kabul ettiğiniz takdirde, bu Sakine hızlı bir şekilde Aİ gönderebilmeniz i
 		</form>
 	</notification>
 	<notification name="RegionRestartMinutes">
-		Bu bölge [MINUTES] dakika içinde yeniden başlatılacak.
+		&quot;[NAME]&quot; bölgesi [MINUTES] dakika içinde yeniden başlatılacak.
 Bu bölgede kalmaya devam ederseniz oturumunuz sonlandırılacak.
 	</notification>
 	<notification name="RegionRestartSeconds">
-		Bu bölge [SECONDS] saniye içinde yeniden başlatılacak.
+		&quot;[NAME]&quot; bölgesi [SECONDS] saniye içinde yeniden başlatılacak.
 Bu bölgede kalmaya devam ederseniz oturumunuz sonlandırılacak.
 	</notification>
 	<notification name="LoadWebPage">
@@ -3295,7 +3315,7 @@ Yeterli yer olduğunda düğme gösterilecek.
 		Paylaşılacak sakinleri seç.
 	</notification>
 	<notification name="MeshUploadError">
-		[LABEL] karşıya yüklenemedi: [MESSAGE] [IDENTIFIER]
+		[LABEL] karşıya yüklenemedi: [MESSAGE] [IDENTIFIER] 
 [DETAILS]Ayrıntılar için bkz. SecondLife.log
 	</notification>
 	<notification name="MeshUploadPermError">
@@ -4069,6 +4089,9 @@ Lütfen bir dakika sonra tekrar deneyin.
 	<notification name="CantAttachNotEnoughScriptResources">
 		Nesneyi iliştirmek için yeterli komut dosyası kaynağı mevcut değil!
 	</notification>
+	<notification name="CantAttachObjectBeingRemoved">
+		Nesne iliştirilemedi çünkü zaten kaldırılıyor.
+	</notification>
 	<notification name="CantDropItemTrialUser">
 		Buraya nesne düşüremezsiniz; Ücretsiz Deneme alanını deneyin.
 	</notification>
@@ -4318,5 +4341,23 @@ Daha küçük bir arazi parçası seçmeyi deneyin.
 	<notification name="ChatHistoryIsBusyAlert">
 		Sohbet geçmişi dosyası önceki işlemi gerçekleştirmekle meşgul. Lütfen bir kaç dakika sonra tekrar deneyin veya başka bir kişiyle sohbet etmeyi deneyin.
 		<usetemplate name="okbutton" yestext="Tamam"/>
+	</notification>
+	<notification name="HMDModeErrorPreInitFailed">
+		Dahili Sorun: HMD moduna girilemiyor çünkü HMD cihaz yöneticisinin ön başlatılması başarısız oldu. Bunun muhtemel anlamı HMD cihaz kütüphanesinin yüklenmemiş olduğu veya beklenenden farklı bir sürüm olduğudur. Second Life istemcisinin tekrar kurulması bu sorunu çözebilir.
+	</notification>
+	<notification name="HMDModeErrorALM">
+		HMD moduna girilemiyor çünkü Gelişmiş Aydınlatma Modeli etkin değil. HMD modunda düzgün işleme için Gelişmiş Aydınlatma Modeli gerekir.
+	</notification>
+	<notification name="HMDModeErrorNoDevice">
+		HMD moduna girilemiyor çünkü bir HMD donanımı algılanamadı. Güvenli olduğuna emin olmak için HMD&apos;nizin ekran kablosunu kontrol edin.
+	</notification>
+	<notification name="HMDModeErrorNoSensor">
+		HMD moduna girilemiyor çünkü HMD Sensör donanımı algılanamadı. HMD cihazınıza güç beslendiğini ve USB kablosunun güvenli bir şekilde bağlandığına emin olun.
+	</notification>
+	<notification name="HMDModeErrorNoWindow">
+		Dahili Sorun: HMD moduna girilemiyor çünkü HMD işleme penceresi oluşturulamadı. İstemcinin tekrar başlatılması bu sorunu muhtemelen çözecektir.
+	</notification>
+	<notification name="FloaterTypeDisabled">
+		[NAME] işlevi şu anda devre dışı.
 	</notification>
 </notifications>

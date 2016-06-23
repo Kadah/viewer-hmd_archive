@@ -797,12 +797,12 @@ void LLPipeline::resizeScreenTexture()
 			{
 #if PROBABLE_FALSE_DISABLES_OF_ALM_HERE
 				//FAILSAFE: screen buffer allocation failed, disable deferred rendering if it's enabled
-			    //NOTE: if the session closes successfully after this call, deferred rendering will be 
-			    // disabled on future sessions
-			    if (LLPipeline::sRenderDeferred)
-			    {
-			    	gSavedSettings.setBOOL("RenderDeferred", FALSE);
-			    	LLPipeline::refreshCachedSettings();
+			//NOTE: if the session closes successfully after this call, deferred rendering will be 
+			// disabled on future sessions
+			if (LLPipeline::sRenderDeferred)
+			{
+				gSavedSettings.setBOOL("RenderDeferred", FALSE);
+				LLPipeline::refreshCachedSettings();
 				}
 #endif
 			}
@@ -7909,6 +7909,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			{
 				mDeferredLight.bindTarget();
 			}
+
 			LLGLSLShader* shader = &gDeferredPostNoDoFProgram;
 			
 			bindDeferredShader(*shader);
@@ -8115,7 +8116,7 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
     {
         S32 w = gHMD.getViewportWidth();
         S32 h = gHMD.getViewportHeight();
-
+	
         LLRenderTarget::copyContentsToBoundTarget(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 0, 0, w, h, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
     }
     else if (LLRenderTarget::sUseFBO)

@@ -1309,13 +1309,11 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 
 	LLColor4U color = tep->getColor();
 
-	if (rebuild_color)
-	{ //decide if shiny goes in alpha channel of color
-		if (tep && 
-			getPoolType() != LLDrawPool::POOL_ALPHA)  // <--- alpha channel MUST contain transparency, not shiny
+    // decide if shiny goes in alpha channel of color
+    // alpha channel MUST contain transparency, not shiny
+    if (rebuild_color && getPoolType() != LLDrawPool::POOL_ALPHA)
 	{
 			LLMaterial* mat = tep->getMaterialParams().get();
-						
 			bool shiny_in_alpha = false;
 			
 			if (LLPipeline::sRenderDeferred)
@@ -1335,20 +1333,11 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 
 			if (shiny_in_alpha)
 			{
-
-				static const GLfloat alpha[4] =
-				{
-					0.00f,
-					0.25f,
-					0.5f,
-					0.75f
-				};
-			
+            GLfloat alpha[4] = { 0.00f, 0.25f, 0.5f, 0.75f };
 				llassert(tep->getShiny() <= 3);
 				color.mV[3] = U8 (alpha[tep->getShiny()] * 255);
 			}
 		}
-	}
 
 	// INDICES
 	if (full_rebuild)

@@ -4,7 +4,7 @@
 		(Aucun/Aucune)
 	</text>
 	<text name="QualitySpeed">
-		Qualité et vitesse :
+		Qualité et vitesse :
 	</text>
 	<text name="ShadersPrefText">
 		Faible
@@ -23,8 +23,8 @@
 	</text>
 	<text name="BetterText">
 		Meilleure
-	</text>
-	<check_box initial_value="true" label="Effets atmosphériques" name="WindLightUseAtmosShaders"/>
+		</text>
+		<check_box initial_value="true" label="Effets atmosphériques" name="WindLightUseAtmosShaders"/>
 	<check_box initial_value="true" label="Modèle d’éclairage avancé" name="UseLightShaders"/>
 	<button label="Enregistrer les paramètres comme préréglage..." name="PrefSaveButton"/>
 	<button label="Charger un préréglage..." name="PrefLoadButton"/>

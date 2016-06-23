@@ -586,10 +586,10 @@ void LLFloaterPreference::apply()
     {
         LLFloaterHMDConfigDebug* hmd_config_debug_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfigDebug>("floater_hmd_config_debug");
         if (hmd_config_debug_settings && hmd_config_debug_settings->getVisible())
-        {
+	{
             hmd_config_debug_settings->onClickSave();
         }
-    }
+	}
 
 	gViewerWindow->requestResolutionUpdate(); // for UIScaleFactor
 
@@ -668,14 +668,14 @@ void LLFloaterPreference::cancel()
 	LLFloaterReg::hideInstance("prefs_spellchecker");
 	
     // hide hmd config floater
-    {
+	{
         LLFloaterHMDConfigDebug* hmd_config_debug_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfigDebug>("floater_hmd_config_debug");
         if (hmd_config_debug_settings && hmd_config_debug_settings->getVisible())
         {
             hmd_config_debug_settings->onClickCancel();
         }
-    }
-
+	}
+	
 	// hide advancede floater
 	LLFloaterReg::hideInstance("prefs_graphics_advanced");
 	
@@ -1379,7 +1379,7 @@ void LLFloaterPreferenceGraphicsAdvanced::refreshEnabledState()
 	{
 		getChildView("texture compression")->setEnabled(FALSE);
 	}
-
+	
 	// if no windlight shaders, turn off nighttime brightness, gamma, and fog distance
 	LLUICtrl* gamma_ctrl = getChild<LLUICtrl>("gamma");
 	gamma_ctrl->setEnabled(!gPipeline.canUseWindLightShaders());
@@ -1394,6 +1394,11 @@ void LLFloaterPreferenceGraphicsAdvanced::refreshEnabledState()
 
 	// Cannot have floater active until caps have been received
 	getChild<LLButton>("default_creation_permissions")->setEnabled(LLStartUp::getStartupState() < STATE_STARTED ? false : true);
+
+    if (gHMD.isHMDMode())
+    {
+        gHMD.renderSettingsChanged(TRUE);
+    }
 }
 
 // static
@@ -2550,9 +2555,9 @@ void LLPanelPreferenceGraphics::onPresetsListChange()
 void LLPanelPreferenceGraphics::setPresetText()
 {
 	LLTextBox* preset_text = getChild<LLTextBox>("preset_text");
-
+	
 	std::string preset_graphic_active = gSavedSettings.getString("PresetGraphicActive");
-
+	
 	if (!preset_graphic_active.empty() && preset_graphic_active != preset_text->getText())
 	{
 		LLFloaterPreference* instance = LLFloaterReg::findTypedInstance<LLFloaterPreference>("preferences");
