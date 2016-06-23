@@ -1242,7 +1242,7 @@ void LLSelectMgr::getGrid(LLVector3& origin, LLQuaternion &rotation, LLVector3 &
 		}
 		else
 		{
-			mGridRotation = first_grid_object->getRenderRotation();
+		mGridRotation = first_grid_object->getRenderRotation();
 		}
 
 		LLVector4a min_extents(F32_MAX);
@@ -1632,7 +1632,7 @@ void LLSelectMgr::selectionSetImage(const LLUUID& imageid)
 		    {
 		        return false;
 		    }
-		    if (mItem)
+			if (mItem)
 			{
 				if (te == -1) // all faces
 				{
@@ -3616,11 +3616,11 @@ bool LLSelectMgr::confirmDelete(const LLSD& notification, const LLSD& response, 
 			// attempt to derez into the trash.
 			LLDeRezInfo info(DRD_TRASH, trash_id);
 			LLSelectMgr::getInstance()->sendListToRegions("DeRezObject",
-                                                          packDeRezHeader,
-                                                          packObjectLocalID,
+										  packDeRezHeader,
+										  packObjectLocalID,
                                                           logNoOp,
-                                                          (void*) &info,
-                                                          SEND_ONLY_ROOTS);
+										  (void*) &info,
+										  SEND_ONLY_ROOTS);
 			// VEFFECT: Delete Object - one effect for all deletes
 			if (LLSelectMgr::getInstance()->mSelectedObjects->mSelectType != SELECT_TYPE_HUD)
 			{
@@ -5765,7 +5765,7 @@ void LLSelectMgr::renderSilhouettes(BOOL for_hud)
 		gGL.pushUIMatrix();
 		gGL.loadUIIdentity();
 		gGL.loadIdentity();
-		gGL.loadMatrix(OGL_TO_CFR_ROTATION);		// Load Cory's favorite reference frame
+		gGL.loadMatrix(OGL_TO_CFR_BASIS);		// Load Cory's favorite reference frame
 		gGL.translatef(-hud_bbox.getCenterLocal().mV[VX] + (depth *0.5f), 0.f, 0.f);
 		gGL.scalef(cur_zoom, cur_zoom, cur_zoom);
 	}

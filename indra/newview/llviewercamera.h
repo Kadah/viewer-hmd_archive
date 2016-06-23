@@ -33,18 +33,18 @@
 #include "m4math.h"
 #include "llcoord.h"
 #include "lltrace.h"
+#include "glh/glh_linear.h"
 
 class LLViewerObject;
 
-// This rotation matrix moves the default OpenGL reference frame 
+// This change of basis matrix moves the default OpenGL reference frame 
 // (-Z at, Y up) to Cory's favorite reference frame (X at, Z up)
-const F32 OGL_TO_CFR_ROTATION[16] = {  0.f,  0.f, -1.f,  0.f, 	// -Z becomes X
+const F32 OGL_TO_CFR_BASIS[16] = {  0.f,  0.f, -1.f,  0.f, 	// -Z becomes X
 									  -1.f,  0.f,  0.f,  0.f, 	// -X becomes Y
 									   0.f,  1.f,  0.f,  0.f,	//  Y becomes Z
 									   0.f,  0.f,  0.f,  1.f };
 
 const BOOL FOR_SELECTION = TRUE;
-const BOOL NOT_FOR_SELECTION = FALSE;
 
 // Build time optimization, generate this once in .cpp file
 #ifndef LLVIEWERCAMERA_CPP
@@ -84,21 +84,28 @@ public:
 
 	LLViewerCamera();
 
-	void updateCameraLocation(const LLVector3 &center,
-								const LLVector3 &up_direction,
-								const LLVector3 &point_of_interest);
+    F32 getUIAspect() const;
+
+	void updateCameraLocation(const LLVector3& center,
+							  const LLVector3& up_direction,
+							  const LLVector3& point_of_interest,
+                              const LLVector3& original_up_direction,
+                              const LLVector3& original_point_of_interest);
 
 	static void updateFrustumPlanes(LLCamera& camera, BOOL ortho = FALSE, BOOL zflip = FALSE, BOOL no_hacks = FALSE);
 	static void updateCameraAngle(void* user_data, const LLSD& value);
 	void setPerspective(BOOL for_selection, S32 x, S32 y_from_bot, S32 width, S32 height, BOOL limit_select_distance, F32 z_near = 0, F32 z_far = 0);
+
+    // Force specific projection matrix (for HMD eye mats)
+    void setProjectionMatrix(glh::matrix4f& proj_mat);
 
 	const LLMatrix4 &getProjection() const;
 	const LLMatrix4 &getModelview() const;
 
 	// Warning!  These assume the current global matrices are correct
 	void projectScreenToPosAgent(const S32 screen_x, const S32 screen_y, LLVector3* pos_agent ) const;
-	BOOL projectPosAgentToScreen(const LLVector3 &pos_agent, LLCoordGL &out_point, const BOOL clamp = TRUE) const;
-	BOOL projectPosAgentToScreenEdge(const LLVector3 &pos_agent, LLCoordGL &out_point) const;
+	BOOL projectPosAgentToScreen(const LLVector3 &pos_agent, LLCoordGL &out_point, const BOOL clamp = TRUE, BOOL useHMDEyeWidth = TRUE) const;
+	BOOL projectPosAgentToScreenEdge(const LLVector3 &pos_agent, LLCoordGL &out_point, BOOL useHMDEyeWidth = TRUE) const;
 
 	LLVector3 getVelocityDir() const {return mVelocityDir;}
 	static LLTrace::CountStatHandle<>* getVelocityStat()		   {return &sVelocityStat; }
@@ -107,14 +114,14 @@ public:
 	F32     getAverageSpeed() {return mAverageSpeed ;}
 	F32     getAverageAngularSpeed() {return mAverageAngularSpeed;}
 
-	void getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, LLVector3 &right);
-	LLVector3 roundToPixel(const LLVector3 &pos_agent);
+	void getPixelVectors(const LLVector3 &pos_agent, LLVector3 &up, LLVector3 &right, BOOL keepLevel = FALSE);
 
 	// Sets the current matrix
 	/* virtual */ void setView(F32 vertical_fov_rads);
+    void setView(F32 vertical_fov_rads, BOOL stereo_update_simulator);
 
-	void setDefaultFOV(F32 fov) ;
-	F32 getDefaultFOV() { return mCameraFOVDefault; }
+	void setDefaultFOV(F32 fov);
+	F32 getDefaultFOV() const;
 
 	BOOL cameraUnderWater() const;
 	BOOL areVertsVisible(LLViewerObject* volumep, BOOL all_verts);

@@ -41,17 +41,17 @@
 class LLVersionInfo
 {
 public:
-	/// return the major verion number as an integer
-	static S32 getMajor();
+	/// return the major version number as an integer
+	static U32 getMajor();
 
-	/// return the minor verion number as an integer
-	static S32 getMinor();
+	/// return the minor version number as an integer
+	static U32 getMinor();
 
-	/// return the patch verion number as an integer
-	static S32 getPatch();
+	/// return the patch version number as an integer
+	static U32 getPatch();
 
 	/// return the build number as an integer
-	static S32 getBuild();
+	static U32 getBuild();
 
 	/// return the full viewer version as a string like "2.0.0.200030"
 	static const std::string &getVersion();

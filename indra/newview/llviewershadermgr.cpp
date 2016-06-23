@@ -41,6 +41,7 @@
 #include "llsky.h"
 #include "llvosky.h"
 #include "llrender.h"
+#include "llhmd.h"
 
 #ifdef LL_RELEASE_FOR_DOWNLOAD
 #define UNIFORM_ERRS LL_WARNS_ONCE("Shader")
@@ -91,7 +92,6 @@ LLGLSLShader	gDownsampleDepthProgram;
 LLGLSLShader	gDownsampleDepthRectProgram;
 LLGLSLShader	gAlphaMaskProgram;
 LLGLSLShader	gBenchmarkProgram;
-
 
 //object shaders
 LLGLSLShader		gObjectSimpleProgram;
@@ -869,7 +869,7 @@ BOOL LLViewerShaderMgr::loadBasicShaders()
 		shaders.push_back( make_pair( "objects/indexedTextureV.glsl",			1 ) );
 	}
 	shaders.push_back( make_pair( "objects/nonindexedTextureV.glsl",		1 ) );
-
+	
 	boost::unordered_map<std::string, std::string> attribs;
 	
 	// We no longer have to bind the shaders to global glhandles, they are automatically added to a map now.
@@ -924,7 +924,7 @@ BOOL LLViewerShaderMgr::loadBasicShaders()
 	index_channels.push_back(ch);	 shaders.push_back( make_pair( "lighting/lightFullbrightShinyF.glsl",	mVertexShaderLevel[SHADER_LIGHTING] ) );
 	index_channels.push_back(ch);	 shaders.push_back( make_pair( "lighting/lightShinyWaterF.glsl",			mVertexShaderLevel[SHADER_LIGHTING] ) );
 	index_channels.push_back(ch);	 shaders.push_back( make_pair( "lighting/lightFullbrightShinyWaterF.glsl", mVertexShaderLevel[SHADER_LIGHTING] ) );
-	
+
 	for (U32 i = 0; i < shaders.size(); i++)
 	{
 		// Note usage of GL_FRAGMENT_SHADER_ARB
@@ -1279,7 +1279,7 @@ BOOL LLViewerShaderMgr::loadShadersDeferred()
 		gDeferredBumpProgram.mShaderLevel = mVertexShaderLevel[SHADER_DEFERRED];
 		success = gDeferredBumpProgram.createShader(NULL, NULL);
 	}
-
+	
 	gDeferredMaterialProgram[1].mFeatures.hasLighting = false;
 	gDeferredMaterialProgram[5].mFeatures.hasLighting = false;
 	gDeferredMaterialProgram[9].mFeatures.hasLighting = false;
@@ -1884,7 +1884,7 @@ BOOL LLViewerShaderMgr::loadShadersDeferred()
 		gDeferredAvatarAlphaProgram.mFeatures.calculatesLighting = true;
 		gDeferredAvatarAlphaProgram.mFeatures.hasLighting = true;
 	}
-
+	
 	if (success)
 	{
 		gDeferredPostGammaCorrectProgram.mName = "Deferred Gamma Correction Post Process";
@@ -3074,7 +3074,7 @@ BOOL LLViewerShaderMgr::loadShadersInterface()
 		}
 	}
 
-	if (success)
+    if (success)
 	{
 		gGlowCombineProgram.mName = "Glow Combine Shader";
 		gGlowCombineProgram.mShaderFiles.clear();

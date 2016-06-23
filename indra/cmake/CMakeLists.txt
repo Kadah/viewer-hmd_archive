@@ -79,6 +79,8 @@ set(cmake_SOURCE_FILES
     LLVFS.cmake
     LLWindow.cmake
     LLXML.cmake
+    LibOVR.cmake
+    OpenVR.cmake
     Linking.cmake
     MediaPluginBase.cmake
     NDOF.cmake

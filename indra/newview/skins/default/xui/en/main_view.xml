@@ -99,7 +99,6 @@
              tab_stop="false"/>
     </layout_panel>
   </layout_stack>
- 
   <panel top="0"
         follows="all"
         mouse_opaque="false"

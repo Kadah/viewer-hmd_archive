@@ -12,6 +12,7 @@
 	</text>
 	<check_box label="總是使用方向鍵移動" name="arrow_keys_move_avatar_check"/>
 	<check_box label="連點按住後跑步" name="tap_tap_hold_to_run"/>
+	<check_box label="按下跳躍(jump)或蹲伏(crouch)鍵可開始或停止飛行" name="automatic_fly"/>
 	<text name="mouse_lbl">
 		滑鼠：
 	</text>
@@ -36,4 +37,5 @@
 		<combo_box.item label="瞬間傳送至點按的地點" name="2"/>
 	</combo_box>
 	<button label="其他設備" name="joystick_setup_button"/>
+	<button label="頭戴顯示器" name="hmd_config_button"/>
 </panel>

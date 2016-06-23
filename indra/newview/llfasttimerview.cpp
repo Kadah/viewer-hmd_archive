@@ -435,8 +435,14 @@ void LLFastTimerView::onClose(bool app_quitting)
 
 void saveChart(const std::string& label, const char* suffix, LLImageRaw* scratch)
 {
+    BOOL nSightDebugMode = gSavedSettings.getBOOL("NsightDebug");
+
 	//read result back into raw image
-	glReadPixels(0, 0, 1024, 512, GL_RGB, GL_UNSIGNED_BYTE, scratch->getData());
+    // Side-step call that prevents all shader debugging downstream...
+    if (!nSightDebugMode)
+    {
+	    glReadPixels(0, 0, 1024, 512, GL_RGB, GL_UNSIGNED_BYTE, scratch->getData());
+    }
 
 	//write results to disk
 	LLPointer<LLImagePNG> result = new LLImagePNG();

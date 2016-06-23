@@ -79,6 +79,9 @@
 #include "llvotree.h"
 #include "llvosky.h"
 #include "llfloaterpathfindingconsole.h"
+#include "llhmd.h"
+#include "llfloaterhmdconfigdebug.h"
+
 // linden library includes
 #include "llavatarnamecache.h"
 #include "llerror.h"
@@ -376,7 +379,8 @@ LLFloaterPreference::LLFloaterPreference(const LLSD& key)
 	mCommitCallbackRegistrar.add("Pref.AutoReplace",            boost::bind(&LLFloaterPreference::onClickAutoReplace, this));
 	mCommitCallbackRegistrar.add("Pref.PermsDefault",           boost::bind(&LLFloaterPreference::onClickPermsDefault, this));
 	mCommitCallbackRegistrar.add("Pref.SpellChecker",           boost::bind(&LLFloaterPreference::onClickSpellChecker, this));
-	mCommitCallbackRegistrar.add("Pref.Advanced",				boost::bind(&LLFloaterPreference::onClickAdvanced, this));
+	mCommitCallbackRegistrar.add("Pref.OpenHMDConfig",          boost::bind(&LLFloaterPreference::onClickOpenHMDConfig, this));
+    mCommitCallbackRegistrar.add("Pref.Advanced",				boost::bind(&LLFloaterPreference::onClickAdvanced, this));
 
 	sSkin = gSavedSettings.getString("SkinCurrent");
 
@@ -578,6 +582,15 @@ void LLFloaterPreference::apply()
 			panel->apply();
 	}
 	
+    // hmd config apply
+    {
+        LLFloaterHMDConfigDebug* hmd_config_debug_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfigDebug>("floater_hmd_config_debug");
+        if (hmd_config_debug_settings && hmd_config_debug_settings->getVisible())
+        {
+            hmd_config_debug_settings->onClickSave();
+        }
+    }
+
 	gViewerWindow->requestResolutionUpdate(); // for UIScaleFactor
 
 	LLSliderCtrl* fov_slider = getChild<LLSliderCtrl>("camera_fov");
@@ -653,6 +666,15 @@ void LLFloaterPreference::cancel()
 	
 	// hide spellchecker settings folder
 	LLFloaterReg::hideInstance("prefs_spellchecker");
+	
+    // hide hmd config floater
+    {
+        LLFloaterHMDConfigDebug* hmd_config_debug_settings = LLFloaterReg::getTypedInstance<LLFloaterHMDConfigDebug>("floater_hmd_config_debug");
+        if (hmd_config_debug_settings && hmd_config_debug_settings->getVisible())
+        {
+            hmd_config_debug_settings->onClickCancel();
+        }
+    }
 
 	// hide advancede floater
 	LLFloaterReg::hideInstance("prefs_graphics_advanced");
@@ -688,7 +710,7 @@ void LLFloaterPreference::cancel()
 
 void LLFloaterPreference::onOpen(const LLSD& key)
 {
-
+	
 	// this variable and if that follows it are used to properly handle do not disturb mode response message
 	static bool initialized = FALSE;
 	// if user is logged in and we haven't initialized do not disturb mode response yet, do it
@@ -855,8 +877,8 @@ void LLFloaterPreference::setHardwareDefaults()
 		if (panel)
 		{
 			panel->setHardwareDefaults();
-		}
 	}
+}
 }
 
 void LLFloaterPreference::getControlNames(std::vector<std::string>& names)
@@ -932,7 +954,7 @@ void LLFloaterPreference::onBtnOK(const LLSD& userdata)
 		}
 		else
 		{
-			closeFloater(false);
+		closeFloater(false);
 		}
 
 		//Conversation transcript and log path changed so reload conversations based on new location
@@ -994,9 +1016,9 @@ void LLFloaterPreference::onBtnCancel(const LLSD& userdata)
 	if (userdata.asString() == "closeadvanced")
 	{
 		LLFloaterReg::hideInstance("prefs_graphics_advanced");
-	}
+}
 	else
-	{
+{
 		closeFloater();
 	}
 }
@@ -1205,7 +1227,7 @@ void LLFloaterPreference::buildPopupLists()
 }
 
 void LLFloaterPreference::refreshEnabledState()
-{
+{	
 	LLCheckBoxCtrl* ctrl_wind_light = getChild<LLCheckBoxCtrl>("WindLightUseAtmosShaders");
 	LLCheckBoxCtrl* ctrl_deferred = getChild<LLCheckBoxCtrl>("UseLightShaders");
 
@@ -1238,7 +1260,7 @@ void LLFloaterPreferenceGraphicsAdvanced::refreshEnabledState()
 {
 	LLComboBox* ctrl_reflections = getChild<LLComboBox>("Reflections");
 	LLTextBox* reflections_text = getChild<LLTextBox>("ReflectionsText");
-
+	
 	// Reflections
 	BOOL reflections = gSavedSettings.getBOOL("VertexShaderEnable") 
 		&& gGLManager.mHasCubeMap
@@ -1281,7 +1303,7 @@ void LLFloaterPreferenceGraphicsAdvanced::refreshEnabledState()
 	LLCheckBoxCtrl* ctrl_shader_enable   = getChild<LLCheckBoxCtrl>("BasicShaders");
 	LLSliderCtrl* terrain_detail = getChild<LLSliderCtrl>("TerrainDetail");   // can be linked with control var
 	LLTextBox* terrain_text = getChild<LLTextBox>("TerrainDetailText");
-
+	
 	ctrl_shader_enable->setEnabled(LLFeatureManager::getInstance()->isFeatureAvailable("VertexShaderEnable"));
 	
 	BOOL shaders = ctrl_shader_enable->get();
@@ -1301,7 +1323,7 @@ void LLFloaterPreferenceGraphicsAdvanced::refreshEnabledState()
 	LLCheckBoxCtrl* ctrl_wind_light = getChild<LLCheckBoxCtrl>("WindLightUseAtmosShaders");
 	LLSliderCtrl* sky = getChild<LLSliderCtrl>("SkyMeshDetail");
 	LLTextBox* sky_text = getChild<LLTextBox>("SkyMeshDetailText");
-
+	
 	// *HACK just checks to see if we can use shaders... 
 	// maybe some cards that use shaders, but don't support windlight
 	ctrl_wind_light->setEnabled(ctrl_shader_enable->getEnabled() && shaders);
@@ -1345,7 +1367,7 @@ void LLFloaterPreferenceGraphicsAdvanced::refreshEnabledState()
 	S32Megabytes max_tex_mem = LLViewerTextureList::getMaxVideoRamSetting(false, mem_multiplier);
 	getChild<LLSliderCtrl>("GraphicsCardTextureMemory")->setMinValue(min_tex_mem.value());
 	getChild<LLSliderCtrl>("GraphicsCardTextureMemory")->setMaxValue(max_tex_mem.value());
-
+	
 	if (!LLFeatureManager::getInstance()->isFeatureAvailable("RenderVBOEnable") ||
 		!gGLManager.mHasVertexBufferObject)
 	{
@@ -1440,7 +1462,7 @@ void LLFloaterPreferenceGraphicsAdvanced::disableUnavailableSettings()
 		
 		ctrl_wind_light->setEnabled(FALSE);
 		ctrl_wind_light->setValue(FALSE);
-
+		
 		sky->setEnabled(FALSE);
 		sky_text->setEnabled(FALSE);
 
@@ -1859,7 +1881,7 @@ void LLFloaterPreferenceGraphicsAdvanced::updateSliderText(LLSliderCtrl* ctrl, L
 {
 	if (text_box == NULL || ctrl== NULL)
 		return;
-
+	
 	// get range and points when text should change
 	F32 value = (F32)ctrl->getValue().asReal();
 	F32 min = ctrl->getMinValue();
@@ -1868,7 +1890,7 @@ void LLFloaterPreferenceGraphicsAdvanced::updateSliderText(LLSliderCtrl* ctrl, L
 	llassert(range > 0);
 	F32 midPoint = min + range / 3.0f;
 	F32 highPoint = min + (2.0f * range / 3.0f);
-
+	
 	// choose the right text
 	if (value < midPoint)
 	{
@@ -2005,6 +2027,11 @@ void LLFloaterPreference::onClickAutoReplace()
 void LLFloaterPreference::onClickSpellChecker()
 {
 		LLFloaterReg::showInstance("prefs_spellchecker");
+}
+
+void LLFloaterPreference::onClickOpenHMDConfig()
+{
+    LLFloaterReg::showInstance("floater_hmd_config_debug");
 }
 
 void LLFloaterPreference::onClickAdvanced()
@@ -2507,12 +2534,12 @@ void LLPanelPreferenceGraphics::draw()
 	setPresetText();
 	LLPanelPreference::draw();
 }
-
+	
 void LLPanelPreferenceGraphics::onPresetsListChange()
 {
 	resetDirtyChilds();
 	setPresetText();
-
+	
 	LLFloaterPreference* instance = LLFloaterReg::findTypedInstance<LLFloaterPreference>("preferences");
 	if (instance && !gSavedSettings.getString("PresetGraphicActive").empty())
 	{
@@ -2549,9 +2576,9 @@ void LLPanelPreferenceGraphics::setPresetText()
 		if (preset_graphic_active == PRESETS_DEFAULT)
 		{
 			preset_graphic_active = LLTrans::getString(PRESETS_DEFAULT);
-		}
-		preset_text->setText(preset_graphic_active);
 	}
+		preset_text->setText(preset_graphic_active);
+}
 	else
 	{
 		preset_text->setText(LLTrans::getString("none_paren_cap"));
@@ -2586,8 +2613,8 @@ bool LLPanelPreferenceGraphics::hasDirtyChilds()
 					std::string control_name = control->getName();
 					if (!control_name.empty())
 					{
-						return true;
-					}
+				return true;
+		}
 				}
 			}
 		}
@@ -2597,7 +2624,7 @@ bool LLPanelPreferenceGraphics::hasDirtyChilds()
 		{
 			view_stack.push_back(*iter);
 		}
-	}
+	}	
 
 	return false;
 }

@@ -742,7 +742,7 @@ void LLViewerTextureList::updateImages(F32 max_time)
 {
 	LL_RECORD_BLOCK_TIME(FTM_UPDATE_TEXTURES);
 	static BOOL cleared = FALSE;
-	if(gTeleportDisplay)
+	if(LLViewerDisplay::gTeleportDisplay)
 	{
 		if(!cleared)
 		{

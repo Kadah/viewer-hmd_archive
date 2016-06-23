@@ -465,9 +465,9 @@ void LLSnapshotLivePreview::reshape(S32 width, S32 height, BOOL called_from_pare
 		LL_DEBUGS() << "window reshaped, updating thumbnail" << LL_ENDL;
 		if (mViewContainer && mViewContainer->isInVisibleChain())
 		{
-			updateSnapshot(TRUE);
-		}
+		updateSnapshot(TRUE);
 	}
+}
 }
 
 BOOL LLSnapshotLivePreview::setThumbnailImageSize()
@@ -754,7 +754,7 @@ BOOL LLSnapshotLivePreview::onIdle( void* snapshot_preview )
             if (gSavedSettings.getBOOL("UseFreezeFrame") && previewp->mAllowFullScreenPreview)
             {
                 previewp->prepareFreezeFrame();
-            }
+                    }
 
             // The snapshot is updated now...
             previewp->mSnapshotUpToDate = TRUE;

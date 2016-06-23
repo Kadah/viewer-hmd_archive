@@ -36,6 +36,8 @@ include(LLUI)
 include(LLVFS)
 include(LLWindow)
 include(LLXML)
+include(LibOVR)
+include(OpenVR)
 include(Linking)
 include(NDOF)
 include(NVAPI)
@@ -88,6 +90,7 @@ include_directories(
     ${OPENAL_LIB_INCLUDE_DIRS}
     ${LIBS_PREBUILT_DIR}/include/collada/1.4
     ${LLAPPEARANCE_INCLUDE_DIRS}
+    ${LIBOVR_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
@@ -242,6 +245,7 @@ set(viewer_SOURCE_FILES
     llfloaterhandler.cpp
     llfloaterhelpbrowser.cpp
     llfloaterhoverheight.cpp
+    llfloaterhmdconfigdebug.cpp
     llfloaterhud.cpp
     llfloaterimagepreview.cpp
     llfloaterimsessiontab.cpp
@@ -322,6 +326,9 @@ set(viewer_SOURCE_FILES
     llgroupmgr.cpp
     llhasheduniqueid.cpp
     llhints.cpp
+    llhmd.cpp
+    llhmdimploculus.cpp
+    llhmdimplopenvr.cpp
     llhttpretrypolicy.cpp
     llhudeffect.cpp
     llhudeffectbeam.cpp
@@ -938,6 +945,8 @@ set(viewer_HEADER_FILES
     llhasheduniqueid.h
     llhints.h
     llhttpretrypolicy.h
+    llhmd.h
+    llhmdimploculus.h
     llhudeffect.h
     llhudeffectbeam.h
     llhudeffectlookat.h
@@ -1389,6 +1398,8 @@ if (LINUX)
 endif (LINUX)
 
 if (WINDOWS)
+    # force delay load of openvr_api.dll if we're doing OpenVR
+    set(CMAKE_EXE_LINKER_FLAGS "${OPENVR_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS}")
     list(APPEND viewer_SOURCE_FILES
          llappviewerwin32.cpp
          llwindebug.cpp
@@ -1648,6 +1659,10 @@ if (FMODEX)
 endif (FMODEX)
 
 set_source_files_properties(llstartup.cpp PROPERTIES COMPILE_FLAGS "${LLSTARTUP_COMPILE_FLAGS}")
+
+if (OPENVR)
+    set_source_files_properties(llhmdimplopenvr.cpp PROPERTIES COMPILE_FLAGS "${OPENVR_DEFINES}")
+endif (OPENVR)
 
 list(APPEND viewer_SOURCE_FILES ${viewer_HEADER_FILES})
 
@@ -1954,6 +1969,7 @@ target_link_libraries(${VIEWER_BINARY_NAME}
     ${LLPHYSICSEXTENSIONS_LIBRARIES}
     ${TCMALLOC_LIBRARIES}
     ${LLAPPEARANCE_LIBRARIES}
+    ${LIBOVR_LIBRARIES}
     )
 
 set(ARTWORK_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH

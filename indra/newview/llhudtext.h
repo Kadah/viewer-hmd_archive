@@ -105,7 +105,6 @@ public:
 	void setMaxLines(S32 max_lines) { mMaxLines = max_lines; }
 	void setFadeDistance(F32 fade_distance, F32 fade_range) { mFadeDistance = fade_distance; mFadeRange = fade_range; }
 	void updateVisibility();
-	LLVector2 updateScreenPos(LLVector2 &offset_target);
 	void updateSize();
 	void setMass(F32 mass) { mMass = llmax(0.1f, mass); }
 	void setTextAlignment(ETextAlignment alignment) { mTextAlignment = alignment; }

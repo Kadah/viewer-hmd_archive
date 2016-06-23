@@ -59,8 +59,8 @@ public:
 	/*virtual*/ BOOL getSize(LLCoordScreen *size);
 	/*virtual*/ BOOL getSize(LLCoordWindow *size);
 	/*virtual*/ BOOL setPosition(LLCoordScreen position);
-	/*virtual*/ BOOL setSizeImpl(LLCoordScreen size);
-	/*virtual*/ BOOL setSizeImpl(LLCoordWindow size);
+	/*virtual*/ BOOL setSizeImpl(LLCoordScreen size, BOOL adjustPosition);
+	/*virtual*/ BOOL setSizeImpl(LLCoordWindow size, BOOL adjustPosition);
 	/*virtual*/ BOOL switchContext(BOOL fullscreen, const LLCoordScreen &size, BOOL disable_vsync, const LLCoordScreen * const posp = NULL);
 	/*virtual*/ BOOL setCursorPosition(LLCoordWindow position);
 	/*virtual*/ BOOL getCursorPosition(LLCoordWindow *position);
@@ -106,7 +106,7 @@ public:
 
 	/*virtual*/ BOOL dialogColorPicker(F32 *r, F32 *g, F32 *b);
 
-	/*virtual*/ void *getPlatformWindow();
+	/*virtual*/ void *getPlatformWindow(S32 idx = -1);
 	/*virtual*/ void bringToFront() {};
 	
 	/*virtual*/ void allowLanguageTextInput(LLPreeditor *preeditor, BOOL b);
@@ -118,7 +118,7 @@ public:
 	// Provide native key event data
 	/*virtual*/ LLSD getNativeKeyData();
 	
-	void* getWindow() { return mWindow; }
+	void* getWindow() { return mWindow[mCurRCIdx]; }
 	LLWindowCallbacks* getCallbacks() { return mCallbacks; }
 	LLPreeditor* getPreeditor() { return mPreeditor; }
 	
@@ -128,6 +128,38 @@ public:
 	void handleDragNDrop(std::string url, LLWindowCallbacks::DragNDropAction action);
     
     bool allowsLanguageInput() { return mLanguageTextInputAllowed; }
+
+    // HMD support
+    /*virtual*/ BOOL initHMDWindow(S32 left, S32 top, S32 width, S32 height, BOOL forceMirror, BOOL& isMirror);
+    /*virtual*/ BOOL destroyHMDWindow();
+    /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
+    /*virtual*/ BOOL setFocusWindow(S32 idx);
+    /*virtual*/ void setHMDMode(BOOL mode, U32 min_width = 0, U32 min_height = 0);
+    /*virtual*/ S32 getDisplayCount();
+    /*virtual*/ void enableVSync(BOOL b);
+    
+    // Mac Overrides to get values for these instead of what the getSize() and getPosition methods return.
+    // adding to get real info from the Mac since this class is very inconsistent about returning 
+    // whole window (i.e. "Frame") vs. view size and position.  The following get functions in this class return
+    // data that is not usable in the corresponding set functions:
+    //
+    // getPosition(LLCoordScreen* position) - returns position of the upper-left corner of the VIEW, not the windowframe
+    //
+    // However, the following methods expect data from the Frame, not the view:
+    // setPosition(LLCoordScreen position) - sets the position assuming you passed in the upper left of the FRAME
+    //
+    // Needless to say, this makes getting and setting the window position problematical on the Mac.
+    // I would fix these, but I'm afraid of what else is now relying upon the current behavior.  *sigh*
+    // Instead, I'll just add methods that get the "correct" data so that the setPosition method can be called
+    // with the correct data on the Mac.
+    
+    // returns the upper-left screen coordinates for the window frame (including the title bar and any borders)
+    /*virtual*/ BOOL getFramePos(LLCoordScreen* pos);
+
+    void adjustPosForHMDScaling(LLCoordGL& pt);
+    void enterFullScreen();
+    void exitFullScreen(LLCoordScreen pos, LLCoordWindow size);
+    void scaleBackSurface(BOOL scale);
 
 protected:
 	LLWindowMacOSX(LLWindowCallbacks* callbacks,
@@ -168,9 +200,13 @@ protected:
 	BOOL createContext(int x, int y, int width, int height, int bits, BOOL fullscreen, BOOL disable_vsync);
 	void destroyContext();
 	void setupFailure(const std::string& text, const std::string& caption, U32 type);
+    void keepMouseWithinBounds(float* cp, S32 winIdx, S32 w, S32 h);
 	void adjustCursorDecouple(bool warpingMouse = false);
 	static MASK modifiersToMask(S16 modifiers);
-	
+
+    void adjustWindowToFitScreen(LLCoordWindow& size);
+    void adjustHMDScale();
+
 #if LL_OS_DRAGDROP_ENABLED
 	
 	//static OSErr dragTrackingHandler(DragTrackingMessage message, WindowRef theWindow, void * handlerRefCon, DragRef theDrag);
@@ -184,8 +220,8 @@ protected:
 	//
 	
 	// Use generic pointers here.  This lets us do some funky Obj-C interop using Obj-C objects without having to worry about any compilation problems that may arise.
-	NSWindowRef			mWindow;
-	GLViewRef			mGLView;
+	NSWindowRef			mWindow[2];
+	GLViewRef			mGLView[2];
 	CGLContextObj		mContext;
 	CGLPixelFormatObj	mPixelFormat;
 	CGDirectDisplayID	mDisplay;
@@ -208,8 +244,10 @@ protected:
 	BOOL		mMinimized;
 	U32			mFSAASamples;
 	BOOL		mForceRebuild;
-	
-	S32	mDragOverrideCursor;
+    S32	        mDragOverrideCursor;
+    BOOL        mHMDMode;
+    S32         mHMDSize[2];
+    F32         mHMDScale[2];
 
 	// Input method management through Text Service Manager.
 	BOOL		mLanguageTextInputAllowed;

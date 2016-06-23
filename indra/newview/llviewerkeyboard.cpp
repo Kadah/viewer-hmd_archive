@@ -34,14 +34,21 @@
 #include "llagentcamera.h"
 #include "llfloaterimnearbychat.h"
 #include "llviewercontrol.h"
+#include "llviewerjoystick.h"
 #include "llfocusmgr.h"
 #include "llmorphview.h"
 #include "llmoveview.h"
 #include "lltoolfocus.h"
+#include "lltoolmgr.h"
+#include "llselectmgr.h"
+#include "lltoolpie.h"
+#include "lltoolgrab.h"
 #include "llviewerwindow.h"
 #include "llvoavatarself.h"
 #include "llfloatercamera.h"
+#include "llviewercamera.h"
 #include "llinitparam.h"
+#include "llhmd.h"
 
 //
 // Constants
@@ -60,6 +67,11 @@ struct LLKeyboardActionRegistry
 };
 
 LLViewerKeyboard gViewerKeyboard;
+
+// forward decl
+void emulate_left_mouse_button( EKeystate s );
+// handle command-key swap
+static BOOL gInKeySwap = FALSE;
 
 void agent_jump( EKeystate s )
 {
@@ -180,6 +192,38 @@ void agent_push_backward( EKeystate s )
 	{
 		agent_push_forwardbackward(s, -1, LLAgent::DOUBLETAP_BACKWARD);
 	}
+}
+
+void align_hips_to_eyes( EKeystate state )
+{
+	if (KEYSTATE_DOWN == state && gHMD.isHMDMode())
+	{
+        if (!gAgentCamera.cameraMouselook() || gHMD.getMouselookControlMode() == (S32)LLHMD::kMouselookControl_Independent)
+        {
+            LLVector3 atl = gAgent.getAtAxis();
+            atl[VZ] = 0.0f;
+            gAgent.resetAxes(atl);
+            F32 roll;
+            F32 pitch;
+            F32 yaw;
+            gHMD.getHMDRotation().getEulerAngles(&roll,&pitch,&yaw);
+            gAgent.yaw(yaw);
+        }
+        else if (LLViewerJoystick::getInstance()->getOverrideCamera())
+        {
+            LLViewerJoystick::getInstance()->moveFlycam(true);
+        }
+        gHMD.resetOrientation();
+	}
+}
+
+void center_cursor( EKeystate state )
+{
+    gViewerWindow->moveCursorToCenter();
+    if (gHMD.isHMDMode())
+    {
+        gHMD.updateHMDMouseInfo();
+    }
 }
 
 static void agent_slide_leftright( EKeystate s, S32 direction, LLAgent::EDoubleTapRunMode mode )
@@ -558,6 +602,14 @@ void edit_avatar_move_backward( EKeystate s )
 
 void stop_moving( EKeystate s )
 {
+    if (!gInKeySwap && gSavedSettings.getBOOL("SwapStopMoveAndAction"))
+    {
+        gInKeySwap = TRUE;
+        emulate_left_mouse_button(s);
+        gInKeySwap = FALSE;
+        return;
+    }
+
 	if( KEYSTATE_UP == s  ) return;
 	// stop agent
 	gAgent.setControlFlags(AGENT_CONTROL_STOP);
@@ -594,6 +646,55 @@ void start_gesture( EKeystate s )
  			LLFloaterIMNearbyChat::startChat(NULL);
  		}
 	}
+}
+
+void emulate_left_mouse_button( EKeystate s )
+{
+    if (!gInKeySwap && gSavedSettings.getBOOL("SwapStopMoveAndAction"))
+    {
+        gInKeySwap = TRUE;
+        stop_moving(s);
+        gInKeySwap = FALSE;
+        return;
+    }
+
+    switch (gAgentCamera.getCameraMode())
+    {
+    case CAMERA_MODE_MOUSELOOK:
+        // call "touch" on object that the reticle is pointing at (if any)
+        if (gBasicToolset && s == KEYSTATE_DOWN)
+        {
+		    const U32 old_flags = gAgent.getControlFlags();
+		    gAgent.clearControlFlags(AGENT_CONTROL_MOUSELOOK);
+            bool dirtyFlags = (old_flags != gAgent.getControlFlags());
+            if (dirtyFlags)
+		    {
+			    gAgent.setFlagsDirty();
+		    }
+            LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
+            gViewerWindow->handleMouseDown(gViewerWindow->getWindow(), gViewerWindow->getCurrentMouse(), gKeyboard->currentMask(TRUE));
+            gViewerWindow->handleMouseUp(gViewerWindow->getWindow(), gViewerWindow->getCurrentMouse(), gKeyboard->currentMask(TRUE));
+    	    LLToolMgr::getInstance()->setCurrentToolset(gMouselookToolset);
+	        gViewerWindow->moveCursorToCenter();
+	        gFocusMgr.setKeyboardFocus(NULL);
+		    gAgent.setControlFlags(old_flags);
+		    if (old_flags != gAgent.getControlFlags())
+		    {
+			    gAgent.setFlagsDirty();
+		    }
+        }
+        break;
+    case CAMERA_MODE_FIRST_PERSON:
+    case CAMERA_MODE_THIRD_PERSON:
+        // fire "gun"
+        if (s == KEYSTATE_DOWN || s == KEYSTATE_LEVEL)
+        {
+            gAgent.setControlFlags(AGENT_CONTROL_ML_LBUTTON_DOWN);
+        }
+        break;
+    default:
+        break;
+    }
 }
 
 #define REGISTER_KEYBOARD_ACTION(KEY, ACTION) LLREGISTER_STATIC(LLKeyboardActionRegistry, KEY, ACTION);
@@ -637,6 +738,11 @@ REGISTER_KEYBOARD_ACTION("edit_avatar_move_backward", edit_avatar_move_backward)
 REGISTER_KEYBOARD_ACTION("stop_moving", stop_moving);
 REGISTER_KEYBOARD_ACTION("start_chat", start_chat);
 REGISTER_KEYBOARD_ACTION("start_gesture", start_gesture);
+REGISTER_KEYBOARD_ACTION("align_hips_to_eyes", align_hips_to_eyes);
+REGISTER_KEYBOARD_ACTION("center_cursor", center_cursor);
+REGISTER_KEYBOARD_ACTION("mouselook_fire", emulate_left_mouse_button);
+REGISTER_KEYBOARD_ACTION("touch", emulate_left_mouse_button);
+
 #undef REGISTER_KEYBOARD_ACTION
 
 LLViewerKeyboard::LLViewerKeyboard()
@@ -693,6 +799,7 @@ BOOL LLViewerKeyboard::modeFromString(const std::string& string, S32 *mode)
 
 BOOL LLViewerKeyboard::handleKey(KEY translated_key,  MASK translated_mask, BOOL repeated)
 {
+	LL_DEBUGS("Keyboard Handling") << "Handling key " << translated_key << LL_ENDL;
 	// check for re-map
 	EKeyboardMode mode = gViewerKeyboard.getMode();
 	U32 keyidx = (translated_mask<<16) | translated_key;

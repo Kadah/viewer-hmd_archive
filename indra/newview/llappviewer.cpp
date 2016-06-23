@@ -99,6 +99,7 @@
 #include "llscenemonitor.h"
 #include "llavatarrenderinfoaccountant.h"
 #include "lllocalbitmaps.h"
+#include "llhmd.h"
 
 // Linden library includes
 #include "llavatarnamecache.h"
@@ -1212,6 +1213,11 @@ bool LLAppViewer::init()
 		LLStringOps::sPM = LLTrans::getString("dateTimePM");
 	}
 
+    if (!gHMD.isFailedInit() && !gHMD.init())
+    {
+        LL_WARNS("HMD") << "HMD initialization Failed!" << LL_ENDL;
+    }
+
 	LLAgentLanguage::init();
 
     /// Tell the Coprocedure manager how to discover and store the pool sizes
@@ -1444,7 +1450,7 @@ bool LLAppViewer::mainLoop()
 				{
 					pingMainloopTimeout("Main:Display");
 					gGLActive = TRUE;
-					display();
+					LLViewerDisplay::display();
 					pingMainloopTimeout("Main:Snapshot");
 					LLFloaterSnapshot::update(); // take snapshots
 					gGLActive = FALSE;
@@ -1713,13 +1719,16 @@ bool LLAppViewer::cleanup()
 
 	LL_INFOS() << "Viewer disconnected" << LL_ENDL;
 
-	display_cleanup(); 
+	LLViewerDisplay::display_cleanup();
 
 	release_start_screen(); // just in case
 
 	LLError::logToFixedBuffer(NULL);
 
 	LL_INFOS() << "Cleaning Up" << LL_ENDL;
+
+    // shut down HMD manager
+    gHMD.shutdown();
 
 	// shut down mesh streamer
 	gMeshRepo.shutdown();
@@ -1855,19 +1864,10 @@ bool LLAppViewer::cleanup()
 
 	LLAvatarAppearance::cleanupClass();
 	
-	LLAvatarAppearance::cleanupClass();
-	
 	LLPostProcess::cleanupClass();
 
 	LLTracker::cleanupInstance();
 	
-	// *FIX: This is handled in LLAppViewerWin32::cleanup().
-	// I'm keeping the comment to remember its order in cleanup,
-	// in case of unforseen dependency.
-	//#if LL_WINDOWS
-	//	gDXHardware.cleanup();
-	//#endif // LL_WINDOWS
-
 	LLVolumeMgr* volume_manager = LLPrimitive::getVolumeManager();
 	if (!volume_manager->cleanup())
 	{
@@ -3266,10 +3266,10 @@ LLSD LLAppViewer::getViewerInfo() const
 	// LLFloaterAbout.
 	LLSD info;
 	LLSD version;
-	version.append(LLVersionInfo::getMajor());
-	version.append(LLVersionInfo::getMinor());
-	version.append(LLVersionInfo::getPatch());
-	version.append(LLVersionInfo::getBuild());
+	version.append((S32)LLVersionInfo::getMajor());
+	version.append((S32)LLVersionInfo::getMinor());
+	version.append((S32)LLVersionInfo::getPatch());
+	version.append((S32)LLVersionInfo::getBuild());
 	info["VIEWER_VERSION"] = version;
 	info["VIEWER_VERSION_STR"] = LLVersionInfo::getVersion();
 	info["CHANNEL"] = LLVersionInfo::getChannel();
@@ -3501,10 +3501,10 @@ void LLAppViewer::writeSystemInfo()
 #endif
 
 	gDebugInfo["ClientInfo"]["Name"] = LLVersionInfo::getChannel();
-	gDebugInfo["ClientInfo"]["MajorVersion"] = LLVersionInfo::getMajor();
-	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::getMinor();
-	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::getPatch();
-	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::getBuild();
+	gDebugInfo["ClientInfo"]["MajorVersion"] = (S32)(LLVersionInfo::getMajor());
+	gDebugInfo["ClientInfo"]["MinorVersion"] = (S32)(LLVersionInfo::getMinor());
+	gDebugInfo["ClientInfo"]["PatchVersion"] = (S32)(LLVersionInfo::getPatch());
+	gDebugInfo["ClientInfo"]["BuildVersion"] = (S32)(LLVersionInfo::getBuild());
 
 	gDebugInfo["CAFilename"] = gDirUtilp->getCAFile();
 
@@ -4618,6 +4618,13 @@ void LLAppViewer::saveFinalSnapshot()
 {
 	if (!mSavedFinalSnapshot)
 	{
+        if (gHMD.isHMDMode())
+        {
+            // Final snapshot should never be from HMD mode
+            gHMD.setRenderMode(LLHMD::RenderMode_Normal);
+        }
+
+        mIsSavingFinalSnapshot = TRUE;
 		gSavedSettings.setVector3d("FocusPosOnLogout", gAgentCamera.calcFocusPositionTargetGlobal());
 		gSavedSettings.setVector3d("CameraPosOnLogout", gAgentCamera.calcCameraPositionTargetGlobal());
 		gViewerWindow->setCursor(UI_CURSOR_WAIT);
@@ -4630,6 +4637,7 @@ void LLAppViewer::saveFinalSnapshot()
 		snap_filename += SCREEN_LAST_FILENAME;
 		// use full pixel dimensions of viewer window (not post-scale dimensions)
 		gViewerWindow->saveSnapshot(snap_filename, gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw(), FALSE, TRUE);
+        mIsSavingFinalSnapshot = FALSE;
 		mSavedFinalSnapshot = TRUE;
 	}
 }
@@ -4794,7 +4802,6 @@ void LLAppViewer::idle()
 		// Update spaceserver timeinfo
 	    LLWorld::getInstance()->setSpaceTimeUSec(LLWorld::getInstance()->getSpaceTimeUSec() + LLUnits::Seconds::fromValue(dt_raw));
     
-    
 	    //////////////////////////////////////
 	    //
 	    // Update simulator agent state
@@ -4929,7 +4936,7 @@ void LLAppViewer::idle()
     {
 		return;
     }
-	if (gTeleportDisplay)
+	if (LLViewerDisplay::gTeleportDisplay)
     {
 		return;
     }
@@ -5617,10 +5624,10 @@ void LLAppViewer::handleLoginComplete()
 	// Store some data to DebugInfo in case of a freeze.
 	gDebugInfo["ClientInfo"]["Name"] = LLVersionInfo::getChannel();
 
-	gDebugInfo["ClientInfo"]["MajorVersion"] = LLVersionInfo::getMajor();
-	gDebugInfo["ClientInfo"]["MinorVersion"] = LLVersionInfo::getMinor();
-	gDebugInfo["ClientInfo"]["PatchVersion"] = LLVersionInfo::getPatch();
-	gDebugInfo["ClientInfo"]["BuildVersion"] = LLVersionInfo::getBuild();
+	gDebugInfo["ClientInfo"]["MajorVersion"] = (S32)(LLVersionInfo::getMajor());
+	gDebugInfo["ClientInfo"]["MinorVersion"] = (S32)(LLVersionInfo::getMinor());
+	gDebugInfo["ClientInfo"]["PatchVersion"] = (S32)(LLVersionInfo::getPatch());
+	gDebugInfo["ClientInfo"]["BuildVersion"] = (S32)(LLVersionInfo::getBuild());
 
 	LLParcel* parcel = LLViewerParcelMgr::getInstance()->getAgentParcel();
 	if ( parcel && parcel->getMusicURL()[0])

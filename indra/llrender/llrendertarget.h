@@ -75,6 +75,12 @@ public:
 	//multiple calls will release previously allocated resources
 	bool allocate(U32 resx, U32 resy, U32 color_fmt, bool depth, bool stencil, LLTexUnit::eTextureType usage = LLTexUnit::TT_TEXTURE, bool use_fbo = false, S32 samples = 0);
 
+	//A stripped version of allocate to handle insertion of Rift swap buffer textures.
+	bool addTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, LLTexUnit::eTextureType usage = LLTexUnit::TT_TEXTURE);
+
+    //A stripped version of allocate to handle insertion of Rift swap buffer textures.
+    bool forceTarget(U32 resx, U32 resy, U32 texID, U32 color_fmt, LLTexUnit::eTextureType usage = LLTexUnit::TT_TEXTURE);
+
 	//resize existing attachments to use new resolution and color format
 	// CAUTION: if the GL runs out of memory attempting to resize, this render target will be undefined
 	// DO NOT use for screen space buffers or for scratch space for an image that might be uploaded
@@ -84,6 +90,9 @@ public:
 	//add color buffer attachment
 	//limit of 4 color attachments per render target
 	bool addColorAttachment(U32 color_fmt);
+
+    //set color buffer attachment to specified texture, use with caution...
+    bool setAttachment(int which, int textureId);
 
 	//allocate a depth texture
 	bool allocateDepth();
@@ -128,7 +137,7 @@ public:
 	// call bindTarget once, do all your rendering, call flush once
 	// if fetch_depth is TRUE, every effort will be made to copy the depth buffer into 
 	// the current depth texture.  A depth texture will be allocated if needed.
-	void flush(bool fetch_depth = FALSE);
+    void flush(bool fetch_depth = FALSE);
 
 	void copyContents(LLRenderTarget& source, S32 srcX0, S32 srcY0, S32 srcX1, S32 srcY1,
 						S32 dstX0, S32 dstY0, S32 dstX1, S32 dstY1, U32 mask, U32 filter);
@@ -136,12 +145,17 @@ public:
 	static void copyContentsToFramebuffer(LLRenderTarget& source, S32 srcX0, S32 srcY0, S32 srcX1, S32 srcY1,
 						S32 dstX0, S32 dstY0, S32 dstX1, S32 dstY1, U32 mask, U32 filter);
 
+    static void copyContentsToBoundTarget(LLRenderTarget& source, S32 srcX0, S32 srcY0, S32 srcX1, S32 srcY1,
+        S32 dstX0, S32 dstY0, S32 dstX1, S32 dstY1, U32 mask, U32 filter);
+
 	//Returns TRUE if target is ready to be rendered into.
 	//That is, if the target has been allocated with at least
 	//one renderable attachment (i.e. color buffer, depth buffer).
 	bool isComplete() const;
 
-	static LLRenderTarget* getCurrentBoundTarget() { return sBoundTarget; }
+    void copyFramebuffer();
+
+    U32 getFBO() const { return mFBO; }
 
 protected:
 	U32 mResX;
@@ -150,6 +164,7 @@ protected:
 	std::vector<U32> mInternalFormat;
 	U32 mFBO;
 	U32 mPreviousFBO;
+    LLRenderTarget* mPreviousTarget;
 	U32 mPreviousResX;
 	U32 mPreviousResY;
 
@@ -158,7 +173,8 @@ protected:
 	bool mUseDepth;
 	bool mRenderDepth;
 	LLTexUnit::eTextureType mUsage;
-	
+
+public:
 	static LLRenderTarget* sBoundTarget;
 };
 

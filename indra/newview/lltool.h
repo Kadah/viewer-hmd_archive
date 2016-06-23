@@ -97,6 +97,11 @@ public:
 	BOOL					hasMouseCapture();
 	virtual void			onMouseCaptureLost() {}  // override this one as needed.
 
+    virtual BOOL            hasMouseIntersectOverride() const { return FALSE; }
+    virtual BOOL            isMouseIntersectInUISpace() const { return TRUE; }
+    virtual BOOL            hasMouseIntersectGlobal() const { return FALSE; }
+    virtual LLVector3d      getMouseIntersectGlobal() { return LLVector3d(); }
+
 protected:
 	LLToolComposite*	mComposite;  // Composite will handle mouse captures.
 	std::string			mName;

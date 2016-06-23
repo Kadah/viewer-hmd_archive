@@ -696,7 +696,7 @@ LLColor4 LLVOSky::calcSkyColorInDir(const LLVector3 &dir, bool isShiny)
 		return col;
 	}
 
-	// undo OGL_TO_CFR_ROTATION and negate vertical direction.
+	// undo OGL_TO_CFR_BASIS and negate vertical direction.
 	LLVector3 Pn = LLVector3(-dir[1] , -dir[2], -dir[0]);
 
 	LLColor3 vary_HazeColor(0,0,0);

@@ -67,7 +67,7 @@ void glh_set_current_modelview(const glh::matrix4f& mat);
 glh::matrix4f glh_get_current_projection();
 void glh_set_current_projection(glh::matrix4f& mat);
 glh::matrix4f gl_ortho(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top, GLfloat znear, GLfloat zfar);
-glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar);
+glh::matrix4f gl_perspective(GLfloat fovy, GLfloat aspect, GLfloat zNear, GLfloat zFar, BOOL display);
 glh::matrix4f gl_lookat(LLVector3 eye, LLVector3 center, LLVector3 up);
 
 extern LLTrace::BlockTimerStatHandle FTM_RENDER_GEOMETRY;
@@ -282,8 +282,8 @@ public:
 	void setupSpotLight(LLGLSLShader& shader, LLDrawable* drawablep);
 
 	void unbindDeferredShader(LLGLSLShader& shader);
-	void renderDeferredLighting();
-	void renderDeferredLightingToRT(LLRenderTarget* target);
+    void renderDeferredLighting(BOOL for_hmd, int which_eye);
+    void renderDeferredLightingToRT(LLRenderTarget* target, BOOL for_hmd, int which_eye);
 	
 	void generateWaterReflection(LLCamera& camera);
 	void generateSunShadow(LLCamera& camera);
@@ -413,6 +413,8 @@ public:
 	void skipRenderingOfTerrain( BOOL flag );
 	void hideObject( const LLUUID& id );
 	void restoreHiddenObject( const LLUUID& id );
+
+    void postRender(BOOL writeAlpha = FALSE, BOOL forHMD = FALSE, int whichEye = -1);
 
 private:
 	void unloadShaders();
@@ -635,6 +637,10 @@ public:
 	LLPointer<LLDrawable>				mShadowSpotLight[2];
 	F32									mSpotLightFade[2];
 	LLPointer<LLDrawable>				mTargetShadowSpotLight[2];
+
+    //utility buffers for rendering various HMD (e.g. Oculus Rift) surfaces
+    LLPointer<LLVertexBuffer> mHMDUISurface;
+    LLPointer<LLVertexBuffer> mHMDDepthShape;
 
 	LLVector4				mSunClipPlanes;
 	LLVector4				mSunOrthoClipPlanes;

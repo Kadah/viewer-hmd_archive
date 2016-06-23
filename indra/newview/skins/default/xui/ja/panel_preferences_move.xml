@@ -12,6 +12,7 @@
 	</text>
 	<check_box label="常にキー操作で動くようにする" name="arrow_keys_move_avatar_check"/>
 	<check_box label="上矢印キー2度押し+長押しで走る" name="tap_tap_hold_to_run"/>
+	<check_box label="ジャンプまたはクラウチキーをホールドして飛行を開始/停止" name="automatic_fly"/>
 	<text name="mouse_lbl">
 		マウス：
 	</text>
@@ -36,4 +37,5 @@
 		<combo_box.item label="クリックされた地点にテレポート" name="2"/>
 	</combo_box>
 	<button label="その他のディバイス" name="joystick_setup_button"/>
+	<button label="ヘッドマウントディスプレイ" name="hmd_config_button"/>
 </panel>

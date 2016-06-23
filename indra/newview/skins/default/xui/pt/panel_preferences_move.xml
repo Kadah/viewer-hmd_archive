@@ -12,6 +12,7 @@
 	</text>
 	<check_box label="Teclas de seta sempre me movem" name="arrow_keys_move_avatar_check"/>
 	<check_box label="Dê dois toques e pressione para correr" name="tap_tap_hold_to_run"/>
+	<check_box label="Mantenha a tecla saltar ou agachar pressionadas para iniciar ou parar o voo" name="automatic_fly"/>
 	<text name="mouse_lbl">
 		Mouse:
 	</text>
@@ -36,4 +37,5 @@
 		<combo_box.item label="Teletransportar para ponto clicado" name="2"/>
 	</combo_box>
 	<button label="Outros dispositivos" name="joystick_setup_button"/>
+	<button label="HMDs" name="hmd_config_button"/>
 </panel>

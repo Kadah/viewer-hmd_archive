@@ -881,12 +881,20 @@ void LLViewerObjectList::renderObjectBeacons()
 
 F32 gpu_benchmark()
 {
-	if (!gGLManager.mHasShaderObjects || !gGLManager.mHasTimerQuery)
+    BOOL nSightDebugMode = gSavedSettings.getBOOL("NsightDebug");
+
+    if (!gGLManager.mHasShaderObjects || !gGLManager.mHasTimerQuery)
 	{ // don't bother benchmarking the fixed function
       // or venerable drivers which don't support accurate timing anyway
       // and are likely to be correctly identified by the GPU table already.
 		return -1.f;
 	}
+
+    if (nSightDebugMode)
+    {
+        // happy lies to avoid benchmark use of glReadPixels below which prevents shader debugging
+        return 512.0f;
+    }
 
     if (gBenchmarkProgram.mProgramObject == 0)
 	{

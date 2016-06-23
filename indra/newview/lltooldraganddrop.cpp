@@ -60,6 +60,7 @@
 #include "llvoavatarself.h"
 #include "llworld.h"
 #include "llpanelface.h"
+#include "llhmd.h"
 
 // syntactic sugar
 #define callMemberFunction(object,ptrToMember)  ((object).*(ptrToMember))
@@ -740,6 +741,10 @@ void LLToolDragAndDrop::dragOrDrop( S32 x, S32 y, MASK mask, BOOL drop,
 		if (handled)
 		{
 			mLastAccept = (EAcceptance)*acceptance;
+            if (gHMD.isHMDMode() && !drop)
+            {
+                gHMD.cursorIntersectsUI(TRUE);
+            }
 		}
 	}
 
@@ -816,6 +821,10 @@ void LLToolDragAndDrop::dragOrDrop( S32 x, S32 y, MASK mask, BOOL drop,
 		if (handled)
 		{
 			mLastAccept = (EAcceptance)*acceptance;
+            if (gHMD.isHMDMode() && !drop)
+            {
+                gHMD.cursorIntersectsUI(TRUE);
+            }
 		}
 	}
 
@@ -1084,7 +1093,7 @@ BOOL LLToolDragAndDrop::handleDropTextureProtections(LLViewerObject* hit_obj,
 		// Force the object to update and refetch its inventory so it has this texture.
 		hit_obj->dirtyInventory();
 		hit_obj->requestInventory();
-		// TODO: Check to see if adding the item was successful; if not, then
+ 		// TODO: Check to see if adding the item was successful; if not, then
 		// we should return false here. This will requre a separate listener
 		// since without listener, we have no way to receive update
 	}

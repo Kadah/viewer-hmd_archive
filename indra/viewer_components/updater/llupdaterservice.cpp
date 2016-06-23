@@ -490,13 +490,13 @@ void LLUpdaterServiceImpl::response(LLSD const & content)
 	else
 	{
 		LL_WARNS("UpdaterService") << "Invalid update query response ignored; retry in "
-			<< mCheckPeriod << " seconds" << LL_ENDL;
+								   << mCheckPeriod << " seconds" << LL_ENDL;
 		setState(LLUpdaterService::TEMPORARY_ERROR);
 		if (mIsChecking)
 		{
-			restartTimer(mCheckPeriod);
-		}
+		restartTimer(mCheckPeriod);
 	}
+}
 }
 
 void LLUpdaterServiceImpl::downloadComplete(LLSD const & data) 
@@ -748,10 +748,10 @@ std::string const & ll_get_version(void) {
 	
 	if (version.empty()) {
 		std::ostringstream stream;
-		stream << LL_VIEWER_VERSION_MAJOR << "."
-			   << LL_VIEWER_VERSION_MINOR << "."
-			   << LL_VIEWER_VERSION_PATCH << "."
-			   << LL_VIEWER_VERSION_BUILD;
+		stream << (U32)(LL_VIEWER_VERSION_MAJOR) << "."
+			   << (U32)(LL_VIEWER_VERSION_MINOR) << "."
+			   << (U32)(LL_VIEWER_VERSION_PATCH) << "."
+			   << (U32)(LL_VIEWER_VERSION_BUILD);
 		version = stream.str();
 	}
 	

@@ -62,6 +62,7 @@
 #include "pipeline.h"
 #include "llviewershadermgr.h"
 #include "lltrans.h"
+#include "llhmd.h"
 
 const S32 NUM_AXES = 3;
 const S32 MOUSE_DRAG_SLOP = 2;       // pixels
@@ -788,6 +789,7 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
 		return;
 	}
 	
+    //RIFT check mouse  BOOL use3D = gHMD.isHMDMode() && !isMouseIntersectInUISpace();
 	//LLBBox bbox = LLSelectMgr::getInstance()->getBBoxOfSelection();
 	LLMatrix4 projMatrix = LLViewerCamera::getInstance()->getProjection();
 	LLMatrix4 modelView = LLViewerCamera::getInstance()->getModelview();
@@ -809,7 +811,7 @@ void LLManipTranslate::highlightManipulators(S32 x, S32 y)
 		relative_camera_dir = LLVector3(1.f, 0.f, 0.f) * ~grid_rotation;
 		LLVector4 translation(object_position);
 		transform.initRotTrans(grid_rotation, translation);
-		LLMatrix4 cfr(OGL_TO_CFR_ROTATION);
+		LLMatrix4 cfr(OGL_TO_CFR_BASIS);
 		transform *= cfr;
 		LLMatrix4 window_scale;
 		F32 zoom_level = 2.f * gAgentCamera.mHUDCurZoom;
@@ -1440,15 +1442,32 @@ void LLManipTranslate::renderSnapGuides()
 				LLVector3 help_text_pos = selection_center_start + (snap_offset_meters_up * 3.f * mSnapOffsetAxis);
 				const LLFontGL* big_fontp = LLFontGL::getFontSansSerif();
 
-				std::string help_text = LLTrans::getString("manip_hint1");
-				LLColor4 help_text_color = LLColor4::white;
-				help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
-				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
-				help_text = LLTrans::getString("manip_hint2");
-				help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapOffsetMeters * 0.2f;
-				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
-			}
-		}
+                if (gHMD.isHMDMode())
+                {
+                    LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
+                    LLGLState gls_blend(GL_BLEND, TRUE);
+                    LLGLState gls_alpha(GL_ALPHA_TEST, TRUE);
+
+                    std::string help_text = LLTrans::getString("manip_hint1");
+                    LLColor4 help_text_color = LLColor4::white;
+                    help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+                    help_text = LLTrans::getString("manip_hint2");
+                    help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapOffsetMeters * 0.2f;
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+                }
+                else
+                {
+                    std::string help_text = LLTrans::getString("manip_hint1");
+                    LLColor4 help_text_color = LLColor4::white;
+                    help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+                    help_text = LLTrans::getString("manip_hint2");
+                    help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapOffsetMeters * 0.2f;
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+                }
+            }
+        }
 	}
 	else
 	{
@@ -1528,6 +1547,7 @@ void LLManipTranslate::renderSnapGuides()
 		{
 			//draw grid behind objects
 			LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
+            LLGLState gls_blend(GL_BLEND, TRUE);
 
 			{
 				LLGLDisable stencil(GL_STENCIL_TEST);
@@ -1627,6 +1647,27 @@ void LLManipTranslate::renderGrid(F32 x, F32 y, F32 size, F32 r, F32 g, F32 b, F
 	}
 
 	
+}
+
+void LLManipTranslate::renderGridVert(F32 x_trans, F32 y_trans, F32 r, F32 g, F32 b, F32 alpha)
+{
+	gGL.color4f(r, g, b, alpha);
+	switch (mManipPart)
+	{
+	case LL_YZ_PLANE:
+		gGL.vertex3f(0, x_trans, y_trans);
+		break;
+	case LL_XZ_PLANE:
+		gGL.vertex3f(x_trans, 0, y_trans);
+		break;
+	case LL_XY_PLANE:
+		gGL.vertex3f(x_trans, y_trans, 0);
+		break;
+	default:
+		gGL.vertex3f(0,0,0);
+		break;
+	}
+
 }
 
 void LLManipTranslate::highlightIntersection(LLVector3 normal, 
@@ -1831,7 +1872,8 @@ void LLManipTranslate::renderTranslationHandles()
 	// Drag handles 	
 	if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 	{
-		mArrowLengthMeters = mAxisArrowLength / gViewerWindow->getWorldViewHeightRaw();
+        S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewHeightRaw();
+		mArrowLengthMeters = mAxisArrowLength / h;
 		mArrowLengthMeters /= gAgentCamera.mHUDCurZoom;
 	}
 	else
@@ -1852,7 +1894,8 @@ void LLManipTranslate::renderTranslationHandles()
 		if (range > 0.001f)
 		{
 			// range != zero
-			F32 fraction_of_fov = mAxisArrowLength / (F32) LLViewerCamera::getInstance()->getViewHeightInPixels();
+            S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels();
+			F32 fraction_of_fov = mAxisArrowLength / (F32)h;
 			F32 apparent_angle = fraction_of_fov * LLViewerCamera::getInstance()->getView();  // radians
 			mArrowLengthMeters = range * tan(apparent_angle);
 		}
@@ -2262,27 +2305,6 @@ void LLManipTranslate::renderArrow(S32 which_arrow, S32 selected_arrow, F32 box_
 
 		gGL.popMatrix();
 	}
-}
-
-void LLManipTranslate::renderGridVert(F32 x_trans, F32 y_trans, F32 r, F32 g, F32 b, F32 alpha)
-{
-	gGL.color4f(r, g, b, alpha);
-	switch (mManipPart)
-	{
-	case LL_YZ_PLANE:
-		gGL.vertex3f(0, x_trans, y_trans);
-		break;
-	case LL_XZ_PLANE:
-		gGL.vertex3f(x_trans, 0, y_trans);
-		break;
-	case LL_XY_PLANE:
-		gGL.vertex3f(x_trans, y_trans, 0);
-		break;
-	default:
-		gGL.vertex3f(0,0,0);
-		break;
-	}
-
 }
 
 // virtual

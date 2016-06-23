@@ -7,6 +7,7 @@
 	<menu_item_call label="Profili Göster" name="view_profile"/>
 	<menu_item_call label="Aİ" name="im"/>
 	<menu_item_call label="Işınlama teklif et" name="offer_teleport"/>
+	<menu_item_call label="Işınlanma talep et" name="request_teleport"/>
 	<menu_item_call label="Sesli arama" name="voice_call"/>
 	<menu_item_call label="Sohbet geçmişi..." name="chat_history"/>
 	<menu_item_call label="Arkadaş ekle" name="add_friend"/>

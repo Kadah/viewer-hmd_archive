@@ -47,6 +47,7 @@
 #include "llviewerregion.h"
 #include "lldrawpoolwater.h"
 #include "llspatialpartition.h"
+#include "llhmd.h"
 
 BOOL LLDrawPoolAlpha::sShowDebugAlpha = FALSE;
 
@@ -245,14 +246,23 @@ void LLDrawPoolAlpha::render(S32 pass)
 
 	if (deferred_render && pass == 1)
 	{
-		gGL.blendFunc(LLRender::BF_SOURCE_ALPHA, LLRender::BF_ONE_MINUS_SOURCE_ALPHA);
+        gGL.setSceneBlendType(LLRender::BT_ALPHA);
 	}
 	else
 	{
 		mColorSFactor = LLRender::BF_SOURCE_ALPHA;           // } regular alpha blend
 		mColorDFactor = LLRender::BF_ONE_MINUS_SOURCE_ALPHA; // }
-		mAlphaSFactor = LLRender::BF_ZERO;                         // } glow suppression
-		mAlphaDFactor = LLRender::BF_ONE_MINUS_SOURCE_ALPHA;       // }
+        if (gHMD.isHMDMode() && LLPipeline::sRenderingHUDs)
+        {
+            //mAlphaSFactor = LLRender::BF_SOURCE_ALPHA;  // have to set it this way or HUD Attachments will not render onto UI texture
+            mAlphaSFactor = LLRender::BF_ONE;  // have to set it this way or HUD Attachments will not render onto UI texture
+		    mAlphaDFactor = LLRender::BF_ONE;       // }
+        }
+        else
+        {
+            mAlphaSFactor = LLRender::BF_ZERO;                         // } glow suppression
+		    mAlphaDFactor = LLRender::BF_ONE_MINUS_SOURCE_ALPHA;       // }
+        }
 		gGL.blendFunc(mColorSFactor, mColorDFactor, mAlphaSFactor, mAlphaDFactor);
 
 		if (mVertexShaderLevel > 0)
@@ -294,7 +304,7 @@ void LLDrawPoolAlpha::render(S32 pass)
 		renderAlpha(getVertexDataMask(), pass);
 	}
 
-	gGL.setColorMask(true, false);
+	gGL.setColorMask(true, LLUI::getDestIsRenderTarget());
 
 	if (deferred_render && pass == 1)
 	{
@@ -581,11 +591,11 @@ void LLDrawPoolAlpha::renderAlpha(U32 mask, S32 pass)
 
 				{
 					LL_RECORD_BLOCK_TIME(FTM_RENDER_ALPHA_PUSH);
-    gGL.blendFunc((LLRender::eBlendFactor) params.mBlendFuncSrc, (LLRender::eBlendFactor) params.mBlendFuncDst, mAlphaSFactor, mAlphaDFactor);					
-				params.mVertexBuffer->setBuffer(mask & ~(params.mFullbright ? (LLVertexBuffer::MAP_TANGENT | LLVertexBuffer::MAP_TEXCOORD1 | LLVertexBuffer::MAP_TEXCOORD2) : 0));
+                    gGL.blendFunc((LLRender::eBlendFactor) params.mBlendFuncSrc, (LLRender::eBlendFactor) params.mBlendFuncDst, mAlphaSFactor, mAlphaDFactor);					
+				    params.mVertexBuffer->setBuffer(mask & ~(params.mFullbright ? (LLVertexBuffer::MAP_TANGENT | LLVertexBuffer::MAP_TEXCOORD1 | LLVertexBuffer::MAP_TEXCOORD2) : 0));
                 
-				params.mVertexBuffer->drawRange(params.mDrawMode, params.mStart, params.mEnd, params.mCount, params.mOffset);
-				gPipeline.addTrianglesDrawn(params.mCount, params.mDrawMode);
+				    params.mVertexBuffer->drawRange(params.mDrawMode, params.mStart, params.mEnd, params.mCount, params.mOffset);
+				    gPipeline.addTrianglesDrawn(params.mCount, params.mDrawMode);
 				}
 				
 				// If this alpha mesh has glow, then draw it a second time to add the destination-alpha (=glow).  Interleaving these state-changing calls could be expensive, but glow must be drawn Z-sorted with alpha.

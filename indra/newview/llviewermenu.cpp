@@ -106,7 +106,7 @@
 #include "lltoolpie.h"
 #include "lltoolselectland.h"
 #include "lltrans.h"
-#include "llviewerdisplay.h" //for gWindowResized
+#include "llviewerdisplay.h" //for LLViewerDisplay::gWindowResized
 #include "llviewergenericmessage.h"
 #include "llviewerhelp.h"
 #include "llviewermenufile.h"	// init_menu_file()
@@ -133,6 +133,7 @@
 #include "llpathfindingmanager.h"
 #include "llstartup.h"
 #include "boost/unordered_map.hpp"
+#include "llhmd.h"
 
 using namespace LLAvatarAppearanceDefines;
 
@@ -327,6 +328,7 @@ BOOL enable_save_into_task_inventory(void*);
 BOOL enable_detach(const LLSD& = LLSD());
 void menu_toggle_attached_lights(void* user_data);
 void menu_toggle_attached_particles(void* user_data);
+void menu_toggle_render_debug_hmd(void* user_data);
 
 class LLMenuParcelObserver : public LLParcelObserver
 {
@@ -1215,7 +1217,7 @@ class LLAdvancedToggleWireframe : public view_listener_t
 			gInitialDeferredModeForWireframe = LLPipeline::sRenderDeferred;
 		}
 
-		gWindowResized = TRUE;
+		LLViewerDisplay::gWindowResized = TRUE;
 		LLPipeline::updateRenderDeferred();
 		gPipeline.resetVertexBuffers();
 
@@ -3433,6 +3435,11 @@ void handle_avatar_eject(const LLSD& avatar_id)
 		}
 }
 
+bool hmd_mode_running()
+{
+    return gHMD.isHMDMode();
+}
+
 bool my_profile_visible()
 {
 	LLFloater* floaterp = LLAvatarActions::getProfileFloater(gAgentID);
@@ -4108,14 +4115,31 @@ class LLViewMouselook : public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		if (!gAgentCamera.cameraMouselook())
+        ECameraMode mode = gAgentCamera.getCameraMode();
+        switch (mode)
+        {
+        case CAMERA_MODE_MOUSELOOK:
+            if (gSavedSettings.getBOOL("FirstPersonModeInCycle"))
 		{
-			gAgentCamera.changeCameraToMouselook();
+                gAgentCamera.changeCameraToFirstPerson();
 		}
 		else
 		{
 			gAgentCamera.changeCameraToDefault();
 		}
+            break;
+        case CAMERA_MODE_FIRST_PERSON:
+            gAgentCamera.changeCameraToDefault();
+            break;
+        case CAMERA_MODE_FOLLOW:
+        case CAMERA_MODE_THIRD_PERSON:
+            gAgentCamera.changeCameraToMouselook();
+            break;
+        case CAMERA_MODE_CUSTOMIZE_AVATAR:
+        default:
+            // do nothing - cannot switch to mouselook/first-person from customize_avatar mode
+            break;
+        }
 		return true;
 	}
 };
@@ -4169,6 +4193,49 @@ class LLViewToggleUI : public view_listener_t
 			LLPanelStandStopFlying::getInstance()->setVisible(gSavedSettings.getBOOL("HideUIControls"));
 			gSavedSettings.setBOOL("HideUIControls",!gSavedSettings.getBOOL("HideUIControls"));
 		}
+	}
+};
+
+class LLViewCycleDisplay : public view_listener_t
+{
+    bool handleEvent(const LLSD& userdata)
+    {
+        U32 curRenderMode = gHMD.getRenderMode();
+        U32 nextRenderMode = LLHMD::RenderMode_Normal;
+        switch (curRenderMode)
+        {
+        case LLHMD::RenderMode_Normal:
+            {
+                if (!gHMD.isInitialized())
+                {
+		            LLNotificationsUtil::add("HMDModeErrorInitFailed");
+                    return true;
+                }
+
+                nextRenderMode = LLHMD::RenderMode_HMD;
+            }
+            break;
+
+        case LLHMD::RenderMode_HMD:
+            nextRenderMode = LLHMD::RenderMode_Normal;
+            break;
+
+        default:
+            nextRenderMode = LLHMD::RenderMode_Normal;
+            break;
+        }
+        gHMD.setRenderMode(nextRenderMode);
+        return true;
+    }
+};
+
+
+class LLViewCheckHMDMode : public view_listener_t
+{
+	bool handleEvent(const LLSD& userdata)
+	{
+		bool new_value = gHMD.isHMDMode();
+		return new_value;
 	}
 };
 
@@ -7293,7 +7360,7 @@ class LLAdvancedClickRenderProfile: public view_listener_t
 {
 	bool handleEvent(const LLSD& userdata)
 	{
-		gShaderProfileFrame = TRUE;
+		LLViewerDisplay::gShaderProfileFrame = TRUE;
 		return true;
 	}
 };
@@ -8679,6 +8746,9 @@ void initialize_menus()
 	view_listener_t::addMenu(new LLZoomer(DEFAULT_FIELD_OF_VIEW, false), "View.ZoomDefault");
 	view_listener_t::addMenu(new LLViewDefaultUISize(), "View.DefaultUISize");
 	view_listener_t::addMenu(new LLViewToggleUI(), "View.ToggleUI");
+    view_listener_t::addMenu(new LLViewCycleDisplay(), "View.CycleDisplay");
+	view_listener_t::addMenu(new LLViewCheckHMDMode(), "View.CheckHMDMode");
+    enable.add("HMD.IsHMDMode", boost::bind(&hmd_mode_running));
 
 	view_listener_t::addMenu(new LLViewEnableMouselook(), "View.EnableMouselook");
 	view_listener_t::addMenu(new LLViewEnableJoystickFlycam(), "View.EnableJoystickFlycam");

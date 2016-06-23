@@ -133,6 +133,7 @@ public:
 
 	bool hasSavedFinalSnapshot() { return mSavedFinalSnapshot; }
 	void saveFinalSnapshot(); 
+    bool isSavingFinalSnapshot() { return mIsSavingFinalSnapshot; }
 
     void loadNameCache();
     void saveNameCache();
@@ -287,6 +288,7 @@ private:
 	LLViewerJoystick* joystick;
 
 	bool mSavedFinalSnapshot;
+    bool mIsSavingFinalSnapshot;
 	bool mSavePerAccountSettings;		// only save per account settings if login succeeded
 
 	boost::optional<U32> mForceGraphicsLevel;

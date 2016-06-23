@@ -12,6 +12,7 @@
 	</text>
 	<check_box label="Les touches de direction me font toujours me déplacer" name="arrow_keys_move_avatar_check"/>
 	<check_box label="Appuyer deux fois et maintenir enfoncé pour courir" name="tap_tap_hold_to_run"/>
+	<check_box label="Maintenir la touche Sauter ou S’accroupir enfoncée pour vous envoler ou atterrir" name="automatic_fly"/>
 	<text name="mouse_lbl">
 		Souris :
 	</text>
@@ -36,4 +37,5 @@
 		<combo_box.item label="Téléportation vers le double clic" name="2"/>
 	</combo_box>
 	<button label="Autres accessoires" name="joystick_setup_button"/>
+	<button label="Visiocasques (HMD)" name="hmd_config_button"/>
 </panel>

@@ -12,6 +12,7 @@
 	</text>
 	<check_box label="Mit Pfeiltasten bewegen" name="arrow_keys_move_avatar_check"/>
 	<check_box label="Drücken-drücken-halten, um zu rennen" name="tap_tap_hold_to_run"/>
+	<check_box label="Taste Springen oder Ducken gedrückt halten, um den Flug zu starten oder zu stoppen" name="automatic_fly"/>
 	<text name="mouse_lbl">
 		Maus:
 	</text>
@@ -36,4 +37,5 @@
 		<combo_box.item label="Zu angeklicktem Ort teleportieren" name="2"/>
 	</combo_box>
 	<button label="Andere Geräte" name="joystick_setup_button"/>
+	<button label="Head-Mounted Displays" name="hmd_config_button"/>
 </panel>

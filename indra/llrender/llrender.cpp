@@ -35,6 +35,7 @@
 #include "llrendertarget.h"
 #include "lltexture.h"
 #include "llshadermgr.h"
+#include "llrender2dutils.h"
 
 LLRender gGL;
 
@@ -97,6 +98,32 @@ static const GLenum sGLBlendFactor[] =
 
 	GL_ZERO // 'BF_UNDEF'
 };
+
+void push_state_gl_identity()
+{
+    gGL.matrixMode(LLRender::MM_PROJECTION);
+    gGL.pushMatrix();
+    gGL.loadIdentity();
+    gGL.matrixMode(LLRender::MM_MODELVIEW);
+    gGL.pushMatrix();
+    gGL.loadIdentity();
+}
+
+void push_state_gl()
+{
+    gGL.matrixMode(LLRender::MM_PROJECTION);
+    gGL.pushMatrix();
+    gGL.matrixMode(LLRender::MM_MODELVIEW);
+    gGL.pushMatrix();
+}
+
+void pop_state_gl()
+{
+    gGL.matrixMode(LLRender::MM_PROJECTION);
+    gGL.popMatrix();
+    gGL.matrixMode(LLRender::MM_MODELVIEW);
+    gGL.popMatrix();
+}
 
 LLTexUnit::LLTexUnit(S32 index)
 	: mCurrTexType(TT_NONE), mCurrBlendType(TB_MULT), 
@@ -227,34 +254,34 @@ bool LLTexUnit::bind(LLTexture* texture, bool for_rendering, bool forceBind)
 	stop_glerror();
 	if (mIndex >= 0)
 	{
-		gGL.flush();
+	gGL.flush();
 
-		LLImageGL* gl_tex = NULL ;
+	LLImageGL* gl_tex = NULL ;
 
 		if (texture != NULL && (gl_tex = texture->getGLTexture()))
-		{
+	{
 			if (gl_tex->getTexName()) //if texture exists
-			{
-				//in audit, replace the selected texture by the default one.
-				if ((mCurrTexture != gl_tex->getTexName()) || forceBind)
-				{
-					activate();
-					enable(gl_tex->getTarget());
-					mCurrTexture = gl_tex->getTexName();
-					glBindTexture(sGLTextureType[gl_tex->getTarget()], mCurrTexture);
-					if(gl_tex->updateBindStats(gl_tex->mTextureMemory))
-					{
-						texture->setActive() ;
-						texture->updateBindStatsForTester() ;
-					}
-					mHasMipMaps = gl_tex->mHasMipMaps;
-					if (gl_tex->mTexOptionsDirty)
-					{
-						gl_tex->mTexOptionsDirty = false;
-						setTextureAddressMode(gl_tex->mAddressMode);
-						setTextureFilteringOption(gl_tex->mFilterOption);
-					}
-				}
+	{
+	//in audit, replace the selected texture by the default one.
+	if ((mCurrTexture != gl_tex->getTexName()) || forceBind)
+	{
+		activate();
+		enable(gl_tex->getTarget());
+		mCurrTexture = gl_tex->getTexName();
+		glBindTexture(sGLTextureType[gl_tex->getTarget()], mCurrTexture);
+		if(gl_tex->updateBindStats(gl_tex->mTextureMemory))
+		{
+			texture->setActive() ;
+			texture->updateBindStatsForTester() ;
+		}
+		mHasMipMaps = gl_tex->mHasMipMaps;
+		if (gl_tex->mTexOptionsDirty)
+		{
+			gl_tex->mTexOptionsDirty = false;
+			setTextureAddressMode(gl_tex->mAddressMode);
+			setTextureFilteringOption(gl_tex->mFilterOption);
+		}
+	}
 			}
 			else
 			{
@@ -1602,7 +1629,14 @@ void LLRender::setSceneBlendType(eBlendType type)
 	switch (type) 
 	{
 		case BT_ALPHA:
+            if (LLRender2D::sDestIsRenderTarget)
+            {
+                blendFunc(LLRender::BF_SOURCE_ALPHA, LLRender::BF_ONE_MINUS_SOURCE_ALPHA, LLRender::BF_ONE, LLRender::BF_ONE);
+            }
+            else
+            { 
 			blendFunc(BF_SOURCE_ALPHA, BF_ONE_MINUS_SOURCE_ALPHA);
+            }
 			break;
 		case BT_ADD:
 			blendFunc(BF_ONE, BF_ONE);

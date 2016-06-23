@@ -98,12 +98,16 @@ void requestUserAttention();
 long showAlert(std::string title, std::string text, int type);
 void setResizeMode(bool oldresize, void* glview);
 
-NSWindowRef createNSWindow(int x, int y, int width, int height);
+NSWindowRef createNSWindow(int x, int y, int width, int height, int screen_index);
 
 #include <OpenGL/OpenGL.h>
 GLViewRef createOpenGLView(NSWindowRef window, unsigned int samples, bool vsync);
+GLViewRef createOpenGLViewTest(NSWindowRef window, int width, int height);
+NSWindowRef createFullScreenWindow(int screen_index, bool hideOnDeactivate);
+GLViewRef createFullScreenView(NSWindowRef window);
 void glSwapBuffers(void* context);
 CGLContextObj getCGLContextObj(GLViewRef view);
+void setCGLCurrentContext(GLViewRef view);
 unsigned long getVramSize(GLViewRef view);
 void getContentViewBounds(NSWindowRef window, float* bounds);
 void getWindowSize(NSWindowRef window, float* size);
@@ -120,6 +124,8 @@ void closeWindow(NSWindowRef window);
 void removeGLView(GLViewRef view);
 void makeFirstResponder(NSWindowRef window, GLViewRef view);
 void setupInputWindow(NSWindowRef window, GLViewRef view);
+void enterFullScreen(int screen_id, NSWindowRef window);
+void leaveFullScreen(int screen_id, NSWindowRef window, int x, int y, int width, int height);
 
 // These are all implemented in llwindowmacosx.cpp.
 // This is largely for easier interop between Obj-C and C++ (at least in the viewer's case due to the BOOL vs. BOOL conflict)
@@ -173,5 +179,11 @@ NSWindowRef getMainAppWindow();
 GLViewRef getGLView();
 
 unsigned int getModifiers();
+
+// Implemented for HMD support
+int getDisplayCountObjC();
+long getDisplayId(int screen_id);
+void getScreenSize(int screen_id, float* size);
+int getScreenFromPoint(float* pos);
 
 #endif // LL_LLWINDOWMACOSX_OBJC_H

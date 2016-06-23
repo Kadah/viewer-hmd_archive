@@ -57,6 +57,7 @@
 #include "llfocusmgr.h"
 #include "lldraghandle.h"
 #include "llwindow.h"
+#include "llhmd.h"
 
 // System includes
 #include <sstream>
@@ -187,7 +188,9 @@ void LLFloaterColorPicker::showUI ()
 		{
 			LLColor4 curCol = swatch->get ();
 			send_agent_pause();
+            U32 oldRenderMode = gHMD.suspendHMDMode();
 			getWindow()->dialogColorPicker( &curCol [ 0 ], &curCol [ 1 ], &curCol [ 2 ] );
+            gHMD.resumeHMDMode(oldRenderMode);
 			send_agent_resume();
 
 			setOrigRgb ( curCol [ 0 ], curCol [ 1 ], curCol [ 2 ] );
@@ -393,7 +396,7 @@ void LLFloaterColorPicker::onClickCancel ( void* data )
 		{
 		    if(self->getRevertOnCancel())
 		    {
-		        self->cancelSelection ();
+			self->cancelSelection ();
 		    }
 			self->closeFloater();
 		}

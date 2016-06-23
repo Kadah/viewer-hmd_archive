@@ -12,6 +12,7 @@
 	</text>
 	<check_box label="Las teclas del cursor siempre para moverme" name="arrow_keys_move_avatar_check"/>
 	<check_box label="Correr siempre: atajo de teclado" name="tap_tap_hold_to_run"/>
+	<check_box label="Mantén pulsada la tecla de saltar o agacharse para empezar o terminar de volar" name="automatic_fly"/>
 	<text name="mouse_lbl">
 		Ratón:
 	</text>
@@ -36,4 +37,5 @@
 		<combo_box.item label="Teleportarte al punto seleccionado" name="2"/>
 	</combo_box>
 	<button label="Otros dispositivos" name="joystick_setup_button"/>
+	<button label="Pantallas de realidad virtual" name="hmd_config_button"/>
 </panel>

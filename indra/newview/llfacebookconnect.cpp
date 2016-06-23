@@ -512,13 +512,15 @@ void LLFacebookConnect::openFacebookWeb(std::string url)
     p.trusted_content(true);
     p.clean_browser(true);
 	LLFloater *floater = LLFloaterReg::showInstance("fbc_web", p);
-	//the internal web browser has a bug that prevents it from gaining focus unless a mouse event occurs first (it seems).
-	//So when showing the internal web browser, set focus to it's containing floater "fbc_web". When a mouse event 
-	//occurs on the "webbrowser" panel part of the floater, a mouse cursor will properly show and the "webbrowser" will gain focus.
-	//fbc_web floater contains the "webbrowser" panel.    JIRA: ACME-744
-	gFocusMgr.setKeyboardFocus( floater );
-
-	//LLUrlAction::openURLExternal(url);
+    if (floater)
+    {
+	    //the internal web browser has a bug that prevents it from gaining focus unless a mouse event occurs first (it seems).
+	    //So when showing the internal web browser, set focus to it's containing floater "fbc_web". When a mouse event 
+	    //occurs on the "webbrowser" panel part of the floater, a mouse cursor will properly show and the "webbrowser" will gain focus.
+	    //fbc_web floater contains the "webbrowser" panel.    JIRA: ACME-744
+	    gFocusMgr.setKeyboardFocus( floater );
+	    //LLUrlAction::openURLExternal(url);
+    }
 }
 
 std::string LLFacebookConnect::getFacebookConnectURL(const std::string& route, bool include_read_from_master)

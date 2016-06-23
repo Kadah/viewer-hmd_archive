@@ -237,11 +237,13 @@ public:
 	LLRect			getWorldViewRectRaw() const		{ return mWorldViewRectRaw; }
 	S32 			getWorldViewHeightRaw() const;
 	S32 			getWorldViewWidthRaw() const;
+    void            getWorldViewportRaw(S32* v, S32 w = 0, S32 h = 0, S32 xOffset = 0, S32 yOffset = 0) const;
 
 	// Window in scaled pixels (via UI scale), use for most UI computations
 	LLRect			getWindowRectScaled() const		{ return mWindowRectScaled; }
 	S32				getWindowHeightScaled() const;
 	S32				getWindowWidthScaled() const;
+    void            getWindowViewportRaw(S32* v, S32 w = 0, S32 h = 0, S32 xOffset = 0, S32 yOffset = 0) const;
 
 	// Window in raw pixels as seen on screen.
 	LLRect			getWindowRectRaw() const		{ return mWindowRectRaw; }
@@ -269,10 +271,10 @@ public:
 
 	const LLPickInfo&	getLastPick() const { return mLastPick; }
 
-	void			setup2DViewport(S32 x_offset = 0, S32 y_offset = 0);
-	void			setup3DViewport(S32 x_offset = 0, S32 y_offset = 0);
-	void			setup3DRender();
-	void			setup2DRender();
+	void			setup2DViewport(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0, S32 height = 0);
+    void			setup3DViewport(S32 x_offset = 0, S32 y_offset = 0);
+	void			setup3DRender(S32 x_offset = 0, S32 y_offset = 0, int whichEye = -1);
+	void			setup2DRender(S32 x_offset = 0, S32 y_offset = 0, S32 width = 0, S32 height = 0);
 
 	LLVector3		mouseDirectionGlobal(const S32 x, const S32 y) const;
 	LLVector3		mouseDirectionCamera(const S32 x, const S32 y) const;
@@ -287,13 +289,14 @@ public:
 	//
 	// MANIPULATORS
 	//
-	void			saveLastMouse(const LLCoordGL &point);
+    void			saveLastMouse(const LLCoordGL &point, BOOL updateHMDMouse);
 
 	void			setCursor( ECursorType c );
 	void			showCursor();
 	void			hideCursor();
 	BOOL            getCursorHidden() { return mCursorHidden; }
 	void			moveCursorToCenter();								// move to center of window
+    BOOL            isMouseInWindow() const { return mMouseInWindow; }
 													
 	void			setShowProgress(const BOOL show);
 	BOOL			getShowProgress() const;
@@ -308,9 +311,9 @@ public:
 	void			updateObjectUnderCursor();
 
 	void			updateUI();		// Once per frame, update UI based on mouse position, calls following update* functions
-	void				updateLayout();						
-	void				updateMouseDelta();		
-	void				updateKeyboardFocus();		
+	void			updateLayout();						
+	void			updateMouseDelta();		
+	void			updateKeyboardFocus();		
 
 	void			updateWorldViewRect(bool use_full_window=false);
 	LLView*			getToolBarHolder() { return mToolBarHolder.get(); }
@@ -329,7 +332,7 @@ public:
 	void			setNormalControlsVisible( BOOL visible );
 	void			setMenuBackgroundColor(bool god_mode = false, bool dev_grid = false);
 
-	void			reshape(S32 width, S32 height);
+	void			reshape(S32 width, S32 height, BOOL only_ui = FALSE);
 	void			sendShapeToSim();
 
 	void			draw();
@@ -411,7 +414,6 @@ public:
 	void			requestResolutionUpdate();
 	void			checkSettings();
 	void			restartDisplay(BOOL show_progress_bar);
-	BOOL			changeDisplaySettings(LLCoordScreen size, BOOL disable_vsync, BOOL show_progress_bar);
 	BOOL			getIgnoreDestroyWindow() { return mIgnoreActivate; }
 	F32				getWorldViewAspectRatio() const;
 	const LLVector2& getDisplayScale() const { return mDisplayScale; }
@@ -489,6 +491,7 @@ private:
 	LLHandle<LLView> mToolBarHolder;		// container for toolbars
 	LLHandle<LLView> mHintHolder;			// container for hints
 	LLHandle<LLView> mLoginPanelHolder;		// container for login panel
+	LLHandle<LLView> mHMDConfigHolder;		// container for HMD config screen
 	LLPopupView*	mPopupView;			// container for transient popups
 	
 	class LLDebugText* mDebugText; // Internal class for debug text

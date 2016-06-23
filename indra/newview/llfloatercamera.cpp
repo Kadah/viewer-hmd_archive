@@ -42,6 +42,7 @@
 #include "llslider.h"
 #include "llfirstuse.h"
 #include "llhints.h"
+#include "llhmd.h"
 
 static LLDefaultChildRegistry::Register<LLPanelCameraItem> r("panel_camera_item");
 
@@ -245,7 +246,7 @@ void activate_camera_tool()
 /*static*/ bool LLFloaterCamera::inFreeCameraMode()
 {
 	LLFloaterCamera* floater_camera = LLFloaterCamera::findInstance();
-	if (floater_camera && floater_camera->mCurrMode == CAMERA_CTRL_MODE_FREE_CAMERA && gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK)
+	if (floater_camera && floater_camera->mCurrMode == CAMERA_CTRL_MODE_FREE_CAMERA && gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK && gAgentCamera.getCameraMode() != CAMERA_MODE_FIRST_PERSON)
 	{
 		return true;
 	}
@@ -278,12 +279,26 @@ void LLFloaterCamera::handleAvatarEditingAppearance(bool editing)
 	getChildView("avatarview_btn")->setEnabled(!editing);
 }
 
+void LLFloaterCamera::onHMDChange()
+{
+	LLFloaterCamera* floater_camera = LLFloaterCamera::findInstance();
+	if (!floater_camera) return;
+	floater_camera->handleHMDChange();
+}
+
+void LLFloaterCamera::handleHMDChange()
+{
+    if (!gHMD.isHMDMode() && gAgentCamera.cameraFirstPerson() && !gSavedSettings.getBOOL("FirstPersonModeInCycle"))
+    {
+        gAgentCamera.changeCameraToMouselook();
+    }
+}
+
 void LLFloaterCamera::update()
 {
 	ECameraControlMode mode = determineMode();
 	if (mode != mCurrMode) setMode(mode);
 }
-
 
 void LLFloaterCamera::toPrevMode()
 {
@@ -407,7 +422,7 @@ ECameraControlMode LLFloaterCamera::determineMode()
 		return CAMERA_CTRL_MODE_FREE_CAMERA;
 	} 
 
-	if (gAgentCamera.getCameraMode() == CAMERA_MODE_MOUSELOOK)
+	if (gAgentCamera.getCameraMode() == CAMERA_MODE_MOUSELOOK || gAgentCamera.getCameraMode() == CAMERA_MODE_FIRST_PERSON)
 	{
 		return CAMERA_CTRL_MODE_PRESETS;
 	}
@@ -533,6 +548,8 @@ void LLFloaterCamera::updateItemsSelection()
 	getChild<LLPanelCameraItem>("mouselook_view")->setValue(argument);
 	argument["selected"] = mCurrMode == CAMERA_CTRL_MODE_FREE_CAMERA;
 	getChild<LLPanelCameraItem>("object_view")->setValue(argument);
+    argument["selected"] = gAgentCamera.getCameraMode() == CAMERA_MODE_FIRST_PERSON;
+    getChild<LLPanelCameraItem>("first_person_view")->setValue(argument);
 }
 
 void LLFloaterCamera::onClickCameraItem(const LLSD& param)
@@ -549,6 +566,10 @@ void LLFloaterCamera::onClickCameraItem(const LLSD& param)
 		if (camera_floater)
 		camera_floater->switchMode(CAMERA_CTRL_MODE_FREE_CAMERA);
 	}
+    else if ("first_person_view" == name)
+    {
+        gAgentCamera.changeCameraToFirstPerson();
+    }
 	else
 	{
 		switchToPreset(name);

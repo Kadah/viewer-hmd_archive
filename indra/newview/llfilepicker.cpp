@@ -35,6 +35,7 @@
 #include "lltrans.h"
 #include "llviewercontrol.h"
 #include "llwindow.h"	// beforeDialog()
+#include "llhmd.h"
 
 #if LL_SDL
 #include "llwindowsdl.h" // for some X/GTK utils to help with filepickers
@@ -246,7 +247,10 @@ BOOL LLFilePicker::getOpenFile(ELoadFilter filter, bool blocking)
 		return FALSE;
 	}
 
-	// don't provide default file selection
+    // blocking or not, we need to exit HMD mode as the OS dialogs do not support stereoscopic rendering
+    U32 oldRenderMode = gHMD.suspendHMDMode();
+
+    // don't provide default file selection
 	mFilesW[0] = '\0';
 
 	mOFN.hwndOwner = (HWND)gViewerWindow->getPlatformWindow();
@@ -275,7 +279,12 @@ BOOL LLFilePicker::getOpenFile(ELoadFilter filter, bool blocking)
 
 	if (blocking)
 	{
-		send_agent_resume();
+        // if we were blocking and in HMD mode, go back to the original mode now.
+        // if we weren't blocking, but still in HMD mode, just stay in normal mode
+        // as this is likely running asynchronously and the dialog is still up.
+        gHMD.resumeHMDMode(oldRenderMode);
+
+        send_agent_resume();
 		// Account for the fact that the app has been stalled.
 		LLFrameTimer::updateFrameTime();
 	}
@@ -296,6 +305,8 @@ BOOL LLFilePicker::getMultipleOpenFiles(ELoadFilter filter)
 	{
 		return FALSE;
 	}
+
+    U32 oldRenderMode = gHMD.suspendHMDMode();
 
 	// don't provide default file selection
 	mFilesW[0] = '\0';
@@ -345,6 +356,9 @@ BOOL LLFilePicker::getMultipleOpenFiles(ELoadFilter filter)
 			}
 		}
 	}
+
+    gHMD.resumeHMDMode(oldRenderMode);
+
 	send_agent_resume();
 
 	// Account for the fact that the app has been stalled.
@@ -365,6 +379,8 @@ BOOL LLFilePicker::getSaveFile(ESaveFilter filter, const std::string& filename)
 	{
 		return FALSE;
 	}
+
+    U32 oldRenderMode = gHMD.suspendHMDMode();
 
 	mOFN.lpstrFile = mFilesW;
 	if (!filename.empty())
@@ -552,6 +568,7 @@ BOOL LLFilePicker::getSaveFile(ESaveFilter filter, const std::string& filename)
 		}
 		gKeyboard->resetKeys();
 	}
+    gHMD.resumeHMDMode(oldRenderMode);
 	send_agent_resume();
 
 	// Account for the fact that the app has been stalled.
@@ -634,6 +651,7 @@ bool	LLFilePicker::doNavChooseDialog(ELoadFilter filter)
 		return false;
 	}
     
+    U32 oldRenderMode = gHMD.suspendHMDMode();
 	gViewerWindow->getWindow()->beforeDialog();
     
     std::vector<std::string> *allowed_types=navOpenFilterProc(filter);
@@ -642,7 +660,7 @@ bool	LLFilePicker::doNavChooseDialog(ELoadFilter filter)
                                                     mPickOptions);
 
 	gViewerWindow->getWindow()->afterDialog();
-
+    gHMD.resumeHMDMode(oldRenderMode);
 
     if (filev && filev->size() > 0)
     {
@@ -752,6 +770,7 @@ bool	LLFilePicker::doNavSaveDialog(ESaveFilter filter, const std::string& filena
 //        
 //    }
     
+    U32 oldRenderMode = gHMD.suspendHMDMode();
 	gViewerWindow->getWindow()->beforeDialog();
 
 	// Run the dialog
@@ -762,6 +781,7 @@ bool	LLFilePicker::doNavSaveDialog(ESaveFilter filter, const std::string& filena
                  mPickOptions);
 
 	gViewerWindow->getWindow()->afterDialog();
+    gHMD.resumeHMDMode(oldRenderMode);
 
 	if ( filev && !filev->empty() )
 	{
@@ -808,7 +828,7 @@ BOOL LLFilePicker::getOpenFile(ELoadFilter filter, bool blocking)
 		send_agent_pause();
 	}
 
-
+    U32 oldRenderMode = gHMD.suspendHMDMode();
 	success = doNavChooseDialog(filter);
 		
 	if (success)
@@ -819,6 +839,7 @@ BOOL LLFilePicker::getOpenFile(ELoadFilter filter, bool blocking)
 
 	if (blocking)
 	{
+        gHMD.resumeHMDMode(oldRenderMode);
 		send_agent_resume();
 		// Account for the fact that the app has been stalled.
 		LLFrameTimer::updateFrameTime();
@@ -847,9 +868,11 @@ BOOL LLFilePicker::getMultipleOpenFiles(ELoadFilter filter)
     mPickOptions |= F_MULTIPLE;
 	// Modal, so pause agent
 	send_agent_pause();
+    U32 oldRenderMode = gHMD.suspendHMDMode();
     
 	success = doNavChooseDialog(filter);
     
+    gHMD.resumeHMDMode(oldRenderMode);
     send_agent_resume();
     
 	if (success)
@@ -884,6 +907,7 @@ BOOL LLFilePicker::getSaveFile(ESaveFilter filter, const std::string& filename)
 
 	// Modal, so pause agent
 	send_agent_pause();
+    U32 oldRenderMode = gHMD.suspendHMDMode();
 
     success = doNavSaveDialog(filter, filename);
 
@@ -893,6 +917,7 @@ BOOL LLFilePicker::getSaveFile(ESaveFilter filter, const std::string& filename)
 			success = false;
 	}
 
+    gHMD.resumeHMDMode(oldRenderMode);
 	send_agent_resume();
 
 	// Account for the fact that the app has been stalled.

@@ -698,7 +698,7 @@ bool idle_startup()
 		LL_DEBUGS("AppInit") << "STATE_BROWSER_INIT" << LL_ENDL;
 		std::string msg = LLTrans::getString("LoginInitializingBrowser");
 		set_startup_status(0.03f, msg.c_str(), gAgent.mMOTD.c_str());
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// LLViewerMedia::initBrowser();
 		LLStartUp::setStartupState( STATE_LOGIN_SHOW );
 		return FALSE;
@@ -726,9 +726,12 @@ bool idle_startup()
 		if (gLoginMenuBarView == NULL)
 		{
 			LL_DEBUGS("AppInit") << "initializing menu bar" << LL_ENDL;
+			LLViewerDisplay::display_startup();
 			initialize_edit_menu();
 			initialize_spellcheck_menu();
+			LLViewerDisplay::display_startup();
 			init_menus();
+			LLViewerDisplay::display_startup();
 		}
 
 		if (show_connect_box)
@@ -740,17 +743,23 @@ bool idle_startup()
 			if (gUserCredential.isNull())                                                                          
 			{                                                  
 				LL_DEBUGS("AppInit") << "loading credentials from gLoginHandler" << LL_ENDL;
+				LLViewerDisplay::display_startup();
 				gUserCredential = gLoginHandler.initializeLoginInfo();                 
+				LLViewerDisplay::display_startup();
 			}     
 			// Make sure the process dialog doesn't hide things
+			LLViewerDisplay::display_startup();
 			gViewerWindow->setShowProgress(FALSE);
+			LLViewerDisplay::display_startup();
 			// Show the login dialog
 			login_show();
+			LLViewerDisplay::display_startup();
 			// connect dialog is already shown, so fill in the names
 			if (gUserCredential.notNull())
 			{
 				LLPanelLogin::setFields( gUserCredential, gRememberPassword);
 			}
+			LLViewerDisplay::display_startup();
 			LLPanelLogin::giveFocus();
 
 			// MAINT-3231 Show first run dialog only for Desura viewer
@@ -776,15 +785,22 @@ bool idle_startup()
 			LLStartUp::setStartupState( STATE_LOGIN_CLEANUP );
 		}
 
+		LLViewerDisplay::display_startup();
 		gViewerWindow->setNormalControlsVisible( FALSE );	
+		LLViewerDisplay::display_startup();
 		gLoginMenuBarView->setVisible( TRUE );
+		LLViewerDisplay::display_startup();
 		gLoginMenuBarView->setEnabled( TRUE );
+		LLViewerDisplay::display_startup();
 		show_debug_menus();
+		LLViewerDisplay::display_startup();
 
 		// Hide the splash screen
 		LLSplashScreen::hide();
+		LLViewerDisplay::display_startup();
 		// Push our window frontmost
 		gViewerWindow->getWindow()->show();
+		LLViewerDisplay::display_startup();
 
 		// DEV-16927.  The following code removes errant keystrokes that happen while the window is being 
 		// first made visible.
@@ -792,9 +808,9 @@ bool idle_startup()
 		MSG msg;
 		while( PeekMessage( &msg, /*All hWnds owned by this thread */ NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE ) )
 		{ }
+		LLViewerDisplay::display_startup();
 #endif
-        display_startup();
-        timeout.reset();
+		timeout.reset();
 		return FALSE;
 	}
 
@@ -807,7 +823,7 @@ bool idle_startup()
 
 		// Don't do anything.  Wait for the login view to call the login_callback,
 		// which will push us to the next state.
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// Sleep so we don't spin the CPU
 		ms_sleep(1);
 		return FALSE;
@@ -978,7 +994,7 @@ bool idle_startup()
 		// Poke the VFS, which could potentially block for a while if
 		// Windows XP is acting up
 		set_startup_status(0.07f, LLTrans::getString("LoginVerifyingCache"), LLStringUtil::null);
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		gVFS->pokeFiles();
 
@@ -995,7 +1011,7 @@ bool idle_startup()
 		auth_desc = LLTrans::getString("LoginInProgress");
 		set_startup_status(progress, auth_desc, auth_message);
 		progress += 0.02f;
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// Setting initial values...
 		LLLoginInstance* login = LLLoginInstance::getInstance();
@@ -1177,77 +1193,77 @@ bool idle_startup()
 	if (STATE_WORLD_INIT == LLStartUp::getStartupState())
 	{
 		set_startup_status(0.30f, LLTrans::getString("LoginInitializingWorld"), gAgent.mMOTD);
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// We should have an agent id by this point.
 		llassert(!(gAgentID == LLUUID::null));
 
 		// Finish agent initialization.  (Requires gSavedSettings, builds camera)
 		gAgent.init();
-		display_startup();
+		LLViewerDisplay::display_startup();
 		gAgentCamera.init();
-		display_startup();
+		LLViewerDisplay::display_startup();
 		set_underclothes_menu_options();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// Since we connected, save off the settings so the user doesn't have to
 		// type the name/password again if we crash.
 		gSavedSettings.saveToFile(gSavedSettings.getString("ClientSettingsFile"), TRUE);
 		LLUIColorTable::instance().saveUserSettings();
 
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		//
 		// Initialize classes w/graphics stuff.
 		//
 		gTextureList.doPrefetchImages();		
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLSurface::initClasses();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 
 		LLFace::initClass();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLDrawable::initClass();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// init the shader managers
 		LLPostProcess::initClass();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLAvatarAppearance::initClass();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLViewerObject::initVOClasses();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// Initialize all our tools.  Must be done after saved settings loaded.
 		// NOTE: This also is where gToolMgr used to be instantiated before being turned into a singleton.
 		LLToolMgr::getInstance()->initTools();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// Pre-load floaters, like the world map, that are slow to spawn
 		// due to XML complexity.
 		gViewerWindow->initWorldUI();
 		
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// This is where we used to initialize gWorldp. Original comment said:
 		// World initialization must be done after above window init
 
 		// User might have overridden far clip
 		LLWorld::getInstance()->setLandFarClip(gAgentCamera.mDrawDistance);
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// Before we create the first region, we need to set the agent's mOriginGlobal
 		// This is necessary because creating objects before this is set will result in a
 		// bad mPositionAgent cache.
 
 		gAgent.initOriginGlobal(from_region_handle(gFirstSimHandle));
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLWorld::getInstance()->addRegion(gFirstSimHandle, gFirstSim);
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLViewerRegion *regionp = LLWorld::getInstance()->getRegionFromHandle(gFirstSimHandle);
 		LL_INFOS("AppInit") << "Adding initial simulator " << regionp->getOriginGlobal() << LL_ENDL;
@@ -1256,18 +1272,18 @@ bool idle_startup()
 		<< gFirstSimSeedCap << LL_ENDL;
 		regionp->setSeedCapability(gFirstSimSeedCap);
 		LL_DEBUGS("AppInit") << "Waiting for seed grant ...." << LL_ENDL;
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// Set agent's initial region to be the one we just created.
 		gAgent.setRegion(regionp);
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// Set agent's initial position, which will be read by LLVOAvatar when the avatar
 		// object is created.  I think this must be done after setting the region.  JC
 		gAgent.setPositionAgent(agent_start_position_region);
 
-		display_startup();
+		LLViewerDisplay::display_startup();
 		LLStartUp::initExperiences();
 
-		display_startup();
+        LLViewerDisplay::display_startup();
 		LLStartUp::setStartupState( STATE_MULTIMEDIA_INIT );
 		
 		LLConversationLog::getInstance();
@@ -1284,7 +1300,7 @@ bool idle_startup()
 	{
 		LLStartUp::multimediaInit();
 		LLStartUp::setStartupState( STATE_FONT_INIT );
-		display_startup();
+		LLViewerDisplay::display_startup();
 		return FALSE;
 	}
 
@@ -1293,7 +1309,7 @@ bool idle_startup()
 	{
 		LLStartUp::fontInit();
 		LLStartUp::setStartupState( STATE_SEED_GRANTED_WAIT );
-		display_startup();
+		LLViewerDisplay::display_startup();
 		return FALSE;
 	}
 
@@ -1321,7 +1337,7 @@ bool idle_startup()
 				set_startup_status(0.4f, LLTrans::getString("LoginRequestSeedCapGrant"), gAgent.mMOTD.c_str());
 			}
 		}
-		display_startup();
+		LLViewerDisplay::display_startup();
 		return FALSE;
 	}
 
@@ -1332,9 +1348,9 @@ bool idle_startup()
 	//---------------------------------------------------------------------
 	if (STATE_SEED_CAP_GRANTED == LLStartUp::getStartupState())
 	{
-		display_startup();
+		LLViewerDisplay::display_startup();
 		update_texture_fetch();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		if ( gViewerWindow != NULL)
 		{	// This isn't the first logon attempt, so show the UI
@@ -1342,15 +1358,15 @@ bool idle_startup()
 		}	
 		gLoginMenuBarView->setVisible( FALSE );
 		gLoginMenuBarView->setEnabled( FALSE );
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// direct logging to the debug console's line buffer
 		LLError::logToFixedBuffer(gDebugView->mDebugConsolep);
-		display_startup();
+		LLViewerDisplay::display_startup();
 		
 		// set initial visibility of debug console
 		gDebugView->mDebugConsolep->setVisible(gSavedSettings.getBOOL("ShowDebugConsole"));
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		//
 		// Set message handlers
@@ -1359,28 +1375,28 @@ bool idle_startup()
 
 		// register callbacks for messages. . . do this after initial handshake to make sure that we don't catch any unwanted
 		register_viewer_callbacks(gMessageSystem);
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// Debugging info parameters
 		gMessageSystem->setMaxMessageTime( 0.5f );			// Spam if decoding all msgs takes more than 500 ms
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		#ifndef	LL_RELEASE_FOR_DOWNLOAD
 			gMessageSystem->setTimeDecodes( TRUE );				// Time the decode of each msg
 			gMessageSystem->setTimeDecodesSpamThreshold( 0.05f );  // Spam if a single msg takes over 50ms to decode
 		#endif
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		gXferManager->registerCallbacks(gMessageSystem);
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLStartUp::initNameCache();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// update the voice settings *after* gCacheName initialization
 		// so that we can construct voice UI that relies on the name cache
 		LLVoiceClient::getInstance()->updateSettings();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// create a container's instance for start a controlling conversation windows
 		// by the voice's events
@@ -1391,12 +1407,12 @@ bool idle_startup()
 		// register null callbacks for audio until the audio system is initialized
 		gMessageSystem->setHandlerFuncFast(_PREHASH_SoundTrigger, null_message_callback, NULL);
 		gMessageSystem->setHandlerFuncFast(_PREHASH_AttachedSound, null_message_callback, NULL);
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		//reset statistics
 		LLViewerStats::instance().resetStats();
 
-		display_startup();
+		LLViewerDisplay::display_startup();
 		//
 		// Set up region and surface defaults
 		//
@@ -1421,7 +1437,7 @@ bool idle_startup()
 		LLViewerCamera::getInstance()->setAspect(gViewerWindow->getWorldViewAspectRatio());
 		// Initialize FOV
 		LLViewerCamera::getInstance()->setDefaultFOV(gSavedSettings.getF32("CameraAngle")); 
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// Move agent to starting location. The position handed to us by
 		// the space server is in global coordinates, but the agent frame
@@ -1432,7 +1448,7 @@ bool idle_startup()
 		gAgent.resetAxes(gAgentStartLookAt);
 		gAgentCamera.stopCameraAnimation();
 		gAgentCamera.resetCamera();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// Initialize global class data needed for surfaces (i.e. textures)
 		LL_DEBUGS("AppInit") << "Initializing sky..." << LL_ENDL;
@@ -1445,7 +1461,7 @@ bool idle_startup()
 		LLGLState::checkStates();
 		LLGLState::checkTextureChannels();
 
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LL_DEBUGS("AppInit") << "Decoding images..." << LL_ENDL;
 		// For all images pre-loaded into viewer cache, decode them.
@@ -1455,12 +1471,12 @@ bool idle_startup()
 		{
 			F32 frac = (F32)i / (F32)DECODE_TIME_SEC;
 			set_startup_status(0.45f + frac*0.1f, LLTrans::getString("LoginDecodingImages"), gAgent.mMOTD);
-			display_startup();
+			LLViewerDisplay::display_startup();
 			gTextureList.decodeAllImages(1.f);
 		}
 		LLStartUp::setStartupState( STATE_WORLD_WAIT );
 
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// JC - Do this as late as possible to increase likelihood Purify
 		// will run.
@@ -1489,7 +1505,7 @@ bool idle_startup()
 			NULL);
 
 		timeout.reset();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		return FALSE;
 	}
@@ -1508,10 +1524,10 @@ bool idle_startup()
 		LLMessageSystem* msg = gMessageSystem;
 		while (msg->checkAllMessages(gFrameCount, gServicePump))
 		{
-			display_startup();
+			LLViewerDisplay::display_startup();
 		}
 		msg->processAcks();
-		display_startup();
+		LLViewerDisplay::display_startup();
 		return FALSE;
 	}
 
@@ -1522,7 +1538,7 @@ bool idle_startup()
 	{
 		LL_DEBUGS("AppInit") << "Connecting to region..." << LL_ENDL;
 		set_startup_status(0.60f, LLTrans::getString("LoginConnectingToRegion"), gAgent.mMOTD);
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// register with the message system so it knows we're
 		// expecting this message
 		LLMessageSystem* msg = gMessageSystem;
@@ -1538,7 +1554,7 @@ bool idle_startup()
 			msg->newMessageFast(_PREHASH_EconomyDataRequest);
 			gAgent.sendReliableMessage();
 		}
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// Create login effect
 		// But not on first login, because you can't see your avatar then
@@ -1553,7 +1569,7 @@ bool idle_startup()
 		LLStartUp::setStartupState( STATE_AGENT_WAIT );		// Go to STATE_AGENT_WAIT
 
 		timeout.reset();
-		display_startup();
+		LLViewerDisplay::display_startup();
 		return FALSE;
 	}
 
@@ -1578,17 +1594,17 @@ bool idle_startup()
 				LL_DEBUGS("AppInit") << "Awaiting AvatarInitComplete, got "
 				<< msg->getMessageName() << LL_ENDL;
 			}
-			display_startup();
+			LLViewerDisplay::display_startup();
 		}
 		msg->processAcks();
 
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		if (gAgentMovementCompleted)
 		{
 			LLStartUp::setStartupState( STATE_INVENTORY_SEND );
 		}
-		display_startup();
+		LLViewerDisplay::display_startup();
 		return FALSE;
 	}
 
@@ -1597,10 +1613,10 @@ bool idle_startup()
 	//---------------------------------------------------------------------
 	if (STATE_INVENTORY_SEND == LLStartUp::getStartupState())
 	{
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// Inform simulator of our language preference
 		LLAgentLanguage::update();
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// unpack thin inventory
 		LLSD response = LLLoginInstance::getInstance()->getResponse();
 		//bool dump_buffer = false;
@@ -1615,7 +1631,7 @@ bool idle_startup()
 				gInventory.setLibraryRootFolderID(id.asUUID());
 			}
 		}
-		display_startup();
+		LLViewerDisplay::display_startup();
  		
 		LLSD inv_lib_owner = response["inventory-lib-owner"];
 		if(inv_lib_owner.isDefined())
@@ -1627,7 +1643,7 @@ bool idle_startup()
 				gInventory.setLibraryOwnerID( LLUUID(id.asUUID()));
 			}
 		}
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLSD inv_skel_lib = response["inventory-skel-lib"];
  		if(inv_skel_lib.isDefined() && gInventory.getLibraryOwnerID().notNull())
@@ -1637,7 +1653,7 @@ bool idle_startup()
  				LL_WARNS("AppInit") << "Problem loading inventory-skel-lib" << LL_ENDL;
  			}
  		}
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLSD inv_skeleton = response["inventory-skeleton"];
  		if(inv_skeleton.isDefined())
@@ -1647,7 +1663,7 @@ bool idle_startup()
  				LL_WARNS("AppInit") << "Problem loading inventory-skel-targets" << LL_ENDL;
  			}
  		}
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLSD inv_basic = response["inventory-basic"];
  		if(inv_basic.isDefined())
@@ -1685,7 +1701,7 @@ bool idle_startup()
 				list[agent_id] = new LLRelationship(given_rights, has_rights, false);
 			}
 			LLAvatarTracker::instance().addBuddyList(list);
-			display_startup();
+			LLViewerDisplay::display_startup();
  		}
 
 		bool show_hud = false;
@@ -1713,7 +1729,7 @@ bool idle_startup()
 				//}
 			}
 		}
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// Either we want to show tutorial because this is the first login
 		// to a Linden Help Island or the user quit with the tutorial
@@ -1722,21 +1738,21 @@ bool idle_startup()
 		{
 			LLFloaterReg::showInstance("hud", LLSD(), FALSE);
 		}
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLSD event_notifications = response["event_notifications"];
 		if(event_notifications.isDefined())
 		{
 			gEventNotifier.load(event_notifications);
 		}
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLSD classified_categories = response["classified_categories"];
 		if(classified_categories.isDefined())
 		{
 			LLClassifiedInfo::loadCategories(classified_categories);
 		}
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// This method MUST be called before gInventory.findCategoryUUIDForType because of 
 		// gInventory.mIsAgentInvUsable is set to true in the gInventory.buildParentChildMap.
@@ -1750,7 +1766,7 @@ bool idle_startup()
 		gInventory.addChangedMask(LLInventoryObserver::ALL, LLUUID::null);
 		gInventory.notifyObservers();
 		
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		//all categories loaded. lets create "My Favorites" category
 		gInventory.findCategoryUUIDForType(LLFolderType::FT_FAVORITE,true);
@@ -1764,26 +1780,26 @@ bool idle_startup()
 		LLAvatarTracker::instance().registerCallbacks(msg);
 		LL_INFOS() << " Landmark" << LL_ENDL;
 		LLLandmark::registerCallbacks(msg);
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// request mute list
 		LL_INFOS() << "Requesting Mute List" << LL_ENDL;
 		LLMuteList::getInstance()->requestFromServer(gAgent.getID());
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// Get L$ and ownership credit information
 		LL_INFOS() << "Requesting Money Balance" << LL_ENDL;
 		LLStatusBar::sendMoneyBalanceRequest();
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// request all group information
 		LL_INFOS() << "Requesting Agent Data" << LL_ENDL;
 		gAgent.sendAgentDataUpdateRequest();
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// Create the inventory views
 		LL_INFOS() << "Creating Inventory Views" << LL_ENDL;
 		LLFloaterReg::getInstance("inventory");
-		display_startup();
+		LLViewerDisplay::display_startup();
 		LLStartUp::setStartupState( STATE_MISC );
-		display_startup();
+		LLViewerDisplay::display_startup();
 		return FALSE;
 	}
 
@@ -1836,12 +1852,7 @@ bool idle_startup()
 
 		}
 
-		display_startup();
-        
-        // *TODO : Uncomment that line once the whole grid migrated to SLM and suppress it from LLAgent::handleTeleportFinished() (llagent.cpp)
-        //check_merchant_status();
-
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		if (gSavedSettings.getBOOL("HelpFloaterOpen"))
 		{
@@ -1849,19 +1860,19 @@ bool idle_startup()
 			LLViewerHelp::instance().showTopic("");
 		}
 
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// We're successfully logged in.
 		gSavedSettings.setBOOL("FirstLoginThisInstall", FALSE);
 
 		LLFloaterReg::showInitialVisibleInstances();
 
-		display_startup();
+		LLViewerDisplay::display_startup();
 
-		display_startup();
+		LLViewerDisplay::display_startup();
 		// JC: Initializing audio requests many sounds for download.
 		init_audio();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// JC: Initialize "active" gestures.  This may also trigger
 		// many gesture downloads, if this is the user's first
@@ -1898,8 +1909,8 @@ bool idle_startup()
 			LLGestureMgr::instance().setFetchIDs(item_ids);
 			LLGestureMgr::instance().startFetch();
 		}
-		gDisplaySwapBuffers = TRUE;
-		display_startup();
+		LLViewerDisplay::gDisplaySwapBuffers = TRUE;
+		LLViewerDisplay::display_startup();
 
 		LLMessageSystem* msg = gMessageSystem;
 		msg->setHandlerFuncFast(_PREHASH_SoundTrigger,				process_sound_trigger);
@@ -1975,10 +1986,10 @@ bool idle_startup()
 			}
 		}
 
-		display_startup();
+		LLViewerDisplay::display_startup();
         //DEV-17797.  get null folder.  Any items found here moved to Lost and Found
         LLInventoryModelBackgroundFetch::instance().findLostItems();
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		LLStartUp::setStartupState( STATE_PRECACHE );
 		timeout.reset();
@@ -1987,7 +1998,7 @@ bool idle_startup()
 
 	if (STATE_PRECACHE == LLStartUp::getStartupState())
 	{
-		display_startup();
+		LLViewerDisplay::display_startup();
 		F32 timeout_frac = timeout.getElapsedTimeF32()/PRECACHING_DELAY;
 		
 		// We now have an inventory skeleton, so if this is a user's first
@@ -2013,7 +2024,7 @@ bool idle_startup()
 			callAfterCategoryFetch(LLAppearanceMgr::instance().getCOF(), set_flags_and_update_appearance);
 		}
 
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// wait precache-delay and for agent's avatar or a lot longer.
 		if ((timeout_frac > 1.f) && isAgentAvatarValid())
@@ -2037,8 +2048,8 @@ bool idle_startup()
 			update_texture_fetch();
 			set_startup_status(0.60f + 0.30f * timeout_frac,
 				LLTrans::getString("LoginPrecaching"),
-					gAgent.mMOTD.c_str());
-			display_startup();
+					gAgent.mMOTD);
+			LLViewerDisplay::display_startup();
 		}
 		
 		return TRUE;
@@ -2066,7 +2077,7 @@ bool idle_startup()
 			LLStartUp::setStartupState( STATE_CLEANUP );
 		}
 		
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		if (gAgent.isOutfitChosen() && (wearables_time > max_wearables_time))
 		{
@@ -2104,7 +2115,7 @@ bool idle_startup()
 	if (STATE_CLEANUP == LLStartUp::getStartupState())
 	{
 		set_startup_status(1.0, "", "");
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// Let the map know about the inventory.
 		LLFloaterWorldMap* floater_world_map = LLFloaterWorldMap::getInstance();
@@ -2120,7 +2131,7 @@ bool idle_startup()
 		//gViewerWindow->revealIntroPanel();
 		gViewerWindow->setStartupComplete(); 
 		gViewerWindow->setProgressCancelButtonVisible(FALSE);
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// We're not away from keyboard, even though login might have taken
 		// a while. JC
@@ -2156,7 +2167,7 @@ bool idle_startup()
 		// LLUserAuth::getInstance()->reset();
 
 		LLStartUp::setStartupState( STATE_STARTED );
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		// Unmute audio if desired and setup volumes.
 		// This is a not-uncommon crash site, so surround it with
@@ -2172,7 +2183,7 @@ bool idle_startup()
 
 		LLAgentPicksInfo::getInstance()->requestNumberOfPicks();
 
-		display_startup();
+		LLViewerDisplay::display_startup();
 
 		llassert(LLPathfindingManager::getInstance() != NULL);
 		LLPathfindingManager::getInstance()->initSystem();
@@ -2754,7 +2765,7 @@ void LLStartUp::multimediaInit()
 	LL_DEBUGS("AppInit") << "Initializing Multimedia...." << LL_ENDL;
 	std::string msg = LLTrans::getString("LoginInitializingMultimedia");
 	set_startup_status(0.42f, msg.c_str(), gAgent.mMOTD.c_str());
-	display_startup();
+	LLViewerDisplay::display_startup();
 
 	// LLViewerMedia::initClass();
 	LLViewerParcelMedia::initClass();
@@ -2765,7 +2776,7 @@ void LLStartUp::fontInit()
 	LL_DEBUGS("AppInit") << "Initializing fonts...." << LL_ENDL;
 	std::string msg = LLTrans::getString("LoginInitializingFonts");
 	set_startup_status(0.45f, msg.c_str(), gAgent.mMOTD.c_str());
-	display_startup();
+	LLViewerDisplay::display_startup();
 
 	LLFontGL::loadDefaultFonts();
 }
@@ -2792,7 +2803,7 @@ void LLStartUp::initNameCache()
 
 
 void LLStartUp::initExperiences()
-{   
+{
     // Should trigger loading the cache.
     LLExperienceCache::instance().setCapabilityQuery(
         boost::bind(&LLAgent::getRegionCapability, &gAgent, _1));

@@ -51,6 +51,7 @@
 #include "llfloatertools.h"
 #include "llgroupactions.h"
 #include "llgroupmgr.h"
+#include "llhmd.h"
 #include "llhudmanager.h"
 #include "lljoystickbutton.h"
 #include "llmorphview.h"
@@ -1245,7 +1246,7 @@ LLVector3 LLAgent::getReferenceUpVector()
 			// make the up vector point to the absolute +z axis
 			up_vector = up_vector * ~((LLViewerObject*)gAgentAvatarp->getParent())->getRenderRotation();
 		}
-		else if (camera_mode == CAMERA_MODE_MOUSELOOK)
+		else if (camera_mode == CAMERA_MODE_MOUSELOOK || camera_mode == CAMERA_MODE_FIRST_PERSON)
 		{
 			// make the up vector point to the avatar's +z axis
 			up_vector = up_vector * gAgentAvatarp->mDrawable->getRotation();
@@ -1895,7 +1896,7 @@ std::ostream& operator<<(std::ostream &s, const LLAgent &agent)
 //-----------------------------------------------------------------------------
 BOOL LLAgent::needsRenderAvatar()
 {
-	if (gAgentCamera.cameraMouselook() && !LLVOAvatar::sVisibleInFirstPerson)
+	if ((gAgentCamera.cameraMouselook() || gAgentCamera.cameraFirstPerson()) && !LLVOAvatar::sVisibleInFirstPerson)
 	{
 		return FALSE;
 	}
@@ -1906,7 +1907,7 @@ BOOL LLAgent::needsRenderAvatar()
 // TRUE if we need to render your own avatar's head.
 BOOL LLAgent::needsRenderHead()
 {
-	return (LLVOAvatar::sVisibleInFirstPerson && LLPipeline::sReflectionRender) || (mShowAvatar && !gAgentCamera.cameraMouselook());
+	return (LLVOAvatar::sVisibleInFirstPerson && LLPipeline::sReflectionRender) || (mShowAvatar && !gAgentCamera.cameraMouselook() && !gAgentCamera.cameraFirstPerson());
 }
 
 //-----------------------------------------------------------------------------
@@ -2972,7 +2973,7 @@ LLQuaternion LLAgent::getHeadRotation()
 		return LLQuaternion::DEFAULT;
 	}
 
-	if (!gAgentCamera.cameraMouselook())
+	if (!gAgentCamera.cameraMouselook() && !gAgentCamera.cameraFirstPerson())
 	{
 		return gAgentAvatarp->getRotation();
 	}
@@ -3789,7 +3790,7 @@ bool LLAgent::teleportCore(bool is_local)
 	}
 	else
 	{
-		gTeleportDisplay = TRUE;
+		LLViewerDisplay::gTeleportDisplay = TRUE;
 		gAgent.setTeleportState( LLAgent::TELEPORT_START );
 
 		//release geometry from old location
@@ -3855,7 +3856,7 @@ void LLAgent::startTeleportRequest()
         mTeleportCanceled.reset();
 		if  (!isMaturityPreferenceSyncedWithServer())
 		{
-			gTeleportDisplay = TRUE;
+			LLViewerDisplay::gTeleportDisplay = TRUE;
 			setTeleportState(TELEPORT_PENDING);
 		}
 		else
@@ -4048,8 +4049,8 @@ void LLAgent::restoreCanceledTeleportRequest()
         gAgent.setTeleportState( LLAgent::TELEPORT_REQUESTED );
         mTeleportRequest = mTeleportCanceled;
         mTeleportCanceled.reset();
-        gTeleportDisplay = TRUE;
-        gTeleportDisplayTimer.reset();
+        LLViewerDisplay::gTeleportDisplay = TRUE;
+        LLViewerDisplay::gTeleportDisplayTimer.reset();
     }
 }
 
@@ -4172,7 +4173,6 @@ void LLAgent::setTeleportState(ETeleportState state)
 			break;
 	}
 }
-
 
 void LLAgent::stopCurrentAnimations()
 {

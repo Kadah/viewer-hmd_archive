@@ -32,6 +32,8 @@
 #include "llfloater.h"
 #include "llmultifloater.h"
 #include "llfloaterreglistener.h"
+#include "llnotificationsutil.h"
+
 
 //*******************************************************
 
@@ -42,6 +44,7 @@ LLFloaterReg::build_map_t LLFloaterReg::sBuildMap;
 std::map<std::string,std::string> LLFloaterReg::sGroupMap;
 bool LLFloaterReg::sBlockShowFloaters = false;
 std::set<std::string> LLFloaterReg::sAlwaysShowableList;
+std::set<std::string> LLFloaterReg::sBlockedFloaterList;
 
 static LLFloaterRegListener sFloaterRegListener;
 
@@ -241,12 +244,50 @@ LLFloaterReg::const_instance_list_t& LLFloaterReg::getFloaterList(const std::str
 // Visibility Management
 
 //static
+void LLFloaterReg::setBlockInstance(bool block, const std::string& name)
+{
+    if (block)
+    {
+        // close any existing instances
+        LLFloaterReg::const_instance_list_t& inst_list = LLFloaterReg::getFloaterList(name);
+        LLFloaterReg::const_instance_list_t::const_iterator iter = inst_list.begin();
+        while (iter != inst_list.end())
+        {
+            LLFloater* instance = *iter;
+            // increment iter before calling hideInstance, because that will likely close the floater,
+            // thus invalidating the iterator and making the increment unsafe.
+            ++iter;
+            if (instance)
+            {
+                instance->closeHostedFloater();
+            }
+        }
+
+        // finally, add the name to the blocked list
+        sBlockedFloaterList.insert(name);
+    }
+    else
+    {
+        sBlockedFloaterList.erase(name);
+    }
+}
+
+//static
 LLFloater* LLFloaterReg::showInstance(const std::string& name, const LLSD& key, BOOL focus) 
 {
-	if( sBlockShowFloaters
-			// see EXT-7090
-			&& sAlwaysShowableList.find(name) == sAlwaysShowableList.end())
-		return 0;//
+    if (sBlockedFloaterList.find(name) != sBlockedFloaterList.end())
+    {
+		LLSD args;
+		args["NAME"] = name;
+		LLNotificationsUtil::add("FloaterTypeDisabled", args);
+        return NULL;
+    }
+	if (sBlockShowFloaters && sAlwaysShowableList.find(name) == sAlwaysShowableList.end())
+    {
+        // see EXT-7090
+        return NULL;
+    }
+
 	LLFloater* instance = getInstance(name, key); 
 	if (instance) 
 	{
@@ -470,8 +511,25 @@ void LLFloaterReg::toggleInstanceOrBringToFront(const LLSD& sdname, const LLSD& 
 	// * Else the target floater is open, close it.
 	// 
 	std::string name = sdname.asString();
-	LLFloater* instance = getInstance(name, key); 
-	
+    LLFloater* instance = findInstance(name, key);
+    if (!instance || !instance->getVisible())
+    {
+        if (sBlockedFloaterList.find(name) != sBlockedFloaterList.end())
+        {
+		    LLSD args;
+		    args["NAME"] = name;
+		    LLNotificationsUtil::add("FloaterTypeDisabled", args);
+            return;
+        }
+	    if (sBlockShowFloaters && sAlwaysShowableList.find(name) == sAlwaysShowableList.end())
+        {
+            return;
+        }
+        if (!instance)
+        {
+            instance = getInstance(name, key);
+        }
+    }
 
 	if (!instance)
 	{

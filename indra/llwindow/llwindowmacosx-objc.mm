@@ -211,10 +211,12 @@ OSErr setImageCursor(CursorRef ref)
 // Now for some unholy juggling between generic pointers and casting them to Obj-C objects!
 // Note: things can get a bit hairy from here.  This is not for the faint of heart.
 
-NSWindowRef createNSWindow(int x, int y, int width, int height)
+NSWindowRef createNSWindow(int x, int y, int width, int height, int screen_index)
 {
+    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_index];
+
 	LLNSWindow *window = [[LLNSWindow alloc]initWithContentRect:NSMakeRect(x, y, width, height)
-													  styleMask:NSTitledWindowMask | NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTexturedBackgroundWindowMask backing:NSBackingStoreBuffered defer:NO];
+													  styleMask:NSTitledWindowMask | NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTexturedBackgroundWindowMask backing:NSBackingStoreBuffered defer:NO screen:s];
 	[window makeKeyAndOrderFront:nil];
 	[window setAcceptsMouseMovedEvents:TRUE];
 	return window;
@@ -232,6 +234,58 @@ void setResizeMode(bool oldresize, void* glview)
     [(LLOpenGLView *)glview setOldResize:oldresize];
 }
 
+GLViewRef createOpenGLViewTest(NSWindowRef window, int width, int height)
+{
+    NSRect winrect;
+    winrect.origin.x = 0;
+    winrect.origin.y = 0;
+    winrect.size.width = width;
+    winrect.size.height = height;
+	LLOpenGLView *glview = [[LLOpenGLView alloc]initWithFrame:winrect];
+	[(LLNSWindow*)window setContentView:glview];
+	return glview;
+}
+
+// Full screen window and view creation
+// Adapted from https://developer.apple.com/library/mac/documentation/graphicsimaging/Conceptual/OpenGL-MacProgGuide/opengl_fullscreen/opengl_cgl.html
+
+NSWindowRef createFullScreenWindow(int screen_index, bool hideOnDeactivate)
+{
+    // Create a screen-sized window on the display you want to take over
+    NSScreen* current_screen = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_index];
+    NSRect display_rect = [current_screen frame];
+    LLNSWindow *full_screen_window = [[LLNSWindow alloc] initWithContentRect: display_rect styleMask:NSBorderlessWindowMask backing:NSBackingStoreBuffered defer:YES];
+    
+    // Set the window level to be above the menu bar
+    [full_screen_window setLevel: NSMainMenuWindowLevel+1];
+    
+    // Perform any other window configuration you desire
+    [full_screen_window setOpaque:YES];
+	[full_screen_window setHidesOnDeactivate:hideOnDeactivate];
+    
+    return full_screen_window;
+}
+
+GLViewRef createFullScreenView(NSWindowRef window)
+{
+    NSRect display_rect = [(LLNSWindow*)window frame];
+
+    // Create a view with a double-buffered OpenGL context and attach it to the window
+    NSOpenGLPixelFormatAttribute attrs[] =
+    {
+        NSOpenGLPFADoubleBuffer,
+        0
+    };
+    
+    NSOpenGLPixelFormat* pixel_format = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
+    
+    NSRect view_rect = NSMakeRect(0.0, 0.0, display_rect.size.width, display_rect.size.height);
+    LLOpenGLView *full_screen_view = [[LLOpenGLView alloc] initWithFrame:view_rect pixelFormat: pixel_format];
+    [(LLNSWindow*)window setContentView: full_screen_view];
+    
+    return full_screen_view;
+}
+
 void glSwapBuffers(void* context)
 {
 	[(NSOpenGLContext*)context flushBuffer];
@@ -240,6 +294,11 @@ void glSwapBuffers(void* context)
 CGLContextObj getCGLContextObj(GLViewRef view)
 {
 	return [(LLOpenGLView *)view getCGLContextObj];
+}
+
+void setCGLCurrentContext(GLViewRef view)
+{
+	return [(LLOpenGLView *)view setCGLCurrentContext];
 }
 
 CGLPixelFormatObj* getCGLPixelFormatObj(NSWindowRef window)
@@ -384,7 +443,7 @@ void commitCurrentPreedit(GLViewRef glView)
 
 void allowDirectMarkedTextInput(bool allow, GLViewRef glView)
 {
-    [(LLOpenGLView*)glView allowMarkedTextInput:allow];
+  //  [(LLOpenGLView*)glView allowMarkedTextInput:allow];
 }
 
 NSWindowRef getMainAppWindow()
@@ -460,3 +519,68 @@ unsigned int getModifiers()
 {
 	return [NSEvent modifierFlags];
 }
+
+// Implemented for HMD support
+int getDisplayCountObjC()
+{
+    return (int)[[NSScreen screens] count];
+}
+
+long getDisplayId(int screen_id)
+{
+    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_id];
+    NSNumber* didref = (NSNumber*)[[s deviceDescription] objectForKey:@"NSScreenNumber"];
+    CGDirectDisplayID disp = (CGDirectDisplayID)[didref longValue];
+    return long(disp);
+}
+
+void getScreenSize(int screen_id, float* size)
+{
+    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_id];
+	NSRect frame = [s frame];
+	size[0] = frame.origin.x;
+	size[1] = frame.origin.y;
+	size[2] = frame.size.width;
+	size[3] = frame.size.height;
+}
+
+int getScreenFromPoint(float* pos)
+{
+	NSPoint point;
+	point.x = pos[0];
+	point.y = pos[1];
+	int numScreens = (int)[[NSScreen screens] count];
+	for (int i = 0; i < numScreens; ++i)
+	{
+		NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:i];
+		if (NSPointInRect(point, [s frame]))
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+void enterFullScreen(int screen_id, NSWindowRef window)
+{
+    NSScreen* s = (NSScreen*)[[NSScreen screens] objectAtIndex:screen_id];
+	NSRect screenRect = [s frame];
+    [(LLNSWindow*)window setStyleMask:NSBorderlessWindowMask];
+    [(LLNSWindow*)window setFrame:screenRect display:YES];
+    [(LLNSWindow*)window setLevel:NSMainMenuWindowLevel+1];
+    [(LLNSWindow*)window setOpaque:YES];
+    [(LLNSWindow*)window setHidesOnDeactivate:YES];
+}
+
+void leaveFullScreen(int screen_id, NSWindowRef window, int x, int y, int width, int height)
+{
+	NSRect frame = NSMakeRect(x, y, width, height);
+    [(LLNSWindow*)window setStyleMask:NSTitledWindowMask | NSResizableWindowMask | NSClosableWindowMask | NSMiniaturizableWindowMask | NSTexturedBackgroundWindowMask];
+    [(LLNSWindow*)window setFrame:frame display:YES];
+    [(LLNSWindow*)window setLevel:NSNormalWindowLevel];
+    [(LLNSWindow*)window setOpaque:YES];
+    [(LLNSWindow*)window setHidesOnDeactivate:NO];
+	[(LLNSWindow*)window makeKeyAndOrderFront:nil];
+	[(LLNSWindow*)window setAcceptsMouseMovedEvents:TRUE];
+}
+

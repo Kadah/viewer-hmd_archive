@@ -377,6 +377,12 @@ class Windows_i686_Manifest(ViewerManifest):
             except:
                 print "Skipping fmodex audio library(assuming other audio engine)"
 
+            # Get OpenVR dll, continue if missing
+            try:
+                self.path("openvr_api.dll")
+            except:
+                print "Skipping OpenVR API library(assuming disabled OpenVR support)"
+
             # For textures
             if self.args['configuration'].lower() == 'debug':
                 self.path("openjpegd.dll")
@@ -434,7 +440,7 @@ class Windows_i686_Manifest(ViewerManifest):
         # Media plugins - CEF
         if self.prefix(src='../media_plugins/cef/%s' % self.args['configuration'], dst="llplugin"):
             self.path("media_plugin_cef.dll")
-            self.end_prefix()
+        self.end_prefix()
 
         # winmm.dll shim
         if self.prefix(src='../media_plugins/winmmshim/%s' % self.args['configuration'], dst=""):

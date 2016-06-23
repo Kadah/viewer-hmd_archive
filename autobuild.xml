@@ -3,6 +3,54 @@
 <map>
     <key>installables</key>
     <map>
+      <key>openvr</key>
+      <map>
+        <key>license</key>
+        <string>Valve</string>
+        <key>license_file</key>
+        <string>LICENSES/openvr_api.txt</string>
+        <key>name</key>
+        <string>openvr</string>
+        <key>platforms</key>
+        <map>
+          <key>windows</key>
+          <map>
+            <key>archive</key>
+            <map>
+              <key>hash</key>
+              <string>0c9d304ec886e20fc3646b95092e20c8</string>
+              <key>url</key>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-openvr/rev/313210/arch/CYGWIN/installer/libopenvr-0.9.19-windows-313210.tar.bz2</string>
+            </map>
+            <key>name</key>
+            <string>windows</string>
+          </map>
+        </map>
+      </map>
+      <key>libovr</key>
+      <map>
+        <key>license</key>
+        <string>Oculus</string>
+        <key>license_file</key>
+        <string>LICENSES/libovr.txt</string>
+        <key>name</key>
+        <string>libovr</string>
+        <key>platforms</key>
+        <map>
+          <key>windows</key>
+          <map>
+            <key>archive</key>
+            <map>
+              <key>hash</key>
+              <string>edbb1e8f7f2345ab61fabb4d7d35f5d2</string>
+              <key>url</key>
+              <string>http://s3-proxy.lindenlab.com/private-builds-secondlife-com/hg/repo/3p-libovr-1.3.0/rev/313845/arch/CYGWIN/installer/libovr-1.3.0-windows-313845.tar.bz2</string>
+            </map>
+            <key>name</key>
+            <string>windows</string>
+          </map>
+        </map>
+      </map>
       <key>SDL</key>
       <map>
         <key>copyright</key>

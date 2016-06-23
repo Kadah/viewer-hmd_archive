@@ -114,6 +114,7 @@
 #include "llpathfindingpathtool.h"
 #include "llscenemonitor.h"
 #include "llprogressview.h"
+#include "llhmd.h"
 
 #ifdef _DEBUG
 // Debug indices is disabled for now for debug performance - djs 4/24/02
@@ -797,7 +798,6 @@ void LLPipeline::resizeScreenTexture()
 			{
 				gSavedSettings.setBOOL("RenderDeferred", FALSE);
 				LLPipeline::refreshCachedSettings();
-
 				}
 #endif
 			}
@@ -3208,7 +3208,7 @@ void LLPipeline::shiftObjects(const LLVector3 &offset)
 	assertInitialized();
 
 	glClear(GL_DEPTH_BUFFER_BIT);
-	gDepthDirty = TRUE;
+	LLViewerDisplay::gDepthDirty = TRUE;
 		
 	LLVector4a offseta;
 	offseta.load3(offset.mV);
@@ -3253,7 +3253,7 @@ void LLPipeline::shiftObjects(const LLVector3 &offset)
 		LLHUDText::shiftAll(offset);
 		LLHUDNameTag::shiftAll(offset);
 	}
-	display_update_camera();
+	LLViewerDisplay::update_camera();
 }
 
 void LLPipeline::markTextured(LLDrawable *drawablep)
@@ -4067,7 +4067,7 @@ void render_hud_elements()
 		// Render name tags.
 		LLHUDObject::renderAll();
 	}
-	else if (gForceRenderLandFence)
+	else if (LLViewerDisplay::gForceRenderLandFence)
 	{
 		// This is only set when not rendering the UI, for parcel snapshots
 		LLViewerParcelMgr::getInstance()->render();
@@ -4835,7 +4835,7 @@ void LLPipeline::addTrianglesDrawn(S32 index_count, U32 render_type)
 
 	if (LLPipeline::sRenderFrameTest)
 	{
-		gViewerWindow->getWindow()->swapBuffers();
+        LLViewerDisplay::swap(TRUE, LLViewerDisplay::gDisplaySwapBuffers);
 		ms_sleep(16);
 	}
 }
@@ -7351,6 +7351,8 @@ void LLPipeline::doResetVertexBuffers(bool forced)
 	mResetVertexBuffers = false;
 
 	mCubeVB = NULL;
+    mHMDUISurface = NULL;
+    mHMDDepthShape = NULL;
 
 	for (LLWorld::region_list_t::const_iterator iter = LLWorld::getInstance()->getRegionList().begin(); 
 			iter != LLWorld::getInstance()->getRegionList().end(); ++iter)
@@ -7679,6 +7681,8 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 			(RenderDepthOfFieldInEditMode || !LLToolMgr::getInstance()->inBuildMode()) &&
 							RenderDepthOfField;
 
+        // Disabling DOF in HMD mode for now (it's slow, it doesn't work, nuff said).
+        dof_enabled = dof_enabled && !gHMD.isHMDMode();
 
 		bool multisample = RenderFSAASamples > 1 && mFXAABuffer.isComplete();
 
@@ -8135,14 +8139,15 @@ void LLPipeline::renderBloom(BOOL for_snapshot, F32 zoom_factor, int subfield)
 		}
 	}
 
-	
-	if (LLRenderTarget::sUseFBO)
+    if (gHMD.isHMDMode())
+    {
+        LLRenderTarget::copyContentsToBoundTarget(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+    }
+    else if (LLRenderTarget::sUseFBO)
 	{ //copy depth buffer from mScreen to framebuffer
-		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 
-			0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+		LLRenderTarget::copyContentsToFramebuffer(mScreen, 0, 0, mScreen.getWidth(), mScreen.getHeight(), 0, 0, mScreen.getWidth(), mScreen.getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 	}
 	
-
 	gGL.matrixMode(LLRender::MM_PROJECTION);
 	gGL.popMatrix();
 	gGL.matrixMode(LLRender::MM_MODELVIEW);
@@ -8392,12 +8397,17 @@ static LLTrace::BlockTimerStatHandle FTM_PROJECTORS("Projectors");
 static LLTrace::BlockTimerStatHandle FTM_POST("Post");
 
 
-void LLPipeline::renderDeferredLighting()
+void LLPipeline::renderDeferredLighting(BOOL for_hmd, int hmd_eye)
 {
 	if (!sCull)
 	{
 		return;
 	}
+
+    if (for_hmd)
+    {
+        gHMD.bindEyeRenderTarget(hmd_eye);
+    }
 
 	{
 		LL_RECORD_BLOCK_TIME(FTM_RENDER_DEFERRED);
@@ -9003,9 +9013,13 @@ void LLPipeline::renderDeferredLighting()
 
 	mScreen.flush();
 						
+    if (for_hmd)
+    {
+        gHMD.flushEyeRenderTarget(hmd_eye);
+    }
 }
 
-void LLPipeline::renderDeferredLightingToRT(LLRenderTarget* target)
+void LLPipeline::renderDeferredLightingToRT(LLRenderTarget* target, BOOL for_hmd, int hmd_eye)
 {
 	if (!sCull)
 	{
@@ -9596,7 +9610,7 @@ void LLPipeline::setupSpotLight(LLGLSLShader& shader, LLDrawable* drawablep)
 	n.normalize();
 	
 	F32 proj_range = far_clip - near_clip;
-	glh::matrix4f light_proj = gl_perspective(fovy, aspect, near_clip, far_clip);
+	glh::matrix4f light_proj = gl_perspective(fovy, aspect, near_clip, far_clip, FALSE);
 	screen_to_light = trans * light_proj * screen_to_light;
 	shader.uniformMatrix4fv(LLShaderMgr::PROJECTOR_MATRIX, 1, FALSE, screen_to_light.m);
 	shader.uniform1f(LLShaderMgr::PROJECTOR_NEAR, near_clip);
@@ -9731,7 +9745,7 @@ void LLPipeline::generateWaterReflection(LLCamera& camera_in)
 	if (LLPipeline::sWaterReflections && assertInitialized() && LLDrawPoolWater::sNeedsReflectionUpdate)
 	{
 		BOOL skip_avatar_update = FALSE;
-		if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || !LLVOAvatar::sVisibleInFirstPerson)
+		if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || (gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK && gAgentCamera.getCameraMode() != CAMERA_MODE_FIRST_PERSON) || !LLVOAvatar::sVisibleInFirstPerson)
 		{
 			skip_avatar_update = TRUE;
 		}
@@ -9920,7 +9934,7 @@ void LLPipeline::generateWaterReflection(LLCamera& camera_in)
 				if (LLPipeline::sRenderDeferred && materials_in_water)
 				{
 					gPipeline.mDeferredScreen.flush();
-					renderDeferredLightingToRT(&mWaterRef);
+					renderDeferredLightingToRT(&mWaterRef, false, -1);
 				}
 
 				gPipeline.popRenderTypeMask();
@@ -10001,7 +10015,7 @@ void LLPipeline::generateWaterReflection(LLCamera& camera_in)
 				if (LLPipeline::sRenderDeferred && materials_in_water)
 				{
 					gPipeline.mDeferredScreen.flush();
-					renderDeferredLightingToRT(&mWaterDis);
+                    renderDeferredLightingToRT(&mWaterDis, false, -1);
 				}
 			}
 
@@ -10511,7 +10525,6 @@ void LLPipeline::generateHighlight(LLCamera& camera)
 	}
 }
 
-
 static LLTrace::BlockTimerStatHandle FTM_GEN_SUN_SHADOW("Gen Sun Shadow");
 
 void LLPipeline::generateSunShadow(LLCamera& camera)
@@ -10524,9 +10537,8 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 	LL_RECORD_BLOCK_TIME(FTM_GEN_SUN_SHADOW);
 
 	BOOL skip_avatar_update = FALSE;
-	if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK || !LLVOAvatar::sVisibleInFirstPerson)
+	if (!isAgentAvatarValid() || gAgentCamera.getCameraAnimating() || (gAgentCamera.getCameraMode() != CAMERA_MODE_MOUSELOOK && gAgentCamera.getCameraMode() != CAMERA_MODE_FIRST_PERSON) || !LLVOAvatar::sVisibleInFirstPerson)
 	{
-
 		skip_avatar_update = TRUE;
 	}
 
@@ -11206,7 +11218,7 @@ void LLPipeline::generateSunShadow(LLCamera& camera)
 			F32 fovy = fov * RAD_TO_DEG;
 			F32 aspect = width/height;
 			
-			proj[i+4] = gl_perspective(fovy, aspect, near_clip, far_clip);
+			proj[i+4] = gl_perspective(fovy, aspect, near_clip, far_clip, FALSE);
 
 			//translate and scale to from [-1, 1] to [0, 1]
 			glh::matrix4f trans(0.5f, 0.f, 0.f, 0.5f,
@@ -11383,7 +11395,7 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 	{
 		LL_RECORD_BLOCK_TIME(FTM_IMPOSTOR_MARK_VISIBLE);
 		markVisible(avatar->mDrawable, *viewer_camera);
-		LLVOAvatar::sUseImpostors = false; // @TODO ???
+		LLVOAvatar::sUseImpostors = FALSE;
 
 		LLVOAvatar::attachment_map_t::iterator iter;
 		for (iter = avatar->mAttachmentPoints.begin();
@@ -11442,7 +11454,7 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 		F32 distance = (pos-camera.getOrigin()).length();
 		F32 fov = atanf(tdim.mV[1]/distance)*2.f*RAD_TO_DEG;
 		F32 aspect = tdim.mV[0]/tdim.mV[1];
-		glh::matrix4f persp = gl_perspective(fov, aspect, 1.f, 256.f);
+		glh::matrix4f persp = gl_perspective(fov, aspect, 1.f, 256.f, TRUE);
 		glh_set_current_projection(persp);
 		gGL.loadMatrix(persp.m);
 
@@ -11451,7 +11463,7 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 		glh::matrix4f mat;
 		camera.getOpenGLTransform(mat.m);
 
-		mat = glh::matrix4f((GLfloat*) OGL_TO_CFR_ROTATION) * mat;
+		mat = glh::matrix4f((GLfloat*) OGL_TO_CFR_BASIS) * mat;
 
 		gGL.loadMatrix(mat.m);
 		glh_set_current_modelview(mat);
@@ -11642,6 +11654,29 @@ void LLPipeline::generateImpostor(LLVOAvatar* avatar)
 	LLGLState::checkStates();
 	LLGLState::checkTextureChannels();
 	LLGLState::checkClientArrays();
+}
+
+
+void LLPipeline::postRender(BOOL writeAlpha, BOOL forHMD, int whichEye)
+{
+    if (!(gPipeline.canUseVertexShaders() && sRenderGlow))
+    {
+        return;
+    }
+
+    if (forHMD)
+    {
+        gHMD.copyToEyeRenderTarget(whichEye, mScreen, GL_DEPTH_BUFFER_BIT);
+    }
+    else if (LLRenderTarget::sUseFBO)
+	{
+        //copy depth buffer from mScreen to framebuffer
+		LLRenderTarget::copyContentsToFramebuffer(
+                                                mScreen,
+                                                0, 0, mScreen.getWidth(), mScreen.getHeight(), 
+			                                    0, 0, mScreen.getWidth(), mScreen.getHeight(),
+                                                GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+	}
 }
 
 BOOL LLPipeline::hasRenderBatches(const U32 type) const

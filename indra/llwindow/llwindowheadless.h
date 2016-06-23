@@ -46,8 +46,8 @@ public:
 	/*virtual*/ BOOL getSize(LLCoordScreen *size) {return FALSE;};
 	/*virtual*/ BOOL getSize(LLCoordWindow *size) {return FALSE;};
 	/*virtual*/ BOOL setPosition(LLCoordScreen position) {return FALSE;};
-	/*virtual*/ BOOL setSizeImpl(LLCoordScreen size) {return FALSE;};
-	/*virtual*/ BOOL setSizeImpl(LLCoordWindow size) {return FALSE;};
+	/*virtual*/ BOOL setSizeImpl(LLCoordScreen size, BOOL adjustPosition) {return FALSE;};
+	/*virtual*/ BOOL setSizeImpl(LLCoordWindow size, BOOL adjustPosition) {return FALSE;};
 	/*virtual*/ BOOL switchContext(BOOL fullscreen, const LLCoordScreen &size, BOOL disable_vsync, const LLCoordScreen * const posp = NULL) {return FALSE;};
 	/*virtual*/ BOOL setCursorPosition(LLCoordWindow position) {return FALSE;};
 	/*virtual*/ BOOL getCursorPosition(LLCoordWindow *position) {return FALSE;};
@@ -89,7 +89,7 @@ public:
 	/*virtual*/ F32 getPixelAspectRatio() { return 1.0f; };
 	/*virtual*/ void setNativeAspectRatio(F32 ratio) {}
 
-	/*virtual*/ void *getPlatformWindow() { return 0; };
+	/*virtual*/ void *getPlatformWindow(S32 idx = -1) { return 0; };
 	/*virtual*/ void bringToFront() {};
 	
 	LLWindowHeadless(LLWindowCallbacks* callbacks,

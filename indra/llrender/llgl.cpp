@@ -998,6 +998,12 @@ void LLGLManager::initExtensions()
 	mHassRGBFramebuffer = ExtensionExists("GL_EXT_framebuffer_sRGB", gGLHExts.mSysExts);
 #endif
 	
+#if WGL_EXT_swap_control && WGL_EXT_extensions_string
+    mHasAdaptiveVSync = ExtensionExists("WGL_EXT_swap_control_tear", gGLHExts.mSysExts);
+#else
+    mHasAdaptiveVSync = FALSE;
+#endif
+	
 	mHasMipMapGeneration = mHasFramebufferObject || mGLVersion >= 1.4f;
 
 	mHasDrawBuffers = ExtensionExists("GL_ARB_draw_buffers", gGLHExts.mSysExts);
@@ -2032,7 +2038,7 @@ LLGLState::LLGLState(LLGLenum state, S32 enabled) :
 	if (mState)
 	{
 		mWasEnabled = sStateMap[state];
-		llassert(mWasEnabled == glIsEnabled(state));
+//		llassert(mWasEnabled == glIsEnabled(state));
 		setEnabled(enabled);
 		stop_glerror();
 	}

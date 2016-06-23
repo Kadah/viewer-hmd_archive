@@ -45,6 +45,7 @@
 #include "lluiimage.h"
 // Linden library includes
 #include "llwindow.h"			// setMouseClipping()
+#include "llhmd.h"
 
 LLToolGun::LLToolGun( LLToolComposite* composite )
 :	LLTool( std::string("gun"), composite ),
@@ -56,7 +57,11 @@ void LLToolGun::handleSelect()
 {
 	gViewerWindow->hideCursor();
 	gViewerWindow->moveCursorToCenter();
-	gViewerWindow->getWindow()->setMouseClipping(TRUE);
+    if (!gHMD.isHMDMode())
+    {
+        // HMD mode already has mouse clipping turned on
+	    gViewerWindow->getWindow()->setMouseClipping(TRUE);
+    }
 	mIsSelected = TRUE;
 }
 
@@ -64,7 +69,12 @@ void LLToolGun::handleDeselect()
 {
 	gViewerWindow->moveCursorToCenter();
 	gViewerWindow->showCursor();
-	gViewerWindow->getWindow()->setMouseClipping(FALSE);
+    if (!gHMD.isHMDMode())
+    {
+        // HMD mode must keep mouse clipping turned on or it can inadvertently defocus the window and cause it
+        // to revert to normal rendering
+    	gViewerWindow->getWindow()->setMouseClipping(FALSE);
+    }
 	mIsSelected = FALSE;
 }
 
@@ -78,7 +88,7 @@ BOOL LLToolGun::handleMouseDown(S32 x, S32 y, MASK mask)
 
 BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask) 
 {
-	if( gAgentCamera.cameraMouselook() && mIsSelected )
+	if( gAgentCamera.cameraMouselook() && mIsSelected && (!gHMD.isHMDMode() || gHMD.getMouselookControlMode() == (S32)LLHMD::kMouselookControl_Independent))
 	{
 		const F32 NOMINAL_MOUSE_SENSITIVITY = 0.0025f;
 
@@ -93,15 +103,18 @@ BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask)
 		
 		if (dx != 0 || dy != 0)
 		{
-			// ...actually moved off center
-			if (gSavedSettings.getBOOL("InvertMouse"))
-			{
-				gAgent.pitch(mouse_sensitivity * -dy);
-			}
-			else
-			{
-				gAgent.pitch(mouse_sensitivity * dy);
-			}
+            if (!gHMD.isHMDMode() || !gHMD.isMouselookYawOnly())
+            {
+			    // ...actually moved off center
+			    if (gSavedSettings.getBOOL("InvertMouse"))
+			    {
+				    gAgent.pitch(mouse_sensitivity * -dy);
+			    }
+			    else
+			    {
+				    gAgent.pitch(mouse_sensitivity * dy);
+			    }
+            }
 			LLVector3 skyward = gAgent.getReferenceUpVector();
 			gAgent.rotate(mouse_sensitivity * dx, skyward.mV[VX], skyward.mV[VY], skyward.mV[VZ]);
 
@@ -131,11 +144,20 @@ BOOL LLToolGun::handleHover(S32 x, S32 y, MASK mask)
 
 void LLToolGun::draw()
 {
-	if( gSavedSettings.getBOOL("ShowCrosshairs") )
+    // crosshair rendering is a bit 'special' in HMD mode, so it's handled elsewhere
+	if(!gHMD.isHMDMode())
+	{
+        drawCrosshairs( gViewerWindow->getWorldViewRectScaled().getWidth() / 2,
+                        gViewerWindow->getWorldViewRectScaled().getHeight() / 2);
+	}
+}
+
+
+void LLToolGun::drawCrosshairs(S32 x, S32 y)
+{
+	if(gSavedSettings.getBOOL("ShowCrosshairs"))
 	{
 		LLUIImagePtr crosshair = LLUI::getUIImage("crosshairs.tga");
-		crosshair->draw(
-			( gViewerWindow->getWorldViewRectScaled().getWidth() - crosshair->getWidth() ) / 2,
-			( gViewerWindow->getWorldViewRectScaled().getHeight() - crosshair->getHeight() ) / 2);
+		crosshair->draw(x - (crosshair->getWidth() / 2), y - (crosshair->getHeight() / 2));
 	}
 }

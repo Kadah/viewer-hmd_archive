@@ -54,6 +54,7 @@
 #include "llparcel.h"
 #include "roles_constants.h"
 #include "llglheaders.h"
+#include "llhmd.h"
 
 const std::string REGION_BLOCKS_TERRAFORM_MSG = "This region does not allow terraforming.\n"
 				"You will need to buy land in another part of the world to terraform it.";
@@ -493,7 +494,6 @@ void LLToolBrushLand::render()
 							  pos_world);
 			}
 		}
-		mGotHover = FALSE;
 	}
 }
 

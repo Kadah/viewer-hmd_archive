@@ -408,11 +408,11 @@ void LLAppViewerWin32::disableWinErrorReporting()
 	std::string executable_name = gDirUtilp->getExecutableFilename();
 
 	if( S_OK == WerAddExcludedApplication( utf8str_to_utf16str(executable_name).c_str(), FALSE ) )
-	{
+				{
 		LL_INFOS() << "WerAddExcludedApplication() succeeded for " << executable_name << LL_ENDL;
-	}
-	else
-	{
+				}
+				else
+				{
 		LL_INFOS() << "WerAddExcludedApplication() failed for " << executable_name << LL_ENDL;
 	}
 }

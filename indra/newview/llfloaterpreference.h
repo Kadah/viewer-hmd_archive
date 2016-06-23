@@ -124,12 +124,12 @@ protected:
 	void updateClickActionSettings();
 	// updates click/double-click action controls depending on values from settings.xml
 	void updateClickActionControls();
-
+	
 public:
 	// This function squirrels away the current values of the controls so that
 	// cancel() can restore them.	
 	void saveSettings();
-
+		
 	void setCacheLocation(const LLStringExplicit& location);
 
 	void onClickSetCache();
@@ -167,7 +167,8 @@ public:
 	void onClickPermsDefault();
 	void onClickAutoReplace();
 	void onClickSpellChecker();
-	void onClickAdvanced();
+	void onClickOpenHMDConfig();
+    void onClickAdvanced();
 	void applyUIColor(LLUICtrl* ctrl, const LLSD& param);
 	void getUIColor(LLUICtrl* ctrl, const LLSD& param);
 	void onLogChatHistorySaved();	
@@ -220,7 +221,7 @@ public:
 	// This function squirrels away the current values of the controls so that
 	// cancel() can restore them.
 	virtual void saveSettings();
-
+	
 	void deletePreset(const LLSD& user_data);
 	void savePreset(const LLSD& user_data);
 	void loadPreset(const LLSD& user_data);
@@ -259,7 +260,7 @@ public:
 
 protected:
 	bool hasDirtyChilds();
-
+	
 private:
 
 	void onPresetsListChange();

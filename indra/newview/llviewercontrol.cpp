@@ -75,6 +75,7 @@
 #include "llslurl.h"
 #include "llstartup.h"
 #include "llupdaterservice.h"
+#include "llviewerdisplay.h"
 
 // Third party library includes
 #include <boost/algorithm/string.hpp>
@@ -93,7 +94,6 @@ LLControlGroup gWarningSettings("Warnings"); // persists ignored dialogs/warning
 
 std::string gLastRunVersion;
 
-extern BOOL gResizeScreenTexture;
 extern BOOL gDebugGL;
 ////////////////////////////////////////////////////////////////////////////
 // Listeners
@@ -427,7 +427,7 @@ static bool handleRenderDebugPipelineChanged(const LLSD& newvalue)
 
 static bool handleRenderResolutionDivisorChanged(const LLSD&)
 {
-	gResizeScreenTexture = TRUE;
+	LLViewerDisplay::gResizeScreenTexture = TRUE;
 	return true;
 }
 
@@ -604,7 +604,6 @@ void settings_setup_listeners()
 	gSavedSettings.getControl("RenderUseTriStrips")->getSignal()->connect(boost::bind(&handleResetVertexBuffersChanged, _2));
 	gSavedSettings.getControl("RenderAvatarVP")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
 	gSavedSettings.getControl("VertexShaderEnable")->getSignal()->connect(boost::bind(&handleSetShaderChanged, _2));
-	gSavedSettings.getControl("RenderUIBuffer")->getSignal()->connect(boost::bind(&handleReleaseGLBufferChanged, _2));
 	gSavedSettings.getControl("RenderDepthOfField")->getSignal()->connect(boost::bind(&handleReleaseGLBufferChanged, _2));
 	gSavedSettings.getControl("RenderFSAASamples")->getSignal()->connect(boost::bind(&handleReleaseGLBufferChanged, _2));
 	gSavedSettings.getControl("RenderSpecularResX")->getSignal()->connect(boost::bind(&handleLUTBufferChanged, _2));

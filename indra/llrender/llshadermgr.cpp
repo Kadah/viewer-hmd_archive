@@ -515,13 +515,29 @@ void LLShaderMgr::dumpObjectLog(GLhandleARB ret, BOOL warns, const std::string& 
 
 	if (log.length() > 0 || warns)
 	{
-        LL_DEBUGS("ShaderLoading") << "Shader loading ";
-        
 		if (!filename.empty())
 		{
-            LL_CONT << "From " << filename << ":\n";
-        }
-        LL_CONT << log << LL_ENDL;
+			if (warns)
+			{
+				LL_WARNS("ShaderLoading") << "From " << filename << ":" << LL_ENDL;
+			}
+			else
+			{
+				LL_INFOS("ShaderLoading") << "From " << filename << ":" << LL_ENDL;
+			}
+		}
+	}
+
+	if ( log.length() > 0 )
+	{
+		if (warns)
+		{
+			LL_WARNS("ShaderLoading") << log << LL_ENDL;
+		}
+		else
+		{
+			LL_INFOS("ShaderLoading") << log << LL_ENDL;
+		}
 	}
  }
 
@@ -1145,6 +1161,7 @@ void LLShaderMgr::initAttribsAndUniforms()
 
 	mReservedUniforms.push_back("global_gamma");
 	mReservedUniforms.push_back("texture_gamma");
+    mReservedUniforms.push_back("alpha_offset");
 	
 	mReservedUniforms.push_back("specular_color");
 	mReservedUniforms.push_back("env_intensity");

@@ -621,8 +621,7 @@ class LLManifest(object):
             except OSError, err:
                 if err.errno != errno.ENOENT:
                     raise
-
-            shutil.copy2(src, dst)
+                shutil.copy2(src, dst)
 
     def ccopytree(self, src, dst):
         """Direct copy of shutil.copytree with the additional

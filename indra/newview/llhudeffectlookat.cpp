@@ -611,7 +611,7 @@ bool LLHUDEffectLookAt::calcTargetPosition()
 			BOOL looking_at_self = source_avatar->isSelf() && target_av->isSelf();
 
 			// if selecting self, stare forward
-			if (looking_at_self && mTargetOffsetGlobal.magVecSquared() < MIN_TARGET_OFFSET_SQUARED)
+			if (looking_at_self && (mTargetOffsetGlobal.magVecSquared() < MIN_TARGET_OFFSET_SQUARED))
 			{
 				//sets the lookat point in front of the avatar
 				mTargetOffsetGlobal.setVec(5.0, 0.0, 0.0);

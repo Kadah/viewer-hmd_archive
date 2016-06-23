@@ -50,6 +50,7 @@
 #include "llvoavatarself.h"
 #include "llwindow.h"
 #include "llworld.h"
+#include "llhmd.h"
 
 using namespace LLAvatarAppearanceDefines;
 
@@ -305,7 +306,14 @@ void LLAgentCamera::resetView(BOOL reset_camera, BOOL change_camera)
 
 	if (change_camera && !gSavedSettings.getBOOL("FreezeTime"))
 	{
+        if (gAgentCamera.getCameraMode() == CAMERA_MODE_FIRST_PERSON)
+        {
+            changeCameraToFirstPerson();
+        }
+        else
+        {
 		changeCameraToDefault();
+        }
 		
 		if (LLViewerJoystick::getInstance()->getOverrideCamera())
 		{
@@ -951,7 +959,14 @@ void LLAgentCamera::cameraOrbitIn(const F32 meters)
 		if (!gSavedSettings.getBOOL("FreezeTime") && mCameraZoomFraction < MIN_ZOOM_FRACTION && meters > 0.f)
 		{
 			// No need to animate, camera is already there.
+            if (gHMD.isHMDMode() && gSavedSettings.getBOOL("FirstPersonModeInCycle"))
+            {
+			    changeCameraToFirstPerson(FALSE);
+            }
+            else
+            {
 			changeCameraToMouselook(FALSE);
+		}
 		}
 
 		mCameraZoomFraction = llclamp(mCameraZoomFraction, MIN_ZOOM_FRACTION, MAX_ZOOM_FRACTION);
@@ -1072,8 +1087,11 @@ void LLAgentCamera::updateLookAt(const S32 mouse_x, const S32 mouse_y)
 	LLQuaternion av_inv_rot = ~gAgentAvatarp->mRoot->getWorldRotation();
 	LLVector3 root_at = LLVector3::x_axis * gAgentAvatarp->mRoot->getWorldRotation();
 
-	if 	(LLTrace::get_frame_recording().getLastRecording().getLastValue(*gViewerWindow->getMouseVelocityStat()) < 0.01f
-		&& (root_at * last_at_axis > 0.95f))
+	// this code slams the head position for the Rift/HMD and is not required if we are in mouse look
+	if (!cameraMouselook() &&
+        !cameraFirstPerson() &&
+        LLTrace::get_frame_recording().getLastRecording().getLastValue(*gViewerWindow->getMouseVelocityStat()) < 0.01f &&
+        (root_at * last_at_axis > 0.95f))
 	{
 		LLVector3 vel = gAgentAvatarp->getVelocity();
 		if (vel.magVecSquared() > 4.f)
@@ -1104,24 +1122,28 @@ void LLAgentCamera::updateLookAt(const S32 mouse_x, const S32 mouse_y)
 		LLVector3 headLookAxis;
 		LLCoordFrame frameCamera = *((LLCoordFrame*)LLViewerCamera::getInstance());
 
-		if (cameraMouselook())
+		if (cameraMouselook() || cameraFirstPerson())
 		{
 			lookAtType = LOOKAT_TARGET_MOUSELOOK;
+            headLookAxis = frameCamera.getAtAxis();
 		}
 		else if (cameraThirdPerson())
 		{
+            if (!gSavedSettings.getBOOL("DisableLookAtFollowsMouseCursor"))
+            {
 			// range from -.5 to .5
 			F32 x_from_center = 
-				((F32) mouse_x / (F32) gViewerWindow->getWorldViewWidthScaled() ) - 0.5f;
+                    ((F32)mouse_x / (F32)(gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWorldViewWidthScaled())) - 0.5f;
 			F32 y_from_center = 
-				((F32) mouse_y / (F32) gViewerWindow->getWorldViewHeightScaled() ) - 0.5f;
+                    ((F32)mouse_y / (F32)(gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewHeightScaled())) - 0.5f;
 
 			frameCamera.yaw( - x_from_center * gSavedSettings.getF32("YawFromMousePosition") * DEG_TO_RAD);
 			frameCamera.pitch( - y_from_center * gSavedSettings.getF32("PitchFromMousePosition") * DEG_TO_RAD);
+            }
 			lookAtType = LOOKAT_TARGET_FREELOOK;
+            headLookAxis = frameCamera.getAtAxis();
 		}
 
-		headLookAxis = frameCamera.getAtAxis();
 		// RN: we use world-space offset for mouselook and freelook
 		//headLookAxis = headLookAxis * av_inv_rot;
 		setLookAt(lookAtType, gAgentAvatarp, headLookAxis);
@@ -1147,7 +1169,7 @@ void LLAgentCamera::updateCamera()
 
 	if (isAgentAvatarValid() && 
 		gAgentAvatarp->isSitting() &&
-		camera_mode == CAMERA_MODE_MOUSELOOK)
+		(camera_mode == CAMERA_MODE_MOUSELOOK || camera_mode == CAMERA_MODE_FIRST_PERSON))
 	{
 		//changed camera_skyward to the new global "mCameraUpVector"
 		mCameraUpVector = mCameraUpVector * gAgentAvatarp->getRenderRotation();
@@ -1291,8 +1313,8 @@ void LLAgentCamera::updateCamera()
 		// linear interpolation
 		F32 fraction_of_animation = time / mAnimationDuration;
 
-		BOOL isfirstPerson = mCameraMode == CAMERA_MODE_MOUSELOOK;
-		BOOL wasfirstPerson = mLastCameraMode == CAMERA_MODE_MOUSELOOK;
+		BOOL isfirstPerson = (mCameraMode == CAMERA_MODE_MOUSELOOK || mCameraMode == CAMERA_MODE_FIRST_PERSON);
+		BOOL wasfirstPerson = (mLastCameraMode == CAMERA_MODE_MOUSELOOK || mLastCameraMode == CAMERA_MODE_FIRST_PERSON);
 		F32 fraction_animation_to_skip;
 
 		if (mAnimationCameraStartGlobal == camera_target_global)
@@ -1331,7 +1353,7 @@ void LLAgentCamera::updateCamera()
 			gAgent.setShowAvatar(TRUE);
 		}
 
-		if (isAgentAvatarValid() && (mCameraMode != CAMERA_MODE_MOUSELOOK))
+		if (isAgentAvatarValid() && mCameraMode != CAMERA_MODE_MOUSELOOK && mCameraMode != CAMERA_MODE_FIRST_PERSON)
 		{
 			gAgentAvatarp->updateAttachmentVisibility(mCameraMode);
 		}
@@ -1397,8 +1419,22 @@ void LLAgentCamera::updateCamera()
 
 	// Move the camera
 
-	LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent);
-	//LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, camera_skyward, focus_agent);
+    if (gHMD.isHMDMode() && (!cameraMouselook() || gHMD.getMouselookControlMode() != (S32)LLHMD::kMouselookControl_Linked))
+    {
+        LLVector3 uiUp = mCameraUpVector;
+        LLVector3 uiFocus = focus_agent;
+        if (cameraThirdPerson() || cameraFollow())
+        {
+            //strip off pitch
+            focus_agent.mV[VZ] = mCameraPositionAgent.mV[VZ];
+            uiFocus = focus_agent;
+        }
+        LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent, uiUp, uiFocus);
+    }
+    else
+    {
+	    LLViewerCamera::getInstance()->updateCameraLocation(mCameraPositionAgent, mCameraUpVector, focus_agent, mCameraUpVector, focus_agent);
+    }
 	
 	// Change FOV
 	LLViewerCamera::getInstance()->setView(LLViewerCamera::getInstance()->getDefaultFOV() / (1.f + mCameraCurrentFOVZoomFactor));
@@ -1420,7 +1456,7 @@ void LLAgentCamera::updateCamera()
 	}
 	gAgent.setLastPositionGlobal(global_pos);
 	
-	if (LLVOAvatar::sVisibleInFirstPerson && isAgentAvatarValid() && !gAgentAvatarp->isSitting() && cameraMouselook())
+	if (LLVOAvatar::sVisibleInFirstPerson && isAgentAvatarValid() && !gAgentAvatarp->isSitting() && (cameraMouselook() || cameraFirstPerson()))
 	{
 		LLVector3 head_pos = gAgentAvatarp->mHeadp->getWorldPosition() + 
 			LLVector3(0.08f, 0.f, 0.05f) * gAgentAvatarp->mHeadp->getWorldRotation() + 
@@ -1434,7 +1470,7 @@ void LLAgentCamera::updateCamera()
 		LLVector3 chest_scale = chest_joint->getScale();
 
 		// shorten avatar skeleton to avoid foot interpenetration
-		if (!gAgentAvatarp->mInAir)
+		if (!gAgentAvatarp->mInAir && !gHMD.isHMDMode())
 		{
 			LLVector3 chest_offset = LLVector3(0.f, 0.f, chest_joint->getPosition().mV[VZ]) * torso_joint->getWorldRotation();
 			F32 z_compensate = llclamp(-diff.mV[VZ], -0.2f, 1.f);
@@ -1518,7 +1554,7 @@ LLVector3d LLAgentCamera::calcFocusPositionTargetGlobal()
 		mFocusTargetGlobal = gAgent.getPosGlobalFromAgent(mFollowCam.getSimulatedFocus());
 		return mFocusTargetGlobal;
 	}
-	else if (mCameraMode == CAMERA_MODE_MOUSELOOK)
+	else if (mCameraMode == CAMERA_MODE_MOUSELOOK || mCameraMode == CAMERA_MODE_FIRST_PERSON)
 	{
 		LLVector3d at_axis(1.0, 0.0, 0.0);
 		LLQuaternion agent_rot = gAgent.getFrameAgent().getQuaternion();
@@ -1644,7 +1680,7 @@ F32	LLAgentCamera::calcCameraFOVZoomFactor()
 	LLVector3 camera_offset_dir;
 	camera_offset_dir.setVec(mCameraFocusOffset);
 
-	if (mCameraMode == CAMERA_MODE_MOUSELOOK)
+	if (mCameraMode == CAMERA_MODE_MOUSELOOK || mCameraMode == CAMERA_MODE_FIRST_PERSON)
 	{
 		return 0.f;
 	}
@@ -1689,7 +1725,7 @@ LLVector3d LLAgentCamera::calcCameraPositionTargetGlobal(BOOL *hit_limit)
 	{
 		camera_position_global = gAgent.getPosGlobalFromAgent(mFollowCam.getSimulatedPosition());
 	}
-	else if (mCameraMode == CAMERA_MODE_MOUSELOOK)
+	else if (mCameraMode == CAMERA_MODE_MOUSELOOK || mCameraMode == CAMERA_MODE_FIRST_PERSON)
 	{
 		if (!isAgentAvatarValid() || gAgentAvatarp->mDrawable.isNull())
 		{
@@ -1950,10 +1986,24 @@ void LLAgentCamera::handleScrollWheel(S32 clicks)
 			mFollowCam.zoom(clicks); 
 			if (mFollowCam.isZoomedToMinimumDistance())
 			{
+                if (gHMD.isHMDMode() && gSavedSettings.getBOOL("FirstPersonModeInCycle"))
+                {
+                    changeCameraToFirstPerson(FALSE);
+                }
+                else
+                {
 				changeCameraToMouselook(FALSE);
 			}
 		}
 	}
+	}
+    else if (mCameraMode == CAMERA_MODE_FIRST_PERSON)
+    {
+        if (clicks > 0)
+        {
+            changeCameraToDefault();
+        }
+    }
 	else
 	{
 		LLObjectSelectionHandle selection = LLSelectMgr::getInstance()->getSelection();
@@ -1993,7 +2043,7 @@ void LLAgentCamera::handleScrollWheel(S32 clicks)
 //-----------------------------------------------------------------------------
 F32 LLAgentCamera::getCameraMinOffGround()
 {
-	if (mCameraMode == CAMERA_MODE_MOUSELOOK)
+	if (mCameraMode == CAMERA_MODE_MOUSELOOK || mCameraMode == CAMERA_MODE_FIRST_PERSON)
 	{
 		return 0.f;
 	}
@@ -2088,6 +2138,53 @@ void LLAgentCamera::changeCameraToMouselook(BOOL animate)
 
 
 //-----------------------------------------------------------------------------
+// changeCameraToFirstPerson()
+//-----------------------------------------------------------------------------
+void LLAgentCamera::changeCameraToFirstPerson(BOOL animate)
+{
+    if (LLViewerJoystick::getInstance()->getOverrideCamera())
+    {
+        return;
+    }
+
+    // visibility changes at end of animation
+    gViewerWindow->getWindow()->resetBusyCount();
+
+    // unpause avatar animation
+    gAgent.unpauseAnimation();
+
+    if (isAgentAvatarValid())
+    {
+        // TODO: should we do this?  Seems like a good idea...
+        gAgentAvatarp->stopMotion(ANIM_AGENT_BODY_NOISE);
+        gAgentAvatarp->stopMotion(ANIM_AGENT_BREATHE_ROT);
+    }
+
+    if (mCameraMode != CAMERA_MODE_FIRST_PERSON)
+    {
+        if (gBasicToolset)
+        {
+            LLToolMgr::getInstance()->setCurrentToolset(gBasicToolset);
+        }
+
+        updateLastCamera();
+        mCameraMode = CAMERA_MODE_FIRST_PERSON;
+        gAgent.clearControlFlags(AGENT_CONTROL_MOUSELOOK);
+    }
+
+    if (animate)
+    {
+        startCameraAnimation();
+    }
+    else
+    {
+        mCameraAnimating = FALSE;
+        gAgent.endAnimationUpdateUI();
+    }
+}
+
+
+//-----------------------------------------------------------------------------
 // changeCameraToDefault()
 //-----------------------------------------------------------------------------
 void LLAgentCamera::changeCameraToDefault()
@@ -2125,7 +2222,7 @@ void LLAgentCamera::changeCameraToFollow(BOOL animate)
 
 	if(mCameraMode != CAMERA_MODE_FOLLOW)
 	{
-		if (mCameraMode == CAMERA_MODE_MOUSELOOK)
+		if (mCameraMode == CAMERA_MODE_MOUSELOOK || mCameraMode == CAMERA_MODE_FIRST_PERSON)
 		{
 			animate = FALSE;
 		}
@@ -2203,7 +2300,7 @@ void LLAgentCamera::changeCameraToThirdPerson(BOOL animate)
 		}
 
 		mCameraLag.clearVec();
-		if (mCameraMode == CAMERA_MODE_MOUSELOOK)
+		if (mCameraMode == CAMERA_MODE_MOUSELOOK || mCameraMode == CAMERA_MODE_FIRST_PERSON)
 		{
 			mCurrentCameraDistance = MIN_CAMERA_DISTANCE;
 			mTargetCameraDistance = MIN_CAMERA_DISTANCE;

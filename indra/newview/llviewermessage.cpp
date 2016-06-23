@@ -2844,7 +2844,6 @@ void process_improved_im(LLMessageSystem *msg, void **user_data)
 	
 	case IM_FROM_TASK:
 		{
-
 			if (is_do_not_disturb && !is_owned_by_me)
 			{
 				return;
@@ -3760,7 +3759,6 @@ void process_chat_from_simulator(LLMessageSystem *msg, void **user_data)
 			msg_notify["source_type"] = chat.mSourceType;
 			on_new_message(msg_notify);
 		}
-
 	}
 }
 
@@ -3778,7 +3776,7 @@ void process_teleport_start(LLMessageSystem *msg, void**)
 	U32 teleport_flags = 0x0;
 	msg->getU32("Info", "TeleportFlags", teleport_flags);
 
-	LL_DEBUGS("Messaging") << "Got TeleportStart with TeleportFlags=" << teleport_flags << ". gTeleportDisplay: " << gTeleportDisplay << ", gAgent.mTeleportState: " << gAgent.getTeleportState() << LL_ENDL;
+	LL_DEBUGS("Messaging") << "Got TeleportStart with TeleportFlags=" << teleport_flags << ". gTeleportDisplay: " << LLViewerDisplay::gTeleportDisplay << ", gAgent.mTeleportState: " << gAgent.getTeleportState() << LL_ENDL;
 
 	// *NOTE: The server sends two StartTeleport packets when you are teleporting to a LM
 	LLViewerMessage::getInstance()->mTeleportStartedSignal();
@@ -3797,7 +3795,7 @@ void process_teleport_start(LLMessageSystem *msg, void**)
 
 	if( gAgent.getTeleportState() == LLAgent::TELEPORT_NONE )
 	{
-		gTeleportDisplay = TRUE;
+		LLViewerDisplay::gTeleportDisplay = TRUE;
 		gAgent.setTeleportState( LLAgent::TELEPORT_START );
 		make_ui_sound("UISndTeleportOut");
 		
@@ -4063,8 +4061,8 @@ void process_teleport_finish(LLMessageSystem* msg, void**)
 	effectp->setColor(LLColor4U(gAgent.getEffectColor()));
 	LLHUDManager::getInstance()->sendEffects();
 
-//	gTeleportDisplay = TRUE;
-//	gTeleportDisplayTimer.reset();
+//	LLViewerDisplay::gTeleportDisplay = TRUE;
+//	LLViewerDisplay::gTeleportDisplayTimer.reset();
 //	gViewerWindow->setShowProgress(TRUE);
 }
 
@@ -6878,8 +6876,8 @@ void process_teleport_local(LLMessageSystem *msg,void**)
 			// To prevent TeleportStart messages re-activating the progress screen right
 			// after tp, keep the teleport state and let progress screen clear it after a short delay
 			// (progress screen is active but not visible)  *TODO: remove when SVC-5290 is fixed
-			gTeleportDisplayTimer.reset();
-			gTeleportDisplay = TRUE;
+			LLViewerDisplay::gTeleportDisplayTimer.reset();
+			LLViewerDisplay::gTeleportDisplay = TRUE;
 		}
 		else
 		{

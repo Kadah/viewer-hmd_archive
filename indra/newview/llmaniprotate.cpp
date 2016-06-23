@@ -62,6 +62,7 @@
 #include "lltrans.h"
 #include "llvoavatarself.h"
 #include "llhudrender.h"
+#include "llhmd.h"
 
 const F32 RADIUS_PIXELS = 100.f;		// size in screen space
 const F32 SQ_RADIUS = RADIUS_PIXELS * RADIUS_PIXELS;
@@ -381,7 +382,9 @@ BOOL LLManipRotate::handleMouseDown(S32 x, S32 y, MASK mask)
 	{
 		if( mHighlightedPart != LL_NO_PART )
 		{
+            mHandlingMouseClick = TRUE;
 			handled = handleMouseDownOnPart( x, y, mask );
+            mHandlingMouseClick = FALSE;
 		}
 	}
 
@@ -397,7 +400,13 @@ BOOL LLManipRotate::handleMouseDownOnPart( S32 x, S32 y, MASK mask )
 		return FALSE;
 	}
 
+    if (!gHMD.isHMDMode())
+    {
+        // for some odd reason, rotation handles don't handle calling highlightManipulators on a click in HMD mode.  Not really sure why,
+        // but the mouse position of the click seems to be in the wrong position.   However, since calling this is pretty redundant
+        // anyway and not calling it fixes the issue...
 	highlightManipulators(x, y);
+    }
 	S32 hit_part = mHighlightedPart;
 	// we just started a drag, so save initial object positions
 	LLSelectMgr::getInstance()->saveSelectedObjectTransform(SELECT_ACTION_TYPE_ROTATE);
@@ -1130,6 +1139,22 @@ void LLManipRotate::renderSnapGuides()
 			LLVector3 help_text_pos = selection_center_start + (mRadiusMeters * 3.f * offset_dir);
 			const LLFontGL* big_fontp = LLFontGL::getFontSansSerif();
 
+            if (gHMD.isHMDMode())
+            {
+                LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
+                LLGLState gls_blend(GL_BLEND, TRUE);
+                LLGLState gls_alpha(GL_ALPHA_TEST, TRUE);
+
+			    std::string help_text =  LLTrans::getString("manip_hint1");
+			    LLColor4 help_text_color = LLColor4::white;
+			    help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
+			    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+			    help_text =  LLTrans::getString("manip_hint2");
+			    help_text_pos -= offset_dir * mRadiusMeters * 0.4f;
+			    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+            }
+            else
+            {
 			std::string help_text =  LLTrans::getString("manip_hint1");
 			LLColor4 help_text_color = LLColor4::white;
 			help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, line_alpha, 0.f);
@@ -1139,6 +1164,7 @@ void LLManipRotate::renderSnapGuides()
 			hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
 		}
 	}
+}
 }
 
 // Returns TRUE if center of sphere is visible.  Also sets a bunch of member variables that are used later (e.g. mCenterToCam)
@@ -1164,7 +1190,7 @@ BOOL LLManipRotate::updateVisiblity()
 		mCenterToCamNorm = mCenterToCam;
 		mCenterToCamMag = mCenterToCamNorm.normVec();
 
-		mRadiusMeters = RADIUS_PIXELS / (F32) LLViewerCamera::getInstance()->getViewHeightInPixels();
+		mRadiusMeters = RADIUS_PIXELS / (F32)(gHMD.isHMDMode() ? gHMD.getViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels());
 		mRadiusMeters /= gAgentCamera.mHUDCurZoom;
 
 		mCenterToProfilePlaneMag = mRadiusMeters * mRadiusMeters / mCenterToCamMag;
@@ -1173,8 +1199,8 @@ BOOL LLManipRotate::updateVisiblity()
 		// x axis range is (-aspect * 0.5f, +aspect * 0.5)
 		// y axis range is (-0.5, 0.5)
 		// so use getWorldViewHeightRaw as scale factor when converting to pixel coordinates
-		mCenterScreen.set((S32)((0.5f - center.mV[VY]) / gAgentCamera.mHUDCurZoom * gViewerWindow->getWorldViewHeightScaled()),
-							(S32)((center.mV[VZ] + 0.5f) / gAgentCamera.mHUDCurZoom * gViewerWindow->getWorldViewHeightScaled()));
+        S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewHeightScaled();
+		mCenterScreen.set((S32)((0.5f - center.mV[VY]) / gAgentCamera.mHUDCurZoom * h), (S32)((center.mV[VZ] + 0.5f) / gAgentCamera.mHUDCurZoom * h));
 		visible = TRUE;
 	}
 	else
@@ -1202,7 +1228,7 @@ BOOL LLManipRotate::updateVisiblity()
 			
 			if (mCenterToCamMag > 0.001f)
 			{
-				F32 fraction_of_fov = RADIUS_PIXELS / (F32) LLViewerCamera::getInstance()->getViewHeightInPixels();
+                F32 fraction_of_fov = RADIUS_PIXELS / (F32)(gHMD.isHMDMode() ? gHMD.getViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels());
 				F32 apparent_angle = fraction_of_fov * LLViewerCamera::getInstance()->getView();  // radians
 				mRadiusMeters = z_dist * tan(apparent_angle);
 
@@ -1700,8 +1726,11 @@ void LLManipRotate::mouseToRay( S32 x, S32 y, LLVector3* ray_pt, LLVector3* ray_
 {
 	if (LLSelectMgr::getInstance()->getSelection()->getSelectType() == SELECT_TYPE_HUD)
 	{
-		F32 mouse_x = (((F32)x / gViewerWindow->getWorldViewRectScaled().getWidth()) - 0.5f) / gAgentCamera.mHUDCurZoom;
-		F32 mouse_y = ((((F32)y) / gViewerWindow->getWorldViewRectScaled().getHeight()) - 0.5f) / gAgentCamera.mHUDCurZoom;
+        S32 w = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWorldViewRectScaled().getWidth();
+        S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewRectScaled().getHeight();
+
+		F32 mouse_x = (((F32)x / w) - 0.5f) / gAgentCamera.mHUDCurZoom;
+		F32 mouse_y = ((((F32)y) / h) - 0.5f) / gAgentCamera.mHUDCurZoom;
 
 		*ray_pt = LLVector3(-1.f, -mouse_x, mouse_y);
 		*ray_dir = LLVector3(1.f, 0.f, 0.f);
@@ -1728,9 +1757,9 @@ void LLManipRotate::highlightManipulators( S32 x, S32 y )
 	}
 	
 	LLVector3 rotation_center = gAgent.getPosAgentFromGlobal(mRotationCenter);
-	LLVector3 mouse_dir_x;
-	LLVector3 mouse_dir_y;
-	LLVector3 mouse_dir_z;
+	LLVector3 mouse_dir_x, mdx_raw;
+	LLVector3 mouse_dir_y, mdy_raw;
+	LLVector3 mouse_dir_z, mdz_raw;
 	LLVector3 intersection_roll;
 
 	LLVector3 grid_origin;
@@ -1751,18 +1780,21 @@ void LLManipRotate::highlightManipulators( S32 x, S32 y )
 	F32 cur_select_distance = 0.f;
 
 	// test x
-	getMousePointOnPlaneAgent(mouse_dir_x, x, y, rotation_center, rot_x_axis);
+	getMousePointOnPlaneAgent(mdx_raw, x, y, rotation_center, rot_x_axis);
+    mouse_dir_x = mdx_raw;
 	mouse_dir_x -= rotation_center;
 	// push intersection point out when working at obtuse angle to make ring easier to hit
 	mouse_dir_x *= 1.f + (1.f - llabs(rot_x_axis * mCenterToCamNorm)) * 0.1f;
 
 	// test y
-	getMousePointOnPlaneAgent(mouse_dir_y, x, y, rotation_center, rot_y_axis);
+	getMousePointOnPlaneAgent(mdy_raw, x, y, rotation_center, rot_y_axis);
+    mouse_dir_y = mdy_raw;
 	mouse_dir_y -= rotation_center;
 	mouse_dir_y *= 1.f + (1.f - llabs(rot_y_axis * mCenterToCamNorm)) * 0.1f;
 
 	// test z
-	getMousePointOnPlaneAgent(mouse_dir_z, x, y, rotation_center, rot_z_axis);
+	getMousePointOnPlaneAgent(mdz_raw, x, y, rotation_center, rot_z_axis);
+    mouse_dir_z = mdz_raw;
 	mouse_dir_z -= rotation_center;
 	mouse_dir_z *= 1.f + (1.f - llabs(rot_z_axis * mCenterToCamNorm)) * 0.1f;
 
@@ -1774,7 +1806,8 @@ void LLManipRotate::highlightManipulators( S32 x, S32 y )
 	F32 dist_y = mouse_dir_y.normVec();
 	F32 dist_z = mouse_dir_z.normVec();
 
-	F32 distance_threshold = (MAX_MANIP_SELECT_DISTANCE * mRadiusMeters) / gViewerWindow->getWorldViewHeightScaled();
+    F32 h = gHMD.isHMDMode() ? (F32)gHMD.getViewportHeight() : (F32)gViewerWindow->getWorldViewHeightScaled();
+	F32 distance_threshold = (MAX_MANIP_SELECT_DISTANCE * mRadiusMeters) / (h > 0.01f ? h : 1.0f);
 
 	if (llabs(dist_x - mRadiusMeters) * llmax(0.05f, proj_rot_x_axis) < distance_threshold)
 	{

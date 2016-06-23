@@ -12,6 +12,7 @@
 	</text>
 	<check_box label="Клавиши со стрелками всегда перемещают меня" name="arrow_keys_move_avatar_check"/>
 	<check_box label="Бег после двойного нажатия клавиши" name="tap_tap_hold_to_run"/>
+	<check_box label="Чтобы начать или прекратить полет, нажмите клавишу прыжка или приседания" name="automatic_fly"/>
 	<text name="mouse_lbl">
 		Мышь:
 	</text>
@@ -36,4 +37,5 @@
 		<combo_box.item label="Телепортация в точку щелчка" name="2"/>
 	</combo_box>
 	<button label="Другие устройства" name="joystick_setup_button"/>
+	<button label="Головные дисплеи" name="hmd_config_button"/>
 </panel>

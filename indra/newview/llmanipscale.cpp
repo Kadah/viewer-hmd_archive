@@ -60,6 +60,7 @@
 #include "llvoavatar.h"
 #include "llmeshrepository.h"
 #include "lltrans.h"
+#include "llhmd.h"
 
 const F32 MAX_MANIP_SELECT_DISTANCE_SQUARED = 11.f * 11.f;
 const F32 SNAP_GUIDE_SCREEN_OFFSET = 0.05f;
@@ -232,7 +233,7 @@ void LLManipScale::render()
 		{
 			for (S32 i = 0; i < NUM_MANIPULATORS; i++)
 			{
-				mBoxHandleSize[i] = BOX_HANDLE_BASE_SIZE * BOX_HANDLE_BASE_FACTOR / (F32) LLViewerCamera::getInstance()->getViewHeightInPixels();
+				mBoxHandleSize[i] = BOX_HANDLE_BASE_SIZE * BOX_HANDLE_BASE_FACTOR / (F32)(gHMD.isHMDMode() ? gHMD.getViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels());
 				mBoxHandleSize[i] /= gAgentCamera.mHUDCurZoom;
 			}
 		}
@@ -257,7 +258,8 @@ void LLManipScale::render()
 				if (range_squared > 0.001f * 0.001f)
 				{
 					// range != zero
-					F32 fraction_of_fov = BOX_HANDLE_BASE_SIZE / (F32) LLViewerCamera::getInstance()->getViewHeightInPixels();
+                    S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : LLViewerCamera::getInstance()->getViewHeightInPixels();
+					F32 fraction_of_fov = BOX_HANDLE_BASE_SIZE / (F32)h;
 					F32 apparent_angle = fraction_of_fov * LLViewerCamera::getInstance()->getView();  // radians
 					mBoxHandleSize[i] = (F32) sqrtf(range_squared) * tan(apparent_angle) * BOX_HANDLE_BASE_FACTOR;
 				}
@@ -318,7 +320,9 @@ BOOL LLManipScale::handleMouseDown(S32 x, S32 y, MASK mask)
 
 	if(mHighlightedPart != LL_NO_PART)
 	{
+        mHandlingMouseClick = TRUE;
 		handled = handleMouseDownOnPart( x, y, mask );
+        mHandlingMouseClick = FALSE;
 	}
 
 	return handled;
@@ -333,7 +337,13 @@ BOOL LLManipScale::handleMouseDownOnPart( S32 x, S32 y, MASK mask )
 		return FALSE;
 	}
 
+    if (!gHMD.isHMDMode())
+    {
+        // for some odd reason, scale handles don't handle calling highlightManipulators on a click in HMD mode.  Not really sure why,
+        // but the mouse position of the click seems to be in the wrong position.   However, since calling this is pretty redundant
+        // anyway and not calling it fixes the issue...
 	highlightManipulators(x, y);
+    }
 	S32 hit_part = mHighlightedPart;
 
 	LLSelectMgr::getInstance()->enableSilhouette(FALSE);
@@ -448,12 +458,18 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 
 	if( canAffectSelection() )
 	{
-		LLMatrix4 transform;
+        BOOL use3D = gHMD.isHMDMode() && !isMouseIntersectInUISpace();
+        LLViewerCamera* camera = LLViewerCamera::getInstance();
+
+		LLVector4 translation(bbox.getPositionAgent());
+        LLQuaternion rot = bbox.getRotation();
+		LLMatrix4 transform(rot, translation);
+
 		if (mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
 		{
 			LLVector4 translation(bbox.getPositionAgent());
 			transform.initRotTrans(bbox.getRotation(), translation);
-			LLMatrix4 cfr(OGL_TO_CFR_ROTATION);
+			LLMatrix4 cfr(OGL_TO_CFR_BASIS);
 			transform *= cfr;
 			LLMatrix4 window_scale;
 			F32 zoom_level = 2.f * gAgentCamera.mHUDCurZoom;
@@ -504,25 +520,63 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 
 		for (S32 i = 0; i < numManips; i++)
 		{
-			LLVector4 projectedVertex = mManipulatorVertices[i] * transform;
+            LLVector4 projectedVertex;
+            if (use3D)
+            {
+                projectedVertex = translation + (mManipulatorVertices[i] * rot);
+            }
+            else
+            {
+			    projectedVertex = mManipulatorVertices[i] * transform;
 			projectedVertex = projectedVertex * (1.f / projectedVertex.mV[VW]);
+            }
 
 			ManipulatorHandle* projManipulator = new ManipulatorHandle(LLVector3(projectedVertex.mV[VX], projectedVertex.mV[VY],
 				projectedVertex.mV[VZ]), MANIPULATOR_IDS[i], (i < 7) ? SCALE_MANIP_CORNER : SCALE_MANIP_FACE);
 			mProjectedManipulators.insert(projManipulator);
 		}
 
+        if (use3D)
+        {
+            mMousePointGlobal.setZero();
+            const LLVector3& mouse_world = camera->getOrigin() + (camera->getAtAxis() * camera->getNear());
+            LLVector3 dir = LLVector3(gHMD.getMouseWorldEnd().getF32ptr()) - mouse_world;
+            dir.normalize();
+            F32 r2 = (mScaledBoxHandleSize * mScaledBoxHandleSize) * (0.5f * 0.5f);
+	        for (manipulator_list_t::iterator it = mProjectedManipulators.begin(), itEnd = mProjectedManipulators.end(); it != itEnd; ++it)
+	        {
+			    ManipulatorHandle* manipulator = *it;
+                LLVector3 other_direction = manipulator->mPosition - mouse_world;
+	            LLVector3 nearest_point = mouse_world + dir * (other_direction * dir);
+	            F32 nearest_approach = (nearest_point - manipulator->mPosition).lengthSquared();
+                if (nearest_approach <= r2)
+                {
+					mHighlightedPart = manipulator->mManipID;
+                    mMousePointGlobal = gAgent.getPosGlobalFromAgent(nearest_point);
+                }
+            }
+        }
+        else
+        {
 		LLRect world_view_rect = gViewerWindow->getWorldViewRectScaled();
-		F32 half_width = (F32)world_view_rect.getWidth() / 2.f;
-		F32 half_height = (F32)world_view_rect.getHeight() / 2.f;
+            F32 half_width = 0, half_height = 0;
+            if (gHMD.isHMDMode() && mObjectSelection->getSelectType() == SELECT_TYPE_HUD)
+            {
+                half_width  = (F32)gHMD.getViewportWidth()  / 2.0f;
+                half_height = (F32)gHMD.getViewportHeight() / 2.0f;
+            }
+            else
+            {
+                half_width  = (F32)world_view_rect.getWidth()  / 2.f;
+                half_height = (F32)world_view_rect.getHeight() / 2.f;
+            }
 		LLVector2 manip2d;
 		LLVector2 mousePos((F32)x - half_width, (F32)y - half_height);
 		LLVector2 delta;
 
 		mHighlightedPart = LL_NO_PART;
 
-		for (manipulator_list_t::iterator iter = mProjectedManipulators.begin();
-			 iter != mProjectedManipulators.end(); ++iter)
+		    for (manipulator_list_t::iterator iter = mProjectedManipulators.begin(); iter != mProjectedManipulators.end(); ++iter)
 		{
 			ManipulatorHandle* manipulator = *iter;
 			{
@@ -539,6 +593,7 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
 			}
 		}
 	}
+    }
 
 	for (S32 i = 0; i < NUM_MANIPULATORS; i++)
 	{
@@ -802,6 +857,9 @@ void LLManipScale::drag( S32 x, S32 y )
 	{
 		dragCorner( x, y );
 	}
+
+    // make sure mouse pointer actually moves during drag operations in HMD mode
+    mMousePointGlobal.setZero();
 
 	// store changes to override updates
 	for (LLObjectSelection::iterator iter = LLSelectMgr::getInstance()->getSelection()->begin();
@@ -1854,16 +1912,33 @@ void LLManipScale::renderSnapGuides(const LLBBox& bbox)
 				LLVector3 help_text_pos = selection_center_start + (mSnapRegimeOffset * 5.f * offset_dir);
 				const LLFontGL* big_fontp = LLFontGL::getFontSansSerif();
 
-				std::string help_text = LLTrans::getString("manip_hint1");
-				LLColor4 help_text_color = LLColor4::white;
-				help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, grid_alpha, 0.f);
-				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
-				help_text = LLTrans::getString("manip_hint2");
-				help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapRegimeOffset * 0.4f;
-				hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
-			}
-		}
-	}
+                if (gHMD.isHMDMode())
+                {
+                    LLGLDepthTest gls_depth(GL_TRUE, GL_FALSE);
+                    LLGLState gls_blend(GL_BLEND, TRUE);
+                    LLGLState gls_alpha(GL_ALPHA_TEST, TRUE);
+
+                    std::string help_text = LLTrans::getString("manip_hint1");
+                    LLColor4 help_text_color = LLColor4::white;
+                    help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, grid_alpha, 0.f);
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+                    help_text = LLTrans::getString("manip_hint2");
+                    help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapRegimeOffset * 0.4f;
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false, gHMD.isHMDMode() && !gHMD.allowTextRoll());
+                }
+                else
+                {
+                    std::string help_text = LLTrans::getString("manip_hint1");
+                    LLColor4 help_text_color = LLColor4::white;
+                    help_text_color.mV[VALPHA] = clamp_rescale(mHelpTextTimer.getElapsedTimeF32(), sHelpTextVisibleTime, sHelpTextVisibleTime + sHelpTextFadeTime, grid_alpha, 0.f);
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+                    help_text = LLTrans::getString("manip_hint2");
+                    help_text_pos -= LLViewerCamera::getInstance()->getUpAxis() * mSnapRegimeOffset * 0.4f;
+                    hud_render_utf8text(help_text, help_text_pos, *big_fontp, LLFontGL::NORMAL, LLFontGL::NO_SHADOW, -0.5f * big_fontp->getWidthF32(help_text), 3.f, help_text_color, false);
+                }
+            }
+        }
+    }
 }
 
 // Returns unit vector in direction of part of an origin-centered cube

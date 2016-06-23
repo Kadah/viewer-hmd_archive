@@ -51,6 +51,7 @@
 #include "llagentcamera.h"
 #include "llfloatertools.h"
 #include "llviewercontrol.h"
+#include "llhmd.h"
 
 extern LLControlGroup gSavedSettings;
 
@@ -275,7 +276,10 @@ void LLToolCompTranslate::pickCallback(const LLPickInfo& pick_info)
 {
 	LLViewerObject* hit_obj = pick_info.getObject();
 
+    if (!gHMD.isHMDMode())
+    {
 	LLToolCompTranslate::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+    }
 	if (!LLToolCompTranslate::getInstance()->mMouseDown)
 	{
 		// fast click on object, but mouse is already up...just do select
@@ -399,7 +403,13 @@ void LLToolCompScale::pickCallback(const LLPickInfo& pick_info)
 {
 	LLViewerObject* hit_obj = pick_info.getObject();
 
+    if (!gHMD.isHMDMode())
+    {
+        // for some odd reason, scale handles don't handle calling highlightManipulators on a click in HMD mode.  Not really sure why,
+        // but the mouse position of the click seems to be in the wrong position.   However, since calling this is pretty redundant
+        // anyway and not calling it fixes the issue...
 	LLToolCompScale::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+    }
 	if (!LLToolCompScale::getInstance()->mMouseDown)
 	{
 		// fast click on object, but mouse is already up...just do select
@@ -599,7 +609,13 @@ void LLToolCompRotate::pickCallback(const LLPickInfo& pick_info)
 {
 	LLViewerObject* hit_obj = pick_info.getObject();
 
+    if (!gHMD.isHMDMode())
+    {
+        // for some odd reason, rotation handles don't handle calling highlightManipulators on a click in HMD mode.  Not really sure why,
+        // but the mouse position of the click seems to be in the wrong position.   However, since calling this is pretty redundant
+        // anyway and not calling it fixes the issue...
 	LLToolCompRotate::getInstance()->mManip->highlightManipulators(pick_info.mMousePt.mX, pick_info.mMousePt.mY);
+    }
 	if (!LLToolCompRotate::getInstance()->mMouseDown)
 	{
 		// fast click on object, but mouse is already up...just do select
@@ -744,11 +760,11 @@ BOOL LLToolCompGun::handleMouseDown(S32 x, S32 y, MASK mask)
 { 
     // if the left button is blocked, don't put up the pie menu
     if (gAgent.leftButtonBlocked())
-    {
+	{
         // in case of "grabbed" control flag will be set later
-        gAgent.setControlFlags(AGENT_CONTROL_ML_LBUTTON_DOWN);
-        return FALSE;
-    }
+		gAgent.setControlFlags(AGENT_CONTROL_ML_LBUTTON_DOWN);
+		return FALSE;
+	}
 
 	// On mousedown, start grabbing
 	gGrabTransientTool = this;
@@ -762,11 +778,11 @@ BOOL LLToolCompGun::handleDoubleClick(S32 x, S32 y, MASK mask)
 {
     // if the left button is blocked, don't put up the pie menu
     if (gAgent.leftButtonBlocked())
-    {
+	{
         // in case of "grabbed" control flag will be set later
-        gAgent.setControlFlags(AGENT_CONTROL_ML_LBUTTON_DOWN);
-        return FALSE;
-    }
+		gAgent.setControlFlags(AGENT_CONTROL_ML_LBUTTON_DOWN);
+		return FALSE;
+	}
 
 	// On mousedown, start grabbing
 	gGrabTransientTool = this;
@@ -832,4 +848,9 @@ BOOL LLToolCompGun::handleScrollWheel(S32 x, S32 y, S32 clicks)
 
 	}
 	return TRUE;
+}
+
+BOOL LLToolCompGun::isInGrabMode() const
+{
+    return mCur != mNull && mCur == mGrab;
 }

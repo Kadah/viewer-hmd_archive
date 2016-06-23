@@ -74,9 +74,10 @@ public:
 	virtual BOOL getSize(LLCoordScreen *size) = 0;
 	virtual BOOL getSize(LLCoordWindow *size) = 0;
 	virtual BOOL setPosition(LLCoordScreen position) = 0;
-	BOOL setSize(LLCoordScreen size);
-	BOOL setSize(LLCoordWindow size);
+	BOOL setSize(LLCoordScreen size, BOOL adjustPosition = FALSE);
+	BOOL setSize(LLCoordWindow size, BOOL adjustPosition = FALSE);
 	virtual void setMinSize(U32 min_width, U32 min_height, bool enforce_immediately = true);
+    virtual void getMinSize(U32& min_width, U32& min_height);
 	virtual BOOL switchContext(BOOL fullscreen, const LLCoordScreen &size, BOOL disable_vsync, const LLCoordScreen * const posp = NULL) = 0;
 	virtual BOOL setCursorPosition(LLCoordWindow position) = 0;
 	virtual BOOL getCursorPosition(LLCoordWindow *position) = 0;
@@ -149,7 +150,7 @@ public:
 	virtual BOOL dialogColorPicker(F32 *r, F32 *g, F32 *b);
 
 // return a platform-specific window reference (HWND on Windows, WindowRef on the Mac, Gtk window on Linux)
-	virtual void *getPlatformWindow() = 0;
+	virtual void *getPlatformWindow(S32 idx = -1) = 0;
 
 // return the platform-specific window reference we use to initialize llmozlib (HWND on Windows, WindowRef on the Mac, Gtk window on Linux)
 	virtual void *getMediaWindow();
@@ -166,6 +167,19 @@ public:
 	// Provide native key event data
 	virtual LLSD getNativeKeyData() { return LLSD::emptyMap(); }
 
+    // HMD support
+    virtual BOOL destroyHMDWindow() { return FALSE; };
+    S32 getRenderWindow(BOOL& fullScreen) const { fullScreen = mFullscreen; return mCurRCIdx; }
+    virtual BOOL setRenderWindow(S32 idx, BOOL fullscreen) { return FALSE; };
+    virtual BOOL setFocusWindow(S32 idx) { return FALSE; };
+    virtual void setHMDMode(BOOL mode, U32 min_width = 0, U32 min_height = 0) {}
+    virtual S32 getDisplayCount() { return 1; };
+    virtual void enableVSync(BOOL b) {}
+    virtual void setBorderStyle(BOOL on, S32 idx = -1) {}
+
+    // See note in llwindowmacosx.h for why this method exists
+    virtual BOOL getFramePos(LLCoordScreen* pos) { return getPosition(pos); }
+    
 protected:
 	LLWindow(LLWindowCallbacks* callbacks, BOOL fullscreen, U32 flags);
 	virtual ~LLWindow();
@@ -174,8 +188,8 @@ protected:
 	// Defaults to true
 	virtual BOOL canDelete();
 
-	virtual BOOL setSizeImpl(LLCoordScreen size) = 0;
-	virtual BOOL setSizeImpl(LLCoordWindow size) = 0;
+	virtual BOOL setSizeImpl(LLCoordScreen size, BOOL adjustPosition) = 0;
+	virtual BOOL setSizeImpl(LLCoordWindow size, BOOL adjustPosition) = 0;
 
 protected:
 	LLWindowCallbacks*	mCallbacks;
@@ -199,6 +213,9 @@ protected:
 	U16			mHighSurrogate;
 	S32			mMinWindowWidth;
 	S32			mMinWindowHeight;
+
+    // HMD support
+    S32         mCurRCIdx;
 
  	// Handle a UTF-16 encoding unit received from keyboard.
  	// Converting the series of UTF-16 encoding units to UTF-32 data,

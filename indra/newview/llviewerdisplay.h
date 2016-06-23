@@ -28,18 +28,78 @@
 #define LL_LLVIEWERDISPLAY_H
 
 class LLPostProcess;
+class LLCullResult;
 
-void display_startup();
-void display_cleanup();
+struct render_options
+{
+    render_options()
+        : zoom_factor(1.0f)
+        , subfield(0)
+        , do_hud_elements(FALSE)
+        , do_hud_attach(FALSE)
+        , render_3d_ui(FALSE)
+        , for_hmd(FALSE)
+        , hmd_eye(-1)
+    {
+    }
 
-void display(BOOL rebuild = TRUE, F32 zoom_factor = 1.f, int subfield = 0, BOOL for_snapshot = FALSE);
+    F32 zoom_factor;
+    int subfield;
+    BOOL do_hud_attach;
+    BOOL do_hud_elements;
+    BOOL render_3d_ui;
+    BOOL for_hmd;
+    int  hmd_eye;
+};
 
-extern BOOL gDisplaySwapBuffers;
-extern BOOL gDepthDirty;
-extern BOOL	gTeleportDisplay;
-extern LLFrameTimer	gTeleportDisplayTimer;
-extern BOOL			gForceRenderLandFence;
-extern BOOL gResizeScreenTexture;
-extern BOOL gWindowResized;
+class LLViewerDisplay
+{
+public:
+    static void display_startup();
+    static void update_camera(int whichEye = -1); // -1 == not for HMD
+    static void display(BOOL rebuild = TRUE, F32 zoom_factor = 1.f, int subfield = 0, BOOL for_snapshot = FALSE);
+    static void render_ui(BOOL to_texture, render_options& options);    
+    static void swap(BOOL doSwap, BOOL newSwap);
+    static void display_cleanup();
+
+private:
+    static void render_ui_3d(BOOL showAxes = FALSE);
+    static void render_ui_2d(render_options& options);
+
+    // Rendering stuff
+    static void display_stats();
+    static void update();
+    static S32 cull(LLCullResult& cullResult);
+    static void display_swap();
+    static void display_imagery();
+    static void update_images();
+    static void state_sort(BOOL rebuild, LLCullResult& cullResult);
+    static void render_start(BOOL to_texture, render_options& options);
+    static void render_geom(render_options& options);
+    static void render_flush(BOOL to_texture, render_options& options);
+    static void render_hud_attachments();
+    static BOOL setup_hud_matrices();
+    static void renderCoordinateAxes();
+    static void draw_axes();
+    static void render_disconnected_background();
+    static void render_frame(BOOL rebuild, BOOL forHMD = FALSE, int whichEye = -1);
+
+public:
+    static BOOL gDisplaySwapBuffers;
+    static BOOL gDepthDirty;
+    static BOOL gTeleportDisplay;
+    static LLFrameTimer	gTeleportDisplayTimer;
+    static BOOL gForceRenderLandFence;
+    static BOOL gResizeScreenTexture;
+    static BOOL gWindowResized;
+    static BOOL gShaderProfileFrame;
+
+private:
+    static LLFrameTimer gTeleportArrivalTimer;
+    static BOOL gSnapshot;
+    static U32 gRecentFrameCount; // number of 'recent' frames
+    static LLFrameTimer gRecentFPSTime;
+    static LLFrameTimer gRecentMemoryTime;
+};
 
 #endif // LL_LLVIEWERDISPLAY_H

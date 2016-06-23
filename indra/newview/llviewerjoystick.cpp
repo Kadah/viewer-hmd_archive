@@ -39,6 +39,7 @@
 #include "llagent.h"
 #include "llagentcamera.h"
 #include "llfocusmgr.h"
+#include "llhmd.h"
 
 
 // ----------------------------------------------------------------------------
@@ -844,12 +845,13 @@ void LLViewerJoystick::moveFlycam(bool reset)
 		gSavedSettings.getS32("JoystickAxis6")
 	};
 
+    LLViewerCamera* camera = LLViewerCamera::getInstance();
 	bool in_build_mode = LLToolMgr::getInstance()->inBuildMode();
 	if (reset || mResetFlag)
 	{
-		sFlycamPosition = LLViewerCamera::getInstance()->getOrigin();
-		sFlycamRotation = LLViewerCamera::getInstance()->getQuaternion();
-		sFlycamZoom = LLViewerCamera::getInstance()->getView();
+		sFlycamPosition = camera->getOrigin();
+		sFlycamRotation = camera->getQuaternion();
+		sFlycamZoom = camera->getView();
 		
 		resetDeltas(axis);
 
@@ -976,12 +978,34 @@ void LLViewerJoystick::moveFlycam(bool reset)
 	}
 
 	LLMatrix3 mat(sFlycamRotation);
+    LLVector3 deltaPos(LLVector3::zero);
+    camera->setView(sFlycamZoom);
+	if (gHMD.isHMDMode())
+	{
+        camera->setOrigin(sFlycamPosition + deltaPos);
+        camera->mXAxis = LLVector3(mat.mMatrix[0]);
+        camera->mYAxis = LLVector3(mat.mMatrix[1]);
+        camera->mZAxis = LLVector3(mat.mMatrix[2]);
+        gHMD.setUIModelView((F32*)(camera->getModelview().mMatrix));
 
-	LLViewerCamera::getInstance()->setView(sFlycamZoom);
-	LLViewerCamera::getInstance()->setOrigin(sFlycamPosition);
-	LLViewerCamera::getInstance()->mXAxis = LLVector3(mat.mMatrix[0]);
-	LLViewerCamera::getInstance()->mYAxis = LLVector3(mat.mMatrix[1]);
-	LLViewerCamera::getInstance()->mZAxis = LLVector3(mat.mMatrix[2]);
+        LLMatrix4 m1(sFlycamRotation);
+        LLMatrix4 m2(~gHMD.getHMDRotation());
+        LLMatrix4 cfr(OGL_TO_CFR_BASIS);
+        m2 *= cfr;
+        m1 *= m2;
+        mat = m1.getMat3();
+
+        //nudge origin by tracked head position
+        LLVector3 headPos = gHMD.getHeadPosition();
+        headPos = headPos * cfr;
+        headPos *= ~sFlycamRotation;
+        deltaPos = headPos;
+	}
+
+	camera->setOrigin(sFlycamPosition + deltaPos);
+	camera->mXAxis = LLVector3(mat.mMatrix[0]);
+	camera->mYAxis = LLVector3(mat.mMatrix[1]);
+	camera->mZAxis = LLVector3(mat.mMatrix[2]);
 }
 
 // -----------------------------------------------------------------------------

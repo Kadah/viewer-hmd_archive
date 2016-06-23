@@ -46,14 +46,13 @@
 #include "llstatusbar.h"
 #include "llmenugl.h"
 #include "pipeline.h"
+#include "llhmd.h"
 #include <boost/tokenizer.hpp>
 
 const F32 HORIZONTAL_PADDING = 15.f;
 const F32 VERTICAL_PADDING = 12.f;
-const F32 BUFFER_SIZE = 2.f;
 const F32 HUD_TEXT_MAX_WIDTH = 190.f;
 const F32 HUD_TEXT_MAX_WIDTH_NO_BUBBLE = 1000.f;
-const F32 MAX_DRAW_DISTANCE = 64.f;
 
 std::set<LLPointer<LLHUDText> > LLHUDText::sTextObjects;
 std::vector<LLPointer<LLHUDText> > LLHUDText::sVisibleTextObjects;
@@ -167,12 +166,12 @@ void LLHUDText::renderText()
 	
 	if (mOnHUDAttachment)
 	{
-		x_pixel_vec = LLVector3::y_axis / (F32)gViewerWindow->getWorldViewWidthRaw();
-		y_pixel_vec = LLVector3::z_axis / (F32)gViewerWindow->getWorldViewHeightRaw();
+        x_pixel_vec = LLVector3::y_axis / (F32)(gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWorldViewWidthRaw());
+        y_pixel_vec = LLVector3::z_axis / (F32)(gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWorldViewHeightRaw());
 	}
 	else
 	{
-		LLViewerCamera::getInstance()->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec);
+		LLViewerCamera::getInstance()->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec, gHMD.isHMDMode() && !gHMD.allowTextRoll());
 	}
 
 	LLVector3 width_vec = mWidth * x_pixel_vec;
@@ -231,7 +230,7 @@ void LLHUDText::renderText()
 			text_color = segment_iter->mColor;
 			text_color.mV[VALPHA] *= alpha_factor;
 
-			hud_render_text(segment_iter->getText(), render_position, *fontp, style, shadow, x_offset, y_offset, text_color, mOnHUDAttachment);
+			hud_render_text(segment_iter->getText(), render_position, *fontp, style, shadow, x_offset, y_offset, text_color, mOnHUDAttachment, gHMD.isHMDMode() && !gHMD.allowTextRoll());
 		}
 	}
 	/// Reset the default color to white.  The renderer expects this to be the default. 
@@ -374,7 +373,10 @@ void LLHUDText::updateVisibility()
 		mVisible = FALSE;
 		return;
 	}
-
+		
+    if (!gHMD.isHMDMode())
+    {
+        // keep text at original position when in HMD mode
 	if (vec_from_camera * LLViewerCamera::getInstance()->getAtAxis() <= LLViewerCamera::getInstance()->getNear() + 0.1f + mSourceObject->getVObjRadius())
 	{
 		mPositionAgent = LLViewerCamera::getInstance()->getOrigin() + vec_from_camera * ((LLViewerCamera::getInstance()->getNear() + 0.1f) / (vec_from_camera * LLViewerCamera::getInstance()->getAtAxis()));
@@ -383,6 +385,7 @@ void LLHUDText::updateVisibility()
 	{
 		mPositionAgent -= dir_from_camera * mSourceObject->getVObjRadius();
 	}
+    }
 
 	mLastDistance = (mPositionAgent - LLViewerCamera::getInstance()->getOrigin()).magVec();
 
@@ -392,19 +395,10 @@ void LLHUDText::updateVisibility()
 		return;
 	}
 
-	LLVector3 pos_agent_center = gAgent.getPosAgentFromGlobal(mPositionGlobal) - dir_from_camera;
-	F32 last_distance_center = (pos_agent_center - LLViewerCamera::getInstance()->getOrigin()).magVec();
-	if(last_distance_center > MAX_DRAW_DISTANCE)
-	{
-		mVisible = FALSE;
-		return;
-	}
-
-
 	LLVector3 x_pixel_vec;
 	LLVector3 y_pixel_vec;
 
-	LLViewerCamera::getInstance()->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec);
+	LLViewerCamera::getInstance()->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec, gHMD.isHMDMode() && !gHMD.allowTextRoll());
 
 	LLVector3 render_position = mPositionAgent + 			
 			(x_pixel_vec * mPositionOffset.mV[VX]) +
@@ -426,47 +420,6 @@ void LLHUDText::updateVisibility()
 
 	mVisible = TRUE;
 	sVisibleTextObjects.push_back(LLPointer<LLHUDText> (this));
-}
-
-LLVector2 LLHUDText::updateScreenPos(LLVector2 &offset)
-{
-	LLCoordGL screen_pos;
-	LLVector2 screen_pos_vec;
-	LLVector3 x_pixel_vec;
-	LLVector3 y_pixel_vec;
-	LLViewerCamera::getInstance()->getPixelVectors(mPositionAgent, y_pixel_vec, x_pixel_vec);
-//	LLVector3 world_pos = mPositionAgent + (offset.mV[VX] * x_pixel_vec) + (offset.mV[VY] * y_pixel_vec);
-//	if (!LLViewerCamera::getInstance()->projectPosAgentToScreen(world_pos, screen_pos, FALSE) && mVisibleOffScreen)
-//	{
-//		// bubble off-screen, so find a spot for it along screen edge
-//		LLViewerCamera::getInstance()->projectPosAgentToScreenEdge(world_pos, screen_pos);
-//	}
-
-	screen_pos_vec.setVec((F32)screen_pos.mX, (F32)screen_pos.mY);
-
-	LLRect world_rect = gViewerWindow->getWorldViewRectScaled();
-	S32 bottom = world_rect.mBottom + STATUS_BAR_HEIGHT;
-
-	LLVector2 screen_center;
-	screen_center.mV[VX] = llclamp((F32)screen_pos_vec.mV[VX], (F32)world_rect.mLeft + mWidth * 0.5f, (F32)world_rect.mRight - mWidth * 0.5f);
-
-	if(mVertAlignment == ALIGN_VERT_TOP)
-	{
-		screen_center.mV[VY] = llclamp((F32)screen_pos_vec.mV[VY], 
-			(F32)bottom, 
-			(F32)world_rect.mTop - mHeight - (F32)MENU_BAR_HEIGHT);
-		mSoftScreenRect.setLeftTopAndSize(screen_center.mV[VX] - (mWidth + BUFFER_SIZE) * 0.5f, 
-			screen_center.mV[VY] + (mHeight + BUFFER_SIZE), mWidth + BUFFER_SIZE, mHeight + BUFFER_SIZE);
-	}
-	else
-	{
-		screen_center.mV[VY] = llclamp((F32)screen_pos_vec.mV[VY], 
-			(F32)bottom + mHeight * 0.5f, 
-			(F32)world_rect.mTop - mHeight * 0.5f - (F32)MENU_BAR_HEIGHT);
-		mSoftScreenRect.setCenterAndSize(screen_center.mV[VX], screen_center.mV[VY], mWidth + BUFFER_SIZE, mHeight + BUFFER_SIZE);
-	}
-
-	return offset + (screen_center - LLVector2((F32)screen_pos.mX, (F32)screen_pos.mY));
 }
 
 void LLHUDText::updateSize()
@@ -566,6 +519,11 @@ void LLHUDText::renderAllHUD()
 		LLGLDepthTest depth(GL_FALSE, GL_FALSE);
 		
 		VisibleTextObjectIterator text_it;
+
+        if (gHMD.isHMDMode())
+        {
+            gGL.setColorMask(true, true);
+        }
 
 		for (text_it = sVisibleHUDTextObjects.begin(); text_it != sVisibleHUDTextObjects.end(); ++text_it)
 		{

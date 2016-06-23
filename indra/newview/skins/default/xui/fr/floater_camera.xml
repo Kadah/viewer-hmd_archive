@@ -41,6 +41,11 @@
 					Vue subjective
 				</panel_camera_item.text>
 			</panel_camera_item>
+			<panel_camera_item name="first_person_view">
+				<panel_camera_item.text name="first_person_view_text">
+					Vue de votre avatar
+				</panel_camera_item.text>
+			</panel_camera_item>
 		</panel>
 		<panel name="zoom" tool_tip="Zoomer en direction du point central">
 			<joystick_rotate name="cam_rotate_stick" tool_tip="Faire tourner la caméra autour du point central"/>

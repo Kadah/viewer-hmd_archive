@@ -53,6 +53,7 @@
 #include "llviewershadermgr.h"
 #include "llviewertexture.h"
 #include "llvoavatar.h"
+#include "llhmd.h"
 
 #if LL_LINUX
 // Work-around spurious used before init warning on Vector4a
@@ -1279,7 +1280,9 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 		scale = mVObjp->getScale();
 	}
 	
+        bool isHudAttachment = mVObjp->isHUDAttachment();
 	bool rebuild_pos = full_rebuild || mDrawablep->isState(LLDrawable::REBUILD_POSITION);
+    bool rebuild_hud_color = isHudAttachment && gHMD.isHMDMode();
 	bool rebuild_color = full_rebuild || mDrawablep->isState(LLDrawable::REBUILD_COLOR);
 	bool rebuild_emissive = rebuild_color && mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_EMISSIVE);
 	bool rebuild_tcoord = full_rebuild || mDrawablep->isState(LLDrawable::REBUILD_TCOORD);
@@ -1470,7 +1473,7 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 			glEndTransformFeedback();
 		}
 
-		if (rebuild_color)
+		if (rebuild_hud_color || rebuild_color)
 		{
 			LL_RECORD_BLOCK_TIME(FTM_FACE_GEOM_FEEDBACK_COLOR);
 			gTransformColorProgram.bind();
@@ -2124,7 +2127,7 @@ BOOL LLFace::getGeometryVolume(const LLVolume& volume,
 			}
 		}
 
-		if (rebuild_color && mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_COLOR) )
+		if ((rebuild_hud_color || rebuild_color) && mVertexBuffer->hasDataType(LLVertexBuffer::TYPE_COLOR) )
 		{
 			LL_RECORD_BLOCK_TIME(FTM_FACE_GEOM_COLOR);
 			mVertexBuffer->getColorStrider(colors, mGeomIndex, mGeomCount, map_range);

@@ -472,13 +472,22 @@ void LLViewerObject::dump() const
 		mDrawable->getNumFaces() && 
 		mDrawable->getFace(0))
 	{
+        //LL_INFOS() << "Drawable::position     : " << mDrawable->getPosition() << LL_ENDL;
+        //LL_INFOS() << "Drawable::positionWorld: " << mDrawable->getWorldPosition() << LL_ENDL;
+        //LL_INFOS() << "Drawable::PositionAgent: " << mDrawable->getPositionAgent() << LL_ENDL;
+        //LL_INFOS() << "Drawable::scale        : " << mDrawable->getScale() << LL_ENDL;
+        //LL_INFOS() << "Drawable::state        : " << mDrawable->getState() << LL_ENDL;
+        //LL_INFOS() << "Drawable::faces        : " << mDrawable->getNumFaces() << LL_ENDL;
 		LLFacePool *poolp = mDrawable->getFace(0)->getPool();
 		if (poolp)
 		{
 			LL_INFOS() << "Pool: " << poolp << LL_ENDL;
 			LL_INFOS() << "Pool reference count: " << poolp->mReferences.size() << LL_ENDL;
 		}
+        //LL_INFOS() << "Drawable::isVisible: " << mDrawable->isVisible() << LL_ENDL;
+        //LL_INFOS() << "Drawable::isActive: " << mDrawable->isActive() << LL_ENDL;
 	}
+    //LL_INFOS() << "isHUDAttachment: " << isHUDAttachment() << LL_ENDL;
 	//LL_INFOS() << "BoxTree Min: " << mDrawable->getBox()->getMin() << LL_ENDL;
 	//LL_INFOS() << "BoxTree Max: " << mDrawable->getBox()->getMin() << LL_ENDL;
 	/*
@@ -2850,6 +2859,7 @@ void LLViewerObject::requestInventory()
 		mInventory->clear(); // will deref and delete entries
 		delete mInventory;
 		mInventory = NULL;
+                mInventoryDirty = FALSE; //since we are going to request it now
 	}
 
 	if(mInventory)
@@ -2873,6 +2883,8 @@ void LLViewerObject::fetchInventoryFromServer()
 	if (!mInventoryPending)
 	{
 		delete mInventory;
+		mInventory = NULL;
+		mInventoryDirty = FALSE;
 		LLMessageSystem* msg = gMessageSystem;
 		msg->newMessageFast(_PREHASH_RequestTaskInventory);
 		msg->nextBlockFast(_PREHASH_AgentData);

@@ -71,6 +71,11 @@ public:
 
 	virtual void			onMouseCaptureLost();
 
+    virtual BOOL            hasMouseIntersectOverride() const { return mCur->hasMouseIntersectOverride(); }
+    virtual BOOL            isMouseIntersectInUISpace() const { return mCur->isMouseIntersectInUISpace(); }
+    virtual BOOL            hasMouseIntersectGlobal() const { return mCur->hasMouseIntersectGlobal(); }
+    virtual LLVector3d      getMouseIntersectGlobal() { return mCur->getMouseIntersectGlobal(); }
+
 	virtual void			screenPointToLocal(S32 screen_x, S32 screen_y, S32* local_x, S32* local_y) const
 								{ mCur->screenPointToLocal(screen_x, screen_y, local_x, local_y); }
 
@@ -234,6 +239,10 @@ public:
 	virtual void			handleSelect();
 	virtual void			handleDeselect();
 	virtual LLTool*			getOverrideTool(MASK mask) { return NULL; }
+
+            BOOL            isInGrabMode() const;
+            LLToolGun*      getToolGun() { return mGun; }
+            LLToolGrab*     getToolGrab() { return mGrab; }
 
 protected:
 	LLToolGun*			mGun;

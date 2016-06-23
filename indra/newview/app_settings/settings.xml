@@ -2,6 +2,17 @@
 <llsd xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:noNamespaceSchemaLocation="llsd.xsd">
 <map>
+    <key>NsightDebug</key>
+    <map>
+      <key>Comment</key>
+      <string>Disable use of APIs that break use of nVidia nSight debugging.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
   <key>ImporterDebug</key>
   <map>
     <key>Comment</key>
@@ -3162,6 +3173,17 @@
       <key>Value</key>
       <integer>0</integer>
     </map>
+    <key>DisableLookAtFollowsMouseCursor</key>
+    <map>
+        <key>Comment</key>
+        <string>Disable head turning following cursor motion in third person view</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>0</integer>
+    </map>
     <key>DisableMouseWarp</key>
     <map>
       <key>Comment</key>
@@ -3777,6 +3799,17 @@
       <string>Boolean</string>
       <key>Value</key>
       <integer>0</integer>
+    </map>
+    <key>FirstPersonModeInCycle</key>
+    <map>
+        <key>Comment</key>
+        <string>When pressing m, add first-person mode.  Thus m would cycle through normal, mouselook, and firstperson camera modes instead of just normal and mouselook</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>1</integer>
     </map>
     <key>FirstRunThisInstall</key>
     <map>
@@ -4536,6 +4569,356 @@
       <string>Boolean</string>
       <key>Value</key>
       <integer>0</integer>
+    </map>
+    <key>HMDAdvancedMode</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable Head Mounted Display Advanced Mode.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>HMDAllowTextRoll</key>
+    <map>
+      <key>Comment</key>
+      <string>In-World text will always be oriented in the head direction rather than in the direction of the object it's attached to.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>HMDDynamicResolutionScaling</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable HMD Dynamic Resolution Scaling: Changes the rendering resolution to increase framerate at the cost of more jagged/pixelated edges and lower rendering quality</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>HMDEnablePositionalTracking</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable HMD Positional Tracking (if hardware allows it)</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>HMDLowPersistence</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable HMD Low Persistence Mode to reduce/eliminate motion blur and judder.  While it does help with these things, it also makes the display noticeably dimmer.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
+    </map>
+    <key>HMDMouselookControlMode</key>
+    <map>
+        <key>Comment</key>
+        <string>0 (default): move with mouse, fire direction = move direction, head motion independent of move.  1: head direction = move direction = fire direction. Use HMDMouselookRotThreshold, etc for rotation</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>S32</string>
+        <key>Value</key>
+        <real>0</real>
+    </map>
+    <key>HMDMouselookRotThreshold</key>
+    <map>
+        <key>Comment</key>
+        <string>In HMD mouselook mode, this value is the number of degrees from center that you can turn your head before it also begins to rotate you.</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>F32</string>
+        <key>Value</key>
+        <real>45.0</real>
+    </map>
+    <key>HMDMouselookRotMax</key>
+    <map>
+        <key>Comment</key>
+        <string>In HMD mouselook mode, this value is the number of degrees after the Rot Threshold is reached before turn rate is at full speed</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>F32</string>
+        <key>Value</key>
+        <real>30.0</real>
+    </map>
+    <key>HMDMouselookTurnSpeedMax</key>
+    <map>
+        <key>Comment</key>
+        <string>In HMD mouselook mode, this value is the max rate of turning (yaw)</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>F32</string>
+        <key>Value</key>
+        <real>0.1</real>
+    </map>
+    <key>HMDMouselookYawOnly</key>
+    <map>
+        <key>Comment</key>
+        <string>If this is enabled, mouse movement in mouselook while in HMD mode will only affect horizontal movement (yaw).  Only head movement will allow the view to move horizontally.</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>Boolean</string>
+        <key>Value</key>
+        <integer>1</integer>
+    </map>
+    <key>HMDPixelDensity</key>
+    <map>
+      <key>Comment</key>
+      <string>HMD Pixel Density</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.0</real>
+    </map>
+    <key>HMDPixelLuminanceOverdrive</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable HMD Pixel Luminance Overdrive: Attempts to combat the dimness of Low Persistence Mode in software without sacrificing the benefits of that mode.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>HMDTimewarp</key>
+    <map>
+      <key>Comment</key>
+      <string>Enable HMD Timewarp Mode: Reduce motion-to-photon latency, i.e. how long it takes from the moment you move your head to when the scene rendered by the Rift is updated.  This allows lower latency and higher frame rates.  Experimental.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>HMDTimewarpIntervalSeconds</key>
+    <map>
+      <key>Comment</key>
+      <string>HMD Timewarp Rendering Interval.  Higher value = higher FPS, but more "dropped" frames.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.02</real>
+    </map>
+    <key>HMDUIMagnification</key>
+    <map>
+      <key>Comment</key>
+      <string>Magnification amount for UI surface.   Higher values = larger text/closer to viewpoint.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>650.0</real>
+    </map>
+    <key>HMDUIShapePreset</key>
+    <map>
+      <key>Comment</key>
+      <string>Preset index for HMD UI Surface shape.  0 = custom</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>S32</string>
+      <key>Value</key>
+      <real>1</real>
+    </map>
+    <key>HMDUIPresetValues</key>
+    <map>
+        <key>Comment</key>
+        <string>Default Preset Values for HMD UI Surface Shape</string>
+        <key>Persist</key>
+        <integer>1</integer>
+        <key>Type</key>
+        <string>LLSD</string>
+        <key>Value</key>
+        <array>
+            <map>
+                <key>PresetType</key>
+                <string>Default</string>
+                <key>ToroidRadiusWidth</key>
+                <real>1.4</real>
+                <key>ToroidRadiusDepth</key>
+                <real>0.9</real>
+                <key>ToroidCSRadiusWidth</key>
+                <real>0.1</real>
+                <key>ToroidCSRadiusHeight</key>
+                <real>2.0</real>
+                <key>ArcHorizontal</key>
+                <real>2.356194</real>
+                <key>ArcVertical</key>
+                <real>0.785398</real>
+                <key>UIMagnification</key>
+                <real>600.0</real>
+                <key>Offsets</key>
+                <array>
+                    <real>0.0</real>
+                    <real>0.0</real>
+                    <real>-0.75</real>
+                </array>
+            </map>
+            <map>
+                <key>PresetType</key>
+                <string>Default</string>
+                <key>ToroidRadiusWidth</key>
+                <real>2.7</real>
+                <key>ToroidRadiusDepth</key>
+                <real>1.4</real>
+                <key>ToroidCSRadiusWidth</key>
+                <real>0.8</real>
+                <key>ToroidCSRadiusHeight</key>
+                <real>3.6</real>
+                <key>ArcHorizontal</key>
+                <real>1.539380</real>
+                <key>ArcVertical</key>
+                <real>0.785398</real>
+                <key>UIMagnification</key>
+                <real>600.0</real>
+                <key>Offsets</key>
+                <array>
+                    <real>0.0</real>
+                    <real>0.0</real>
+                    <real>0.0</real>
+                </array>
+            </map>
+        </array>
+    </map>
+    <key>HMDUISurfaceArcHorizontal</key>
+    <map>
+      <key>Comment</key>
+      <string>amount of horizontal arc (in radians) used by the HMD UI Surface</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>2.8274333882308139146163790449516</real>
+    </map>
+    <key>HMDUISurfaceArcVertical</key>
+    <map>
+      <key>Comment</key>
+      <string>amount of vertical arc (in radians) used by the HMD UI Surface</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.8849555921538759430775860299677</real>
+    </map>
+    <key>HMDUISurfaceOffsets</key>
+    <map>
+      <key>Comment</key>
+      <string>Offsets (in meters) to add to final coordinates of HMD UI surface</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Vector3</string>
+      <key>Value</key>
+      <array>
+        <real>0.0</real>
+        <real>0.0</real>
+        <real>-0.2</real>
+      </array>
+    </map>
+    <key>HMDUISurfaceToroidCSHeight</key>
+    <map>
+      <key>Comment</key>
+      <string>Height (in meters) of HMD UI Surface Toroid Cross-Section.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.2</real>
+    </map>
+    <key>HMDUISurfaceToroidCSWidth</key>
+    <map>
+      <key>Comment</key>
+      <string>Width (in meters) of HMD UI Surface Toroid Cross-Section.  Also used for Cross-Section depth.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>0.2</real>
+    </map>
+    <key>HMDUISurfaceToroidDepth</key>
+    <map>
+      <key>Comment</key>
+      <string>Depth (in meters) of HMD UI Surface Toroid.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.0</real>
+    </map>
+    <key>HMDUISurfaceToroidWidth</key>
+    <map>
+      <key>Comment</key>
+      <string>Width (in meters) of HMD UI Surface Toroid.  Also used for Toroid Height</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>1.0</real>
+    </map>
+    <key>HMDUseMotionPrediction</key>
+    <map>
+      <key>Comment</key>
+      <string>Saved Value of whether to use Motion Prediction for HMD.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>HMDUseSRGBDistortion</key>
+    <map>
+      <key>Comment</key>
+      <string>Use SRGB texture/buffer format for HMD rendering.  Attempts to get better chromatic aberration, but can also cause things to appear faded or washed-out.  Note that due to SDK issues, if you start the viewer with this off and then turn it on, you'll need to toggle the DK1 legacy support checkbox in the Oculus Tool (in the Rift Display Mode panel) to get the brightness correct.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>HMDWorldCursorSizeMult</key>
+    <map>
+      <key>Comment</key>
+      <string>Size Multiplier for in-world cursor in HMD mode</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>F32</string>
+      <key>Value</key>
+      <real>3.0</real>
     </map>
     <key>HostID</key>
     <map>
@@ -9441,7 +9824,7 @@
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>0</integer>
+      <integer>1</integer>
     </map>
     <key>RenderGlow</key>
     <map>
@@ -10013,28 +10396,28 @@
     <key>Value</key>
     <integer>0</integer>
   </map>
-  <key>RenderUseFarClip</key>
-  <map>
-    <key>Comment</key>
-    <string>If false, frustum culling will ignore far clip plane.</string>
-    <key>Persist</key>
-    <integer>1</integer>
-    <key>Type</key>
-    <string>Boolean</string>
-    <key>Value</key>
-    <integer>1</integer>
-  </map>
-  <key>RenderUseImpostors</key>
-  <map>
-    <key>Comment</key>
+    <key>RenderUseFarClip</key>
+    <map>
+      <key>Comment</key>
+      <string>If false, frustum culling will ignore far clip plane.</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>1</integer>
+    </map>
+    <key>RenderUseImpostors</key>
+    <map>
+      <key>Comment</key>
     <string>OBSOLETE and UNUSED. See RenderAvatarMaxNonImpostors and RenderAvatarMaxComplexity.</string>
-    <key>Persist</key>
+      <key>Persist</key>
     <integer>0</integer>
-    <key>Type</key>
-    <string>Boolean</string>
-    <key>Value</key>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
     <integer>0</integer>
-  </map>
+    </map>
   <key>RenderAutoMuteByteLimit</key>
   <map>
     <key>Comment</key>
@@ -10149,7 +10532,7 @@
       <key>Type</key>
       <string>Boolean</string>
       <key>Value</key>
-      <integer>0</integer>
+      <integer>1</integer>
     </map>
   <key>RenderUseTransformFeedback</key>
   <map>
@@ -11790,6 +12173,17 @@
       <string>String</string>
       <key>Value</key>
       <string>fss.txt</string>
+    </map>
+    <key>SwapStopMoveAndAction</key>
+    <map>
+      <key>Comment</key>
+      <string>Swap the Action (X) and Stop-Movement (space-bar) key functionality</string>
+      <key>Persist</key>
+      <integer>1</integer>
+      <key>Type</key>
+      <string>Boolean</string>
+      <key>Value</key>
+      <integer>0</integer>
     </map>
     <key>SystemLanguage</key>
     <map>
