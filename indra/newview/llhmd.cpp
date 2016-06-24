@@ -510,9 +510,10 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
         {
             mImpl->resetOrientation();
         }
+
 		windowp->setHMDMode(isHMDMode(), gHMD.getViewportWidth(), gHMD.getViewportHeight());
 		//RIFT TODO:  is Y of screen < HMD height, the display in the rift is bad but mirroring looks okay. 
-		gViewerWindow->reshape(gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw());
+		//gViewerWindow->reshape(gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw());
     }
 }
 
@@ -893,7 +894,6 @@ void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
         // 1. determine horizontal and vertical percentage within toroidal UI surface based on mouse_x, mouse_y
         F32 uiw = (F32)gHMD.getViewportWidth();
         F32 uih = (F32)gHMD.getViewportHeight();
-		
         F32 nx = llclamp((F32)mouse_x / (F32)uiw, 0.0f, 1.0f);
         F32 ny = llclamp((F32)mouse_y / (F32)uih, 0.0f, 1.0f);
 
@@ -1002,8 +1002,6 @@ void LLHMD::setup2DRender()
 {
     S32 w = getViewportWidth();
     S32 h = getViewportHeight();
-	
-
 	gl_state_for_2d(w, h, 0, 0);
 	glViewport(0, 0, w, h);
 }

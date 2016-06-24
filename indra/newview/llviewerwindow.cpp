@@ -2340,7 +2340,7 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
         else
         {
             setup2DViewport();
-		mRootView->reshape(llceil((F32)width / mDisplayScale.mV[VX]), llceil((F32)height / mDisplayScale.mV[VY]));
+		    mRootView->reshape(llceil((F32)width / mDisplayScale.mV[VX]), llceil((F32)height / mDisplayScale.mV[VY]));
         }
 		LLView::sForceReshape = FALSE;
 

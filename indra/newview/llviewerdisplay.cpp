@@ -1456,8 +1456,8 @@ void LLViewerDisplay::render_ui_2d(render_options& options)
 	//  Disable wireframe mode below here, as this is HUD/menus
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    S32 w = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWindowWidthScaled();
-    S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWindowHeightScaled();
+    S32 w = gViewerWindow->getWindowWidthScaled();
+    S32 h = gViewerWindow->getWindowHeightScaled();
 
 	//  Menu overlays, HUD, etc
     gViewerWindow->setup2DRender(0, 0, w, h);
