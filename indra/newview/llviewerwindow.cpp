@@ -1312,11 +1312,6 @@ void LLViewerWindow::handleMouseMove(LLWindow *window,  LLCoordGL pos, MASK mask
 
 	LLCoordGL mouse_point(x, y);
 
-    //if (LLView::sDebugMouseHandling)
-    //{
-    //    LL_INFOS("Window") << "MouseMove [pos.mX,pos.mY] = {" << pos.mX << "," << pos.mY << "}, [x,y] = {" << x << "," << y << "}, mouse_point = {" << mouse_point.mX << "," << mouse_point.mY << "}" << LL_ENDL;
-    //}
-
 	if (mouse_point != mCurrentMousePoint)
 	{
 		LLUI::resetMouseIdleTimer();
@@ -1401,7 +1396,6 @@ void LLViewerWindow::handleFocus(LLWindow *window)
 void LLViewerWindow::handleFocusLost(LLWindow *window)
 {
 	gFocusMgr.setAppHasFocus(FALSE);
-
 	//LLModalDialog::onAppFocusLost();
 	LLToolMgr::getInstance()->onAppFocusLost();
 	gFocusMgr.setMouseCapture( NULL );
@@ -2279,8 +2273,8 @@ void LLViewerWindow::sendShapeToSim()
 	msg->addU32Fast(_PREHASH_CircuitCode, gMessageSystem->mOurCircuitCode);
 	msg->nextBlockFast(_PREHASH_HeightWidthBlock);
 	msg->addU32Fast(_PREHASH_GenCounter, 0);
-	U16 height16 = (U16)getWorldViewHeightRaw();
-	U16 width16 = (U16)getWindowWidthRaw();
+	U16 height16 = (U16) mWorldViewRectRaw.getHeight();
+	U16 width16 = (U16) mWorldViewRectRaw.getWidth();
 	msg->addU16Fast(_PREHASH_Height, height16);
 	msg->addU16Fast(_PREHASH_Width, width16);
 	gAgent.sendReliableMessage();
@@ -2303,7 +2297,6 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
         }
 
 		// update our window rectangle
-
 		mWindowRectRaw.mRight = mWindowRectRaw.mLeft + width;
 		mWindowRectRaw.mTop = mWindowRectRaw.mBottom + height;
 
