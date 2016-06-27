@@ -220,10 +220,6 @@ void align_hips_to_eyes( EKeystate state )
 void center_cursor( EKeystate state )
 {
     gViewerWindow->moveCursorToCenter();
-    if (gHMD.isHMDMode())
-    {
-        gHMD.updateHMDMouseInfo();
-    }
 }
 
 static void agent_slide_leftright( EKeystate s, S32 direction, LLAgent::EDoubleTapRunMode mode )

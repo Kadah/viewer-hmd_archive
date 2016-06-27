@@ -1053,16 +1053,16 @@ void LLViewerDisplay::render_geom(render_options& options)
 			
 			gGL.setColorMask(true, true);
 
-        if (!options.for_hmd)
-        {
-			//store this frame's modelview matrix for use
-			//when rendering next frame's occlusion queries
-			for (U32 i = 0; i < 16; i++)
-			{
-				gGLLastModelView[i] = gGLModelView[i];
-				gGLLastProjection[i] = gGLProjection[i];
-			}
-        }
+            if (!options.for_hmd)
+            {
+			    //store this frame's modelview matrix for use
+			    //when rendering next frame's occlusion queries
+			    for (U32 i = 0; i < 16; i++)
+			    {
+				    gGLLastModelView [i] = gGLModelView [i];
+				    gGLLastProjection[i] = gGLProjection[i];
+			    }
+            }
 			stop_glerror();
 		}
 
@@ -1546,8 +1546,8 @@ void LLViewerDisplay::render_ui_2d(render_options& options)
 		LLGLDisable cull(GL_CULL_FACE);
 		LLGLDisable blend(GL_BLEND);
 
-        S32 width = options.for_hmd ?  gHMD.getViewportWidth() : gViewerWindow->getWindowWidthScaled();
-        S32 height = options.for_hmd ? gHMD.getViewportWidth() : gViewerWindow->getWindowHeightScaled();
+        S32 width  = options.for_hmd ? gHMD.getViewportWidth()  : gViewerWindow->getWindowWidthScaled();
+        S32 height = options.for_hmd ? gHMD.getViewportHeight() : gViewerWindow->getWindowHeightScaled();
 
         if (options.for_hmd)
         {
@@ -1555,15 +1555,15 @@ void LLViewerDisplay::render_ui_2d(render_options& options)
         }
         else
         {
-		gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
-		gGL.begin(LLRender::TRIANGLE_STRIP);
-		gGL.color4f(1,1,1,1);
-		gGL.texCoord2f(0, 0);			gGL.vertex2i(0, 0);
+		    gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+		    gGL.begin(LLRender::TRIANGLE_STRIP);
+		    gGL.color4f(1,1,1,1);
+		    gGL.texCoord2f(0, 0); gGL.vertex2i(0, 0);
 		gGL.texCoord2f(width, 0);		gGL.vertex2i(width, 0);
 		gGL.texCoord2f(0, height);		gGL.vertex2i(0, height);
 		gGL.texCoord2f(width, height);	gGL.vertex2i(width, height);
-		gGL.end();
-	}
+		    gGL.end();
+	    }
 	}
 	else
 	{
@@ -1571,6 +1571,8 @@ void LLViewerDisplay::render_ui_2d(render_options& options)
 	}
 
     pop_state_gl();
+
+    //gHMD.renderCursor2D();
 
 	// reset current origin for font rendering, in case of tiling render
 	LLFontGL::sCurOrigin.set(0, 0);
@@ -1697,15 +1699,15 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
 	if (to_texture && !options.for_hmd)
 	{        
         gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
-     
-        if (options.for_hmd)
-        {
-            gHMD.render3DUI(options.hmd_eye);
-        }
 
         LLVertexBuffer::unbind();
         LLGLState::checkStates();
         LLGLState::checkTextureChannels();
+    }
+
+    if (options.for_hmd)
+    {
+        //gHMD.render3DUI(options.hmd_eye);
     }
 
     if (do_hud_elements_render && !options.for_hmd)
@@ -1746,12 +1748,7 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
         // debugging text
         gViewerWindow->setup2DRender();
         gViewerWindow->updateDebugText();
-        gViewerWindow->drawDebugText();
-    
-        if (options.for_hmd)
-        {
-            gHMD.renderCursor2D();
-        }
+        gViewerWindow->drawDebugText();        
     }
     pop_state_gl();
 

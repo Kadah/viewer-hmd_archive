@@ -1317,7 +1317,7 @@ void LLViewerWindow::handleMouseMove(LLWindow *window,  LLCoordGL pos, MASK mask
 		LLUI::resetMouseIdleTimer();
 	}
 
-	saveLastMouse(mouse_point, TRUE);// FALSE);
+	saveLastMouse(mouse_point);
 
 	mWindow->showCursorFromMouseMove();
 
@@ -2325,15 +2325,12 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
 		mWindowRectScaled.mRight = mWindowRectScaled.mLeft + ll_round((F32)width / mDisplayScale.mV[VX]);
 		mWindowRectScaled.mTop = mWindowRectScaled.mBottom + ll_round((F32)height / mDisplayScale.mV[VY]);
 
-		//setup2DViewport();
-
 		// Inform lower views of the change
 		// round up when converting coordinates to make sure there are no gaps at edge of window
         if (gHMD.isHMDMode())
         {
 			S32 w = gHMD.getViewportWidth();
 			S32 h = gHMD.getViewportHeight();
-
             setup2DViewport(0, 0, w,h);
             mRootView->reshape(llceil((F32)w / mDisplayScale.mV[VX]), llceil((F32)h / mDisplayScale.mV[VY]));
         }
@@ -2989,8 +2986,8 @@ void LLViewerWindow::moveCursorToCenter()
 {
 	if (! gSavedSettings.getBOOL("DisableMouseWarp"))
 	{
-		S32 x = (gHMD.isHMDMode() ? gHMD.getViewportWidth()  : getWorldViewWidthScaled())  / 2;
-		S32 y = (gHMD.isHMDMode() ? gHMD.getViewportHeight() : getWorldViewHeightScaled()) / 2;
+		S32 x = getWorldViewWidthScaled()  >> 1;
+		S32 y = getWorldViewHeightScaled() >> 1;
 	
 		//on a forced move, all deltas get zeroed out to prevent jumping
 		mCurrentMousePoint.set(x,y);
@@ -3077,7 +3074,7 @@ void LLViewerWindow::updateUI()
 
 	MASK	mask = gKeyboard->currentMask(TRUE);
 
-	if (gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_RAYCAST) || gHMD.isHMDMode())
+	if (gPipeline.hasRenderDebugMask(LLPipeline::RENDER_DEBUG_RAYCAST))
 	{
 		gDebugRaycastFaceHit = -1;
 		gDebugRaycastObject = cursorIntersect(-1, -1, 512.f, NULL, -1, FALSE, FALSE,
@@ -3088,27 +3085,52 @@ void LLViewerWindow::updateUI()
 											  &gDebugRaycastTangent,
 											  &gDebugRaycastStart,
 											  &gDebugRaycastEnd);
-        if (gHMD.isHMDMode())
-        {
-            gHMD.updateMouseRaycast(gDebugRaycastEnd);
-            if (gDebugRaycastObject &&
-                gDebugRaycastObject->mDrawable &&
-                gDebugRaycastObject->mDrawable->getNumFaces())
-            {
-                if (gDebugRaycastObject->isHUDAttachment())
-                {
-                    gHMD.cursorIntersectsUI(TRUE);
-                }
-                else
-                {
-                    gHMD.cursorIntersectsWorld(TRUE);
-                }
-                gHMD.setMouseWorldRaycastIntersection(gDebugRaycastIntersection, gDebugRaycastNormal, gDebugRaycastTangent);
-            }
-        }
+        
 
 		gDebugRaycastParticle = gPipeline.lineSegmentIntersectParticle(gDebugRaycastStart, gDebugRaycastEnd, &gDebugRaycastParticleIntersection, NULL);
 	}
+
+    if (gHMD.isHMDMode())
+    {
+        LLViewerObject* raycastObject;
+        LLVector4a      raycastIntersection;
+
+        LLVector2       raycastTexCoord;
+        LLVector4a      raycastNormal;
+        LLVector4a      raycastTangent;
+        S32				raycastFaceHit;
+        LLVector4a		raycastStart;
+        LLVector4a      raycastEnd;
+
+        raycastFaceHit = -1;
+        raycastObject = cursorIntersect(-1, -1, 512.f, NULL, -1, FALSE, FALSE,
+            &raycastFaceHit,
+            &raycastIntersection,
+            &raycastTexCoord,
+            &raycastNormal,
+            &raycastTangent,
+            &raycastStart,
+            &raycastEnd);
+
+        gHMD.setMouseWorldRaycastIntersection(raycastIntersection, raycastNormal, raycastTangent);
+        gHMD.updateMouseRaycast(raycastEnd);
+
+        if (raycastObject &&
+            raycastObject->mDrawable &&
+            raycastObject->mDrawable->getNumFaces())
+        {
+            if (raycastObject->isHUDAttachment())
+            {
+                gHMD.cursorIntersectsUI(TRUE);
+                gHMD.cursorIntersectsWorld(FALSE);
+            }
+            else
+            {
+                gHMD.cursorIntersectsUI(FALSE);
+                gHMD.cursorIntersectsWorld(TRUE);
+            }            
+        }
+    }
 
 	updateMouseDelta();
 	updateKeyboardFocus();
@@ -3282,14 +3304,12 @@ void LLViewerWindow::updateUI()
 			S32 local_y; 
 			mouse_captor->screenPointToLocal( x, y, &local_x, &local_y );
 			handled = mouse_captor->handleHover(local_x, local_y, mask);
-			
-
             if (handled)
             {
-			if (LLView::sDebugMouseHandling)
-			{
-				LL_INFOS() << "Hover handled by captor " << mouse_captor->getName() << LL_ENDL;
-			}
+			    if (LLView::sDebugMouseHandling)
+			    {
+				    LL_INFOS() << "Hover handled by captor " << mouse_captor->getName() << LL_ENDL;
+			    }
                 gHMD.handleMouseIntersectOverride(mouse_captor);
             }
 			else
@@ -3328,8 +3348,6 @@ void LLViewerWindow::updateUI()
 					}
 				}
 			}
-		
-            gHMD.cursorIntersectsUI(handled || gHMD.cursorIntersectsUI());
 
 			if (!handled)
 			{
@@ -3453,7 +3471,8 @@ void LLViewerWindow::updateUI()
 	updateLayout();
 
 	mLastMousePoint = mCurrentMousePoint;
-	saveLastMouse(mCurrentMousePoint, TRUE);
+
+	saveLastMouse(mCurrentMousePoint);
 
 	// cleanup unused selections when no modal dialogs are open
 	if (LLModalDialog::activeCount() == 0)
@@ -3692,13 +3711,13 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 	}
 }
 
-void LLViewerWindow::saveLastMouse(const LLCoordGL &point, BOOL updateHMDMouse)
+void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 {
 	// Store last mouse location.
-	// If mouse leaves window, pretend last point was on edge of window
+	// If mouse leaves window, clamp last point to edge of window.
+    S32 maxW = getWindowWidthScaled();
+    S32 maxH = getWindowHeightScaled();
 
-    S32 maxW = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : getWindowWidthScaled();
-    S32 maxH = gHMD.isHMDMode() ? gHMD.getViewportHeight() : getWindowHeightScaled();
 	if (point.mX < 0)
 	{
 		mCurrentMousePoint.mX = 0;
@@ -3724,11 +3743,6 @@ void LLViewerWindow::saveLastMouse(const LLCoordGL &point, BOOL updateHMDMouse)
 	{
 		mCurrentMousePoint.mY = point.mY;
 	}
-
-    if (gHMD.isHMDMode() && updateHMDMouse)
-    {
-        gHMD.updateHMDMouseInfo();
-    }
 }
 
 
@@ -4092,7 +4106,7 @@ LLViewerObject* LLViewerWindow::cursorIntersect(S32 mouse_x, S32 mouse_y, F32 de
 	
 	// world coordinates of mouse
 	LLVector3 mouse_direction_global = mouseDirectionGlobal(x,y);
-	LLVector3 mouse_point_global = LLViewerCamera::getInstance()->getOrigin();
+	LLVector3 mouse_point_global     = LLViewerCamera::getInstance()->getOrigin();
 	
 	//get near clip plane
 	LLVector3 n = LLViewerCamera::getInstance()->getAtAxis();
@@ -4179,41 +4193,25 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
     LLVector3 mouse_vector;
     LLViewerCamera* camera = LLViewerCamera::getInstance();
 
-    if (gHMD.isHMDMode())
-    {
-        if (gAgentCamera.cameraMouselook())
-        {
-            // in HMD mouselook mode, just use the camera forward direction
-            mouse_vector = camera->getAtAxis();
-        }
-        else
-        {
-            // get dir from viewpoint to mouse_world
-            LLVector3 viewPoint = camera->getOrigin() + (camera->getAtAxis() * gHMD.getUIEyeDepth());
-            mouse_vector = gHMD.getMouseWorld() - viewPoint;
-        }
-    }
-    else
-    {
-	// find vertical field of view
-	    F32			fov = camera->getView();
+    // find vertical field of view
+    F32 fov = camera->getView();
 
-	// find world view center in scaled ui coordinates
-	F32			center_x = getWorldViewRectScaled().getCenterX();
-	F32			center_y = getWorldViewRectScaled().getCenterY();
+    // find world view center in scaled ui coordinates
+    F32 center_x = getWorldViewRectScaled().getCenterX();
+    F32 center_y = getWorldViewRectScaled().getCenterY();
 
-	// calculate pixel distance to screen
-	F32			distance = ((F32)getWorldViewHeightScaled() * 0.5f) / (tan(fov / 2.f));
+    // calculate pixel distance to screen
+    F32 distance = ((F32)getWorldViewHeightScaled() * 0.5f) / (tan(fov / 2.f));
 
-	// calculate click point relative to middle of screen
-	F32			click_x = x - center_x;
-	F32			click_y = y - center_y;
+    // calculate click point relative to middle of screen
+    F32 click_x = x - center_x;
+    F32 click_y = y - center_y;
 
 	// compute mouse vector
-	    mouse_vector =	distance * camera->getAtAxis()
-						- click_x * camera->getLeftAxis()
-						+ click_y * camera->getUpAxis();
-    }
+    mouse_vector = distance * camera->getAtAxis()
+   			     - click_x  * camera->getLeftAxis()
+				 + click_y  * camera->getUpAxis();
+
     mouse_vector.normalize();
 
 	return mouse_vector;
@@ -4222,15 +4220,15 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
 LLVector3 LLViewerWindow::mousePointHUD(const S32 x, const S32 y) const
 {
 	// find screen resolution
-	S32			height = gHMD.isHMDMode() ? gHMD.getViewportHeight() : getWorldViewHeightScaled();
+	S32 height = getWorldViewHeightScaled();
 
 	// find world view center
-	F32			center_x = gHMD.isHMDMode() ? gHMD.getViewportWidth() / 2 : getWorldViewRectScaled().getCenterX();
-	F32			center_y = gHMD.isHMDMode() ? gHMD.getViewportHeight() / 2 : getWorldViewRectScaled().getCenterY();
+	F32 center_x = getWorldViewRectScaled().getCenterX();
+	F32 center_y = getWorldViewRectScaled().getCenterY();
 
 	// remap with uniform scale (1/height) so that top is -0.5, bottom is +0.5
-	F32 hud_x = -((F32)x - center_x)  / height;
-	F32 hud_y = ((F32)y - center_y) / height;
+	F32 hud_x = -((F32)x - center_x) / height;
+	F32 hud_y =  ((F32)y - center_y) / height;
 
 	return LLVector3(0.f, hud_x/gAgentCamera.mHUDCurZoom, hud_y/gAgentCamera.mHUDCurZoom);
 }
@@ -4241,18 +4239,18 @@ LLVector3 LLViewerWindow::mouseDirectionCamera(const S32 x, const S32 y) const
 {
 	// find vertical field of view
 	F32			fov_height = LLViewerCamera::getInstance()->getView();
-	F32			fov_width = fov_height * LLViewerCamera::getInstance()->getAspect();
+	F32			fov_width  = fov_height * LLViewerCamera::getInstance()->getAspect();
 
 	// find screen resolution
 	S32			height = getWorldViewHeightScaled();
-	S32			width = getWorldViewWidthScaled();
+	S32			width  = getWorldViewWidthScaled();
 
 	// find world view center
 	F32			center_x = getWorldViewRectScaled().getCenterX();
 	F32			center_y = getWorldViewRectScaled().getCenterY();
 
 	// calculate click point relative to middle of screen
-	F32			click_x = (((F32)x - center_x) / (F32)width) * fov_width * -1.f;
+	F32			click_x = (((F32)x - center_x) / (F32)width)  * fov_width * -1.f;
 	F32			click_y = (((F32)y - center_y) / (F32)height) * fov_height;
 
 	// compute mouse vector

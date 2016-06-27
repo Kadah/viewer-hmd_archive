@@ -222,9 +222,12 @@ public:
 
     LLVertexBuffer* createUISurface();
     void getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* uv = NULL);
-    void calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world);
+    
     void updateHMDMouseInfo();
-    const LLVector3& getMouseWorld() const { return mMouseWorld; }
+
+    void calculateMouseToroidIntersectWorldSpace(S32 mouse_x, S32 mouse_y, LLVector3& intersect);
+    const LLVector3& getMouseToroidIntersectWorldSpace() const { return mMouseToroidIntersect; }
+
     void updateMouseRaycast(const LLVector4a& mwe) { mMouseWorldEnd = mwe; }
     const LLVector4a& getMouseWorldEnd() const { return mMouseWorldEnd; }
     void setMouseWorldRaycastIntersection(const LLVector3& intersection)
@@ -312,11 +315,14 @@ private:
     F32 mUIModelView[16];
     F32 mUIModelViewInv[16];
 
-    // in-world coordinates of mouse pointer on the UI surface
-    LLVector3 mMouseWorld;
     // in-world coordinates of raycast from viewpoint into world, assuming no collisions.
     // Used for rendering in-world cursor over sky, etc.
-    LLVector4a mMouseWorldEnd;
+    LLVector4a mMouseToroidIntersect;
+
+    // in-world coordinates of raycast from viewpoint into world, assuming no collisions.
+    // Used for rendering in-world cursor over sky, etc.
+    LLVector4a mMouseRayEnd;
+
     // gDebugRaycastIntersection - i.e. where ray from eye to the world (through (mMouseWorld) meets landscape (or an object)
     LLVector4a mMouseWorldRaycastIntersection;
     LLVector4a mMouseWorldRaycastNormal;

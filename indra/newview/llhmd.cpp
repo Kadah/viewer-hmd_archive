@@ -511,9 +511,7 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
             mImpl->resetOrientation();
         }
 
-		windowp->setHMDMode(isHMDMode(), gHMD.getViewportWidth(), gHMD.getViewportHeight());
-		//RIFT TODO:  is Y of screen < HMD height, the display in the rift is bad but mirroring looks okay. 
-		//gViewerWindow->reshape(gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw());
+		windowp->setHMDMode(isHMDMode());
     }
 }
 
@@ -876,11 +874,11 @@ void LLHMD::getUISurfaceCoordinates(F32 ha, F32 va, LLVector4& pos, LLVector2* u
     }
 }
 
-void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
+void LLHMD::calculateMouseToroidIntersectWorldSpace(S32 mouse_x, S32 mouse_y, LLVector3& intersection)
 {
     if (!isHMDMode())
     {
-        world.set(0.0f, 0.0f, 0.0f);
+        MemSet(&intersection, 0xFF, sizeof(LLVector3));
         return;
     }
 
@@ -911,14 +909,14 @@ void LLHMD::calculateMouseWorld(S32 mouse_x, S32 mouse_y, LLVector3& world)
         glh::matrix4f uivInv(mUIModelViewInv);
         glh::vec4f w(eyeSpacePos.mV);
         uivInv.mult_matrix_vec(w);
-		world.set(w[VX], w[VY], w[VZ]);
+		intersection.set(w[VX], w[VY], w[VZ]);
     }
 }
 
 
 void LLHMD::updateHMDMouseInfo()
 {
-    calculateMouseWorld(gViewerWindow->getCurrentMouse().mX, gViewerWindow->getCurrentMouse().mY, mMouseWorld);
+    calculateMouseToroidIntersectWorldSpace(gViewerWindow->getCurrentMouse().mX, gViewerWindow->getCurrentMouse().mY, mMouseWorld);
 }
 
 BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
@@ -943,11 +941,11 @@ BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
             gHMD.cursorIntersectsUI(TRUE);
         }
         else
-        {
-            gHMD.cursorIntersectsWorld(TRUE);
+        {            
             if (tool->hasMouseIntersectGlobal())
             {
                 LLVector3 newMouseIntersect = gAgent.getPosAgentFromGlobal(tool->getMouseIntersectGlobal());
+                gHMD.cursorIntersectsWorld(TRUE);
                 gHMD.setMouseWorldRaycastIntersection(newMouseIntersect);
             }
         }
@@ -1280,8 +1278,6 @@ void LLHMD::render3DUI(int which_eye)
 {
     push_state_gl();
 
-    renderCursor3D(which_eye);
-
     if (gPipeline.mHMDUISurface.isNull())
     {
         gPipeline.mHMDUISurface = createUISurface();
@@ -1336,5 +1332,8 @@ void LLHMD::render3DUI(int which_eye)
             pop_state_gl();
         }
     }
+
     pop_state_gl();
+
+    renderCursor3D(which_eye);
 }

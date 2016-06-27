@@ -289,7 +289,7 @@ public:
 	//
 	// MANIPULATORS
 	//
-    void			saveLastMouse(const LLCoordGL &point, BOOL updateHMDMouse);
+    void			saveLastMouse(const LLCoordGL &point);
 
 	void			setCursor( ECursorType c );
 	void			showCursor();
