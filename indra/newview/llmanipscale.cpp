@@ -540,7 +540,7 @@ void LLManipScale::highlightManipulators(S32 x, S32 y)
         {
             mMousePointGlobal.setZero();
             const LLVector3& mouse_world = camera->getOrigin() + (camera->getAtAxis() * camera->getNear());
-            LLVector3 dir = LLVector3(gHMD.getMouseWorldEnd().getF32ptr()) - mouse_world;
+            LLVector3 dir = LLVector3(gHMD.getMouseRayEnd().getF32ptr()) - mouse_world;
             dir.normalize();
             F32 r2 = (mScaledBoxHandleSize * mScaledBoxHandleSize) * (0.5f * 0.5f);
 	        for (manipulator_list_t::iterator it = mProjectedManipulators.begin(), itEnd = mProjectedManipulators.end(); it != itEnd; ++it)

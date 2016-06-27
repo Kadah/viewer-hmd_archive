@@ -228,8 +228,8 @@ public:
     void calculateMouseToroidIntersectWorldSpace(S32 mouse_x, S32 mouse_y, LLVector3& intersect);
     const LLVector3& getMouseToroidIntersectWorldSpace() const { return mMouseToroidIntersect; }
 
-    void updateMouseRaycast(const LLVector4a& mwe) { mMouseWorldEnd = mwe; }
-    const LLVector4a& getMouseWorldEnd() const { return mMouseWorldEnd; }
+    void updateMouseRaycast(const LLVector4a& mwe) { mMouseRayEnd = mwe; }
+    const LLVector4a& getMouseRayEnd() const { return mMouseRayEnd; }
     void setMouseWorldRaycastIntersection(const LLVector3& intersection)
     {
         LLVector4a ni;
@@ -317,7 +317,7 @@ private:
 
     // in-world coordinates of raycast from viewpoint into world, assuming no collisions.
     // Used for rendering in-world cursor over sky, etc.
-    LLVector4a mMouseToroidIntersect;
+    LLVector3 mMouseToroidIntersect;
 
     // in-world coordinates of raycast from viewpoint into world, assuming no collisions.
     // Used for rendering in-world cursor over sky, etc.

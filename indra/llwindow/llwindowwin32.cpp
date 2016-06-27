@@ -441,10 +441,6 @@ LLWindowWin32::LLWindowWin32(LLWindowCallbacks* callbacks,
 	mNativeAspectRatio = 0.f;
 	mMousePositionModified = FALSE;
 	mInputProcessingPaused = FALSE;
-    mHMDMode = FALSE;
-    mHMDMirrored = FALSE;
-    mHMDWidth = mHMDHeight = mHMDClientHeightDiff = 0;
-    mHMDScale[0] = mHMDScale[1] = 1.0f;
 	mPreeditor = NULL;
 	mKeyCharCode = 0;
 	mKeyScanCode = 0;
@@ -889,12 +885,6 @@ BOOL LLWindowWin32::getCurrentClientRect(RECT& r, RECT* pActualRect)
     {
         *pActualRect = r;
     }
-    if (mHMDMode)
-    {
-
-        r.right = (LONG)llmin((S32)r.right, (S32)(r.left + mHMDWidth));
-        r.top = (LONG)llmax((S32)r.top, (S32)(r.bottom - mHMDHeight));
-    }
     return TRUE;
 }
 
@@ -908,11 +898,6 @@ BOOL LLWindowWin32::getCurrentWindowRect(RECT& r, RECT* pActualRect)
     {
         *pActualRect = r;
     }
-    if (mHMDMode)
-    {
-        r.right = (LONG)llmin((S32)r.right, (S32)(r.left + mHMDWidth));
-        r.top = (LONG)llmax((S32)r.top, (S32)(r.bottom - mHMDHeight));
-	}
     return TRUE;
 }
 
@@ -1746,8 +1731,6 @@ BOOL LLWindowWin32::setCursorPosition(const LLCoordWindow position)
 	}
 
     LLCoordGL gl_coord = position.convert();
-    adjustPosForHMDScaling(gl_coord);
-
 	// Inform the application of the new mouse position (needed for per-frame
 	// hover/picking to function).
 	mCallbacks->handleMouseMove(this, gl_coord, (MASK)0);
@@ -2118,22 +2101,6 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 						<< LL_ENDL;
 				}
 
-				if (window_imp->mFullscreen && !window_imp->mHMDMode)
-				{
-					// When we run fullscreen, restoring or minimizing the app needs 
-					// to switch the screen resolution
-					if (activating)
-					{
-						window_imp->setFullscreenResolution();
-						window_imp->restore();
-					}
-					else
-					{
-						window_imp->minimize();
-						window_imp->resetDisplayResolution();
-					}
-				}
-
 				if (!activating)
 				{
 					sHandleDoubleClick = false;
@@ -2402,7 +2369,6 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
-                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2440,7 +2406,6 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
-                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2482,7 +2447,6 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
-                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2518,7 +2482,6 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
-                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2548,7 +2511,6 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
-                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2584,7 +2546,6 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
-                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2614,7 +2575,6 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
-                window_imp->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2641,7 +2601,6 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 					&& window_imp->getCurrentClientRect(client_rect))
 				{
 					// we have a valid mouse point and client rect
-                    mouse_coord.y -= window_imp->mHMDClientHeightDiff;
 					if (mouse_coord.x < client_rect.left || client_rect.right < mouse_coord.x
 						|| mouse_coord.y < client_rect.top || client_rect.bottom < mouse_coord.y)
 					{
@@ -2688,7 +2647,6 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				window_imp->mCallbacks->handlePingWatchdog(window_imp, "Main:WM_MOUSEMOVE");
 				MASK mask = gKeyboard->currentMask(TRUE);
                 gl_coord = window_coord.convert();
-                window_imp->adjustPosForHMDScaling(gl_coord);
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
 				return 0;
 			}
@@ -2750,17 +2708,6 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				// Actually resize all of our views
 				if (w_param != SIZE_MINIMIZED)
 				{
-                    if (window_imp->mHMDMode && window_imp->mCurRCIdx == 0)
-                    {
-                        window_imp->adjustHMDScale(width, height);
-                        if (!window_imp->mHMDMirrored)
-                        {
-							width = llmax(window_imp->mHMDWidth, width);
-                            height = llmax(window_imp->mHMDHeight, height);
-
-                        }
-                    }
-
 					// Ignore updates for minimizing and minimized "windows"
 					window_imp->mCallbacks->handleResize(	window_imp, 
 						LOWORD(l_param), 
@@ -2819,7 +2766,7 @@ BOOL LLWindowWin32::convertCoords(LLCoordGL from, LLCoordWindow *to)
 		return FALSE;
 	}
 	to->mX = from.mX;
-	S32 client_height = (client_rect.bottom - client_rect.top) + mHMDClientHeightDiff;
+	S32 client_height = (client_rect.bottom - client_rect.top);
 	to->mY = client_height - from.mY - 1;
 
 	return TRUE;
@@ -2834,7 +2781,7 @@ BOOL LLWindowWin32::convertCoords(LLCoordWindow from, LLCoordGL* to)
 		return FALSE;
 	}
 	to->mX = from.mX;
-	S32 client_height = (client_rect.bottom - client_rect.top) + mHMDClientHeightDiff;
+	S32 client_height = (client_rect.bottom - client_rect.top);
 	to->mY = client_height - from.mY - 1;
 
 	return TRUE;
@@ -2853,7 +2800,7 @@ BOOL LLWindowWin32::convertCoords(LLCoordScreen from, LLCoordWindow* to)
 	if (result)
 	{
 		to->mX = mouse_point.x;
-		to->mY = mouse_point.y - mHMDClientHeightDiff;
+		to->mY = mouse_point.y;
 	}
 	return result;
 }
@@ -2866,7 +2813,7 @@ BOOL LLWindowWin32::convertCoords(LLCoordWindow from, LLCoordScreen *to)
     }
 	POINT mouse_point;
 	mouse_point.x = from.mX;
-	mouse_point.y = from.mY + mHMDClientHeightDiff;
+	mouse_point.y = from.mY;
 	BOOL result = ClientToScreen(mWindowHandle[mCurRCIdx], &mouse_point);
 	if (result)
 	{
@@ -4043,200 +3990,6 @@ BOOL LLWindowWin32::handleImeRequests(U32 request, U32 param, LRESULT *result)
 
 	return FALSE;
 }
-
-
-BOOL LLWindowWin32::testMainDisplayIsMirrored(S32 left, S32 top, S32 width, S32 height)
-{
-    if (!mWindowHandle[0])
-    {
-        return FALSE;
-    }
-    HMONITOR mainWindowMonitorHandle = MonitorFromWindow(mWindowHandle[0], MONITOR_DEFAULTTOPRIMARY);
-    POINT ptHMD;
-    ptHMD.x = (LONG)(left + (width / 2));
-    ptHMD.y = (LONG)(top + (height / 2));
-    HMONITOR hmdWindowMonitorHandle = MonitorFromPoint(ptHMD, MONITOR_DEFAULTTONULL);
-
-    if (hmdWindowMonitorHandle == NULL)
-    {
-        LL_WARNS("HMD") << "No monitor found for HMD coordinates [" << ptHMD.x << "," << ptHMD.y << "]!" << LL_ENDL;
-        return FALSE;
-    }
-
-    MONITORINFOEX infoMain, infoHMD;
-    infoMain.cbSize = infoHMD.cbSize = sizeof(MONITORINFOEX);
-    if (!::GetMonitorInfo(mainWindowMonitorHandle, &infoMain) || !::GetMonitorInfo(hmdWindowMonitorHandle, &infoHMD))
-    {
-        return FALSE;
-    }
-    llutf16string devMain(infoMain.szDevice);
-    llutf16string devHMD(infoHMD.szDevice);
-    //LL_INFOS("HMD") << "Main Monitor = " << utf16str_to_utf8str(devMain) << LL_ENDL;
-    //LL_INFOS("HMD") << "HMD Monitor = " << utf16str_to_utf8str(devHMD) << LL_ENDL;
-    if (devMain.compare(devHMD) == 0)
-    {
-        return TRUE;
-    }
-    return FALSE;
-}
-
-BOOL LLWindowWin32::destroyHMDWindow()
-{
-    if (mhDC[1] && !ReleaseDC(mWindowHandle[1], mhDC[1]))
-    {
-        LL_WARNS("Window") << "Release of HMD ghDC failed" << LL_ENDL;
-        mhDC[1] = NULL;
-    }
-
-    LL_DEBUGS("Window") << "Destroying HMD Window" << LL_ENDL;
-
-    // Don't process events in our mainWindowProc any longer.
-    SetWindowLong(mWindowHandle[1], GWL_USERDATA, NULL);
-
-    // Make sure we don't leave a blank toolbar button.
-    ShowWindow(mWindowHandle[1], SW_HIDE);
-
-    // This causes WM_DESTROY to be sent *immediately*
-    mPostQuit = FALSE;
-    if (!DestroyWindow(mWindowHandle[1]))
-    {
-        LL_WARNS("Window") << "Window Destroy Failed: " << mCallbacks->translateString("MBDestroyWinFailed") << " :: " << mCallbacks->translateString("MBShutdownErr") << LL_ENDL;
-    }
-    mPostQuit = TRUE;
-    mWindowHandle[1] = NULL;
-
-    return TRUE;
-}
-
-
-BOOL LLWindowWin32::setRenderWindow(S32 idx, BOOL fullScreen)
-{
-    if (idx < 0 || idx > 1 || !mhDC[idx])
-    {
-        return FALSE;
-    }
-    if (mCurRCIdx == idx && mFullscreen == fullScreen)
-    {
-        return TRUE;
-    }
-    mCurRCIdx = idx;
-    BOOL oldFullScreen = mFullscreen;
-    mFullscreen = fullScreen;
-    wglMakeCurrent(NULL, NULL);  // probably not needed
-    if (!wglMakeCurrent(mhDC[mCurRCIdx], mhRC))
-    {
-        mCurRCIdx = 0;
-        mFullscreen = oldFullScreen;
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
-
-BOOL LLWindowWin32::setFocusWindow(S32 idx)
-{
-    if (idx < 0 || idx > 1 || !mWindowHandle[idx])
-    {
-        return FALSE;
-    }
-    SetForegroundWindow(mWindowHandle[idx]);
-    SetFocus(mWindowHandle[idx]);
-    adjustHMDScale();
-    return TRUE;
-}
-
-
-void LLWindowWin32::setHMDMode(BOOL mode, U32 min_width, U32 min_height)
-{
-	//Called when entering HMD mode.
-   mHMDMode = mode;
-    if (mHMDMode)
-    {
-		mHMDWidth = min_width;
-		mHMDHeight = min_height;
-
-        while (ShowCursor(FALSE) >= 0) {}
-		adjustHMDScale();
-    }
-	else
-	{
-		mHMDWidth = 0;
-		mHMDHeight = 0;
-	}
-  /*  else if (!isCursorHidden())
-    {
-        showCursor();
-    }*/
-
-	if (!isCursorHidden())
-	{
-		showCursor();
-	}
-    setMinSize(min_width, min_height, false);
-}
-
-
-void LLWindowWin32::adjustHMDScale()
-{
-    mHMDClientHeightDiff = 0;
-    mHMDScale[0] = mHMDScale[1] = 1.0f;
-    if (mHMDMode && mCurRCIdx == 0 && mWindowHandle[mCurRCIdx])
-    {
-        RECT r;
-        if (GetClientRect(mWindowHandle[mCurRCIdx], &r))
-        {
-            S32 actual_dim[2] = { (S32)(r.right - r.left), (S32)(r.bottom - r.top) };
-            adjustHMDScale(actual_dim[0], actual_dim[1]);
-        }
-    }
-}
-
-
-void LLWindowWin32::adjustHMDScale(S32 w, S32 h)
-{
-	//Called when entering HMD mode.
-    mHMDClientHeightDiff = 0;
-    mHMDScale[0] = mHMDScale[1] = 1.0f;
-	mHMDHalfWidth = w / 2;
-    if (mHMDMode && mCurRCIdx == 0 && mWindowHandle[mCurRCIdx])
-    {
-        if (mHMDWidth > 0 && w > 0) 
-        {
-			mHMDScale[0] = (F32)((F32)w / (F32)(mHMDWidth * 2));
-        }
-		
-        if (mHMDHeight > 0 && h > 0) 
-        {
-            mHMDScale[1] = (F32)((F32)h / (F32)mHMDHeight);
-        }
-        else
-        {
-            mHMDClientHeightDiff = llmax(0, h - mHMDHeight);
-        }
-    }
-}
-
-
-void LLWindowWin32::adjustPosForHMDScaling(LLCoordGL& pt)
-{
-    if (mHMDMode && mCurRCIdx == 0)
-    {
-        if (mHMDScale[0] != 0.0f)
-        {
-			if (pt.mX > mHMDHalfWidth)
-			{
-				pt.mX -= mHMDHalfWidth;
-			}
-            pt.mX = ll_round((F32)pt.mX / mHMDScale[0]);
-        }
-        if (mHMDScale[1] != 0.0f) 
-        {
-            pt.mY = ll_round((F32)pt.mY / mHMDScale[1]);
-        }
-    }
-}
-
 
 S32 LLWindowWin32::getDisplayCount()
 {

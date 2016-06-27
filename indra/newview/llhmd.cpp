@@ -510,8 +510,6 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
         {
             mImpl->resetOrientation();
         }
-
-		windowp->setHMDMode(isHMDMode());
     }
 }
 
@@ -878,14 +876,14 @@ void LLHMD::calculateMouseToroidIntersectWorldSpace(S32 mouse_x, S32 mouse_y, LL
 {
     if (!isHMDMode())
     {
-        MemSet(&intersection, 0xFF, sizeof(LLVector3));
+        memset(&intersection, 0xFF, sizeof(LLVector3));
         return;
     }
 
     if (gAgentCamera.cameraMouselook())
     {
         LLViewerCamera* camera = LLViewerCamera::getInstance();
-        world.set(camera->getOrigin() + (camera->getAtAxis() * camera->getNear()));
+        intersection.set(camera->getOrigin() + (camera->getAtAxis() * camera->getNear()));
     }
     else
     {
@@ -916,7 +914,7 @@ void LLHMD::calculateMouseToroidIntersectWorldSpace(S32 mouse_x, S32 mouse_y, LL
 
 void LLHMD::updateHMDMouseInfo()
 {
-    calculateMouseToroidIntersectWorldSpace(gViewerWindow->getCurrentMouse().mX, gViewerWindow->getCurrentMouse().mY, mMouseWorld);
+    calculateMouseToroidIntersectWorldSpace(gViewerWindow->getCurrentMouse().mX, gViewerWindow->getCurrentMouse().mY, mMouseToroidIntersect);
 }
 
 BOOL LLHMD::handleMouseIntersectOverride(LLMouseHandler* mh)
@@ -1174,7 +1172,7 @@ void LLHMD::renderCursor3D(int which_eye)
         }
         else
         {
-            pt.set(mMouseWorldEnd.getF32ptr());
+            pt.set(mMouseRayEnd.getF32ptr());
         }
         LLVector3 delta = pt - origin;
         F32 dist = delta.magVec();

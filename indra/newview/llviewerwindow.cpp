@@ -3545,9 +3545,11 @@ void LLViewerWindow::updateMouseDelta()
 	S32 dx = lltrunc((F32) (mCurrentMousePoint.mX - mLastMousePoint.mX) * LLUI::getScaleFactor().mV[VX]);
 	S32 dy = lltrunc((F32) (mCurrentMousePoint.mY - mLastMousePoint.mY) * LLUI::getScaleFactor().mV[VY]);
 
+
 	//RN: fix for asynchronous notification of mouse leaving window not working
 	LLCoordWindow mouse_pos;
 	mWindow->getCursorPosition(&mouse_pos);
+
 	if (mouse_pos.mX < 0 || 
 		mouse_pos.mY < 0 ||
 		mouse_pos.mX > mWindowRectRaw.getWidth() ||
@@ -4193,24 +4195,30 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
     LLVector3 mouse_vector;
     LLViewerCamera* camera = LLViewerCamera::getInstance();
 
+    
     // find vertical field of view
-    F32 fov = camera->getView();
-
-    // find world view center in scaled ui coordinates
-    F32 center_x = getWorldViewRectScaled().getCenterX();
-    F32 center_y = getWorldViewRectScaled().getCenterY();
+    F32 fov = gHMD.isHMDMode() ? gHMD.getVerticalFOV() : camera->getView();
 
     // calculate pixel distance to screen
     F32 distance = ((F32)getWorldViewHeightScaled() * 0.5f) / (tan(fov / 2.f));
 
+    if (gHMD.isHMDMode())
+    {
+        distance = ((F32)gHMD.getViewportHeight() * 0.5f) / (tan(fov / 2.f));
+    }
+
+    // find world view center in scaled ui coordinates
+    F32 center_x = gHMD.isHMDMode() ? (gHMD.getViewportWidth()  >> 2) : getWorldViewRectScaled().getCenterX();
+    F32 center_y = gHMD.isHMDMode() ? (gHMD.getViewportHeight() >> 2) : getWorldViewRectScaled().getCenterY();
+
     // calculate click point relative to middle of screen
     F32 click_x = x - center_x;
     F32 click_y = y - center_y;
-
-	// compute mouse vector
+        
+    // compute mouse vector
     mouse_vector = distance * camera->getAtAxis()
-   			     - click_x  * camera->getLeftAxis()
-				 + click_y  * camera->getUpAxis();
+                 - click_x  * camera->getLeftAxis()
+                 + click_y  * camera->getUpAxis();
 
     mouse_vector.normalize();
 

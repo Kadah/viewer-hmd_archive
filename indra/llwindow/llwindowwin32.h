@@ -112,11 +112,6 @@ public:
 
 	LLWindowCallbacks::DragNDropResult completeDragNDropRequest( const LLCoordGL gl_coord, const MASK mask, LLWindowCallbacks::DragNDropAction action, const std::string url );
 
-    // HMD support
-    /*virtual*/ BOOL destroyHMDWindow();
-    /*virtual*/ BOOL setRenderWindow(S32 idx, BOOL fullscreen);
-    /*virtual*/ BOOL setFocusWindow(S32 idx);
-    /*virtual*/ void setHMDMode(BOOL mode, U32 min_width = 0, U32 min_height = 0);
     /*virtual*/ S32 getDisplayCount();
     /*virtual*/ void enableVSync(BOOL b);
     /*virtual*/ void setBorderStyle(BOOL on, S32 idx = -1);
@@ -159,10 +154,6 @@ protected:
 
     BOOL    getCurrentClientRect(RECT& r, RECT* pActualRect = NULL);
     BOOL    getCurrentWindowRect(RECT& r, RECT* pActualRect = NULL);
-    void    adjustHMDScale();
-    void    adjustHMDScale(S32 w, S32 h);
-    void    adjustPosForHMDScaling(LLCoordGL& pt);
-    BOOL    testMainDisplayIsMirrored(S32 left, S32 top, S32 width, S32 height);
 
 protected:
 	//
@@ -206,13 +197,7 @@ protected:
 	LPWSTR		mIconResource;
 	BOOL		mMousePositionModified;
 	BOOL		mInputProcessingPaused;
-    BOOL        mHMDMode;
-    BOOL        mHMDMirrored;
-    S32         mHMDWidth;
-    S32         mHMDHeight;
-	S32         mHMDHalfWidth;
-    S32         mHMDClientHeightDiff;
-    F32         mHMDScale[2];
+
     DWORD       mDwExStyle[2];
     DWORD       mDwStyle[2];
 
