@@ -1456,8 +1456,8 @@ void LLViewerDisplay::render_ui_2d(render_options& options)
 	//  Disable wireframe mode below here, as this is HUD/menus
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    S32 w = gViewerWindow->getWindowWidthScaled();
-    S32 h = gViewerWindow->getWindowHeightScaled();
+    S32 w = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWindowWidthScaled();
+	S32 h = gHMD.isHMDMode() ? gViewerWindow->getWindowHeightRaw() : gViewerWindow->getWindowHeightScaled(); 
 
 	//  Menu overlays, HUD, etc
     gViewerWindow->setup2DRender(0, 0, w, h);
@@ -1572,92 +1572,8 @@ void LLViewerDisplay::render_ui_2d(render_options& options)
 
     pop_state_gl();
 
-    //gHMD.renderCursor2D();
-
 	// reset current origin for font rendering, in case of tiling render
 	LLFontGL::sCurOrigin.set(0, 0);
-}
-
-void LLViewerDisplay::render_disconnected_background()
-{
-	if (LLGLSLShader::sNoFixedFunction)
-	{
-		gUIProgram.bind();
-	}
-
-	gGL.color4f(1,1,1,1);
-	if (!gDisconnectedImagep && gDisconnected)
-	{
-		LL_INFOS() << "Loading last bitmap..." << LL_ENDL;
-
-		std::string temp_str;
-		temp_str = gDirUtilp->getLindenUserDir() + gDirUtilp->getDirDelimiter() + SCREEN_LAST_FILENAME;
-
-		LLPointer<LLImageBMP> image_bmp = new LLImageBMP;
-		if( !image_bmp->load(temp_str) )
-		{
-			//LL_INFOS() << "Bitmap load failed" << LL_ENDL;
-			return;
-		}
-		
-		LLPointer<LLImageRaw> raw = new LLImageRaw;
-		if (!image_bmp->decode(raw, 0.0f))
-		{
-			LL_INFOS() << "Bitmap decode failed" << LL_ENDL;
-			gDisconnectedImagep = NULL;
-			return;
-		}
-
-		U8 *rawp = raw->getData();
-		S32 npixels = (S32)image_bmp->getWidth()*(S32)image_bmp->getHeight();
-		for (S32 i = 0; i < npixels; i++)
-		{
-			S32 sum = 0;
-			sum = *rawp + *(rawp+1) + *(rawp+2);
-			sum /= 3;
-			*rawp = ((S32)sum*6 + *rawp)/7;
-			rawp++;
-			*rawp = ((S32)sum*6 + *rawp)/7;
-			rawp++;
-			*rawp = ((S32)sum*6 + *rawp)/7;
-			rawp++;
-		}
-
-		raw->expandToPowerOfTwo();
-		gDisconnectedImagep = LLViewerTextureManager::getLocalTexture(raw.get(), FALSE );
-		gStartTexture = gDisconnectedImagep;
-		gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
-	}
-
-	// Make sure the progress view always fills the entire window.
-	S32 width = gViewerWindow->getWindowWidthScaled();
-	S32 height = gViewerWindow->getWindowHeightScaled();
-
-	if (gDisconnectedImagep)
-	{
-		LLGLSUIDefault gls_ui;
-		gViewerWindow->setup2DRender();
-		gGL.pushMatrix();
-		{
-			// scale ui to reflect UIScaleFactor
-			// this can't be done in setup2DRender because it requires a
-			// pushMatrix/popMatrix pair
-			const LLVector2& display_scale = gViewerWindow->getDisplayScale();
-			gGL.scalef(display_scale.mV[VX], display_scale.mV[VY], 1.f);
-
-			gGL.getTexUnit(0)->bind(gDisconnectedImagep);
-			gGL.color4f(1.f, 1.f, 1.f, 1.f);
-			gl_rect_2d_simple_tex(width, height);
-			gGL.getTexUnit(0)->unbind(LLTexUnit::TT_TEXTURE);
-		}
-		gGL.popMatrix();
-	}
-	gGL.flush();
-
-	if (LLGLSLShader::sNoFixedFunction)
-	{
-		gUIProgram.unbind();
-	}
 }
 
 void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)

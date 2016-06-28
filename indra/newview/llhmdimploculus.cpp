@@ -432,6 +432,9 @@ BOOL LLHMDImplOculus::copyToEyeRenderTarget(int which_eye, LLRenderTarget& sourc
         return FALSE;
     }
 
+	//Source contains the dimensions of the Desktop Window.  The w/h defined below are the size of the 
+	//Rift display.   Smaller values will result in a scaled down version of the 3D elements in a portion of the viewport.
+	//2D UI elements are unaffected by these values. 
     int texIndex = getFrameIndex() % 3;
     S32 w        = getViewportWidth();
     S32 h        = getViewportHeight();
@@ -485,7 +488,7 @@ BOOL LLHMDImplOculus::endFrame()
     }
 
     S32 viewport_w  = getViewportWidth();
-    S32 viewport_h  = getViewportHeight();
+	S32 viewport_h = gViewerWindow->getWindowHeightRaw(); //Controls the Y position of the menu bar.
     S32 window_w    = gViewerWindow->getWindowWidthRaw();
     S32 window_h    = gViewerWindow->getWindowHeightRaw();
 

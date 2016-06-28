@@ -436,13 +436,7 @@ void LLViewerCamera::setPerspective(BOOL for_selection,
 		// anything drawn into this viewport will be "selected"
 
 		GLint viewport[4];
-        LLRect viewRect = gViewerWindow->getWorldViewRectRaw();
-
-        viewport[0] = viewRect.mLeft;
-        viewport[1] = viewRect.mBottom;
-        viewport[2] = viewRect.getWidth();
-        viewport[3] = viewRect.getHeight();
-		
+        gViewerWindow->getWorldViewportRaw(viewport);
 		proj_mat = gl_pick_matrix(x+width/2.f, y_from_bot+height/2.f, (GLfloat) width, (GLfloat) height, viewport);
 
 		if (limit_select_distance)
@@ -573,14 +567,8 @@ BOOL LLViewerCamera::projectPosAgentToScreen(const LLVector3 &pos_agent, LLCoord
 		}
 	}
 
-    GLint viewport[4];
-    LLRect viewRect = gViewerWindow->getWorldViewRectRaw();
-
-    viewport[0] = viewRect.mLeft;
-    viewport[1] = viewRect.mBottom;
-    viewport[2] = viewRect.getWidth();
-    viewport[3] = viewRect.getHeight();
-
+	S32	viewport[4];
+    gViewerWindow->getWorldViewportRaw(viewport);
 	F64 mdlv[16];
 	F64 proj[16];
 	for (U32 i = 0; i < 16; i++)
@@ -686,14 +674,8 @@ BOOL LLViewerCamera::projectPosAgentToScreenEdge(const LLVector3 &pos_agent,
 		in_front = FALSE;
 	}
 
-    GLint viewport[4];
-    LLRect viewRect = gViewerWindow->getWorldViewRectRaw();
-
-    viewport[0] = viewRect.mLeft;
-    viewport[1] = viewRect.mBottom;
-    viewport[2] = viewRect.getWidth();
-    viewport[3] = viewRect.getHeight();
-
+	S32	viewport[4];
+    gViewerWindow->getWorldViewportRaw(viewport);
 	GLdouble	x, y, z;			// object's window coords, GL-style
 
 	F64 mdlv[16];

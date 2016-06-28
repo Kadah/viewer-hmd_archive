@@ -81,7 +81,6 @@ private:
     static BOOL setup_hud_matrices();
     static void renderCoordinateAxes();
     static void draw_axes();
-    static void render_disconnected_background();
     static void render_frame(BOOL rebuild, BOOL forHMD = FALSE, int whichEye = -1);
 
 public:

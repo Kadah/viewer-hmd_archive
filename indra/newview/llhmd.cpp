@@ -510,6 +510,8 @@ void LLHMD::setRenderMode(U32 mode, bool setFocusWindow)
         {
             mImpl->resetOrientation();
         }
+		//RIFT TODO:  is Y of screen < HMD height, the display in the rift is bad but mirroring looks okay. 
+		gViewerWindow->reshape(gViewerWindow->getWindowWidthRaw(), gViewerWindow->getWindowHeightRaw());
     }
 }
 
@@ -997,7 +999,9 @@ void LLHMD::setup3DRender(int which_eye)
 void LLHMD::setup2DRender()
 {
     S32 w = getViewportWidth();
-    S32 h = getViewportHeight();
+	S32 h = gViewerWindow->getWindowHeightRaw();
+	
+
 	gl_state_for_2d(w, h, 0, 0);
 	glViewport(0, 0, w, h);
 }

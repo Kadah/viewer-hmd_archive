@@ -2330,7 +2330,7 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
         if (gHMD.isHMDMode())
         {
 			S32 w = gHMD.getViewportWidth();
-			S32 h = gHMD.getViewportHeight();
+			S32 h = gViewerWindow->getWindowHeightRaw();
             setup2DViewport(0, 0, w,h);
             mRootView->reshape(llceil((F32)w / mDisplayScale.mV[VX]), llceil((F32)h / mDisplayScale.mV[VY]));
         }
@@ -4228,11 +4228,11 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
 LLVector3 LLViewerWindow::mousePointHUD(const S32 x, const S32 y) const
 {
 	// find screen resolution
-	S32 height = getWorldViewHeightScaled();
+	S32			height = gHMD.isHMDMode() ? gHMD.getViewportHeight() : getWorldViewHeightScaled();
 
 	// find world view center
-	F32 center_x = getWorldViewRectScaled().getCenterX();
-	F32 center_y = getWorldViewRectScaled().getCenterY();
+	F32			center_x = gHMD.isHMDMode() ? gHMD.getViewportWidth() >> 1 : getWorldViewRectScaled().getCenterX();
+	F32			center_y = gHMD.isHMDMode() ? gHMD.getViewportHeight() >> 1 : getWorldViewRectScaled().getCenterY();
 
 	// remap with uniform scale (1/height) so that top is -0.5, bottom is +0.5
 	F32 hud_x = -((F32)x - center_x) / height;
@@ -5295,7 +5295,7 @@ void LLViewerWindow::restartDisplay(BOOL show_progress_bar)
 
 F32	LLViewerWindow::getWorldViewAspectRatio() const
 {
-	F32 world_aspect = (F32)mWorldViewRectRaw.getWidth() / (F32)mWorldViewRectRaw.getHeight();
+    F32 world_aspect = ((F32)getWorldViewWidthRaw() / (F32)getWorldViewHeightRaw());
 	return world_aspect;
 }
 
@@ -5303,16 +5303,16 @@ void LLViewerWindow::calcDisplayScale()
 {
 	F32 ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
 	LLVector2 display_scale;
-    if (gHMD.isHMDMode())
-    {
-        // In HMD mode, the world should not be scaled as the resolution is fixed and too many calculations depend on that
-        // fixed resolution.   The UI could be scaled by adjusting the resolution of the rendertarget that the UI is sent
-        // to, but because the current setup has the world and UI scaling so intermingled, getting scaling to work for just
-        // the UI would be painful and probably take a week or more.  Thus, for now, just disable "UI" scaling in HMD mode.
-	    ui_scale_factor = 1.0f;
-	    display_scale.setVec(1.0f, 1.0f);
-    }
-    else
+    //if (gHMD.isHMDMode())
+    //{
+    //    // In HMD mode, the world should not be scaled as the resolution is fixed and too many calculations depend on that
+    //    // fixed resolution.   The UI could be scaled by adjusting the resolution of the rendertarget that the UI is sent
+    //    // to, but because the current setup has the world and UI scaling so intermingled, getting scaling to work for just
+    //    // the UI would be painful and probably take a week or more.  Thus, for now, just disable "UI" scaling in HMD mode.
+	   // ui_scale_factor = 1.0f;
+	   // display_scale.setVec(1.0f, 1.0f);
+    //}
+    //else
     {
 	    ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
 	display_scale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
