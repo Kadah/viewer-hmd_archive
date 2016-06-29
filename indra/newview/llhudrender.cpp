@@ -92,6 +92,8 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 	F64 winX, winY, winZ;
 
     
+	S32	viewport[4];
+    gViewerWindow->getWorldViewportRaw(viewport);
 
 	F64 mdlv[16];
 	F64 proj[16];
@@ -102,16 +104,9 @@ void hud_render_text(const LLWString &wstr, const LLVector3 &pos_agent,
 		proj[i] = (F64) gGLProjection[i];
 	}
 
-    LLRect viewRect = gViewerWindow->getWorldViewRectRaw();
-
-    GLint viewport[4];
-
-    viewport[0] = viewRect.mLeft;
-    viewport[1] = viewRect.mBottom;
-    viewport[2] = viewRect.getWidth();
-    viewport[3] = viewRect.getHeight();
-		
-	gluProject(render_pos.mV[0], render_pos.mV[1], render_pos.mV[2], mdlv, proj, (GLint*) viewport, &winX, &winY, &winZ);
+	gluProject(render_pos.mV[0], render_pos.mV[1], render_pos.mV[2],
+				mdlv, proj, (GLint*) viewport,
+				&winX, &winY, &winZ);
 
 	//fonts all render orthographically, set up projection
 	gGL.matrixMode(LLRender::MM_PROJECTION);

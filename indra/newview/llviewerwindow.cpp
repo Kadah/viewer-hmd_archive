@@ -1297,6 +1297,21 @@ BOOL LLViewerWindow::handleMiddleMouseUp(LLWindow *window,  LLCoordGL pos, MASK 
 	return TRUE;
 }
 
+void LLViewerWindow::adjustPosForHMDScaling(LLCoordGL& pt)
+{
+	if (gHMD.isHMDMode()) //fix X positioning in Rift.
+	{
+		S32 winw = gViewerWindow->getWindowWidthRaw() >> 1;
+		S32 hmdw = gHMD.getViewportWidth();
+		if (pt.mX > winw)
+		{
+			pt.mX -= winw;
+		}
+		pt.mX = (S32)((F32)pt.mX * ((F32)hmdw / (F32)winw));
+	}
+}
+
+
 // WARNING: this is potentially called multiple times per frame
 void LLViewerWindow::handleMouseMove(LLWindow *window,  LLCoordGL pos, MASK mask)
 {
@@ -2331,7 +2346,8 @@ void LLViewerWindow::reshape(S32 width, S32 height, BOOL only_ui)
         {
 			S32 w = gHMD.getViewportWidth();
 			S32 h = gViewerWindow->getWindowHeightRaw();
-            setup2DViewport(0, 0, w,h);
+
+           setup2DViewport(0, 0, w,h);
             mRootView->reshape(llceil((F32)w / mDisplayScale.mV[VX]), llceil((F32)h / mDisplayScale.mV[VY]));
         }
         else
@@ -2986,8 +3002,8 @@ void LLViewerWindow::moveCursorToCenter()
 {
 	if (! gSavedSettings.getBOOL("DisableMouseWarp"))
 	{
-		S32 x = getWorldViewWidthScaled()  >> 1;
-		S32 y = getWorldViewHeightScaled() >> 1;
+		S32 x = (gHMD.isHMDMode() ? gHMD.getViewportWidth()  : getWorldViewWidthScaled())  >> 1;
+		S32 y = (gHMD.isHMDMode() ? gHMD.getViewportHeight() : getWorldViewHeightScaled()) >> 1;
 	
 		//on a forced move, all deltas get zeroed out to prevent jumping
 		mCurrentMousePoint.set(x,y);
@@ -3714,10 +3730,10 @@ void LLViewerWindow::updateWorldViewRect(bool use_full_window)
 void LLViewerWindow::saveLastMouse(const LLCoordGL &point)
 {
 	// Store last mouse location.
-	// If mouse leaves window, clamp last point to edge of window.
-    S32 maxW = getWindowWidthScaled();
-    S32 maxH = getWindowHeightScaled();
+	// If mouse leaves window, pretend last point was on edge of window
 
+    S32 maxW = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : getWindowWidthScaled();
+    S32 maxH = gHMD.isHMDMode() ? gHMD.getViewportHeight() : getWindowHeightScaled();
 	if (point.mX < 0)
 	{
 		mCurrentMousePoint.mX = 0;
