@@ -262,7 +262,7 @@ public:
     void getEyeOffset(int whichEye, LLVector3& offsetOut)       const { offsetOut= mEyeOffset[whichEye];     }
 
     void setup2DRender();
-    void render3DUI(int which_eye);
+    void renderUserInterfaceInVR(int which_eye, LLRenderTarget& uiScreenRenderTarget);
 
     // defaults
     S32 getUIShapePresetIndexDefault() const { return 1; }

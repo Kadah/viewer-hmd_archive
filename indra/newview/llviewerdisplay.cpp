@@ -265,8 +265,8 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
 		gWindowResized = FALSE;
         if (!LLAppViewer::instance()->isSavingFinalSnapshot())
         {
-		return;
-	}
+		    return;
+	    }
 	}
 
     BOOL for_snapshot_original = for_snapshot;
@@ -614,7 +614,7 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
     if (!gDisconnected)
     {
         U32 render_mode = gHMD.getRenderMode();
-        BOOL hmd_ready  = gHMD.isHMDMode() && gHMD.isHMDConnected();
+        BOOL hmd_ready = gHMD.isHMDMode() && gHMD.isHMDConnected();
 
         if (gHMD.isHMDMode())
         {
@@ -637,10 +637,10 @@ void LLViewerDisplay::display(BOOL rebuild, F32 zoom_factor, int subfield, BOOL 
             gHMD.endFrame();
         }
 
-        if (!for_snapshot)
-        {
-            swap(gDisplaySwapBuffers, TRUE);
-        }
+            if (!for_snapshot)
+            {
+                swap(gDisplaySwapBuffers, TRUE);
+            }
 
         if (gHMD.isHMDMode())
         {
@@ -1089,12 +1089,11 @@ void LLViewerDisplay::render_flush(BOOL to_texture, render_options& options)
 			{
 				gPipeline.mDeferredScreen.flush();
 
-            if (options.for_hmd)
-            {
-                gHMD.copyToEyeRenderTarget(options.hmd_eye, gPipeline.mDeferredScreen, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            }
-
-				if(LLRenderTarget::sUseFBO)
+                if (options.for_hmd)
+                {
+                    gHMD.copyToEyeRenderTarget(options.hmd_eye, gPipeline.mDeferredScreen, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                }
+				else if(LLRenderTarget::sUseFBO)
 				{
 					LLRenderTarget::copyContentsToFramebuffer(gPipeline.mDeferredScreen, 0, 0, gPipeline.mDeferredScreen.getWidth(), 
 															  gPipeline.mDeferredScreen.getHeight(), 0, 0, 
@@ -1107,16 +1106,15 @@ void LLViewerDisplay::render_flush(BOOL to_texture, render_options& options)
 			{
 				gPipeline.mScreen.flush();
 
-            if (options.for_hmd)
-            {
-                gHMD.copyToEyeRenderTarget(options.hmd_eye, gPipeline.mScreen, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            }
-
-				if(LLRenderTarget::sUseFBO)
+                if (options.for_hmd)
+                {
+                    gHMD.copyToEyeRenderTarget(options.hmd_eye, gPipeline.mScreen, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+                }
+				else if(LLRenderTarget::sUseFBO)
 				{				
-                LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
-                                                                             0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
-															  GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+                    LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
+                                                                                 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
+															                     GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 				}
 			}
 		}
@@ -1456,8 +1454,8 @@ void LLViewerDisplay::render_ui_2d(render_options& options)
 	//  Disable wireframe mode below here, as this is HUD/menus
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    S32 w = gViewerWindow->getWindowWidthScaled();
-    S32 h = gViewerWindow->getWindowHeightScaled();
+    S32 w = gHMD.isHMDMode() ? gHMD.getViewportWidth()  : gViewerWindow->getWindowWidthScaled();
+    S32 h = gHMD.isHMDMode() ? gHMD.getViewportHeight() : gViewerWindow->getWindowHeightScaled();
 
 	//  Menu overlays, HUD, etc
     gViewerWindow->setup2DRender(0, 0, w, h);
@@ -1497,8 +1495,19 @@ void LLViewerDisplay::render_ui_2d(render_options& options)
 		gGL.popMatrix();
 		stop_glerror();
 	}
-	
-	if (gSavedSettings.getBOOL("RenderUIBuffer"))
+    
+    if (options.for_hmd)
+    {
+        if (options.hmd_eye == 0)
+        {
+            gPipeline.mUIScreen.bindTarget();
+            gPipeline.mUIScreen.clear();
+            gViewerWindow->draw();
+            gPipeline.mUIScreen.flush();
+        }                
+        gHMD.renderCursor2D();
+    }
+	else if (gSavedSettings.getBOOL("RenderUIBuffer"))
 	{
 		if (LLUI::sDirty)
 		{
@@ -1543,36 +1552,27 @@ void LLViewerDisplay::render_ui_2d(render_options& options)
 			LLUI::sDirtyRect = t_rect;
 		}
 
-		LLGLDisable cull(GL_CULL_FACE);
-		LLGLDisable blend(GL_BLEND);
+        LLGLDisable cull(GL_CULL_FACE);
+        LLGLDisable blend(GL_BLEND);
 
-        S32 width  = options.for_hmd ? gHMD.getViewportWidth()  : gViewerWindow->getWindowWidthScaled();
-        S32 height = options.for_hmd ? gHMD.getViewportHeight() : gViewerWindow->getWindowHeightScaled();
+        S32 width  = gViewerWindow->getWindowWidthScaled();
+        S32 height = gViewerWindow->getWindowHeightScaled();
 
-        if (options.for_hmd)
-        {
-            gHMD.copyToEyeRenderTarget(options.hmd_eye, gPipeline.mUIScreen, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        }
-        else
-        {
-		    gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
-		    gGL.begin(LLRender::TRIANGLE_STRIP);
-		    gGL.color4f(1,1,1,1);
-		    gGL.texCoord2f(0, 0); gGL.vertex2i(0, 0);
-		gGL.texCoord2f(width, 0);		gGL.vertex2i(width, 0);
-		gGL.texCoord2f(0, height);		gGL.vertex2i(0, height);
-		gGL.texCoord2f(width, height);	gGL.vertex2i(width, height);
-		    gGL.end();
-	    }
+		gGL.getTexUnit(0)->bind(&gPipeline.mUIScreen);
+		gGL.begin(LLRender::TRIANGLE_STRIP);
+		gGL.color4f(1,1,1,1);
+		gGL.texCoord2f(0, 0); gGL.vertex2i(0,     0);
+		gGL.texCoord2f(1, 0); gGL.vertex2i(width, 0);
+		gGL.texCoord2f(0, 1); gGL.vertex2i(0,     height);
+		gGL.texCoord2f(1, 1); gGL.vertex2i(width, height);
+		gGL.end();
 	}
 	else
 	{
-		gViewerWindow->draw();
+        gViewerWindow->draw();
 	}
 
     pop_state_gl();
-
-    //gHMD.renderCursor2D();
 
 	// reset current origin for font rendering, in case of tiling render
 	LLFontGL::sCurOrigin.set(0, 0);
@@ -1696,26 +1696,21 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
         gHMD.bindEyeRenderTarget(options.hmd_eye);
     }
 
-	if (to_texture && !options.for_hmd)
-	{        
+    if (to_texture)
+    {        
         gPipeline.renderBloom(gSnapshot, zoom_factor, subfield);
 
         LLVertexBuffer::unbind();
         LLGLState::checkStates();
         LLGLState::checkTextureChannels();
-    }
-
-    if (options.for_hmd)
-    {
-        //gHMD.render3DUI(options.hmd_eye);
-    }
+    }    
 
     if (do_hud_elements_render && !options.for_hmd)
     {
         render_hud_elements();
     }
 
-    if (do_hud_attachments_render)
+    if (do_hud_attachments_render && !options.for_hmd)
     {
         render_hud_attachments();
     }
@@ -1731,6 +1726,12 @@ void LLViewerDisplay::render_ui(BOOL to_texture, render_options& options)
     }
 
     render_ui_2d(options);
+
+    // Note: must be *after* mUIScreen RT is prepared
+    //if (options.for_hmd)
+    //{
+    //    gHMD.renderUserInterfaceInVR(options.hmd_eye, gPipeline.mUIScreen);        
+    //}
 
     LLGLState::checkStates();
 

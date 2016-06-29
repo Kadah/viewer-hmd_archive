@@ -928,9 +928,19 @@ bool LLPipeline::allocateScreenBuffer(U32 resX, U32 resY, U32 samples)
 
     mUIScreen.release();
 
-	if (RenderUIBuffer)
+	//if (RenderUIBuffer)
 	{
-		if (!mUIScreen.allocate(resX,resY, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE))
+        if (gHMD.isHMDMode())
+        {
+            mScreenWidth  = gHMD.getViewportWidth();
+            mScreenHeight = gHMD.getViewportHeight();
+
+            if (!mUIScreen.allocate(mScreenWidth, mScreenHeight, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_TEXTURE, FALSE))
+            {
+                return false;
+            }
+        }
+        else if (!mUIScreen.allocate(mScreenWidth, mScreenHeight, GL_RGBA, FALSE, FALSE, LLTexUnit::TT_RECT_TEXTURE, FALSE))
 		{
 			return false;
 		}
@@ -11580,7 +11590,7 @@ void LLPipeline::postRender(BOOL writeAlpha, BOOL forHMD, int whichEye)
 
     if (forHMD)
     {
-        gHMD.copyToEyeRenderTarget(whichEye, mScreen, GL_DEPTH_BUFFER_BIT);
+        //gHMD.copyToEyeRenderTarget(whichEye, mScreen, GL_DEPTH_BUFFER_BIT);
     }
     else if (LLRenderTarget::sUseFBO)
 	{
