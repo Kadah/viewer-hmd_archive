@@ -5,7 +5,7 @@
     <key>NsightDebug</key>
     <map>
       <key>Comment</key>
-      <string>Disable use of APIs that break use of nVidia nSight debugging.</string>
+      <string>Disable use of APIs that break use of nVidia nSight debugging. Breaks HMD rendering.</string>
       <key>Persist</key>
       <integer>1</integer>
       <key>Type</key>

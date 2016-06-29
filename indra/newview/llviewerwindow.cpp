@@ -3104,13 +3104,13 @@ void LLViewerWindow::updateUI()
 
         raycastFaceHit = -1;
         raycastObject = cursorIntersect(-1, -1, 512.f, NULL, -1, FALSE, FALSE,
-            &raycastFaceHit,
-            &raycastIntersection,
-            &raycastTexCoord,
-            &raycastNormal,
-            &raycastTangent,
-            &raycastStart,
-            &raycastEnd);
+                            &raycastFaceHit,
+                            &raycastIntersection,
+                            &raycastTexCoord,
+                            &raycastNormal,
+                            &raycastTangent,
+                            &raycastStart,
+                            &raycastEnd);
 
         gHMD.setMouseWorldRaycastIntersection(raycastIntersection, raycastNormal, raycastTangent);
         gHMD.updateMouseRaycast(raycastEnd);
@@ -3122,11 +3122,9 @@ void LLViewerWindow::updateUI()
             if (raycastObject->isHUDAttachment())
             {
                 gHMD.cursorIntersectsUI(TRUE);
-                gHMD.cursorIntersectsWorld(FALSE);
             }
             else
             {
-                gHMD.cursorIntersectsUI(FALSE);
                 gHMD.cursorIntersectsWorld(TRUE);
             }            
         }
@@ -4195,32 +4193,34 @@ LLVector3 LLViewerWindow::mouseDirectionGlobal(const S32 x, const S32 y) const
     LLVector3 mouse_vector;
     LLViewerCamera* camera = LLViewerCamera::getInstance();
 
-    
-    // find vertical field of view
-    F32 fov = gHMD.isHMDMode() ? gHMD.getVerticalFOV() : camera->getView();
-
     // calculate pixel distance to screen
-    F32 distance = ((F32)getWorldViewHeightScaled() * 0.5f) / (tan(fov / 2.f));
+    F32 pixelDistance = ((F32)getWorldViewHeightScaled() * 0.5f) / (tan(camera->getView() / 2.f));
+
+    // find world view center in scaled ui coordinates
+    F32 center_x = getWorldViewRectScaled().getCenterX();
+    F32 center_y = getWorldViewRectScaled().getCenterY();
+
+    // calculate click point relative to middle of screen
+    F32 pixelDeltaX = F32(x) - center_x;
+    F32 pixelDeltaY = F32(y) - center_y;
 
     if (gHMD.isHMDMode())
     {
-        distance = ((F32)gHMD.getViewportHeight() * 0.5f) / (tan(fov / 2.f));
+        F32 hmdPixelDistance = ((F32)gHMD.getViewportHeight() * 0.5f) / (tan(gHMD.getVerticalFOV() / 2.f));
+        // keep calcs below "between apples"
+        pixelDeltaX *= (hmdPixelDistance / pixelDistance);
+        pixelDeltaY *= (hmdPixelDistance / pixelDistance);
+        pixelDistance = hmdPixelDistance;
     }
 
-    // find world view center in scaled ui coordinates
-    F32 center_x = gHMD.isHMDMode() ? (gHMD.getViewportWidth()  >> 2) : getWorldViewRectScaled().getCenterX();
-    F32 center_y = gHMD.isHMDMode() ? (gHMD.getViewportHeight() >> 2) : getWorldViewRectScaled().getCenterY();
-
-    // calculate click point relative to middle of screen
-    F32 click_x = x - center_x;
-    F32 click_y = y - center_y;
-        
     // compute mouse vector
-    mouse_vector = distance * camera->getAtAxis()
-                 - click_x  * camera->getLeftAxis()
-                 + click_y  * camera->getUpAxis();
+    mouse_vector = pixelDistance * camera->getAtAxis()
+                 - pixelDeltaX   * camera->getLeftAxis()
+                 + pixelDeltaY   * camera->getUpAxis();
 
     mouse_vector.normalize();
+
+    //LL_INFOS() << "MouseDir: " << mouse_vector << LL_ENDL;
 
 	return mouse_vector;
 }

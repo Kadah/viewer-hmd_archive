@@ -254,49 +254,49 @@ bool LLTexUnit::bind(LLTexture* texture, bool for_rendering, bool forceBind)
 	stop_glerror();
 	if (mIndex >= 0)
 	{
-	gGL.flush();
+	    gGL.flush();
 
-	LLImageGL* gl_tex = NULL ;
+	    LLImageGL* gl_tex = NULL ;
 
-		if (texture != NULL && (gl_tex = texture->getGLTexture()))
-	{
-			if (gl_tex->getTexName()) //if texture exists
-	{
-	//in audit, replace the selected texture by the default one.
-	if ((mCurrTexture != gl_tex->getTexName()) || forceBind)
-	{
-		activate();
-		enable(gl_tex->getTarget());
-		mCurrTexture = gl_tex->getTexName();
-		glBindTexture(sGLTextureType[gl_tex->getTarget()], mCurrTexture);
-		if(gl_tex->updateBindStats(gl_tex->mTextureMemory))
-		{
-			texture->setActive() ;
-			texture->updateBindStatsForTester() ;
-		}
-		mHasMipMaps = gl_tex->mHasMipMaps;
-		if (gl_tex->mTexOptionsDirty)
-		{
-			gl_tex->mTexOptionsDirty = false;
-			setTextureAddressMode(gl_tex->mAddressMode);
-			setTextureFilteringOption(gl_tex->mFilterOption);
-		}
-	}
-			}
-			else
-			{
-				//if deleted, will re-generate it immediately
-				texture->forceImmediateUpdate() ;
+        if (texture != NULL && (gl_tex = texture->getGLTexture()))
+	    {
+	        if (gl_tex->getTexName()) //if texture exists
+	        {
+	            //in audit, replace the selected texture by the default one.
+	            if ((mCurrTexture != gl_tex->getTexName()) || forceBind)
+	            {
+		            activate();
+		            enable(gl_tex->getTarget());
+		            mCurrTexture = gl_tex->getTexName();
+		            glBindTexture(sGLTextureType[gl_tex->getTarget()], mCurrTexture);
+		            if(gl_tex->updateBindStats(gl_tex->mTextureMemory))
+		            {
+			            texture->setActive() ;
+			            texture->updateBindStatsForTester() ;
+		            }
+		            mHasMipMaps = gl_tex->mHasMipMaps;
+		            if (gl_tex->mTexOptionsDirty)
+		            {
+			            gl_tex->mTexOptionsDirty = false;
+			            setTextureAddressMode(gl_tex->mAddressMode);
+			            setTextureFilteringOption(gl_tex->mFilterOption);
+		            }
+	            }
+		    }
+		    else
+		    {
+			    //if deleted, will re-generate it immediately
+			    texture->forceImmediateUpdate() ;
 
-				gl_tex->forceUpdateBindStats() ;
-				return texture->bindDefaultImage(mIndex);
-			}
-		}
-		else
-		{
-			LL_WARNS() << "NULL LLTexUnit::bind texture" << LL_ENDL;
-			return false;
-		}
+			    gl_tex->forceUpdateBindStats() ;
+			    return texture->bindDefaultImage(mIndex);
+		    }
+        }
+	    else
+	    {
+		    LL_WARNS() << "NULL LLTexUnit::bind texture" << LL_ENDL;
+		    return false;
+	    }
 	}
 	else
 	{ // mIndex < 0
