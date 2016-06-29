@@ -65,6 +65,8 @@ public:
 	virtual void handleDataCopy(LLWindow *window, S32 data_type, void *data);
 	virtual BOOL handleTimerEvent(LLWindow *window);
 	virtual BOOL handleDeviceChange(LLWindow *window);
+	virtual void adjustPosForHMDScaling(LLCoordGL& pt);
+
 
 	enum DragNDropAction {
 		DNDA_START_TRACKING = 0,// Start tracking an incoming drag

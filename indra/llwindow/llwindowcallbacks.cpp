@@ -201,3 +201,8 @@ std::string LLWindowCallbacks::translateString(const char* tag,
 {
 	return std::string();
 }
+
+//virtual
+void LLWindowCallbacks::adjustPosForHMDScaling(LLCoordGL& pt)
+{
+}

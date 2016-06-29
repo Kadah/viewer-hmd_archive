@@ -1731,6 +1731,7 @@ BOOL LLWindowWin32::setCursorPosition(const LLCoordWindow position)
 	}
 
     LLCoordGL gl_coord = position.convert();
+	mCallbacks->adjustPosForHMDScaling(gl_coord);
 	// Inform the application of the new mouse position (needed for per-frame
 	// hover/picking to function).
 	mCallbacks->handleMouseMove(this, gl_coord, (MASK)0);
@@ -2369,6 +2370,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+				window_imp->mCallbacks->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2406,6 +2408,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+				window_imp->mCallbacks->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2447,6 +2450,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+				window_imp->mCallbacks->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2482,6 +2486,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+				window_imp->mCallbacks->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2511,6 +2516,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+				window_imp->mCallbacks->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2546,6 +2552,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+				window_imp->mCallbacks->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2575,6 +2582,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				{
 					gl_coord = window_coord.convert();
 				}
+				window_imp->mCallbacks->adjustPosForHMDScaling(gl_coord);
 				MASK mask = gKeyboard->currentMask(TRUE);
 				// generate move event to update mouse coordinates
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
@@ -2647,6 +2655,7 @@ LRESULT CALLBACK LLWindowWin32::mainWindowProc(HWND h_wnd, UINT u_msg, WPARAM w_
 				window_imp->mCallbacks->handlePingWatchdog(window_imp, "Main:WM_MOUSEMOVE");
 				MASK mask = gKeyboard->currentMask(TRUE);
                 gl_coord = window_coord.convert();
+				window_imp->mCallbacks->adjustPosForHMDScaling(gl_coord);
 				window_imp->mCallbacks->handleMouseMove(window_imp, gl_coord, mask);
 				return 0;
 			}

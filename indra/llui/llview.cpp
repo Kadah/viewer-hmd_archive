@@ -1291,7 +1291,6 @@ void LLView::reshape(S32 width, S32 height, BOOL called_from_parent)
 	// compute how much things changed and apply reshape logic to children
 	S32 delta_width = width - getRect().getWidth();
 	S32 delta_height = height - getRect().getHeight();
-
 	if (delta_width || delta_height || sForceReshape)
 	{
 		// adjust our rectangle

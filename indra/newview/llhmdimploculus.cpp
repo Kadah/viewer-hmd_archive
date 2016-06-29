@@ -459,6 +459,7 @@ BOOL LLHMDImplOculus::releaseEyeRenderTarget(int which)
     if (!mNsightDebugMode)
     {
         int texIndex = getFrameIndex() % 3;
+
         S32 w = getViewportWidth();
         S32 h = getViewportHeight();
         glBindFramebuffer(GL_READ_FRAMEBUFFER, mEyeRenderTarget[which][texIndex]->getFBO());
@@ -488,7 +489,7 @@ BOOL LLHMDImplOculus::endFrame()
     }
 
     S32 viewport_w  = getViewportWidth();
-	S32 viewport_h = gViewerWindow->getWindowHeightRaw(); //Controls the Y position of the menu bar.
+	S32 viewport_h = gViewerWindow->getWindowHeightRaw(); //controls the position of the menu bar.
     S32 window_w    = gViewerWindow->getWindowWidthRaw();
     S32 window_h    = gViewerWindow->getWindowHeightRaw();
 

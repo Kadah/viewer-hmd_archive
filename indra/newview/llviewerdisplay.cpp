@@ -1133,7 +1133,7 @@ void LLViewerDisplay::render_flush(BOOL to_texture, render_options& options)
 		}
 
 void LLViewerDisplay::render_hud_attachments()
-		{
+{
     push_state_gl();
 		
 	glh::matrix4f current_proj = glh_get_current_projection();
