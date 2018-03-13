@@ -110,6 +110,8 @@ public:
 	/*virtual*/ void interruptLanguageTextInput();
 	/*virtual*/ void spawnWebBrowser(const std::string& escaped_url, bool async);
 
+	/*virtual*/ F32 getSystemUISize();
+
 	LLWindowCallbacks::DragNDropResult completeDragNDropRequest( const LLCoordGL gl_coord, const MASK mask, LLWindowCallbacks::DragNDropAction action, const std::string url );
 
     /*virtual*/ S32 getDisplayCount();
@@ -117,7 +119,7 @@ public:
     /*virtual*/ void setBorderStyle(BOOL on, S32 idx = -1);
 
 	static std::vector<std::string> getDynamicFallbackFontList();
-
+	static void setDPIAwareness();
 protected:
 	LLWindowWin32(LLWindowCallbacks* callbacks,
 		const std::string& title, const std::string& name, int x, int y, int width, int height, U32 flags, 
@@ -150,7 +152,7 @@ protected:
 	U32		fillReconvertString(const LLWString &text, S32 focus, S32 focus_length, RECONVERTSTRING *reconvert_string);
 	void	handleStartCompositionMessage();
 	void	handleCompositionMessage(U32 indexes);
-	BOOL	handleImeRequests(U32 request, U32 param, LRESULT *result);
+	BOOL	handleImeRequests(WPARAM request, LPARAM param, LRESULT *result);
 
     BOOL    getCurrentClientRect(RECT& r, RECT* pActualRect = NULL);
     BOOL    getCurrentWindowRect(RECT& r, RECT* pActualRect = NULL);
@@ -223,6 +225,8 @@ protected:
 	U32				mRawMsg;
 	U32				mRawWParam;
 	U32				mRawLParam;
+
+	BOOL			mMouseVanish;
 
 	friend class LLWindowManager;
 };

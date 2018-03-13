@@ -104,10 +104,10 @@ void LLWeb::loadURL(const std::string& url, const std::string& target, const std
 
 // static
 // Explicitly open a Web URL using the Web content floater
-void LLWeb::loadURLInternal(const std::string &url, const std::string& target, const std::string& uuid)
+void LLWeb::loadURLInternal(const std::string &url, const std::string& target, const std::string& uuid, bool dev_mode)
 {
 	LLFloaterWebContent::Params p;
-	p.url(url).target(target).id(uuid);
+	p.url(url).target(target).id(uuid).dev_mode(dev_mode);
 	LLFloaterReg::showInstance("web_content", p);
 }
 
@@ -192,7 +192,7 @@ std::string LLWeb::expandURLSubstitutions(const std::string &url,
 	substitution["CHANNEL"] = LLVersionInfo::getChannel();
 	substitution["GRID"] = LLGridManager::getInstance()->getGridId();
 	substitution["GRID_LOWERCASE"] = utf8str_tolower(LLGridManager::getInstance()->getGridId());
-	substitution["OS"] = LLAppViewer::instance()->getOSInfo().getOSStringSimple();
+	substitution["OS"] = LLOSInfo::instance().getOSStringSimple();
 	substitution["SESSION_ID"] = gAgent.getSessionID();
 	substitution["FIRST_LOGIN"] = gAgent.isFirstLogin();
 
@@ -224,6 +224,22 @@ std::string LLWeb::expandURLSubstitutions(const std::string &url,
 	}
 	substitution["PARCEL_ID"] = llformat("%d", parcel_id);
 
+	// find the grid
+	std::string current_grid = LLGridManager::getInstance()->getGridId();
+	std::transform(current_grid.begin(), current_grid.end(), current_grid.begin(), ::tolower);
+	if (current_grid == "agni")
+	{
+		substitution["GRID"] = "secondlife.com";
+	}
+	else if (current_grid == "damballah")
+	{
+		// Staging grid has its own naming scheme.
+		substitution["GRID"] = "secondlife-staging.com";
+	}
+	else
+	{
+		substitution["GRID"] = llformat("%s.lindenlab.com", current_grid.c_str());
+	}
 	// expand all of the substitution strings and escape the url
 	std::string expanded_url = url;
 	LLStringUtil::format(expanded_url, substitution);

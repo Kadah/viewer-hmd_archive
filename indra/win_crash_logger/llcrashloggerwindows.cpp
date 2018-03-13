@@ -377,7 +377,7 @@ bool LLCrashLoggerWindows::initCrashServer()
 	std::wstring wpipe_name;
 	wpipe_name = mCrashReportPipeStr + std::wstring(wstringize(mPID));
 
-	std::wstring wdump_path( wstringize(dump_path) );
+	std::wstring wdump_path(utf8str_to_utf16str(dump_path));
 		
 	//Pipe naming conventions:  http://msdn.microsoft.com/en-us/library/aa365783%28v=vs.85%29.aspx
 	mCrashHandler = new CrashGenerationServer( wpipe_name,
@@ -454,7 +454,7 @@ void LLCrashLoggerWindows::gatherPlatformSpecificFiles()
 	//mDebugLog["DisplayDeviceInfo"] = gDXHardware.getDisplayInfo();  //Not initialized.
 }
 
-bool LLCrashLoggerWindows::mainLoop()
+bool LLCrashLoggerWindows::frame()
 {	
 	LL_INFOS() << "CrashSubmitBehavior is " << mCrashBehavior << LL_ENDL;
 
@@ -503,14 +503,14 @@ bool LLCrashLoggerWindows::mainLoop()
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
-		return msg.wParam;
+		return true; // msg.wParam;
 	}
 	else
 	{
 		LL_WARNS() << "Unknown crash behavior " << mCrashBehavior << LL_ENDL;
-		return 1;
+		return true; // 1;
 	}
-	return 0;
+	return true; // 0;
 }
 
 void LLCrashLoggerWindows::updateApplication(const std::string& message)

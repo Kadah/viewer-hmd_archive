@@ -66,6 +66,7 @@ public:
 	virtual BOOL handleTimerEvent(LLWindow *window);
 	virtual BOOL handleDeviceChange(LLWindow *window);
 	virtual void adjustPosForHMDScaling(LLCoordGL& pt);
+	virtual BOOL handleDPIChanged(LLWindow *window, F32 ui_scale_factor, S32 window_width, S32 window_height);
 
 
 	enum DragNDropAction {

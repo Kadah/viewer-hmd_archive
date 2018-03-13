@@ -43,6 +43,8 @@
 #include "llcoros.h"
 #include "lleventcoro.h"
 #include "llcorehttputil.h"
+#include "llexception.h"
+#include "stringize.h"
 
 #include <map>
 #include <set>
@@ -231,13 +233,12 @@ void LLAvatarNameCache::requestAvatarNameCache_(std::string url, std::vector<LLU
         LLAvatarNameCache::handleAvNameCacheSuccess(results, httpResults);
 
     }
-    catch (std::exception e)
-    {
-        LL_WARNS() << "Caught exception '" << e.what() << "'" << LL_ENDL;
-    }
     catch (...)
     {
-        LL_WARNS() << "Caught unknown exception." << LL_ENDL;
+        LOG_UNHANDLED_EXCEPTION(STRINGIZE("coroutine " << LLCoros::instance().getName()
+                                          << "('" << url << "', " << agentIds.size()
+                                          << " Agent Ids)"));
+        throw;
     }
 }
 
@@ -752,6 +753,28 @@ void LLAvatarNameCache::insert(const LLUUID& agent_id, const LLAvatarName& av_na
 {
 	// *TODO: update timestamp if zero?
 	sCache[agent_id] = av_name;
+}
+
+LLUUID LLAvatarNameCache::findIdByName(const std::string& name)
+{
+    std::map<LLUUID, LLAvatarName>::iterator it;
+    std::map<LLUUID, LLAvatarName>::iterator end = sCache.end();
+    for (it = sCache.begin(); it != end; ++it)
+    {
+        if (it->second.getUserName() == name)
+        {
+            return it->first;
+        }
+    }
+
+    // Legacy method
+    LLUUID id;
+    if (gCacheName && gCacheName->getUUID(name, id))
+    {
+        return id;
+    }
+
+    return LLUUID::null;
 }
 
 #if 0

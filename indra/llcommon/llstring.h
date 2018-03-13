@@ -336,6 +336,7 @@ public:
 
 	static void	addCRLF(string_type& string);
 	static void	removeCRLF(string_type& string);
+	static void removeWindowsCR(string_type& string);
 
 	static void	replaceTabsWithSpaces( string_type& string, size_type spaces_per_tab );
 	static void	replaceNonstandardASCII( string_type& string, T replacement );
@@ -443,7 +444,7 @@ public:
 struct LLDictionaryLess
 {
 public:
-	bool operator()(const std::string& a, const std::string& b)
+	bool operator()(const std::string& a, const std::string& b) const
 	{
 		return (LLStringUtil::precedesDict(a, b) ? true : false);
 	}
@@ -562,6 +563,17 @@ LL_COMMON_API std::string utf8str_trim(const std::string& utf8str);
 LL_COMMON_API S32 utf8str_compare_insensitive(
 	const std::string& lhs,
 	const std::string& rhs);
+
+/**
+* @brief Properly truncate a utf8 string to a maximum character count.
+*
+* If symbol_len is longer than the string passed in, the return
+* value == utf8str.
+* @param utf8str A valid utf8 string to truncate.
+* @param symbol_len The maximum number of symbols in the return value.
+* @return Returns a valid utf8 string with symbol count <= max_len.
+*/
+LL_COMMON_API std::string utf8str_symbol_truncate(const std::string& utf8str, const S32 symbol_len);
 
 /**
  * @brief Replace all occurences of target_char with replace_char
@@ -1311,6 +1323,32 @@ void LLStringUtilBase<T>::removeCRLF(string_type& string)
 
 //static
 template<class T> 
+void LLStringUtilBase<T>::removeWindowsCR(string_type& string)
+{
+    if (string.empty())
+    {
+        return;
+    }
+    const T LF = 10;
+    const T CR = 13;
+
+    size_type cr_count = 0;
+    size_type len = string.size();
+    size_type i;
+    for( i = 0; i < len - cr_count - 1; i++ )
+    {
+        if( string[i+cr_count] == CR && string[i+cr_count+1] == LF)
+        {
+            cr_count++;
+        }
+
+        string[i] = string[i+cr_count];
+    }
+    string.erase(i, cr_count);
+}
+
+//static
+template<class T>
 void LLStringUtilBase<T>::replaceChar( string_type& string, T target, T replacement )
 {
 	size_type found_pos = 0;

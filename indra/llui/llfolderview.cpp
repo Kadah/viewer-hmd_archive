@@ -102,6 +102,18 @@ void LLCloseAllFoldersFunctor::doFolder(LLFolderViewFolder* folder)
 void LLCloseAllFoldersFunctor::doItem(LLFolderViewItem* item)
 { }
 
+//---------------------------------------------------------------------------
+
+void LLAllDescendentsPassedFilter::doFolder(LLFolderViewFolder* folder)
+{
+	mAllDescendentsPassedFilter &= (folder) && (folder->passedFilter()) && (folder->descendantsPassedFilter());
+}
+
+void LLAllDescendentsPassedFilter::doItem(LLFolderViewItem* item)
+{
+	mAllDescendentsPassedFilter &= (item) && (item->passedFilter());
+}
+
 ///----------------------------------------------------------------------------
 /// Class LLFolderViewScrollContainer
 ///----------------------------------------------------------------------------
@@ -682,6 +694,13 @@ void LLFolderView::draw()
 			LLUI::pushMatrix();
 			LLUI::translate((F32)getRect().mLeft, (F32)getRect().mBottom);
 		}
+	}
+
+	if (mRenameItem && mRenamer && mRenamer->getVisible() && !getVisibleRect().overlaps(mRenamer->getRect()))
+	{
+		// renamer is not connected to the item we are renaming in any form so manage it manually
+		// TODO: consider stopping on any scroll action instead of when out of visible area
+		finishRenamingItem();
 	}
 
 	// skip over LLFolderViewFolder::draw since we don't want the folder icon, label, 
@@ -1629,9 +1648,9 @@ void LLFolderView::update()
 	if (mNeedsAutoSelect)
 	{
 		LL_RECORD_BLOCK_TIME(FTM_AUTO_SELECT);
-		// select new item only if a filtered item not currently selected
+		// select new item only if a filtered item not currently selected and there was a selection
 		LLFolderViewItem* selected_itemp = mSelectedItems.empty() ? NULL : mSelectedItems.back();
-		if (!mAutoSelectOverride && (!selected_itemp || !selected_itemp->getViewModelItem()->potentiallyVisible()))
+		if (!mAutoSelectOverride && selected_itemp && !selected_itemp->getViewModelItem()->potentiallyVisible())
 		{
 			// these are named variables to get around gcc not binding non-const references to rvalues
 			// and functor application is inherently non-const to allow for stateful functors

@@ -231,6 +231,8 @@ int APIENTRY WINMAIN(HINSTANCE hInstance,
 	DWORD heap_enable_lfh_error[MAX_HEAPS];
 	S32 num_heaps = 0;
 	
+	LLWindowWin32::setDPIAwareness();
+
 #if WINDOWS_CRT_MEM_CHECKS && !INCLUDE_VLD
 	_CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ); // dump memory leaks on exit
 #elif 0
@@ -317,10 +319,8 @@ int APIENTRY WINMAIN(HINSTANCE hInstance,
 	}
 	
 	// Run the application main loop
-	if(!LLApp::isQuitting()) 
-	{
-		viewer_app_ptr->mainLoop();
-	}
+	while (! viewer_app_ptr->frame()) 
+	{}
 
 	if (!LLApp::isError())
 	{
@@ -330,47 +330,36 @@ int APIENTRY WINMAIN(HINSTANCE hInstance,
 		// app cleanup if there was a problem.
 		//
 #if WINDOWS_CRT_MEM_CHECKS
-    LL_INFOS() << "CRT Checking memory:" << LL_ENDL;
-	if (!_CrtCheckMemory())
-	{
-		LL_WARNS() << "_CrtCheckMemory() failed at prior to cleanup!" << LL_ENDL;
-	}
-	else
-	{
-		LL_INFOS() << " No corruption detected." << LL_ENDL;
-	}
+		LL_INFOS() << "CRT Checking memory:" << LL_ENDL;
+		if (!_CrtCheckMemory())
+		{
+			LL_WARNS() << "_CrtCheckMemory() failed at prior to cleanup!" << LL_ENDL;
+		}
+		else
+		{
+			LL_INFOS() << " No corruption detected." << LL_ENDL;
+		}
 #endif
-	
-	gGLActive = TRUE;
 
-	viewer_app_ptr->cleanup();
-	
+		gGLActive = TRUE;
+
+		viewer_app_ptr->cleanup();
+
 #if WINDOWS_CRT_MEM_CHECKS
-    LL_INFOS() << "CRT Checking memory:" << LL_ENDL;
-	if (!_CrtCheckMemory())
-	{
-		LL_WARNS() << "_CrtCheckMemory() failed after cleanup!" << LL_ENDL;
-	}
-	else
-	{
-		LL_INFOS() << " No corruption detected." << LL_ENDL;
-	}
+		LL_INFOS() << "CRT Checking memory:" << LL_ENDL;
+		if (!_CrtCheckMemory())
+		{
+			LL_WARNS() << "_CrtCheckMemory() failed after cleanup!" << LL_ENDL;
+		}
+		else
+		{
+			LL_INFOS() << " No corruption detected." << LL_ENDL;
+		}
 #endif
-	 
+
 	}
 	delete viewer_app_ptr;
 	viewer_app_ptr = NULL;
-
-	//start updater
-	if(LLAppViewer::sUpdaterInfo)
-	{
-		_spawnl(_P_NOWAIT, LLAppViewer::sUpdaterInfo->mUpdateExePath.c_str(), LLAppViewer::sUpdaterInfo->mUpdateExePath.c_str(), LLAppViewer::sUpdaterInfo->mParams.str().c_str(), NULL);
-
-		delete LLAppViewer::sUpdaterInfo ;
-		LLAppViewer::sUpdaterInfo = NULL ;
-	}
-
-
 
 	// (NVAPI) (6) We clean up. This is analogous to doing a free()
 	if (hSession)
@@ -502,7 +491,8 @@ bool LLAppViewerWin32::init()
 	disableWinErrorReporting();
 
 #ifndef LL_RELEASE_FOR_DOWNLOAD
-	LLWinDebug::instance().init();
+	// Merely requesting the LLSingleton instance initializes it.
+	LLWinDebug::instance();
 #endif
 
 #if LL_WINDOWS
@@ -525,10 +515,6 @@ bool LLAppViewerWin32::cleanup()
 	bool result = LLAppViewer::cleanup();
 
 	gDXHardware.cleanup();
-
-#ifndef LL_RELEASE_FOR_DOWNLOAD
-	LLWinDebug::instance().cleanup();
-#endif
 
 	if (mIsConsoleAllocated)
 	{
@@ -569,7 +555,7 @@ bool LLAppViewerWin32::initHardwareTest()
 	// Do driver verification and initialization based on DirectX
 	// hardware polling and driver versions
 	//
-	if (FALSE == gSavedSettings.getBOOL("NoHardwareProbe"))
+	if (TRUE == gSavedSettings.getBOOL("ProbeHardwareOnStartup") && FALSE == gSavedSettings.getBOOL("NoHardwareProbe"))
 	{
 		// per DEV-11631 - disable hardware probing for everything
 		// but vram.
@@ -694,10 +680,10 @@ void LLAppViewerWin32::initCrashReporting(bool reportFreeze)
 	PROCESS_INFORMATION processInfo;
 
 	std::wstring exe_wstr;
-	exe_wstr=wstringize(exe_path);
+	exe_wstr = utf8str_to_utf16str(exe_path);
 
 	std::wstring arg_wstr;
-	arg_wstr=wstringize(arg_str);
+	arg_wstr = utf8str_to_utf16str(arg_str);
 
 	LL_INFOS("CrashReport") << "Creating crash reporter process " << exe_path << " with params: " << arg_str << LL_ENDL;
     if(CreateProcess(exe_wstr.c_str(),     

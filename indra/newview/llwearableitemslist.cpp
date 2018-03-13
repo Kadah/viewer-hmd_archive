@@ -645,7 +645,7 @@ LLWearableItemsList::LLWearableItemsList(const LLWearableItemsList::Params& p)
 		setRightMouseDownCallback(boost::bind(&LLWearableItemsList::onRightClick, this, _2, _3));
 	}
 	mWornIndicationEnabled = p.worn_indication_enabled;
-	setNoItemsCommentText(LLTrans::getString("LoadingData"));
+	setNoItemsCommentText(LLTrans::getString("NoneFound"));
 }
 
 // virtual
@@ -653,24 +653,16 @@ LLWearableItemsList::~LLWearableItemsList()
 {}
 
 // virtual
-void LLWearableItemsList::addNewItem(LLViewerInventoryItem* item, bool rearrange /*= true*/)
+LLPanel* LLWearableItemsList::createNewItem(LLViewerInventoryItem* item)
 {
-	if (!item)
-	{
-		LL_WARNS() << "No inventory item. Couldn't create flat list item." << LL_ENDL;
-		llassert(item != NULL);
-	}
+    if (!item)
+    {
+        LL_WARNS() << "No inventory item. Couldn't create flat list item." << LL_ENDL;
+        llassert(item != NULL);
+        return NULL;
+    }
 
-	LLPanelWearableOutfitItem *list_item = LLPanelWearableOutfitItem::create(item, mWornIndicationEnabled);
-	if (!list_item)
-		return;
-
-	bool is_item_added = addItem(list_item, item->getUUID(), ADD_BOTTOM, rearrange);
-	if (!is_item_added)
-	{
-		LL_WARNS() << "Couldn't add flat list item." << LL_ENDL;
-		llassert(is_item_added);
-	}
+    return LLPanelWearableOutfitItem::create(item, mWornIndicationEnabled);
 }
 
 void LLWearableItemsList::updateList(const LLUUID& category_id)

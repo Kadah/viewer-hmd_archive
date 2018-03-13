@@ -182,7 +182,14 @@ int	LLFile::mkdir(const std::string& dirname, int perms)
 	int rc = ::mkdir(dirname.c_str(), (mode_t)perms);
 #endif
 	// We often use mkdir() to ensure the existence of a directory that might
-	// already exist. Don't spam the log if it does.
+	// already exist. There is no known case in which we want to call out as
+	// an error the requested directory already existing.
+	if (rc < 0 && errno == EEXIST)
+	{
+		// this is not the error you want, move along
+		return 0;
+	}
+	// anything else might be a problem
 	return warnif("mkdir", dirname, rc, EEXIST);
 }
 
@@ -239,7 +246,7 @@ int	LLFile::close(LLFILE * file)
 }
 
 
-int	LLFile::remove(const std::string& filename)
+int	LLFile::remove(const std::string& filename, int supress_error)
 {
 #if	LL_WINDOWS
 	std::string utf8filename = filename;
@@ -248,7 +255,7 @@ int	LLFile::remove(const std::string& filename)
 #else
 	int rc = ::remove(filename.c_str());
 #endif
-	return warnif("remove", filename, rc);
+	return warnif("remove", filename, rc, supress_error);
 }
 
 int	LLFile::rename(const std::string& filename, const std::string& newname)

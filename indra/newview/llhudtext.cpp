@@ -395,6 +395,19 @@ void LLHUDText::updateVisibility()
 		return;
 	}
 
+
+	if(max_draw_distance < 0)
+	{
+		max_draw_distance = 0;
+		gSavedSettings.setF32("PrimTextMaxDrawDistance", max_draw_distance);
+	}
+	else if(max_draw_distance > MAX_DRAW_DISTANCE)
+	{
+		max_draw_distance = MAX_DRAW_DISTANCE;
+		gSavedSettings.setF32("PrimTextMaxDrawDistance", MAX_DRAW_DISTANCE);
+	}
+
+	if(last_distance_center > max_draw_distance)
 	LLVector3 x_pixel_vec;
 	LLVector3 y_pixel_vec;
 

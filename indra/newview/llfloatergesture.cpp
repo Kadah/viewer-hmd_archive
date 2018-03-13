@@ -328,7 +328,7 @@ void LLFloaterGesture::addGesture(const LLUUID& item_id , LLMultiGesture* gestur
 		element["columns"][0]["font"]["name"] = "SANSSERIF";
 		element["columns"][0]["font"]["style"] = font_style;
 
-		std::string key_string = LLKeyboard::stringFromKey(gesture->mKey);
+		std::string key_string;
 		std::string buffer;
 
 		if (gesture->mKey == KEY_NONE)
@@ -338,6 +338,7 @@ void LLFloaterGesture::addGesture(const LLUUID& item_id , LLMultiGesture* gestur
 		}
 		else
 		{
+			key_string = LLKeyboard::stringFromKey(gesture->mKey);
 			buffer = LLKeyboard::stringFromAccelerator(gesture->mMask,
 					gesture->mKey);
 		}
@@ -528,7 +529,8 @@ void LLFloaterGesture::onCopyPasteAction(const LLSD& command)
 			LLInventoryItem* item = gInventory.getItem(*it);
 			if(item  && item->getInventoryType() == LLInventoryType::IT_GESTURE)
 			{
-				LLClipboard::instance().addToClipboard(item->getUUID(),LLAssetType::AT_GESTURE);
+				LLWString item_name = utf8str_to_wstring(item->getName());
+				LLClipboard::instance().addToClipboard(item_name, 0, item_name.size());
 			}
 		}
 	}

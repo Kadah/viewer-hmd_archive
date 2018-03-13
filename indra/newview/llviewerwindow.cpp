@@ -33,6 +33,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <boost/filesystem.hpp>
 #include <boost/lambda/core.hpp>
 #include <boost/regex.hpp>
 
@@ -53,6 +54,7 @@
 #include "llrender.h"
 
 #include "llvoiceclient.h"	// for push-to-talk button handling
+#include "stringize.h"
 
 //
 // TODO: Many of these includes are unnecessary.  Remove them.
@@ -208,6 +210,7 @@
 #include "llwindowlistener.h"
 #include "llviewerwindowlistener.h"
 #include "llpaneltopinfobar.h"
+#include "llcleanup.h"
 
 #include "llhmd.h"
 
@@ -253,6 +256,11 @@ BOOL				gDisplayBadge = FALSE;
 static const U8 NO_FACE = 255;
 BOOL gQuietSnapshot = FALSE;
 
+// Minimum value for UIScaleFactor, also defined in preferences, ui_scale_slider
+static const F32 MIN_UI_SCALE = 0.75f;
+// 4.0 in preferences, but win10 supports larger scaling and value is used more as
+// sanity check, so leaving space for larger values from DPI updates.
+static const F32 MAX_UI_SCALE = 7.0f;
 static const F32 MIN_DISPLAY_SCALE = 0.75f;
 
 std::string	LLViewerWindow::sSnapshotBaseName;
@@ -289,19 +297,19 @@ public:
 
 class RecordToChatConsole : public LLSingleton<RecordToChatConsole>
 {
+	LLSINGLETON(RecordToChatConsole);
 public:
-	RecordToChatConsole()
-		: LLSingleton<RecordToChatConsole>(),
-		mRecorder(new RecordToChatConsoleRecorder())
-	{
-	}
-
 	void startRecorder() { LLError::addRecorder(mRecorder); }
 	void stopRecorder() { LLError::removeRecorder(mRecorder); }
 
 private:
 	LLError::RecorderPtr mRecorder;
 };
+
+RecordToChatConsole::RecordToChatConsole():
+	mRecorder(new RecordToChatConsoleRecorder())
+{
+}
 
 ////////////////////////////////////////////////////////////////////////////
 //
@@ -390,7 +398,8 @@ public:
 #if LL_WINDOWS
 		if (gSavedSettings.getBOOL("DebugShowMemory"))
 		{
-			addText(xpos, ypos, llformat("Memory: %d (KB)", LLMemory::getWorkingSetSize() / 1024)); 
+			addText(xpos, ypos,
+					STRINGIZE("Memory: " << (LLMemory::getCurrentRSS() / 1024) << " (KB)"));
 			ypos += y_inc;
 		}
 #endif
@@ -745,45 +754,45 @@ public:
 		}
 
 		// only display these messages if we are actually rendering beacons at this moment
-		if (LLPipeline::getRenderBeacons(NULL) && LLFloaterReg::instanceVisible("beacons"))
+		if (LLPipeline::getRenderBeacons() && LLFloaterReg::instanceVisible("beacons"))
 		{
-			if (LLPipeline::getRenderMOAPBeacons(NULL))
+			if (LLPipeline::getRenderMOAPBeacons())
 			{
 				addText(xpos, ypos, "Viewing media beacons (white)");
 				ypos += y_inc;
 			}
 
-			if (LLPipeline::toggleRenderTypeControlNegated((void*)LLPipeline::RENDER_TYPE_PARTICLES))
+			if (LLPipeline::toggleRenderTypeControlNegated(LLPipeline::RENDER_TYPE_PARTICLES))
 			{
 				addText(xpos, ypos, particle_hiding);
 				ypos += y_inc;
 			}
 
-			if (LLPipeline::getRenderParticleBeacons(NULL))
+			if (LLPipeline::getRenderParticleBeacons())
 			{
 				addText(xpos, ypos, "Viewing particle beacons (blue)");
 				ypos += y_inc;
 			}
 
-			if (LLPipeline::getRenderSoundBeacons(NULL))
+			if (LLPipeline::getRenderSoundBeacons())
 			{
 				addText(xpos, ypos, "Viewing sound beacons (yellow)");
 				ypos += y_inc;
 			}
 
-			if (LLPipeline::getRenderScriptedBeacons(NULL))
+			if (LLPipeline::getRenderScriptedBeacons())
 			{
 				addText(xpos, ypos, beacon_scripted);
 				ypos += y_inc;
 			}
 			else
-				if (LLPipeline::getRenderScriptedTouchBeacons(NULL))
+				if (LLPipeline::getRenderScriptedTouchBeacons())
 				{
 					addText(xpos, ypos, beacon_scripted_touch);
 					ypos += y_inc;
 				}
 
-			if (LLPipeline::getRenderPhysicalBeacons(NULL))
+			if (LLPipeline::getRenderPhysicalBeacons())
 			{
 				addText(xpos, ypos, "Viewing physical object beacons (green)");
 				ypos += y_inc;
@@ -1440,7 +1449,7 @@ BOOL LLViewerWindow::handleTranslatedKeyDown(KEY key,  MASK mask, BOOL repeated)
 {
 	// Let the voice chat code check for its PTT key.  Note that this never affects event processing.
 	LLVoiceClient::getInstance()->keyDown(key, mask);
-	
+
 	if (gAwayTimer.getElapsedTimeF32() > LLAgent::MIN_AFK_TIME)
 	{
 		gAgent.clearAFK();
@@ -1635,6 +1644,23 @@ BOOL LLViewerWindow::handleDeviceChange(LLWindow *window)
 	return FALSE;
 }
 
+BOOL LLViewerWindow::handleDPIChanged(LLWindow *window, F32 ui_scale_factor, S32 window_width, S32 window_height)
+{
+    if (ui_scale_factor >= MIN_UI_SCALE && ui_scale_factor <= MAX_UI_SCALE)
+    {
+        gSavedSettings.setF32("LastSystemUIScaleFactor", ui_scale_factor);
+        gSavedSettings.setF32("UIScaleFactor", ui_scale_factor);
+        LLViewerWindow::reshape(window_width, window_height);
+        mResDirty = true;
+        return TRUE;
+    }
+    else
+    {
+        LL_WARNS() << "DPI change caused UI scale to go out of bounds: " << ui_scale_factor << LL_ENDL;
+        return FALSE;
+    }
+}
+
 void LLViewerWindow::handlePingWatchdog(LLWindow *window, const char * msg)
 {
 	LLAppViewer::instance()->pingMainloopTimeout(msg);
@@ -1697,7 +1723,8 @@ LLViewerWindow::LLViewerWindow(const Params& p)
 	mResDirty(false),
 	mStatesDirty(false),
 	mCurrResolutionIndex(0),
-	mProgressView(NULL)
+	mProgressView(NULL),
+	mSystemUIScaleFactorChanged(false)
 {
 	// gKeyboard is still NULL, so it doesn't do LLWindowListener any good to
 	// pass its value right now. Instead, pass it a nullary function that
@@ -1785,9 +1812,24 @@ LLViewerWindow::LLViewerWindow(const Params& p)
 		gSavedSettings.setS32("FullScreenHeight",scr.mY);
     }
 
+
+	F32 system_scale_factor = mWindow->getSystemUISize();
+	if (system_scale_factor < MIN_UI_SCALE || system_scale_factor > MAX_UI_SCALE)
+	{
+		// reset to default;
+		system_scale_factor = 1.f;
+	}
+	if (p.first_run || gSavedSettings.getF32("LastSystemUIScaleFactor") != system_scale_factor)
+	{
+		mSystemUIScaleFactorChanged = !p.first_run;
+		gSavedSettings.setF32("LastSystemUIScaleFactor", system_scale_factor);
+		gSavedSettings.setF32("UIScaleFactor", system_scale_factor);
+	}
+
+
 	// Get the real window rect the window was created with (since there are various OS-dependent reasons why
 	// the size of a window or fullscreen context may have been adjusted slightly...)
-	F32 ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
+	F32 ui_scale_factor = llclamp(gSavedSettings.getF32("UIScaleFactor"), MIN_UI_SCALE, MAX_UI_SCALE);
 	
 	mDisplayScale.setVec(llmax(1.f / mWindow->getPixelAspectRatio(), 1.f), llmax(mWindow->getPixelAspectRatio(), 1.f));
 	mDisplayScale *= ui_scale_factor;
@@ -1880,6 +1922,28 @@ LLViewerWindow::LLViewerWindow(const Params& p)
 	mWorldViewRectScaled = calcScaledRect(mWorldViewRectRaw, mDisplayScale);
 }
 
+//static
+void LLViewerWindow::showSystemUIScaleFactorChanged()
+{
+	LLNotificationsUtil::add("SystemUIScaleFactorChanged", LLSD(), LLSD(), onSystemUIScaleFactorChanged);
+}
+
+//static
+bool LLViewerWindow::onSystemUIScaleFactorChanged(const LLSD& notification, const LLSD& response)
+{
+	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
+	if(option == 0)
+	{
+		LLFloaterReg::toggleInstanceOrBringToFront("preferences");
+		LLFloater* pref_floater = LLFloaterReg::getInstance("preferences");
+		LLTabContainer* tab_container = pref_floater->getChild<LLTabContainer>("pref core");
+		tab_container->selectTabByName("advanced1");
+
+	}
+	return false; 
+}
+
+
 void LLViewerWindow::initGLDefaults()
 {
 	gGL.setSceneBlendType(LLRender::BT_ALPHA);
@@ -1937,7 +2001,11 @@ void LLViewerWindow::initBase()
 	// (But wait to add it as a child of the root view so that it will be in front of the 
 	// other views.)
 	MainPanel* main_view = new MainPanel();
-	main_view->buildFromFile("main_view.xml");
+	if (!main_view->buildFromFile("main_view.xml"))
+	{
+		LL_ERRS() << "Failed to initialize viewer: Viewer couldn't process file main_view.xml, "
+				<< "if this problem happens again, please validate your installation." << LL_ENDL;
+	}
 	main_view->setShape(full_window);
 	getRootView()->addChild(main_view);
 
@@ -2160,10 +2228,7 @@ void LLViewerWindow::shutdownViews()
 
 	// destroy the nav bar, not currently part of gViewerWindow
 	// *TODO: Make LLNavigationBar part of gViewerWindow
-	if (LLNavigationBar::instanceExists())
-	{
-		delete LLNavigationBar::getInstance();
-	}
+	LLNavigationBar::deleteSingleton();
 	LL_INFOS() << "LLNavigationBar destroyed." << LL_ENDL ;
 	
 	// destroy menus after instantiating navbar above, as it needs
@@ -2199,7 +2264,7 @@ void LLViewerWindow::shutdownGL()
 	// Shutdown GL cleanly.  Order is very important here.
 	//--------------------------------------------------------
 	LLFontGL::destroyDefaultFonts();
-	LLFontManager::cleanupClass();
+	SUBSYSTEM_CLEANUP(LLFontManager);
 	stop_glerror();
 
 	gSky.cleanup();
@@ -2222,7 +2287,7 @@ void LLViewerWindow::shutdownGL()
 	LLWorldMapView::cleanupTextures();
 
 	LLViewerTextureManager::cleanup() ;
-	LLImageGL::cleanupClass() ;
+	SUBSYSTEM_CLEANUP(LLImageGL) ;
 
 	LL_INFOS() << "All textures and llimagegl images are destroyed!" << LL_ENDL ;
 
@@ -2235,7 +2300,7 @@ void LLViewerWindow::shutdownGL()
 
 	gGL.shutdown();
 
-	LLVertexBuffer::cleanupClass();
+	SUBSYSTEM_CLEANUP(LLVertexBuffer);
 
 	LL_INFOS() << "LLVertexBuffer cleaned." << LL_ENDL ;
 }
@@ -2244,6 +2309,7 @@ void LLViewerWindow::shutdownGL()
 LLViewerWindow::~LLViewerWindow()
 {
 	LL_INFOS() << "Destroying Window" << LL_ENDL;
+	gDebugWindowProc = TRUE; // event catching, at this point it shouldn't output at all
 	destroyWindow();
 
 	delete mDebugText;
@@ -2742,8 +2808,16 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 			return TRUE;
 		}
 
-		if ((gMenuBarView && gMenuBarView->handleAcceleratorKey(key, mask))
-			||(gLoginMenuBarView && gLoginMenuBarView->handleAcceleratorKey(key, mask)))
+		if (gAgent.isInitialized()
+			&& (gAgent.getTeleportState() == LLAgent::TELEPORT_NONE || gAgent.getTeleportState() == LLAgent::TELEPORT_LOCAL)
+			&& gMenuBarView
+			&& gMenuBarView->handleAcceleratorKey(key, mask))
+		{
+			LLViewerEventRecorder::instance().logKeyEvent(key, mask);
+			return TRUE;
+		}
+
+		if (gLoginMenuBarView && gLoginMenuBarView->handleAcceleratorKey(key, mask))
 		{
 			LLViewerEventRecorder::instance().logKeyEvent(key,mask);
 			return TRUE;
@@ -2873,8 +2947,16 @@ BOOL LLViewerWindow::handleKey(KEY key, MASK mask)
 	}
 
 	// give menus a chance to handle unmodified accelerator keys
-	if ((gMenuBarView && gMenuBarView->handleAcceleratorKey(key, mask))
-		||(gLoginMenuBarView && gLoginMenuBarView->handleAcceleratorKey(key, mask)))
+	if (gAgent.isInitialized()
+		&& (gAgent.getTeleportState() == LLAgent::TELEPORT_NONE || gAgent.getTeleportState() == LLAgent::TELEPORT_LOCAL)
+		&& gMenuBarView
+		&& gMenuBarView->handleAcceleratorKey(key, mask))
+	{
+		LLViewerEventRecorder::instance().logKeyEvent(key, mask);
+		return TRUE;
+	}
+
+	if (gLoginMenuBarView && gLoginMenuBarView->handleAcceleratorKey(key, mask))
 	{
 		return TRUE;
 	}
@@ -4429,8 +4511,10 @@ BOOL LLViewerWindow::mousePointOnLandGlobal(const S32 x, const S32 y, LLVector3d
 }
 
 // Saves an image to the harddrive as "SnapshotX" where X >= 1.
-BOOL LLViewerWindow::saveImageNumbered(LLImageFormatted *image, bool force_picker)
+BOOL LLViewerWindow::saveImageNumbered(LLImageFormatted *image, BOOL force_picker, BOOL& insufficient_memory)
 {
+	insufficient_memory = FALSE;
+
 	if (!image)
 	{
 		LL_WARNS() << "No image to save" << LL_ENDL;
@@ -4452,6 +4536,8 @@ BOOL LLViewerWindow::saveImageNumbered(LLImageFormatted *image, bool force_picke
 	else
 		pick_type = LLFilePicker::FFSAVE_ALL; // ???
 	
+	BOOL is_snapshot_name_loc_set = isSnapshotLocSet();
+
 	// Get a base file location if needed.
 	if (force_picker || !isSnapshotLocSet())
 	{
@@ -4474,6 +4560,22 @@ BOOL LLViewerWindow::saveImageNumbered(LLImageFormatted *image, bool force_picke
 		LLViewerWindow::sSnapshotDir = gDirUtilp->getDirName(filepath);
 	}
 
+	if(LLViewerWindow::sSnapshotDir.empty())
+	{
+		return FALSE;
+	}
+
+// Check if there is enough free space to save snapshot
+#ifdef LL_WINDOWS
+	boost::filesystem::space_info b_space = boost::filesystem::space(utf8str_to_utf16str(sSnapshotDir));
+#else
+	boost::filesystem::space_info b_space = boost::filesystem::space(sSnapshotDir);
+#endif
+	if (b_space.free < image->getDataSize())
+	{
+		insufficient_memory = TRUE;
+		return FALSE;
+	}
 	// Look for an unused file name
 	std::string filepath;
 	S32 i = 1;
@@ -4484,14 +4586,20 @@ BOOL LLViewerWindow::saveImageNumbered(LLImageFormatted *image, bool force_picke
 		filepath = sSnapshotDir;
 		filepath += gDirUtilp->getDirDelimiter();
 		filepath += sSnapshotBaseName;
-		filepath += llformat("_%.3d",i);
+
+		if (is_snapshot_name_loc_set)
+		{
+			filepath += llformat("_%.3d",i);
+		}		
+
 		filepath += extension;
 
 		llstat stat_info;
 		err = LLFile::stat( filepath, &stat_info );
 		i++;
 	}
-	while( -1 != err );  // search until the file is not found (i.e., stat() gives an error).
+	while( -1 != err  // Search until the file is not found (i.e., stat() gives an error).
+			&& is_snapshot_name_loc_set); // Or stop if we are rewriting.
 
 	LL_INFOS() << "Saving snapshot to " << filepath << LL_ENDL;
 	return image->save(filepath);
@@ -4514,7 +4622,7 @@ void LLViewerWindow::movieSize(S32 new_width, S32 new_height)
 	}
 }
 
-BOOL LLViewerWindow::saveSnapshot( const std::string& filepath, S32 image_width, S32 image_height, BOOL show_ui, BOOL do_rebuild, ESnapshotType type)
+BOOL LLViewerWindow::saveSnapshot(const std::string& filepath, S32 image_width, S32 image_height, BOOL show_ui, BOOL do_rebuild, LLSnapshotModel::ESnapshotLayerType type)
 {
 	LL_INFOS() << "Saving snapshot to: " << filepath << LL_ENDL;
 
@@ -4553,7 +4661,7 @@ void LLViewerWindow::playSnapshotAnimAndSound()
 	send_sound_trigger(LLUUID(gSavedSettings.getString("UISndSnapshot")), 1.0f);
 }
 
-BOOL LLViewerWindow::thumbnailSnapshot(LLImageRaw *raw, S32 preview_width, S32 preview_height, BOOL show_ui, BOOL do_rebuild, ESnapshotType type)
+BOOL LLViewerWindow::thumbnailSnapshot(LLImageRaw *raw, S32 preview_width, S32 preview_height, BOOL show_ui, BOOL do_rebuild, LLSnapshotModel::ESnapshotLayerType type)
 {
 	return rawSnapshot(raw, preview_width, preview_height, FALSE, FALSE, show_ui, do_rebuild, type);
 }
@@ -4562,7 +4670,7 @@ BOOL LLViewerWindow::thumbnailSnapshot(LLImageRaw *raw, S32 preview_width, S32 p
 // Since the required size might be bigger than the available screen, this method rerenders the scene in parts (called subimages) and copy
 // the results over to the final raw image.
 BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_height, 
-								 BOOL keep_window_aspect, BOOL is_texture, BOOL show_ui, BOOL do_rebuild, ESnapshotType type, S32 max_size)
+	BOOL keep_window_aspect, BOOL is_texture, BOOL show_ui, BOOL do_rebuild, LLSnapshotModel::ESnapshotLayerType type, S32 max_size)
 {
 	if (!raw)
 	{
@@ -4593,7 +4701,7 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 
 	if ( prev_draw_ui != show_ui)
 	{
-		LLPipeline::toggleRenderDebugFeature((void*)LLPipeline::RENDER_DEBUG_FEATURE_UI);
+		LLPipeline::toggleRenderDebugFeature(LLPipeline::RENDER_DEBUG_FEATURE_UI);
 	}
 
 	BOOL hide_hud = !gSavedSettings.getBOOL("RenderHUDInSnapshot") && LLPipeline::sShowHUDAttachments;
@@ -4776,7 +4884,7 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 						LLAppViewer::instance()->pingMainloopTimeout("LLViewerWindow::rawSnapshot");
 					}
 				
-					if (type == SNAPSHOT_TYPE_COLOR)
+					if (type == LLSnapshotModel::SNAPSHOT_TYPE_COLOR)
 					{
                         // glReadPixels spoils the shader debugging party...
                         if (!gSavedSettings.getBOOL("NsightDebug"))
@@ -4788,8 +4896,7 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 									 raw->getData() + output_buffer_offset
 									 );
 					}
-					}
-					else // SNAPSHOT_TYPE_DEPTH
+					else // LLSnapshotModel::SNAPSHOT_TYPE_DEPTH
 					{
                         // glReadPixels spoils the shader debugging party...
                         if (!gSavedSettings.getBOOL("NsightDebug"))
@@ -4830,7 +4937,7 @@ BOOL LLViewerWindow::rawSnapshot(LLImageRaw *raw, S32 image_width, S32 image_hei
 	// POST SNAPSHOT
 	if (!gPipeline.hasRenderDebugFeatureMask(LLPipeline::RENDER_DEBUG_FEATURE_UI))
 	{
-		LLPipeline::toggleRenderDebugFeature((void*)LLPipeline::RENDER_DEBUG_FEATURE_UI);
+		LLPipeline::toggleRenderDebugFeature(LLPipeline::RENDER_DEBUG_FEATURE_UI);
 	}
 
 	if (hide_hud)
@@ -5317,7 +5424,7 @@ F32	LLViewerWindow::getWorldViewAspectRatio() const
 
 void LLViewerWindow::calcDisplayScale()
 {
-	F32 ui_scale_factor = gSavedSettings.getF32("UIScaleFactor");
+	F32 ui_scale_factor = llclamp(gSavedSettings.getF32("UIScaleFactor"), MIN_UI_SCALE, MAX_UI_SCALE);
 	LLVector2 display_scale;
     //if (gHMD.isHMDMode())
     //{
@@ -5343,7 +5450,7 @@ void LLViewerWindow::calcDisplayScale()
 	
 	if (display_scale != mDisplayScale)
 	{
-		LL_INFOS() << "Setting display scale to " << display_scale << LL_ENDL;
+		LL_INFOS() << "Setting display scale to " << display_scale << " for ui scale: " << ui_scale_factor << LL_ENDL;
 
 		mDisplayScale = display_scale;
 		// Init default fonts

@@ -163,7 +163,7 @@ bool LLImageDimensionsInfo::getImageDimensionsJpeg()
 {
 	sJpegErrorEncountered = false;
 	clean();
-	FILE *fp = fopen (mSrcFilename.c_str(), "rb");
+	FILE *fp = LLFile::fopen(mSrcFilename, "rb");
 	if (fp == NULL) 
 	{
 		setLastError("Unable to open file for reading", mSrcFilename);
@@ -201,7 +201,7 @@ bool LLImageDimensionsInfo::getImageDimensionsJpeg()
 	cinfo.out_color_space = JCS_RGB;
 	jpeg_start_decompress	(&cinfo);
 
-	mHeight = cinfo.output_width;
+	mWidth = cinfo.output_width;
 	mHeight = cinfo.output_height;
 
 	jpeg_destroy_decompress(&cinfo);

@@ -34,6 +34,7 @@
 #include "llapr.h"
 #include "apr_signal.h"
 #include "llevents.h"
+#include "llexception.h"
 
 #include <boost/foreach.hpp>
 #include <boost/bind.hpp>
@@ -472,9 +473,9 @@ private:
 *****************************************************************************/
 /// Need an exception to avoid constructing an invalid LLProcess object, but
 /// internal use only
-struct LLProcessError: public std::runtime_error
+struct LLProcessError: public LLException
 {
-	LLProcessError(const std::string& msg): std::runtime_error(msg) {}
+	LLProcessError(const std::string& msg): LLException(msg) {}
 };
 
 LLProcessPtr LLProcess::create(const LLSDOrParams& params)
@@ -516,6 +517,10 @@ LLProcessPtr LLProcess::create(const LLSDOrParams& params)
 
 LLProcess::LLProcess(const LLSDOrParams& params):
 	mAutokill(params.autokill),
+	// Because 'autokill' originally meant both 'autokill' and 'attached', to
+	// preserve existing semantics, we promise that mAttached defaults to the
+	// same setting as mAutokill.
+	mAttached(params.attached.isProvided()? params.attached : params.autokill),
 	mPipes(NSLOTS)
 {
 	// Hmm, when you construct a ptr_vector with a size, it merely reserves
@@ -530,8 +535,8 @@ LLProcess::LLProcess(const LLSDOrParams& params):
 
 	if (! params.validateBlock(true))
 	{
-		throw LLProcessError(STRINGIZE("not launched: failed parameter validation\n"
-									   << LLSDNotationStreamer(params)));
+		LLTHROW(LLProcessError(STRINGIZE("not launched: failed parameter validation\n"
+										 << LLSDNotationStreamer(params))));
 	}
 
 	mPostend = params.postend;
@@ -596,10 +601,10 @@ LLProcess::LLProcess(const LLSDOrParams& params):
 		}
 		else
 		{
-			throw LLProcessError(STRINGIZE("For " << params.executable()
-										   << ": unsupported FileParam for " << which
-										   << ": type='" << fparam.type()
-										   << "', name='" << fparam.name() << "'"));
+			LLTHROW(LLProcessError(STRINGIZE("For " << params.executable()
+											 << ": unsupported FileParam for " << which
+											 << ": type='" << fparam.type()
+											 << "', name='" << fparam.name() << "'")));
 		}
 	}
 	// By default, pass APR_NO_PIPE for unspecified slots.
@@ -624,9 +629,9 @@ LLProcess::LLProcess(const LLSDOrParams& params):
 	// std handles and the like, and that's a bit more detachment than we
 	// want. autokill=false just means not to implicitly kill the child when
 	// the parent terminates!
-//	chkapr(apr_procattr_detach_set(procattr, params.autokill? 0 : 1));
+//	chkapr(apr_procattr_detach_set(procattr, mAutokill? 0 : 1));
 
-	if (params.autokill)
+	if (mAutokill)
 	{
 #if ! defined(APR_HAS_PROCATTR_AUTOKILL_SET)
 		// Our special preprocessor symbol isn't even defined -- wrong APR
@@ -678,7 +683,7 @@ LLProcess::LLProcess(const LLSDOrParams& params):
 	if (ll_apr_warn_status(apr_proc_create(&mProcess, argv[0], &argv[0], NULL, procattr,
 										   gAPRPoolp)))
 	{
-		throw LLProcessError(STRINGIZE(params << " failed"));
+		LLTHROW(LLProcessError(STRINGIZE(params << " failed")));
 	}
 
 	// arrange to call status_callback()
@@ -695,7 +700,7 @@ LLProcess::LLProcess(const LLSDOrParams& params):
 	// take steps to terminate the child. This is all suspenders-and-belt: in
 	// theory our destructor should kill an autokill child, but in practice
 	// that doesn't always work (e.g. VWR-21538).
-	if (params.autokill)
+	if (mAutokill)
 	{
 /*==========================================================================*|
 		// NO: There may be an APR bug, not sure -- but at least on Mac, when
@@ -798,7 +803,7 @@ LLProcess::~LLProcess()
 		sProcessListener.dropPoll(*this);
 	}
 
-	if (mAutokill)
+	if (mAttached)
 	{
 		kill("destructor");
 	}
@@ -1063,7 +1068,7 @@ PIPETYPE& LLProcess::getPipe(FILESLOT slot)
 	PIPETYPE* wp = getPipePtr<PIPETYPE>(error, slot);
 	if (! wp)
 	{
-		throw NoPipe(error);
+		LLTHROW(NoPipe(error));
 	}
 	return *wp;
 }

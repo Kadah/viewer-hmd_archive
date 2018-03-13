@@ -161,6 +161,7 @@ void LLSpellChecker::refreshDictionaryMap()
 	}
 
 	// Load user installed dictionary information
+	user_filename = user_path + DICT_FILE_USER;
 	llifstream custom_file(user_filename.c_str(), std::ios::binary);
 	if (custom_file.is_open())
 	{
@@ -405,10 +406,7 @@ const std::string LLSpellChecker::getDictionaryAppPath()
 const std::string LLSpellChecker::getDictionaryUserPath()
 {
 	std::string dict_path = gDirUtilp->getExpandedFilename(LL_PATH_USER_SETTINGS, DICT_DIR, "");
-	if (!gDirUtilp->fileExists(dict_path))
-	{
-		LLFile::mkdir(dict_path);
-	}
+	LLFile::mkdir(dict_path);
 	return dict_path;
 }
 

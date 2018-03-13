@@ -95,7 +95,8 @@ LLPanelPrimMediaControls::LLPanelPrimMediaControls() :
 	mVolumeSliderVisible(0),
 	mWindowShade(NULL),
 	mHideImmediately(false),
-    mSecureURL(false)
+    mSecureURL(false),
+	mMediaPlaySliderCtrlMouseDownValue(0.0)
 {
 	mCommitCallbackRegistrar.add("MediaCtrl.Close",		boost::bind(&LLPanelPrimMediaControls::onClickClose, this));
 	mCommitCallbackRegistrar.add("MediaCtrl.Back",		boost::bind(&LLPanelPrimMediaControls::onClickBack, this));
@@ -109,7 +110,8 @@ LLPanelPrimMediaControls::LLPanelPrimMediaControls() :
 	mCommitCallbackRegistrar.add("MediaCtrl.Open",		boost::bind(&LLPanelPrimMediaControls::onClickOpen, this));
 	mCommitCallbackRegistrar.add("MediaCtrl.Zoom",		boost::bind(&LLPanelPrimMediaControls::onClickZoom, this));
 	mCommitCallbackRegistrar.add("MediaCtrl.CommitURL",	boost::bind(&LLPanelPrimMediaControls::onCommitURL, this));
-	mCommitCallbackRegistrar.add("MediaCtrl.JumpProgress",		boost::bind(&LLPanelPrimMediaControls::onCommitSlider, this));
+	mCommitCallbackRegistrar.add("MediaCtrl.MouseDown", boost::bind(&LLPanelPrimMediaControls::onMediaPlaySliderCtrlMouseDown, this));
+	mCommitCallbackRegistrar.add("MediaCtrl.MouseUp", boost::bind(&LLPanelPrimMediaControls::onMediaPlaySliderCtrlMouseUp, this));
 	mCommitCallbackRegistrar.add("MediaCtrl.CommitVolumeUp",	boost::bind(&LLPanelPrimMediaControls::onCommitVolumeUp, this));
 	mCommitCallbackRegistrar.add("MediaCtrl.CommitVolumeDown",	boost::bind(&LLPanelPrimMediaControls::onCommitVolumeDown, this));
 	mCommitCallbackRegistrar.add("MediaCtrl.Volume",	boost::bind(&LLPanelPrimMediaControls::onCommitVolumeSlider, this));
@@ -564,11 +566,16 @@ void LLPanelPrimMediaControls::updateShape()
 			}
 		}
 		
-		// MAINT-1392 If this is a HUD always set it visible, but hide each control if user has no perms.
-		// When setting it invisible it won't receive any mouse messages anymore
+		// Web plugins and HUD may have media controls invisible for user, but still need scroll mouse events.
+		// LLView checks for visibleEnabledAndContains() and won't pass events to invisible panel, so instead
+		// of hiding whole panel hide each control instead (if user has no perms).
+		// Note: It might be beneficial to keep panel visible for all plugins to make behavior consistent, but 
+		// for now limiting change to cases that need events.
 
-		if( !is_hud )
+		if (!is_hud && (!media_plugin || media_plugin->pluginSupportsMediaTime()))
+		{
 			setVisible(enabled);
+		}
 		else
 		{
 			if( !hasPermsControl )
@@ -1246,26 +1253,38 @@ void LLPanelPrimMediaControls::setCurrentURL()
 #endif	// USE_COMBO_BOX_FOR_MEDIA_URL
 }
 
-void LLPanelPrimMediaControls::onCommitSlider()
-{
-	focusOnTarget();
 
-	LLViewerMediaImpl* media_impl = getTargetMediaImpl();
-	if (media_impl) 
+void LLPanelPrimMediaControls::onMediaPlaySliderCtrlMouseDown()
+{
+	mMediaPlaySliderCtrlMouseDownValue = mMediaPlaySliderCtrl->getValue().asReal();
+
+	mUpdateSlider = false;
+}
+
+void LLPanelPrimMediaControls::onMediaPlaySliderCtrlMouseUp()
+{
+	F64 cur_value = mMediaPlaySliderCtrl->getValue().asReal();
+
+	if (mMediaPlaySliderCtrlMouseDownValue != cur_value)
 	{
-		// get slider value
-		F64 slider_value = mMediaPlaySliderCtrl->getValue().asReal();
-		if(slider_value <= 0.0)
-		{	
-			media_impl->stop();
-		}
-		else 
+		focusOnTarget();
+
+		LLViewerMediaImpl* media_impl = getTargetMediaImpl();
+		if (media_impl)
 		{
-			media_impl->seek(slider_value*mMovieDuration);
-			//mUpdateSlider= false;
+			if (cur_value <= 0.0)
+			{
+				media_impl->stop();
+			}
+			else
+			{
+				media_impl->seek(cur_value * mMovieDuration);
+			}
 		}
+
+		mUpdateSlider = true;
 	}
-}		
+}
 
 void LLPanelPrimMediaControls::onCommitVolumeUp()
 {

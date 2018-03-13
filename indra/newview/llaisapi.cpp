@@ -394,6 +394,40 @@ void AISAPI::InvokeAISCommandCoro(LLCoreHttpUtil::HttpCoroutineAdapter::ptr_t ht
         {
             status = LLCore::HttpStatus(HTTP_INTERNAL_ERROR, "Malformed response contents");
         }
+        else if (status.getType() == 410) //GONE
+        {
+            // Item does not exist or was already deleted from server.
+            // parent folder is out of sync
+            if (type == REMOVECATEGORY)
+            {
+                LLViewerInventoryCategory *cat = gInventory.getCategory(targetId);
+                if (cat)
+                {
+                    LL_WARNS("Inventory") << "Purge failed for '" << cat->getName()
+                        << "' local version:" << cat->getVersion()
+                        << " since folder no longer exists at server. Descendent count: server == " << cat->getDescendentCount()
+                        << ", viewer == " << cat->getViewerDescendentCount()
+                        << LL_ENDL;
+                    gInventory.fetchDescendentsOf(cat->getParentUUID());
+                    // Note: don't delete folder here - contained items will be deparented (or deleted)
+                    // and since we are clearly out of sync we can't be sure we won't get rid of something we need.
+                    // For example folder could have been moved or renamed with items intact, let it fetch first.
+                }
+            }
+            else if (type == REMOVEITEM)
+            {
+                LLViewerInventoryItem *item = gInventory.getItem(targetId);
+                if (item)
+                {
+                    LL_WARNS("Inventory") << "Purge failed for '" << item->getName()
+                        << "' since item no longer exists at server." << LL_ENDL;
+                    gInventory.fetchDescendentsOf(item->getParentUUID());
+                    // since item not on the server and exists at viewer, so it needs an update at the least,
+                    // so delete it, in worst case item will be refetched with new params.
+                    gInventory.onObjectDeletedFromServer(targetId);
+                }
+            }
+        }
         LL_WARNS("Inventory") << "Inventory error: " << status.toString() << LL_ENDL;
         LL_WARNS("Inventory") << ll_pretty_print_sd(result) << LL_ENDL;
     }
@@ -838,11 +872,11 @@ void AISUpdate::parseEmbeddedCategories(const LLSD& categories)
 
 void AISUpdate::doUpdate()
 {
-	// Do version/descendent accounting.
+	// Do version/descendant accounting.
 	for (std::map<LLUUID,S32>::const_iterator catit = mCatDescendentDeltas.begin();
 		 catit != mCatDescendentDeltas.end(); ++catit)
 	{
-		LL_DEBUGS("Inventory") << "descendent accounting for " << catit->first << LL_ENDL;
+		LL_DEBUGS("Inventory") << "descendant accounting for " << catit->first << LL_ENDL;
 
 		const LLUUID cat_id(catit->first);
 		// Don't account for update if we just created this category.
@@ -859,13 +893,13 @@ void AISUpdate::doUpdate()
 			continue;
 		}
 
-		// If we have a known descendent count, set that now.
+		// If we have a known descendant count, set that now.
 		LLViewerInventoryCategory* cat = gInventory.getCategory(cat_id);
 		if (cat)
 		{
 			S32 descendent_delta = catit->second;
 			S32 old_count = cat->getDescendentCount();
-			LL_DEBUGS("Inventory") << "Updating descendent count for "
+			LL_DEBUGS("Inventory") << "Updating descendant count for "
 								   << cat->getName() << " " << cat_id
 								   << " with delta " << descendent_delta << " from "
 								   << old_count << " to " << (old_count+descendent_delta) << LL_ENDL;
@@ -896,7 +930,7 @@ void AISUpdate::doUpdate()
 		LLUUID category_id(update_it->first);
 		LLPointer<LLViewerInventoryCategory> new_category = update_it->second;
 		// Since this is a copy of the category *before* the accounting update, above,
-		// we need to transfer back the updated version/descendent count.
+		// we need to transfer back the updated version/descendant count.
 		LLViewerInventoryCategory* curr_cat = gInventory.getCategory(new_category->getUUID());
 		if (!curr_cat)
 		{
@@ -961,7 +995,25 @@ void AISUpdate::doUpdate()
 		{
 			LL_WARNS() << "Possible version mismatch for category " << cat->getName()
 					<< ", viewer version " << cat->getVersion()
-					<< " server version " << version << LL_ENDL;
+					<< " AIS version " << version << " !!!Adjusting local version!!!" <<  LL_ENDL;
+
+            // the AIS version should be considered the true version. Adjust 
+            // our local category model to reflect this version number.  Otherwise 
+            // it becomes possible to get stuck with the viewer being out of 
+            // sync with the inventory system.  Under normal circumstances 
+            // inventory COF is maintained on the viewer through calls to 
+            // LLInventoryModel::accountForUpdate when a changing operation 
+            // is performed.  This occasionally gets out of sync however.
+            if (version != LLViewerInventoryCategory::VERSION_UNKNOWN)
+            {
+                cat->setVersion(version);
+            }
+            else
+            {
+                // We do not account for update if version is UNKNOWN, so we shouldn't rise version
+                // either or viewer will get stuck on descendants count -1, try to refetch folder instead
+                cat->fetch();
+            }
 		}
 	}
 

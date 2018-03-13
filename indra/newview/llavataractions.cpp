@@ -476,13 +476,62 @@ void LLAvatarActions::kick(const LLUUID& id)
 }
 
 // static
+void LLAvatarActions::freezeAvatar(const LLUUID& id)
+{
+	LLAvatarName av_name;
+	LLSD payload;
+	payload["avatar_id"] = id;
+
+	if (LLAvatarNameCache::get(id, &av_name))
+	{
+		LLSD args;
+		args["AVATAR_NAME"] = av_name.getUserName();
+		LLNotificationsUtil::add("FreezeAvatarFullname", args, payload, handleFreezeAvatar);
+	}
+	else
+	{
+		LLNotificationsUtil::add("FreezeAvatar", LLSD(), payload, handleFreezeAvatar);
+	}
+}
+
+// static
+void LLAvatarActions::ejectAvatar(const LLUUID& id, bool ban_enabled)
+{
+	LLAvatarName av_name;
+	LLSD payload;
+	payload["avatar_id"] = id;
+	payload["ban_enabled"] = ban_enabled;
+	LLSD args;
+	bool has_name = LLAvatarNameCache::get(id, &av_name);
+	if (has_name)
+	{
+		args["AVATAR_NAME"] = av_name.getUserName();
+	}
+
+	if (ban_enabled)
+	{
+			LLNotificationsUtil::add("EjectAvatarFullname", args, payload, handleEjectAvatar);
+	}
+	else
+	{
+		if (has_name)
+		{
+			LLNotificationsUtil::add("EjectAvatarFullnameNoBan", args, payload, handleEjectAvatar);
+		}
+		else
+		{
+			LLNotificationsUtil::add("EjectAvatarNoBan", LLSD(), payload, handleEjectAvatar);
+		}
+	}
+}
+
+// static
 void LLAvatarActions::freeze(const LLUUID& id)
 {
 	LLSD payload;
 	payload["avatar_id"] = id;
 	LLNotifications::instance().add("FreezeUser", LLSD(), payload, handleFreeze);
 }
-
 // static
 void LLAvatarActions::unfreeze(const LLUUID& id)
 {
@@ -639,6 +688,8 @@ namespace action_give_inventory
 
 	struct LLShareInfo : public LLSingleton<LLShareInfo>
 	{
+		LLSINGLETON_EMPTY_CTOR(LLShareInfo);
+	public:
 		std::vector<LLAvatarName> mAvatarNames;
 		uuid_vec_t mAvatarUuids;
 	};
@@ -878,7 +929,6 @@ void LLAvatarActions::shareWithAvatars(LLView * panel)
 	LLNotificationsUtil::add("ShareNotification");
 }
 
-
 // static
 bool LLAvatarActions::canShareSelectedItems(LLInventoryPanel* inv_panel /* = NULL*/)
 {
@@ -900,15 +950,22 @@ bool LLAvatarActions::canShareSelectedItems(LLInventoryPanel* inv_panel /* = NUL
 	const std::set<LLFolderViewItem*> inventory_selected = root_folder->getSelectionList();
 	if (inventory_selected.empty()) return false; // nothing selected
 
+	const LLUUID trash_id = gInventory.findCategoryUUIDForType(LLFolderType::FT_TRASH);
 	bool can_share = true;
 	std::set<LLFolderViewItem*>::const_iterator it = inventory_selected.begin();
 	const std::set<LLFolderViewItem*>::const_iterator it_end = inventory_selected.end();
 	for (; it != it_end; ++it)
 	{
-		LLViewerInventoryCategory* inv_cat = gInventory.getCategory(static_cast<LLFolderViewModelItemInventory*>((*it)->getViewModelItem())->getUUID());
-		// any category can be offered.
+		LLUUID cat_id = static_cast<LLFolderViewModelItemInventory*>((*it)->getViewModelItem())->getUUID();
+		LLViewerInventoryCategory* inv_cat = gInventory.getCategory(cat_id);
+		// any category can be offered if it's not in trash.
 		if (inv_cat)
 		{
+			if ((cat_id == trash_id) || gInventory.isObjectDescendentOf(cat_id, trash_id))
+			{
+				can_share = false;
+				break;
+			}
 			continue;
 		}
 
@@ -932,10 +989,10 @@ bool LLAvatarActions::canShareSelectedItems(LLInventoryPanel* inv_panel /* = NUL
 // static
 void LLAvatarActions::toggleBlock(const LLUUID& id)
 {
-	std::string name;
+	LLAvatarName av_name;
+	LLAvatarNameCache::get(id, &av_name);
 
-	gCacheName->getFullName(id, name); // needed for mute
-	LLMute mute(id, name, LLMute::AGENT);
+	LLMute mute(id, av_name.getUserName(), LLMute::AGENT);
 
 	if (LLMuteList::getInstance()->isMuted(mute.mID, mute.mName))
 	{
@@ -948,23 +1005,29 @@ void LLAvatarActions::toggleBlock(const LLUUID& id)
 }
 
 // static
-void LLAvatarActions::toggleMuteVoice(const LLUUID& id)
+void LLAvatarActions::toggleMute(const LLUUID& id, U32 flags)
 {
-	std::string name;
-	gCacheName->getFullName(id, name); // needed for mute
+	LLAvatarName av_name;
+	LLAvatarNameCache::get(id, &av_name);
 
 	LLMuteList* mute_list = LLMuteList::getInstance();
-	bool is_muted = mute_list->isMuted(id, LLMute::flagVoiceChat);
+	bool is_muted = mute_list->isMuted(id, flags);
 
-	LLMute mute(id, name, LLMute::AGENT);
+	LLMute mute(id, av_name.getUserName(), LLMute::AGENT);
 	if (!is_muted)
 	{
-		mute_list->add(mute, LLMute::flagVoiceChat);
+		mute_list->add(mute, flags);
 	}
 	else
 	{
-		mute_list->remove(mute, LLMute::flagVoiceChat);
+		mute_list->remove(mute, flags);
 	}
+}
+
+// static
+void LLAvatarActions::toggleMuteVoice(const LLUUID& id)
+{
+	toggleMute(id, LLMute::flagVoiceChat);
 }
 
 // static
@@ -1133,10 +1196,77 @@ bool LLAvatarActions::handleKick(const LLSD& notification, const LLSD& response)
 	}
 	return false;
 }
-bool LLAvatarActions::handleFreeze(const LLSD& notification, const LLSD& response)
+
+bool LLAvatarActions::handleFreezeAvatar(const LLSD& notification, const LLSD& response)
 {
 	S32 option = LLNotification::getSelectedOption(notification, response);
 
+	if (0 == option || 1 == option)
+	{
+	    U32 flags = 0x0;
+	    if (1 == option)
+	    {
+	        // unfreeze
+	        flags |= 0x1;
+	    }
+	    LLUUID avatar_id = notification["payload"]["avatar_id"].asUUID();
+		LLMessageSystem* msg = gMessageSystem;
+
+		msg->newMessage("FreezeUser");
+		msg->nextBlock("AgentData");
+		msg->addUUID("AgentID", gAgent.getID());
+		msg->addUUID("SessionID", gAgent.getSessionID());
+		msg->nextBlock("Data");
+		msg->addUUID("TargetID", avatar_id );
+		msg->addU32("Flags", flags );
+		gAgent.sendReliableMessage();
+	}
+	return false;
+}
+
+bool LLAvatarActions::handleEjectAvatar(const LLSD& notification, const LLSD& response)
+{
+	S32 option = LLNotificationsUtil::getSelectedOption(notification, response);
+	if (2 == option)
+	{
+		return false;
+	}
+	LLUUID avatar_id = notification["payload"]["avatar_id"].asUUID();
+	bool ban_enabled = notification["payload"]["ban_enabled"].asBoolean();
+
+	if (0 == option)
+	{
+		LLMessageSystem* msg = gMessageSystem;
+		U32 flags = 0x0;
+		msg->newMessage("EjectUser");
+		msg->nextBlock("AgentData");
+		msg->addUUID("AgentID", gAgent.getID() );
+		msg->addUUID("SessionID", gAgent.getSessionID() );
+		msg->nextBlock("Data");
+		msg->addUUID("TargetID", avatar_id );
+		msg->addU32("Flags", flags );
+		gAgent.sendReliableMessage();
+	}
+	else if (ban_enabled)
+	{
+		LLMessageSystem* msg = gMessageSystem;
+
+		U32 flags = 0x1;
+		msg->newMessage("EjectUser");
+		msg->nextBlock("AgentData");
+		msg->addUUID("AgentID", gAgent.getID() );
+		msg->addUUID("SessionID", gAgent.getSessionID() );
+		msg->nextBlock("Data");
+		msg->addUUID("TargetID", avatar_id );
+		msg->addU32("Flags", flags );
+		gAgent.sendReliableMessage();
+	}
+	return false;
+}
+
+bool LLAvatarActions::handleFreeze(const LLSD& notification, const LLSD& response)
+{
+	S32 option = LLNotification::getSelectedOption(notification, response);
 	if (option == 0)
 	{
 		LLUUID avatar_id = notification["payload"]["avatar_id"].asUUID();
@@ -1153,6 +1283,7 @@ bool LLAvatarActions::handleFreeze(const LLSD& notification, const LLSD& respons
 	}
 	return false;
 }
+
 bool LLAvatarActions::handleUnfreeze(const LLSD& notification, const LLSD& response)
 {
 	S32 option = LLNotification::getSelectedOption(notification, response);
@@ -1202,9 +1333,9 @@ bool LLAvatarActions::isFriend(const LLUUID& id)
 // static
 bool LLAvatarActions::isBlocked(const LLUUID& id)
 {
-	std::string name;
-	gCacheName->getFullName(id, name); // needed for mute
-	return LLMuteList::getInstance()->isMuted(id, name);
+	LLAvatarName av_name;
+	LLAvatarNameCache::get(id, &av_name);
+	return LLMuteList::getInstance()->isMuted(id, av_name.getUserName());
 }
 
 // static
@@ -1216,8 +1347,10 @@ bool LLAvatarActions::isVoiceMuted(const LLUUID& id)
 // static
 bool LLAvatarActions::canBlock(const LLUUID& id)
 {
-	std::string full_name;
-	gCacheName->getFullName(id, full_name); // needed for mute
+	LLAvatarName av_name;
+	LLAvatarNameCache::get(id, &av_name);
+
+	std::string full_name = av_name.getUserName();
 	bool is_linden = (full_name.find("Linden") != std::string::npos);
 	bool is_self = id == gAgentID;
 	return !is_self && !is_linden;

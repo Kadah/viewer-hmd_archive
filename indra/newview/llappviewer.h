@@ -55,7 +55,6 @@ class LLTextureCache;
 class LLImageDecodeThread;
 class LLTextureFetch;
 class LLWatchdogTimeout;
-class LLUpdaterService;
 class LLViewerJoystick;
 
 extern LLTrace::BlockTimerStatHandle FTM_FRAME;
@@ -79,7 +78,7 @@ public:
 	//
 	virtual bool init();			// Override to do application initialization
 	virtual bool cleanup();			// Override to do application cleanup
-	virtual bool mainLoop(); // Override for the application main loop.  Needs to at least gracefully notice the QUITTING state and exit.
+	virtual bool frame(); // Override for application body logic
 
 	// Application control
 	void flushVFSIO(); // waits for vfs transfers to complete
@@ -98,11 +97,10 @@ public:
 
 	void writeDebugInfo(bool isStatic=true);
 
-	const LLOSInfo& getOSInfo() const { return mSysOSInfo; }
-
 	void setServerReleaseNotesURL(const std::string& url) { mServerReleaseNotesURL = url; }
 	LLSD getViewerInfo() const;
 	std::string getViewerInfoString() const;
+	std::string getShortViewerInfoString() const;
 
 	// Report true if under the control of a debugger. A null-op default.
 	virtual bool beingDebugged() { return false; } 
@@ -229,7 +227,6 @@ private:
 	bool initThreads(); // Initialize viewer threads, return false on failure.
 	bool initConfiguration(); // Initialize settings from the command line/config file.
 	void initStrings();       // Initialize LLTrans machinery
-	void initUpdater(); // Initialize the updater service.
 	bool initCache(); // Initialize local client cache.
 	void checkMemory() ;
 
@@ -255,7 +252,9 @@ private:
 
     void sendLogoutRequest();
     void disconnectViewer();
-	
+
+	bool onChangeFrameLimit(LLSD const & evt);
+
 	// *FIX: the app viewer class should be some sort of singleton, no?
 	// Perhaps its child class is the singleton and this should be an abstract base.
 	static LLAppViewer* sInstance; 
@@ -268,8 +267,6 @@ private:
 	std::string mLogoutMarkerFileName;
 	LLAPRFile mLogoutMarkerFile; // A file created to indicate the app is running.
 
-	
-	LLOSInfo mSysOSInfo; 
 	bool mReportedCrash;
 
 	std::string mServerReleaseNotesURL;
@@ -284,7 +281,6 @@ private:
 	std::string mSerialNumber;
 	bool mPurgeCache;
     bool mPurgeOnExit;
-	bool mMainLoopInitialized;
 	LLViewerJoystick* joystick;
 
 	bool mSavedFinalSnapshot;
@@ -295,7 +291,6 @@ private:
 
     bool mQuitRequested;				// User wants to quit, may have modified documents open.
     bool mLogoutRequestSent;			// Disconnect message sent to simulator, no longer safe to send messages to the sim.
-    S32 mYieldTime;
 	U32 mLastAgentControlFlags;
 	F32 mLastAgentForceUpdate;
 	struct SettingsFiles* mSettingsLocationList;
@@ -312,27 +307,14 @@ private:
     LLAllocator mAlloc;
 
 	LLFrameTimer mMemCheckTimer;
-	
-	boost::scoped_ptr<LLUpdaterService> mUpdater;
 
 	// llcorehttp library init/shutdown helper
 	LLAppCoreHttp mAppCoreHttp;
 
-	//---------------------------------------------
-	//*NOTE: Mani - legacy updater stuff
-	// Still useable?
-public:
+        bool mIsFirstRun;
+	U64 mMinMicroSecPerFrame; // frame throttling
 
-	//some information for updater
-	typedef struct
-	{
-		std::string mUpdateExePath;
-		std::ostringstream mParams;
-	}LLUpdaterInfo ;
-	static LLUpdaterInfo *sUpdaterInfo ;
 
-	void launchUpdater();
-	//---------------------------------------------
 };
 
 // consts from viewer.h
@@ -373,7 +355,6 @@ extern F32SecondsImplicit		gFrameTimeSeconds;			// Loses msec precision after ~4
 extern F32SecondsImplicit		gFrameIntervalSeconds;		// Elapsed time between current and previous gFrameTimeSeconds
 extern F32		gFPSClamped;				// Frames per second, smoothed, weighted toward last frame
 extern F32		gFrameDTClamped;
-extern U32 		gFrameStalls;
 
 extern LLTimer gRenderStartTime;
 extern LLFrameTimer gForegroundTime;
@@ -391,8 +372,8 @@ extern BOOL		gDisconnected;
 
 extern LLFrameTimer	gRestoreGLTimer;
 extern BOOL			gRestoreGL;
-extern BOOL		gUseWireframe;
-extern BOOL		gInitialDeferredModeForWireframe;
+extern bool		gUseWireframe;
+extern bool		gInitialDeferredModeForWireframe;
 
 // VFS globals - gVFS is for general use
 // gStaticVFS is read-only and is shipped w/ the viewer

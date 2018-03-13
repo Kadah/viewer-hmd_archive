@@ -324,18 +324,19 @@ bool LLFeatureManager::parseFeatureTable(std::string filename)
 
 	// Check file version
 	file >> name;
-	file >> version;
 	if (name != "version")
 	{
 		LL_WARNS("RenderInit") << filename << " does not appear to be a valid feature table!" << LL_ENDL;
 		return false;
 	}
+	file >> version;
 
 	mTableVersion = version;
+	LL_INFOS("RenderInit") << "Found feature table version " << version << LL_ENDL;
 
 	LLFeatureList *flp = NULL;
 	bool parse_ok = true;
-	while (file >> name && parse_ok)
+	while (parse_ok && file >> name )
 	{
 		char buffer[MAX_STRING];		 /*Flawfinder: ignore*/
 		
@@ -345,7 +346,7 @@ bool LLFeatureManager::parseFeatureTable(std::string filename)
 			file.getline(buffer, MAX_STRING);
 			continue;
 		}
-
+        
 		if (name == "list")
 		{
 			LL_DEBUGS("RenderInit") << "Before new list" << std::endl;
@@ -368,7 +369,7 @@ bool LLFeatureManager::parseFeatureTable(std::string filename)
             }
             else
             {
-				LL_WARNS("RenderInit") << "Overriding mask " << name << ", this is invalid!" << LL_ENDL;
+				LL_WARNS("RenderInit") << "Overriding mask '" << name << "'; this is invalid!" << LL_ENDL;
 				parse_ok = false;
 			}
 		}
@@ -403,69 +404,79 @@ F32 gpu_benchmark();
 
 bool LLFeatureManager::loadGPUClass()
 {
-	//get memory bandwidth from benchmark
-	F32 gbps = gpu_benchmark();
-
-	if (gbps < 0.f)
-	{ //couldn't bench, use GLVersion
-#if LL_DARWIN
-        //GLVersion is misleading on OSX, just default to class 3 if we can't bench
-		LL_WARNS() << "Unable to get an accurate benchmark; defaulting to class 3" << LL_ENDL;
-        mGPUClass = GPU_CLASS_3;
-#else
-		if (gGLManager.mGLVersion < 2.f)
+	if (!gSavedSettings.getBOOL("SkipBenchmark"))
+	{
+		//get memory bandwidth from benchmark
+		F32 gbps = gpu_benchmark();
+	
+		if (gbps < 0.f)
+		{ //couldn't bench, use GLVersion
+	#if LL_DARWIN
+		//GLVersion is misleading on OSX, just default to class 3 if we can't bench
+		LL_WARNS("RenderInit") << "Unable to get an accurate benchmark; defaulting to class 3" << LL_ENDL;
+		mGPUClass = GPU_CLASS_3;
+	#else
+			if (gGLManager.mGLVersion < 2.f)
+			{
+				mGPUClass = GPU_CLASS_0;
+			}
+			else if (gGLManager.mGLVersion < 3.f)
+			{
+				mGPUClass = GPU_CLASS_1;
+			}
+			else if (gGLManager.mGLVersion < 3.3f)
+			{
+				mGPUClass = GPU_CLASS_2;
+			}
+			else if (gGLManager.mGLVersion < 4.f)
+			{
+				mGPUClass = GPU_CLASS_3;
+			}
+			else 
+			{
+				mGPUClass = GPU_CLASS_4;
+			}
+	#endif
+		}
+		else if (gGLManager.mGLVersion <= 2.f)
 		{
 			mGPUClass = GPU_CLASS_0;
 		}
-		else if (gGLManager.mGLVersion < 3.f)
+		else if (gGLManager.mGLVersion <= 3.f)
 		{
 			mGPUClass = GPU_CLASS_1;
 		}
-		else if (gGLManager.mGLVersion < 3.3f)
+		else if (gbps <= 5.f)
+		{
+			mGPUClass = GPU_CLASS_0;
+		}
+		else if (gbps <= 8.f)
+		{
+			mGPUClass = GPU_CLASS_1;
+		}
+		else if (gbps <= 16.f)
 		{
 			mGPUClass = GPU_CLASS_2;
 		}
-		else if (gGLManager.mGLVersion < 4.f)
+		else if (gbps <= 40.f)
 		{
 			mGPUClass = GPU_CLASS_3;
 		}
-		else 
+		else if (gbps <= 80.f)
 		{
 			mGPUClass = GPU_CLASS_4;
 		}
-#endif
-	}
-	else if (gGLManager.mGLVersion <= 2.f)
+		else 
+		{
+			mGPUClass = GPU_CLASS_5;
+		}
+	} //end if benchmark
+	else
 	{
-		mGPUClass = GPU_CLASS_0;
-	}
-	else if (gGLManager.mGLVersion <= 3.f)
-	{
+		//setting says don't benchmark MAINT-7558
+        LL_WARNS("RenderInit") << "Setting 'SkipBenchmark' is true; defaulting to class 1 (may be required for some GPUs)" << LL_ENDL;
+        
 		mGPUClass = GPU_CLASS_1;
-	}
-	else if (gbps <= 5.f)
-	{
-		mGPUClass = GPU_CLASS_0;
-	}
-	else if (gbps <= 8.f)
-	{
-		mGPUClass = GPU_CLASS_1;
-	}
-	else if (gbps <= 16.f)
-	{
-		mGPUClass = GPU_CLASS_2;
-	}
-	else if (gbps <= 40.f)
-	{
-		mGPUClass = GPU_CLASS_3;
-	}
-	else if (gbps <= 80.f)
-	{
-		mGPUClass = GPU_CLASS_4;
-	}
-	else 
-	{
-		mGPUClass = GPU_CLASS_5;
 	}
 
 	// defaults
@@ -486,7 +497,7 @@ void LLFeatureManager::fetchFeatureTableCoro(std::string tableName)
 
 
 #if LL_WINDOWS
-    std::string os_string = LLAppViewer::instance()->getOSInfo().getOSStringSimple();
+    std::string os_string = LLOSInfo::instance().getOSStringSimple();
     std::string filename;
 
     if (os_string.find("Microsoft Windows XP") == 0)
@@ -610,7 +621,7 @@ void LLFeatureManager::applyFeatures(bool skipFeatures)
 		LLControlVariable* ctrl = gSavedSettings.getControl(mIt->first);
 		if(ctrl == NULL)
 		{
-			LL_WARNS() << "AHHH! Control setting " << mIt->first << " does not exist!" << LL_ENDL;
+			LL_WARNS("RenderInit") << "AHHH! Control setting " << mIt->first << " does not exist!" << LL_ENDL;
 			continue;
 		}
 
@@ -633,7 +644,7 @@ void LLFeatureManager::applyFeatures(bool skipFeatures)
 		}
 		else
 		{
-			LL_WARNS() << "AHHH! Control variable is not a numeric type!" << LL_ENDL;
+			LL_WARNS("RenderInit") << "AHHH! Control variable is not a numeric type!" << LL_ENDL;
 		}
 	}
 }
@@ -767,7 +778,7 @@ void LLFeatureManager::applyBaseMasks()
 	}
 
 #if LL_DARWIN
-	const LLOSInfo& osInfo = LLAppViewer::instance()->getOSInfo();
+	const LLOSInfo& osInfo = LLOSInfo::instance();
 	if (osInfo.mMajorVer == 10 && osInfo.mMinorVer < 7)
 	{
 		maskFeatures("OSX_10_6_8");
@@ -789,7 +800,7 @@ void LLFeatureManager::applyBaseMasks()
 	maskFeatures(gpustr);
 
 	// now mask cpu type ones
-	if (gSysMemory.getPhysicalMemoryClamped() <= U32Megabytes(256))
+	if (gSysMemory.getPhysicalMemoryKB() <= U32Megabytes(256))
 	{
 		maskFeatures("RAM256MB");
 	}
@@ -808,4 +819,63 @@ void LLFeatureManager::applyBaseMasks()
 	{
 		maskFeatures("safe");
 	}
+}
+
+LLSD LLFeatureManager::getRecommendedSettingsMap()
+{
+	// Create the map and fill it with the hardware recommended settings.
+	// It's needed to create an initial Default graphics preset (MAINT-6435).
+	// The process is similar to the one LLFeatureManager::applyRecommendedSettings() does.
+
+	LLSD map(LLSD::emptyMap());
+
+	loadGPUClass();
+	U32 level = llmax(GPU_CLASS_0, llmin(mGPUClass, GPU_CLASS_5));
+	LL_INFOS("RenderInit") << "Getting the map of recommended settings for level " << level << LL_ENDL;
+
+	applyBaseMasks();
+	std::string features(isValidGraphicsLevel(level) ? getNameForGraphicsLevel(level) : "Low");
+
+	maskFeatures(features);
+
+	LLControlVariable* ctrl = gSavedSettings.getControl("RenderQualityPerformance"); // include the quality value for correct preset loading   
+	map["RenderQualityPerformance"]["Value"] = (LLSD::Integer)level;
+	map["RenderQualityPerformance"]["Comment"] = ctrl->getComment();;
+	map["RenderQualityPerformance"]["Persist"] = 1;
+	map["RenderQualityPerformance"]["Type"] = LLControlGroup::typeEnumToString(ctrl->type());
+
+
+
+	for (feature_map_t::iterator mIt = mFeatures.begin(); mIt != mFeatures.end(); ++mIt)
+	{
+		LLControlVariable* ctrl = gSavedSettings.getControl(mIt->first);
+		if (ctrl == NULL)
+		{
+			LL_WARNS("RenderInit") << "AHHH! Control setting " << mIt->first << " does not exist!" << LL_ENDL;
+			continue;
+		}
+
+		if (ctrl->isType(TYPE_BOOLEAN))
+		{
+			map[mIt->first]["Value"] = (LLSD::Boolean)getRecommendedValue(mIt->first);
+		}
+		else if (ctrl->isType(TYPE_S32) || ctrl->isType(TYPE_U32))
+		{
+			map[mIt->first]["Value"] = (LLSD::Integer)getRecommendedValue(mIt->first);
+		}
+		else if (ctrl->isType(TYPE_F32))
+		{
+			map[mIt->first]["Value"] = (LLSD::Real)getRecommendedValue(mIt->first);
+		}
+		else
+		{
+			LL_WARNS("RenderInit") << "AHHH! Control variable is not a numeric type!" << LL_ENDL;
+			continue;
+		}
+		map[mIt->first]["Comment"] = ctrl->getComment();;
+		map[mIt->first]["Persist"] = 1;
+		map[mIt->first]["Type"] = LLControlGroup::typeEnumToString(ctrl->type());
+	}
+	
+	return map;
 }

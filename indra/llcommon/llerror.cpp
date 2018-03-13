@@ -239,6 +239,14 @@ namespace
 {
 	std::string className(const std::type_info& type)
 	{
+		return LLError::Log::demangle(type.name());
+	}
+} // anonymous
+
+namespace LLError
+{
+	std::string Log::demangle(const char* mangled)
+	{
 #ifdef __GNUC__
 		// GCC: type_info::name() returns a mangled class name,st demangle
 
@@ -252,31 +260,34 @@ namespace
 			// but gcc 3.3 libstc++'s implementation of demangling is broken
 			// and fails without.
 			
-		char* name = abi::__cxa_demangle(type.name(),
+		char* name = abi::__cxa_demangle(mangled,
 										abi_name_buf, &abi_name_len, &status);
 			// this call can realloc the abi_name_buf pointer (!)
 
-		return name ? name : type.name();
+		return name ? name : mangled;
 
 #elif LL_WINDOWS
 		// DevStudio: type_info::name() includes the text "class " at the start
 
 		static const std::string class_prefix = "class ";
-
-		std::string name = type.name();
-		std::string::size_type p = name.find(class_prefix);
-		if (p == std::string::npos)
+		std::string name = mangled;
+		if (0 != name.compare(0, class_prefix.length(), class_prefix))
 		{
+			LL_DEBUGS() << "Did not see '" << class_prefix << "' prefix on '"
+					   << name << "'" << LL_ENDL;
 			return name;
 		}
 
-		return name.substr(p + class_prefix.size());
+		return name.substr(class_prefix.length());
 
-#else		
-		return type.name();
+#else
+		return mangled;
 #endif
 	}
+} // LLError
 
+namespace
+{
 	std::string functionName(const std::string& preprocessor_name)
 	{
 #if LL_WINDOWS
@@ -301,7 +312,7 @@ namespace
 		LOG_CLASS(LogControlFile);
 	
 	public:
-		static LogControlFile& fromDirectory(const std::string& dir);
+		static LogControlFile& fromDirectory(const std::string& user_dir, const std::string& app_dir);
 		
 		virtual bool loadFile();
 		
@@ -311,13 +322,12 @@ namespace
 			{ }
 	};
 
-	LogControlFile& LogControlFile::fromDirectory(const std::string& dir)
+	LogControlFile& LogControlFile::fromDirectory(const std::string& user_dir, const std::string& app_dir)
 	{
-		std::string dirBase = dir + "/";
-			// NB: We have no abstraction in llcommon  for the "proper"
-			// delimiter but it turns out that "/" works on all three platforms
+        // NB: We have no abstraction in llcommon  for the "proper"
+        // delimiter but it turns out that "/" works on all three platforms
 			
-		std::string file = dirBase + "logcontrol-dev.xml";
+		std::string file = user_dir + "/logcontrol-dev.xml";
 		
 		llstat stat_info;
 		if (LLFile::stat(file, &stat_info)) {
@@ -325,7 +335,7 @@ namespace
 			// if it doesn't exist.  LLFile has no better abstraction for 
 			// testing for file existence.
 			
-			file = dirBase + "logcontrol.xml";
+			file = app_dir + "/logcontrol.xml";
 		}
 		return * new LogControlFile(file);
 			// NB: This instance is never freed
@@ -352,7 +362,7 @@ namespace
 		}
 		
 		LLError::configure(configuration);
-		LL_INFOS() << "logging reconfigured from " << filename() << LL_ENDL;
+		LL_INFOS("LogControlFile") << "logging reconfigured from " << filename() << LL_ENDL;
 		return true;
 	}
 
@@ -363,9 +373,8 @@ namespace
 
 	class Globals : public LLSingleton<Globals>
 	{
+		LLSINGLETON(Globals);
 	public:
-		Globals();
-
 		std::ostringstream messageStream;
 		bool messageStreamInUse;
 
@@ -438,11 +447,10 @@ namespace LLError
 
 	class Settings : public LLSingleton<Settings>
 	{
+		LLSINGLETON(Settings);
 	public:
-		Settings();
-
 		SettingsConfigPtr getSettingsConfig();
-	
+
 		void reset();
 		SettingsStoragePtr saveAndReset();
 		void restore(SettingsStoragePtr pSettingsStorage);
@@ -450,7 +458,7 @@ namespace LLError
 	private:
 		SettingsConfigPtr mSettingsConfig;
 	};
-	
+
 	SettingsConfig::SettingsConfig()
 		: LLRefCount(),
 		mPrintLocation(false),
@@ -475,8 +483,7 @@ namespace LLError
 		mRecorders.clear();
 	}
 
-	Settings::Settings()
-		: LLSingleton<Settings>(),
+	Settings::Settings():
 		mSettingsConfig(new SettingsConfig())
 	{
 	}
@@ -485,25 +492,30 @@ namespace LLError
 	{
 		return mSettingsConfig;
 	}
-	
+
 	void Settings::reset()
 	{
 		Globals::getInstance()->invalidateCallSites();
 		mSettingsConfig = new SettingsConfig();
 	}
-	
+
 	SettingsStoragePtr Settings::saveAndReset()
 	{
 		SettingsStoragePtr oldSettingsConfig(mSettingsConfig.get());
 		reset();
 		return oldSettingsConfig;
 	}
-	
+
 	void Settings::restore(SettingsStoragePtr pSettingsStorage)
 	{
 		Globals::getInstance()->invalidateCallSites();
 		SettingsConfigPtr newSettingsConfig(dynamic_cast<SettingsConfig *>(pSettingsStorage.get()));
 		mSettingsConfig = newSettingsConfig;
+	}
+
+	bool is_available()
+	{
+		return Settings::instanceExists() && Globals::instanceExists();
 	}
 }
 
@@ -557,9 +569,12 @@ namespace LLError
 		}
 #endif
 		mFunctionString += std::string(mFunction) + ":";
+        const std::string tag_hash("#");
 		for (size_t i = 0; i < mTagCount; i++)
 		{
-			mTagString += std::string("#") + mTags[i] + ((i == mTagCount - 1) ? "" : ",");
+            mTagString.append(tag_hash);
+			mTagString.append(mTags[i]);
+            mTagString.append((i == mTagCount - 1) ? ";" : ",");
 		}
 	}
 
@@ -602,7 +617,7 @@ namespace
 	}
 	
 	
-	void commonInit(const std::string& dir, bool log_to_stderr = true)
+	void commonInit(const std::string& user_dir, const std::string& app_dir, bool log_to_stderr = true)
 	{
 		LLError::Settings::getInstance()->reset();
 		
@@ -622,7 +637,7 @@ namespace
 		LLError::addRecorder(recordToWinDebug);
 #endif
 
-		LogControlFile& e = LogControlFile::fromDirectory(dir);
+		LogControlFile& e = LogControlFile::fromDirectory(user_dir, app_dir);
 
 		// NOTE: We want to explicitly load the file before we add it to the event timer
 		// that checks for changes to the file.  Else, we're not actually loading the file yet,
@@ -638,23 +653,9 @@ namespace
 
 namespace LLError
 {
-	void initForServer(const std::string& identity)
+	void initForApplication(const std::string& user_dir, const std::string& app_dir, bool log_to_stderr)
 	{
-		std::string dir = "/opt/linden/etc";
-		if (LLApp::instance())
-		{
-			dir = LLApp::instance()->getOption("configdir").asString();
-		}
-		commonInit(dir);
-#if !LL_WINDOWS
-		LLError::RecorderPtr recordToSyslog(new RecordToSyslog(identity));
-		addRecorder(recordToSyslog);
-#endif
-	}
-
-	void initForApplication(const std::string& dir, bool log_to_stderr)
-	{
-		commonInit(dir, log_to_stderr);
+		commonInit(user_dir, app_dir, log_to_stderr);
 	}
 
 	void setPrintLocation(bool print)
@@ -921,11 +922,6 @@ namespace
 			
 			std::ostringstream message_stream;
 
-			if (show_location && (r->wantsLocation() || level == LLError::LEVEL_ERROR || s->mPrintLocation))
-			{
-				message_stream << site.mLocationString << " ";
-			}
-
 			if (show_time && r->wantsTime() && s->mTimeFunction != NULL)
 			{
 				message_stream << s->mTimeFunction() << " ";
@@ -933,17 +929,17 @@ namespace
 
 			if (show_level && r->wantsLevel())
             {
-				message_stream << site.mLevelString;
+				message_stream << site.mLevelString << " ";
             }
 				
 			if (show_tags && r->wantsTags())
 			{
 				message_stream << site.mTagString;
 			}
-			if ((show_level && r->wantsLevel())||
-                (show_tags && r->wantsTags()))
+
+            if (show_location && (r->wantsLocation() || level == LLError::LEVEL_ERROR || s->mPrintLocation))
             {
-                message_stream << " ";
+                message_stream << site.mLocationString << " ";
             }
 
 			if (show_function && r->wantsFunctionName())
@@ -1059,7 +1055,15 @@ namespace LLError
 		{
 			return false;
 		}
-		
+
+		// If we hit a logging request very late during shutdown processing,
+		// when either of the relevant LLSingletons has already been deleted,
+		// DO NOT resurrect them.
+		if (Settings::wasDeleted() || Globals::wasDeleted())
+		{
+			return false;
+		}
+
 		SettingsConfigPtr s = Settings::getInstance()->getSettingsConfig();
 		
 		s->mShouldLogCallCounter++;
@@ -1098,7 +1102,10 @@ namespace LLError
 	std::ostringstream* Log::out()
 	{
 		LogLock lock;
-		if (lock.ok())
+		// If we hit a logging request very late during shutdown processing,
+		// when either of the relevant LLSingletons has already been deleted,
+		// DO NOT resurrect them.
+		if (lock.ok() && ! (Settings::wasDeleted() || Globals::wasDeleted()))
 		{
 			Globals* g = Globals::getInstance();
 
@@ -1108,41 +1115,49 @@ namespace LLError
 				return &g->messageStream;
 			}
 		}
-		
+
 		return new std::ostringstream;
 	}
-	
+
 	void Log::flush(std::ostringstream* out, char* message)
-    {
-       LogLock lock;
-       if (!lock.ok())
-       {
-           return;
-       }
-       
-	   if(strlen(out->str().c_str()) < 128)
-	   {
-		   strcpy(message, out->str().c_str());
-	   }
-	   else
-	   {
-		   strncpy(message, out->str().c_str(), 127);
-		   message[127] = '\0' ;
-	   }
-	   
-	   Globals* g = Globals::getInstance();
-       if (out == &g->messageStream)
-       {
-           g->messageStream.clear();
-           g->messageStream.str("");
-           g->messageStreamInUse = false;
-       }
-       else
-       {
-           delete out;
-       }
-	   return ;
-    }
+	{
+		LogLock lock;
+		if (!lock.ok())
+		{
+			return;
+		}
+
+		// If we hit a logging request very late during shutdown processing,
+		// when either of the relevant LLSingletons has already been deleted,
+		// DO NOT resurrect them.
+		if (Settings::wasDeleted() || Globals::wasDeleted())
+		{
+			return;
+		}
+
+		if(strlen(out->str().c_str()) < 128)
+		{
+			strcpy(message, out->str().c_str());
+		}
+		else
+		{
+			strncpy(message, out->str().c_str(), 127);
+			message[127] = '\0' ;
+		}
+
+		Globals* g = Globals::getInstance();
+		if (out == &g->messageStream)
+		{
+			g->messageStream.clear();
+			g->messageStream.str("");
+			g->messageStreamInUse = false;
+		}
+		else
+		{
+			delete out;
+		}
+		return ;
+	}
 
 	void Log::flush(std::ostringstream* out, const CallSite& site)
 	{
@@ -1151,7 +1166,15 @@ namespace LLError
 		{
 			return;
 		}
-		
+
+		// If we hit a logging request very late during shutdown processing,
+		// when either of the relevant LLSingletons has already been deleted,
+		// DO NOT resurrect them.
+		if (Settings::wasDeleted() || Globals::wasDeleted())
+		{
+			return;
+		}
+
 		Globals* g = Globals::getInstance();
 		SettingsConfigPtr s = Settings::getInstance()->getSettingsConfig();
 
@@ -1492,4 +1515,21 @@ namespace LLError
 	   freeStackBuffer();
    }
 }
+
+bool debugLoggingEnabled(const std::string& tag)
+{
+    const char* tags[] = {tag.c_str()};
+    ::size_t tag_count = 1;
+    LLError::CallSite _site(LLError::LEVEL_DEBUG, __FILE__, __LINE__, 
+                            typeid(_LL_CLASS_TO_LOG), __FUNCTION__, false, tags, tag_count);
+    if (LL_UNLIKELY(_site.shouldLog()))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 

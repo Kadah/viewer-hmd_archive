@@ -611,9 +611,11 @@ BOOL LLPanelPeople::postBuild()
 	mOnlineFriendList->setNoItemsCommentText(getString("no_friends_online"));
 	mOnlineFriendList->setShowIcons("FriendsListShowIcons");
 	mOnlineFriendList->showPermissions("FriendsListShowPermissions");
+	mOnlineFriendList->setShowCompleteName(!gSavedSettings.getBOOL("FriendsListHideUsernames"));
 	mAllFriendList->setNoItemsCommentText(getString("no_friends"));
 	mAllFriendList->setShowIcons("FriendsListShowIcons");
 	mAllFriendList->showPermissions("FriendsListShowPermissions");
+	mAllFriendList->setShowCompleteName(!gSavedSettings.getBOOL("FriendsListHideUsernames"));
 
 	LLPanel* nearby_tab = getChild<LLPanel>(NEARBY_TAB_NAME);
 	nearby_tab->setVisibleCallback(boost::bind(&Updater::setActive, mNearbyListUpdater, _2));
@@ -622,6 +624,7 @@ BOOL LLPanelPeople::postBuild()
 	mNearbyList->setNoItemsMsg(getString("no_one_near"));
 	mNearbyList->setNoFilteredItemsMsg(getString("no_one_filtered_near"));
 	mNearbyList->setShowIcons("NearbyListShowIcons");
+	mNearbyList->setShowCompleteName(!gSavedSettings.getBOOL("NearbyListHideUsernames"));
 	mMiniMap = (LLNetMap*)getChildView("Net Map",true);
 	mMiniMap->setToolTipMsg(gSavedSettings.getBOOL("DoubleClickTeleport") ? 
 		getString("AltMiniMapToolTipMsg") :	getString("MiniMapToolTipMsg"));
@@ -1342,6 +1345,16 @@ void LLPanelPeople::onFriendsViewSortMenuItemClicked(const LLSD& userdata)
 		mAllFriendList->showPermissions(show_permissions);
 		mOnlineFriendList->showPermissions(show_permissions);
 	}
+	else if (chosen_item == "view_usernames")
+	{
+		bool hide_usernames = !gSavedSettings.getBOOL("FriendsListHideUsernames");
+		gSavedSettings.setBOOL("FriendsListHideUsernames", hide_usernames);
+
+		mAllFriendList->setShowCompleteName(!hide_usernames);
+		mAllFriendList->handleDisplayNamesOptionChanged();
+		mOnlineFriendList->setShowCompleteName(!hide_usernames);
+		mOnlineFriendList->handleDisplayNamesOptionChanged();
+	}
 	}
 
 void LLPanelPeople::onGroupsViewSortMenuItemClicked(const LLSD& userdata)
@@ -1373,6 +1386,14 @@ void LLPanelPeople::onNearbyViewSortMenuItemClicked(const LLSD& userdata)
 	else if (chosen_item == "sort_distance")
 	{
 		setSortOrder(mNearbyList, E_SORT_BY_DISTANCE);
+	}
+	else if (chosen_item == "view_usernames")
+	{
+	    bool hide_usernames = !gSavedSettings.getBOOL("NearbyListHideUsernames");
+	    gSavedSettings.setBOOL("NearbyListHideUsernames", hide_usernames);
+
+	    mNearbyList->setShowCompleteName(!hide_usernames);
+	    mNearbyList->handleDisplayNamesOptionChanged();
 	}
 }
 
@@ -1444,7 +1465,17 @@ void	LLPanelPeople::onOpen(const LLSD& key)
 {
 	std::string tab_name = key["people_panel_tab_name"];
 	if (!tab_name.empty())
+	{
 		mTabContainer->selectTabByName(tab_name);
+		if(tab_name == BLOCKED_TAB_NAME)
+		{
+			LLPanel* blocked_tab = mTabContainer->getCurrentPanel()->findChild<LLPanel>("panel_block_list_sidetray");
+			if(blocked_tab)
+			{
+				blocked_tab->onOpen(key);
+			}
+		}
+	}
 }
 
 bool LLPanelPeople::notifyChildren(const LLSD& info)

@@ -285,6 +285,14 @@ void LLFloaterIMNearbyChatScreenChannel::addChat(LLSD& chat)
 	if(mStopProcessing)
 		return;
 
+	if (mFloaterSnapRegion == NULL)
+	{
+		mFloaterSnapRegion = gViewerWindow->getRootView()->getChildView("floater_snap_region");
+	}
+	LLRect channel_rect;
+	mFloaterSnapRegion->localRectToOtherView(mFloaterSnapRegion->getLocalRect(), &channel_rect, gFloaterView);
+	chat["available_height"] = channel_rect.getHeight() - channel_rect.mBottom - gSavedSettings.getS32("ToastGap") - 110;;
+
 	/*
     find last toast and check ID
 	*/
@@ -380,7 +388,7 @@ void LLFloaterIMNearbyChatScreenChannel::arrangeToasts()
 		setFollows(FOLLOWS_ALL);
 	}
 
-	LLRect	toast_rect;	
+	LLRect	toast_rect;
 	updateRect();
 
 	LLRect channel_rect;
@@ -601,12 +609,31 @@ void LLFloaterIMNearbyChatHandler::processChat(const LLChat& chat_msg,
 			toast_msg = chat_msg.mText;
 		}
 
+		bool chat_overlaps = false;
+		if(nearby_chat->getChatHistory())
+		{
+			LLRect chat_rect = nearby_chat->getChatHistory()->calcScreenRect();
+			for (std::list<LLView*>::const_iterator child_iter = gFloaterView->getChildList()->begin();
+				 child_iter != gFloaterView->getChildList()->end(); ++child_iter)
+			{
+				LLView *view = *child_iter;
+				const LLRect& rect = view->getRect();
+				if(view->isInVisibleChain() && (rect.overlaps(chat_rect)))
+				{
+					if(!nearby_chat->getChatHistory()->hasAncestor(view))
+					{
+						chat_overlaps = true;
+					}
+					break;
+				}
+			}
+		}
 		//Don't show nearby toast, if conversation is visible and selected
 		if ((nearby_chat->hasFocus()) ||
 			(LLFloater::isVisible(nearby_chat) && nearby_chat->isTornOff() && !nearby_chat->isMinimized()) ||
-		    ((im_box->getSelectedSession().isNull() &&
-				((LLFloater::isVisible(im_box) && !im_box->isMinimized() && im_box->isFrontmost())
-						|| (LLFloater::isVisible(nearby_chat) && !nearby_chat->isMinimized() && nearby_chat->isFrontmost())))))
+		    ((im_box->getSelectedSession().isNull() && !chat_overlaps &&
+				((LLFloater::isVisible(im_box) && !nearby_chat->isTornOff() && !im_box->isMinimized())
+						|| (LLFloater::isVisible(nearby_chat) && nearby_chat->isTornOff() && !nearby_chat->isMinimized())))))
 		{
 			if(nearby_chat->isMessagePaneExpanded())
 			{

@@ -169,6 +169,8 @@ public:
 
     virtual S32 getDisplayCount() { return 1; };
     virtual void enableVSync(BOOL b) {}
+	// Get system UI size based on DPI (for 96 DPI UI size should be 1.0)
+	virtual F32 getSystemUISize() { return 1.0; }
     virtual void setBorderStyle(BOOL on, S32 idx = -1) {}
 
     // See note in llwindowmacosx.h for why this method exists

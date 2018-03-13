@@ -167,6 +167,7 @@ static bool sForceUpdate = false;
 static LLUUID sOnlyAudibleTextureID = LLUUID::null;
 static F64 sLowestLoadableImplInterest = 0.0f;
 static bool sAnyMediaShowing = false;
+static bool sAnyMediaPlaying = false;
 static boost::signals2::connection sTeleportFinishConnection;
 static std::string sUpdatedCookies;
 static const char *PLUGIN_COOKIE_FILE_NAME = "plugin_cookies.txt";
@@ -603,9 +604,12 @@ void LLViewerMedia::updateMedia(void *dummy_arg)
 	LLPluginProcessParent::setUseReadThread(gSavedSettings.getBOOL("PluginUseReadThread"));
 
 	// HACK: we always try to keep a spare running webkit plugin around to improve launch times.
-	createSpareBrowserMediaSource();
+	// 2017-04-19 Removed CP - this doesn't appear to buy us much and consumes a lot of resources so
+	// removing it for now.
+	//createSpareBrowserMediaSource();
 
 	sAnyMediaShowing = false;
+	sAnyMediaPlaying = false;
 	sUpdatedCookies = getCookieStore()->getChangedCookies();
 	if(!sUpdatedCookies.empty())
 	{
@@ -782,13 +786,24 @@ void LLViewerMedia::updateMedia(void *dummy_arg)
 				}
 			}
 			// update the audio stream here as well
+			static bool restore_parcel_audio = false;
 			if( !inworld_audio_enabled)
 			{
 				if(LLViewerMedia::isParcelAudioPlaying() && gAudiop && LLViewerMedia::hasParcelAudio())
 				{
 					LLViewerAudio::getInstance()->stopInternetStreamWithAutoFade();
+					restore_parcel_audio = true;
 				}
 			}
+            else
+            {
+                if(gAudiop && LLViewerMedia::hasParcelAudio() && restore_parcel_audio && gSavedSettings.getBOOL("MediaTentativeAutoPlay"))
+                {
+                    LLViewerAudio::getInstance()->startInternetStreamWithAutoFade(LLViewerMedia::getParcelAudioURL());
+                    restore_parcel_audio = false;
+                }
+            }
+
 			pimpl->setPriority(new_priority);
 
 			if(pimpl->getUsedInUI())
@@ -806,6 +821,12 @@ void LLViewerMedia::updateMedia(void *dummy_arg)
 			if (!pimpl->getUsedInUI() && pimpl->hasMedia())
 			{
 				sAnyMediaShowing = true;
+			}
+
+			if (!pimpl->getUsedInUI() && pimpl->hasMedia() && (pimpl->isMediaPlaying() || !pimpl->isMediaTimeBased()))
+			{
+				// consider visible non-timebased media as playing
+				sAnyMediaPlaying = true;
 			}
 
 		}
@@ -854,6 +875,13 @@ void LLViewerMedia::updateMedia(void *dummy_arg)
 bool LLViewerMedia::isAnyMediaShowing()
 {
 	return sAnyMediaShowing;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// static
+bool LLViewerMedia::isAnyMediaPlaying()
+{
+    return sAnyMediaPlaying;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -909,6 +937,77 @@ void LLViewerMedia::setAllMediaEnabled(bool val)
 			LLViewerAudio::getInstance()->stopInternetStreamWithAutoFade();
 		}
 	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+// static
+void LLViewerMedia::setAllMediaPaused(bool val)
+{
+    // Set "tentative" autoplay first.  We need to do this here or else
+    // re-enabling won't start up the media below.
+    gSavedSettings.setBOOL("MediaTentativeAutoPlay", !val);
+
+    // Then
+    impl_list::iterator iter = sViewerMediaImplList.begin();
+    impl_list::iterator end = sViewerMediaImplList.end();
+
+    for (; iter != end; iter++)
+    {
+        LLViewerMediaImpl* pimpl = *iter;
+        if (!pimpl->getUsedInUI())
+        {
+            // upause/pause time based media, enable/disable any other
+            if (!val)
+            {
+                pimpl->setDisabled(val);
+                if (pimpl->isMediaTimeBased() && pimpl->isMediaPaused())
+                {
+                    pimpl->play();
+                }
+            }
+            else if (pimpl->isMediaTimeBased() && pimpl->mMediaSource && (pimpl->isMediaPlaying() || pimpl->isMediaPaused()))
+            {
+                pimpl->pause();
+            }
+            else
+            {
+                pimpl->setDisabled(val);
+            }
+        }
+    }
+
+    // Also do Parcel Media and Parcel Audio
+    if (!val)
+    {
+        if (!LLViewerMedia::isParcelMediaPlaying() && LLViewerMedia::hasParcelMedia())
+        {
+            LLViewerParcelMedia::play(LLViewerParcelMgr::getInstance()->getAgentParcel());
+        }
+
+        if (gSavedSettings.getBOOL("AudioStreamingMusic") &&
+            !LLViewerMedia::isParcelAudioPlaying() &&
+            gAudiop &&
+            LLViewerMedia::hasParcelAudio())
+        {
+            if (LLAudioEngine::AUDIO_PAUSED == gAudiop->isInternetStreamPlaying())
+            {
+                // 'false' means unpause
+                gAudiop->pauseInternetStream(false);
+            }
+            else
+            {
+                LLViewerAudio::getInstance()->startInternetStreamWithAutoFade(LLViewerMedia::getParcelAudioURL());
+            }
+        }
+    }
+    else {
+        // This actually unloads the impl, as opposed to "stop"ping the media
+        LLViewerParcelMedia::stop();
+        if (gAudiop)
+        {
+            LLViewerAudio::getInstance()->stopInternetStreamWithAutoFade();
+        }
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1490,7 +1589,7 @@ void LLViewerMedia::createSpareBrowserMediaSource()
 		// The null owner will keep the browser plugin from fully initializing
 		// (specifically, it keeps LLPluginClassMedia from negotiating a size change,
 		// which keeps MediaPluginWebkit::initBrowserWindow from doing anything until we have some necessary data, like the background color)
-		sSpareBrowserMediaSource = LLViewerMediaImpl::newSourceFromMediaType(HTTP_CONTENT_TEXT_HTML, NULL, 0, 0);
+		sSpareBrowserMediaSource = LLViewerMediaImpl::newSourceFromMediaType(HTTP_CONTENT_TEXT_HTML, NULL, 0, 0, 1.0);
 	}
 }
 
@@ -1762,7 +1861,7 @@ void LLViewerMediaImpl::setMediaType(const std::string& media_type)
 
 //////////////////////////////////////////////////////////////////////////////////////////
 /*static*/
-LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_type, LLPluginClassMediaOwner *owner /* may be NULL */, S32 default_width, S32 default_height, const std::string target, bool clean_browser)
+LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_type, LLPluginClassMediaOwner *owner /* may be NULL */, S32 default_width, S32 default_height, F64 zoom_factor, const std::string target, bool clean_browser)
 {
 	std::string plugin_basename = LLMIMETypes::implType(media_type);
 	LLPluginClassMedia* media_source = NULL;
@@ -1779,6 +1878,7 @@ LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_
 			media_source->setOwner(owner);
 			media_source->setTarget(target);
 			media_source->setSize(default_width, default_height);
+			media_source->setZoomFactor(zoom_factor);
 
 			return media_source;
 		}
@@ -1819,7 +1919,9 @@ LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_
 		}
 		else if(LLFile::stat(plugin_name, &s))
 		{
+#if !LL_LINUX
 			LL_WARNS_ONCE("Media") << "Couldn't find plugin at " << plugin_name << LL_ENDL;
+#endif
 		}
 		else
 		{
@@ -1827,6 +1929,7 @@ LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_
 			media_source->setSize(default_width, default_height);
 			media_source->setUserDataPath(user_data_path_cache, user_data_path_cookies);
 			media_source->setLanguageCode(LLUI::getLanguage());
+			media_source->setZoomFactor(zoom_factor);
 
 			// collect 'cookies enabled' setting from prefs and send to embedded browser
 			bool cookies_enabled = gSavedSettings.getBOOL( "CookiesEnabled" );
@@ -1860,8 +1963,10 @@ LLPluginClassMedia* LLViewerMediaImpl::newSourceFromMediaType(std::string media_
 			}
 		}
 	}
-
+#if !LL_LINUX
 	LL_WARNS_ONCE("Plugin") << "plugin initialization failed for mime type: " << media_type << LL_ENDL;
+#endif
+
 	if(gAgent.isInitialized())
 	{
 	    if (std::find(sMimeTypesFailed.begin(), sMimeTypesFailed.end(), media_type) == sMimeTypesFailed.end())
@@ -1883,6 +1988,7 @@ bool LLViewerMediaImpl::initializePlugin(const std::string& media_type)
 		// Save the previous media source's last set size before destroying it.
 		mMediaWidth = mMediaSource->getSetWidth();
 		mMediaHeight = mMediaSource->getSetHeight();
+		mZoomFactor = mMediaSource->getZoomFactor();
 	}
 
 	// Always delete the old media impl first.
@@ -1905,7 +2011,7 @@ bool LLViewerMediaImpl::initializePlugin(const std::string& media_type)
 	// Save the MIME type that really caused the plugin to load
 	mCurrentMimeType = mMimeType;
 
-	LLPluginClassMedia* media_source = newSourceFromMediaType(mMimeType, this, mMediaWidth, mMediaHeight, mTarget, mCleanBrowser);
+	LLPluginClassMedia* media_source = newSourceFromMediaType(mMimeType, this, mMediaWidth, mMediaHeight, mZoomFactor, mTarget, mCleanBrowser);
 
 	if (media_source)
 	{
@@ -1921,11 +2027,9 @@ bool LLViewerMediaImpl::initializePlugin(const std::string& media_type)
 			media_source->ignore_ssl_cert_errors(true);
 		}
 
-		// the correct way to deal with certs it to load ours from CA.pem and append them to the ones
+		// the correct way to deal with certs it to load ours from ca-bundle.crt and append them to the ones
 		// Qt/WebKit loads from your system location.
-		// Note: This needs the new CA.pem file with the Equifax Secure Certificate Authority
-		// cert at the bottom: (MIIDIDCCAomgAwIBAgIENd70zzANBg)
-		std::string ca_path = gDirUtilp->getExpandedFilename( LL_PATH_APP_SETTINGS, "CA.pem" );
+		std::string ca_path = gDirUtilp->getExpandedFilename( LL_PATH_APP_SETTINGS, "ca-bundle.crt" );
 		media_source->addCertificateFilePath( ca_path );
 
 		media_source->proxy_setup(gSavedSettings.getBOOL("BrowserProxyEnabled"), gSavedSettings.getString("BrowserProxyAddress"), gSavedSettings.getS32("BrowserProxyPort"));
@@ -2959,20 +3063,23 @@ void LLViewerMediaImpl::update()
 					data = mMediaSource->getBitsData();
 				}
 
-				// Offset the pixels pointer to match x_pos and y_pos
-				data += ( x_pos * mMediaSource->getTextureDepth() * mMediaSource->getBitsWidth() );
-				data += ( y_pos * mMediaSource->getTextureDepth() );
-
+				if(data != NULL)
 				{
-					LL_RECORD_BLOCK_TIME(FTM_MEDIA_SET_SUBIMAGE);
-					placeholder_image->setSubImage(
-							data,
-							mMediaSource->getBitsWidth(),
-							mMediaSource->getBitsHeight(),
-							x_pos,
-							y_pos,
-							width,
-							height);
+					// Offset the pixels pointer to match x_pos and y_pos
+					data += ( x_pos * mMediaSource->getTextureDepth() * mMediaSource->getBitsWidth() );
+					data += ( y_pos * mMediaSource->getTextureDepth() );
+
+					{
+						LL_RECORD_BLOCK_TIME(FTM_MEDIA_SET_SUBIMAGE);
+									placeholder_image->setSubImage(
+									data,
+									mMediaSource->getBitsWidth(),
+									mMediaSource->getBitsHeight(),
+									x_pos,
+									y_pos,
+									width,
+									height);
+					}
 				}
 
 			}

@@ -60,12 +60,7 @@ public:
 
 namespace LLError
 {
-	LL_COMMON_API void initForServer(const std::string& identity);
-		// resets all logging settings to defaults needed by server processes
-		// logs to stderr, syslog, and windows debug log
-		// the identity string is used for in the syslog
-
-	LL_COMMON_API void initForApplication(const std::string& dir, bool log_to_stderr = true);
+	LL_COMMON_API void initForApplication(const std::string& user_dir, const std::string& app_dir, bool log_to_stderr = true);
 		// resets all logging settings to defaults needed by applicaitons
 		// logs to stderr and windows debug log
 		// sets up log configuration from the file logcontrol.xml in dir
@@ -189,6 +184,11 @@ namespace LLError
 
 	LL_COMMON_API std::string abbreviateFile(const std::string& filePath);
 	LL_COMMON_API int shouldLogCallCount();
+
+	// Check whether Globals exists. This should only be used by LLSingleton
+	// infrastructure to avoid trying to log when our internal LLSingleton is
+	// unavailable -- circularity ensues.
+	LL_COMMON_API bool is_available();
 };
 
 #endif // LL_LLERRORCONTROL_H

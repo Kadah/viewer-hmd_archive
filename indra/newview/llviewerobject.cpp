@@ -102,6 +102,7 @@
 #include "llmediaentry.h"
 #include "llfloaterperms.h"
 #include "llvocache.h"
+#include "llcleanup.h"
 
 //#define DEBUG_UPDATE_TYPE
 
@@ -244,9 +245,10 @@ LLViewerObject::LLViewerObject(const LLUUID &id, const LLPCode pcode, LLViewerRe
 	mPixelArea(1024.f),
 	mInventory(NULL),
 	mInventorySerialNum(0),
-	mRegionp( regionp ),
-	mInventoryPending(FALSE),
+	mInvRequestState(INVENTORY_REQUEST_STOPPED),
+	mInvRequestXFerId(0),
 	mInventoryDirty(FALSE),
+	mRegionp(regionp),
 	mDead(FALSE),
 	mOrphaned(FALSE),
 	mUserSelected(FALSE),
@@ -268,7 +270,9 @@ LLViewerObject::LLViewerObject(const LLUUID &id, const LLPCode pcode, LLViewerRe
 	mPhysicsShapeUnknown(true),
 	mAttachmentItemID(LLUUID::null),
 	mLastUpdateType(OUT_UNKNOWN),
-	mLastUpdateCached(FALSE)
+	mLastUpdateCached(FALSE),
+	mCachedMuteListUpdateTime(0),
+	mCachedOwnerInMuteList(false)
 {
 	if (!is_global)
 	{
@@ -370,7 +374,7 @@ void LLViewerObject::markDead()
 		if (av && LLVOAvatar::getRiggedMeshID(this,mesh_id))
 		{
 			// This case is needed for indirectly attached mesh objects.
-			av->resetJointPositionsOnDetach(mesh_id);
+			av->resetJointsOnDetach(mesh_id);
 		}
 
 		// Mark itself as dead
@@ -538,11 +542,11 @@ void LLViewerObject::initVOClasses()
 
 void LLViewerObject::cleanupVOClasses()
 {
-	LLVOGrass::cleanupClass();
-	LLVOWater::cleanupClass();
-	LLVOTree::cleanupClass();
-	LLVOAvatar::cleanupClass();
-	LLVOVolume::cleanupClass();
+	SUBSYSTEM_CLEANUP(LLVOGrass);
+	SUBSYSTEM_CLEANUP(LLVOWater);
+	SUBSYSTEM_CLEANUP(LLVOTree);
+	SUBSYSTEM_CLEANUP(LLVOAvatar);
+	SUBSYSTEM_CLEANUP(LLVOVolume);
 
 	sObjectDataMap.clear();
 }
@@ -1443,10 +1447,14 @@ U32 LLViewerObject::processUpdateMessage(LLMessageSystem *mesgsys,
 
 					setChanged(MOVED | SILHOUETTE);
 				}
-				else if (mText.notNull())
+				else
 				{
-					mText->markDead();
-					mText = NULL;
+					if (mText.notNull())
+					{
+						mText->markDead();
+						mText = NULL;
+					}
+					mHudText.clear();
 				}
 
 				std::string media_url;
@@ -1821,10 +1829,14 @@ U32 LLViewerObject::processUpdateMessage(LLMessageSystem *mesgsys,
 
 					setChanged(TEXTURE);
 				}
-				else if(mText.notNull())
+				else
 				{
-					mText->markDead();
-					mText = NULL;
+					if (mText.notNull())
+					{
+						mText->markDead();
+						mText = NULL;
+					}
+					mHudText.clear();
 				}
 
                 std::string media_url;
@@ -2213,7 +2225,9 @@ U32 LLViewerObject::processUpdateMessage(LLMessageSystem *mesgsys,
 		LLCircuitData *cdp = gMessageSystem->mCircuitInfo.findCircuit(mesgsys->getSender());
 		if (cdp)
 		{
-			F32 ping_delay = 0.5f * time_dilation * ( ((F32)cdp->getPingDelay().valueInUnits<LLUnits::Seconds>()) + gFrameDTClamped);
+			// Note: delay is U32 and usually less then second,
+			// converting it into seconds with valueInUnits will result in 0
+			F32 ping_delay = 0.5f * time_dilation * ( ((F32)cdp->getPingDelay().value()) * 0.001f + gFrameDTClamped);
 			LLVector3 diff = getVelocity() * ping_delay; 
 			new_pos_parent += diff;
 		}
@@ -2841,6 +2855,11 @@ void LLViewerObject::removeInventoryListener(LLVOInventoryListener* listener)
 	}
 }
 
+BOOL LLViewerObject::isInventoryPending()
+{
+    return mInvRequestState != INVENTORY_REQUEST_STOPPED;
+}
+
 void LLViewerObject::clearInventoryListeners()
 {
 	for_each(mInventoryCallbacks.begin(), mInventoryCallbacks.end(), DeletePointer());
@@ -2880,7 +2899,7 @@ void LLViewerObject::requestInventory()
 
 void LLViewerObject::fetchInventoryFromServer()
 {
-	if (!mInventoryPending)
+	if (!isInventoryPending())
 	{
 		delete mInventory;
 		mInventory = NULL;
@@ -2895,7 +2914,7 @@ void LLViewerObject::fetchInventoryFromServer()
 		msg->sendReliable(mRegionp->getHost());
 
 		// this will get reset by dirtyInventory or doInventoryCallback
-		mInventoryPending = TRUE;
+		mInvRequestState = INVENTORY_REQUEST_PENDING;
 	}
 }
 
@@ -2956,7 +2975,7 @@ void LLViewerObject::processTaskInv(LLMessageSystem* msg, void** user_data)
 	std::string unclean_filename;
 	msg->getStringFast(_PREHASH_InventoryData, _PREHASH_Filename, unclean_filename);
 	ft->mFilename = LLDir::getScrubbedFileName(unclean_filename);
-	
+
 	if(ft->mFilename.empty())
 	{
 		LL_DEBUGS() << "Task has no inventory" << LL_ENDL;
@@ -2978,13 +2997,27 @@ void LLViewerObject::processTaskInv(LLMessageSystem* msg, void** user_data)
 		delete ft;
 		return;
 	}
-	gXferManager->requestFile(gDirUtilp->getExpandedFilename(LL_PATH_CACHE, ft->mFilename), 
+	U64 new_id = gXferManager->requestFile(gDirUtilp->getExpandedFilename(LL_PATH_CACHE, ft->mFilename), 
 								ft->mFilename, LL_PATH_CACHE,
 								object->mRegionp->getHost(),
 								TRUE,
 								&LLViewerObject::processTaskInvFile,
 								(void**)ft,
 								LLXferManager::HIGH_PRIORITY);
+	if (object->mInvRequestState == INVENTORY_XFER)
+	{
+		if (new_id > 0 && new_id != object->mInvRequestXFerId)
+		{
+			// we started new download.
+			gXferManager->abortRequestById(object->mInvRequestXFerId, -1);
+			object->mInvRequestXFerId = new_id;
+		}
+	}
+	else
+	{
+		object->mInvRequestState = INVENTORY_XFER;
+		object->mInvRequestXFerId = new_id;
+	}
 }
 
 void LLViewerObject::processTaskInvFile(void** user_data, S32 error_code, LLExtStat ext_status)
@@ -3111,7 +3144,10 @@ void LLViewerObject::doInventoryCallback()
 			mInventoryCallbacks.erase(curiter);
 		}
 	}
-	mInventoryPending = FALSE;
+
+	// release inventory loading state
+	mInvRequestXFerId = 0;
+	mInvRequestState = INVENTORY_REQUEST_STOPPED;
 }
 
 void LLViewerObject::removeInventory(const LLUUID& item_id)
@@ -5002,8 +5038,26 @@ void LLViewerObject::initHudText()
 
 void LLViewerObject::restoreHudText()
 {
-    if(mText)
+    if (mHudText.empty())
     {
+        if (mText)
+        {
+            mText->markDead();
+            mText = NULL;
+        }
+    }
+    else
+    {
+        if (!mText)
+        {
+            initHudText();
+        }
+        else
+        {
+            // Restore default values
+            mText->setZCompare(TRUE);
+            mText->setDoFade(TRUE);
+        }
         mText->setColor(mHudTextColor);
         mText->setString(mHudText);
     }
@@ -5074,6 +5128,30 @@ void LLViewerObject::updateText()
 			}
 		}
 	}
+}
+
+bool LLViewerObject::isOwnerInMuteList(LLUUID id)
+{
+	LLUUID owner_id = id.isNull() ? mOwnerID : id;
+	if (isAvatar() || owner_id.isNull())
+	{
+		return false;
+	}
+	bool muted = false;
+	F64 now = LLFrameTimer::getTotalSeconds();
+	if (now < mCachedMuteListUpdateTime)
+	{
+		muted = mCachedOwnerInMuteList;
+	}
+	else
+	{
+		muted = LLMuteList::getInstance()->isMuted(owner_id);
+
+		const F64 SECONDS_BETWEEN_MUTE_UPDATES = 1;
+		mCachedMuteListUpdateTime = now + SECONDS_BETWEEN_MUTE_UPDATES;
+		mCachedOwnerInMuteList = muted;
+	}
+	return muted;
 }
 
 LLVOAvatar* LLViewerObject::asAvatar()
@@ -6178,7 +6256,7 @@ void LLViewerObject::resetChildrenRotationAndPosition(const std::vector<LLQuater
 }
 
 //counter-translation
-void LLViewerObject::resetChildrenPosition(const LLVector3& offset, BOOL simplified)
+void LLViewerObject::resetChildrenPosition(const LLVector3& offset, BOOL simplified, BOOL skip_avatar_child)
 {
 	if(mChildList.empty())
 	{
@@ -6208,6 +6286,7 @@ void LLViewerObject::resetChildrenPosition(const LLVector3& offset, BOOL simplif
 			iter != mChildList.end(); iter++)
 	{
 		LLViewerObject* childp = *iter;
+
 		if (!childp->isSelected() && childp->mDrawable.notNull())
 		{
 			if (childp->getPCode() != LL_PCODE_LEGACY_AVATAR)
@@ -6217,14 +6296,16 @@ void LLViewerObject::resetChildrenPosition(const LLVector3& offset, BOOL simplif
 			}
 			else //avatar
 			{
-				LLVector3 reset_pos = ((LLVOAvatar*)childp)->mDrawable->mXform.getPosition() + child_offset ;
+				if(!skip_avatar_child)
+				{
+					LLVector3 reset_pos = ((LLVOAvatar*)childp)->mDrawable->mXform.getPosition() + child_offset ;
 
-				((LLVOAvatar*)childp)->mDrawable->mXform.setPosition(reset_pos);
-				((LLVOAvatar*)childp)->mDrawable->getVObj()->setPosition(reset_pos);				
-				
-				LLManip::rebuild(childp);
-			}			
-		}		
+					((LLVOAvatar*)childp)->mDrawable->mXform.setPosition(reset_pos);
+					((LLVOAvatar*)childp)->mDrawable->getVObj()->setPosition(reset_pos);
+					LLManip::rebuild(childp);
+				}
+			}
+		}
 	}
 
 	return ;
@@ -6234,6 +6315,24 @@ void LLViewerObject::resetChildrenPosition(const LLVector3& offset, BOOL simplif
 BOOL	LLViewerObject::isTempAttachment() const
 {
 	return (mID.notNull() && (mID == mAttachmentItemID));
+}
+
+BOOL LLViewerObject::isHiglightedOrBeacon() const
+{
+	if (LLFloaterReg::instanceVisible("beacons") && (gPipeline.getRenderBeacons() || gPipeline.getRenderHighlights()))
+	{
+		BOOL has_media = (getMediaType() == LLViewerObject::MEDIA_SET);
+		BOOL is_scripted = !isAvatar() && !getParent() && flagScripted();
+		BOOL is_physical = !isAvatar() && flagUsePhysics();
+
+		return (isParticleSource() && gPipeline.getRenderParticleBeacons())
+				|| (isAudioSource() && gPipeline.getRenderSoundBeacons())
+				|| (has_media && gPipeline.getRenderMOAPBeacons())
+				|| (is_scripted && gPipeline.getRenderScriptedBeacons())
+				|| (is_scripted && flagHandleTouch() && gPipeline.getRenderScriptedTouchBeacons())
+				|| (is_physical && gPipeline.getRenderPhysicalBeacons());
+	}
+	return FALSE;
 }
 
 
@@ -6283,7 +6382,7 @@ const LLUUID &LLViewerObject::extractAttachmentItemID()
 	return getAttachmentItemID();
 }
 
-const std::string& LLViewerObject::getAttachmentItemName()
+const std::string& LLViewerObject::getAttachmentItemName() const
 {
 	static std::string empty;
 	LLInventoryItem *item = gInventory.getItem(getAttachmentItemID());

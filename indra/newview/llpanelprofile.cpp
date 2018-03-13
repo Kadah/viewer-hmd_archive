@@ -44,19 +44,11 @@ static const std::string PANEL_PICKS = "panel_picks";
 
 std::string getProfileURL(const std::string& agent_name)
 {
-	std::string url;
-
-	if (LLGridManager::getInstance()->isInProductionGrid())
-	{
-		url = gSavedSettings.getString("WebProfileURL");
-	}
-	else
-	{
-		url = gSavedSettings.getString("WebProfileNonProductionURL");
-	}
+	std::string url = "[WEB_PROFILE_URL][AGENT_NAME]";
 	LLSD subs;
+	subs["WEB_PROFILE_URL"] = LLGridManager::getInstance()->getWebProfileURL();
 	subs["AGENT_NAME"] = agent_name;
-	url = LLWeb::expandURLSubstitutions(url,subs);
+	url = LLWeb::expandURLSubstitutions(url, subs);
 	LLStringUtil::toLower(url);
 	return url;
 }
@@ -176,6 +168,16 @@ public:
 			return true;
 		}
 
+		if (verb == "unblock")
+		{
+			if (params.size() > 2)
+			{
+				const std::string object_name = params[2].asString();
+				LLMute mute(avatar_id, object_name, LLMute::OBJECT);
+				LLMuteList::getInstance()->remove(mute);
+			}
+			return true;
+		}
 		return false;
 	}
 };

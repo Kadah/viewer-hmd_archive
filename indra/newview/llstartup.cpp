@@ -28,6 +28,7 @@
 
 #include "llappviewer.h"
 #include "llstartup.h"
+#include "llcallstack.h"
 
 #if LL_WINDOWS
 #	include <process.h>		// _spawnl()
@@ -55,6 +56,7 @@
 #include "llerrorcontrol.h"
 #include "llfloaterreg.h"
 #include "llfocusmgr.h"
+#include "llfloatergridstatus.h"
 #include "llfloaterimsession.h"
 #include "lllocationhistory.h"
 #include "llimageworker.h"
@@ -193,6 +195,9 @@
 #include "llstartuplistener.h"
 #include "lltoolbarview.h"
 #include "llexperiencelog.h"
+#include "llcleanup.h"
+
+#include "llstacktrace.h"
 
 #if LL_WINDOWS
 #include "lldxhardware.h"
@@ -252,6 +257,7 @@ boost::scoped_ptr<LLViewerStats::PhaseMap> LLStartUp::sPhases(new LLViewerStats:
 
 void login_show();
 void login_callback(S32 option, void* userdata);
+void show_release_notes_if_required();
 void show_first_run_dialog();
 bool first_run_dialog_callback(const LLSD& notification, const LLSD& response);
 void set_startup_status(const F32 frac, const std::string& string, const std::string& msg);
@@ -339,7 +345,7 @@ bool idle_startup()
 	const std::string delims (" ");
 	std::string system;
 	int begIdx, endIdx;
-	std::string osString = LLAppViewer::instance()->getOSInfo().getOSStringSimple();
+	std::string osString = LLOSInfo::instance().getOSStringSimple();
 
 	begIdx = osString.find_first_not_of (delims);
 	endIdx = osString.find_first_of (delims, begIdx);
@@ -678,15 +684,27 @@ bool idle_startup()
 		}
 		else if (gSavedSettings.getBOOL("AutoLogin"))  
 		{
+			// Log into last account
 			gRememberPassword = TRUE;
 			gSavedSettings.setBOOL("RememberPassword", TRUE);                                                      
 			show_connect_box = false;    			
+		}
+		else if (gSavedSettings.getLLSD("UserLoginInfo").size() == 3)
+		{
+			// Console provided login&password
+			gRememberPassword = gSavedSettings.getBOOL("RememberPassword");
+			show_connect_box = false;
 		}
 		else 
 		{
 			gRememberPassword = gSavedSettings.getBOOL("RememberPassword");
 			show_connect_box = TRUE;
 		}
+
+		//setup map of datetime strings to codes and slt & local time offset from utc
+		// *TODO: Does this need to be here?
+		LLStringOps::setupDatetimeInfo(false);
+
 		// Go to the next startup state
 		LLStartUp::setStartupState( STATE_BROWSER_INIT );
 		return FALSE;
@@ -733,6 +751,7 @@ bool idle_startup()
 			init_menus();
 			LLViewerDisplay::display_startup();
 		}
+		show_release_notes_if_required();
 
 		if (show_connect_box)
 		{
@@ -755,7 +774,7 @@ bool idle_startup()
 			login_show();
 			LLViewerDisplay::display_startup();
 			// connect dialog is already shown, so fill in the names
-			if (gUserCredential.notNull())
+			if (gUserCredential.notNull() && !LLPanelLogin::isCredentialSet())
 			{
 				LLPanelLogin::setFields( gUserCredential, gRememberPassword);
 			}
@@ -775,7 +794,11 @@ bool idle_startup()
 					LL_DEBUGS("AppInit") << "FirstLoginThisInstall off" << LL_ENDL;
 				}
 			}
-
+			display_startup();
+			if (gViewerWindow->getSystemUIScaleFactorChanged())
+			{
+				LLViewerWindow::showSystemUIScaleFactorChanged();
+			}
 			LLStartUp::setStartupState( STATE_LOGIN_WAIT );		// Wait for user input
 		}
 		else
@@ -823,7 +846,8 @@ bool idle_startup()
 
 		// Don't do anything.  Wait for the login view to call the login_callback,
 		// which will push us to the next state.
-		LLViewerDisplay::display_startup();
+
+		// display() function will be the one to run display_startup()
 		// Sleep so we don't spin the CPU
 		ms_sleep(1);
 		return FALSE;
@@ -960,6 +984,8 @@ bool idle_startup()
 		// Load media plugin cookies
 		LLViewerMedia::loadCookieFile();
 
+		LLRenderMuteList::getInstance()->loadFromFile();
+
 		//-------------------------------------------------
 		// Handle startup progress screen
 		//-------------------------------------------------
@@ -1020,7 +1046,6 @@ bool idle_startup()
 		login->setSerialNumber(LLAppViewer::instance()->getSerialNumber());
 		login->setLastExecEvent(gLastExecEvent);
 		login->setLastExecDuration(gLastExecDuration);
-		login->setUpdaterLauncher(boost::bind(&LLAppViewer::launchUpdater, LLAppViewer::instance()));
 
 		// This call to LLLoginInstance::connect() starts the 
 		// authentication process.
@@ -1155,9 +1180,6 @@ bool idle_startup()
 						LLNotificationsUtil::add("ErrorMessage", args, LLSD(), login_alert_done);
 					}
 				}
-				//setup map of datetime strings to codes and slt & local time offset from utc
-				// *TODO: Does this need to be here?
-				LLStringOps::setupDatetimeInfo (false);
 				transition_back_to_login_panel(emsg.str());
 				show_connect_box = true;
 			}
@@ -1232,7 +1254,7 @@ bool idle_startup()
 		LLPostProcess::initClass();
 		LLViewerDisplay::display_startup();
 
-		LLAvatarAppearance::initClass();
+        LLAvatarAppearance::initClass("avatar_lad.xml","avatar_skeleton.xml");
 		LLViewerDisplay::display_startup();
 
 		LLViewerObject::initVOClasses();
@@ -1456,6 +1478,7 @@ bool idle_startup()
 		LLGLState::checkStates();
 		LLGLState::checkTextureChannels();
 
+		LLEnvManagerNew::getInstance()->usePrefs(); // Load all presets and settings
 		gSky.init(initial_sun_direction);
 
 		LLGLState::checkStates();
@@ -1867,7 +1890,9 @@ bool idle_startup()
 
 		LLFloaterReg::showInitialVisibleInstances();
 
+		LLFloaterGridStatus::getInstance()->startGridStatusTimer();
 		LLViewerDisplay::display_startup();
+
 
 		LLViewerDisplay::display_startup();
 		// JC: Initializing audio requests many sounds for download.
@@ -2246,6 +2271,24 @@ void login_callback(S32 option, void *userdata)
 	{
 		LL_WARNS("AppInit") << "Unknown login button clicked" << LL_ENDL;
 	}
+}
+
+/**
+* Check if user is running a new version of the viewer.
+* Display the Release Notes if it's not overriden by the "UpdaterShowReleaseNotes" setting.
+*/
+void show_release_notes_if_required()
+{
+    static bool release_notes_shown = false;
+    if (!release_notes_shown && (LLVersionInfo::getChannelAndVersion() != gLastRunVersion)
+        && LLVersionInfo::getViewerMaturity() != LLVersionInfo::TEST_VIEWER // don't show Release Notes for the test builds
+        && gSavedSettings.getBOOL("UpdaterShowReleaseNotes")
+        && !gSavedSettings.getBOOL("FirstLoginThisInstall"))
+    {
+        LLSD info(LLAppViewer::instance()->getViewerInfo());
+        LLWeb::loadURLInternal(info["VIEWER_RELEASE_NOTES_URL"]);
+        release_notes_shown = true;
+    }
 }
 
 void show_first_run_dialog()
@@ -2734,6 +2777,7 @@ void LLStartUp::postStartupState()
 	stateInfo["str"] = getStartupStateString();
 	stateInfo["enum"] = gStartupState;
 	sStateWatcher->post(stateInfo);
+	gDebugInfo["StartupState"] = getStartupStateString();
 }
 
 
@@ -2813,7 +2857,7 @@ void LLStartUp::initExperiences()
 
 void LLStartUp::cleanupNameCache()
 {
-	LLAvatarNameCache::cleanupClass();
+	SUBSYSTEM_CLEANUP(LLAvatarNameCache);
 
 	delete gCacheName;
 	gCacheName = NULL;
@@ -3030,7 +3074,7 @@ bool LLStartUp::startLLProxy()
 		}
 		else
 		{
-			LL_WARNS("Proxy") << "Invalid other HTTP proxy configuration."<< LL_ENDL;
+			LL_WARNS("Proxy") << "Invalid other HTTP proxy configuration: " << httpProxyType << LL_ENDL;
 
 			// Set the missing or wrong configuration back to something valid.
 			gSavedSettings.setString("HttpProxyType", "None");
@@ -3321,6 +3365,13 @@ bool process_login_success_response()
 		{
 			time_t now = time(NULL);
 			gUTCOffset = (server_utc_time - now);
+
+			// Print server timestamp
+			LLSD substitution;
+			substitution["datetime"] = (S32)server_utc_time;
+			std::string timeStr = "[month, datetime, slt] [day, datetime, slt] [year, datetime, slt] [hour, datetime, slt]:[min, datetime, slt]:[second, datetime, slt]";
+			LLStringUtil::format(timeStr, substitution);
+			LL_INFOS("AppInit") << "Server SLT timestamp: " << timeStr << ". Server-viewer time offset before correction: " << gUTCOffset << "s" << LL_ENDL;
 		}
 	}
 

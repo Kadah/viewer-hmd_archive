@@ -232,8 +232,8 @@ attributedStringInfo getSegments(NSAttributedString *str)
 		NSOpenGLPFADoubleBuffer,
 		NSOpenGLPFAClosestPolicy,
 		NSOpenGLPFAAccelerated,
-		NSOpenGLPFASampleBuffers, (samples > 0 ? 1 : 0),
-		NSOpenGLPFASamples, samples,
+		NSOpenGLPFASampleBuffers, static_cast<NSOpenGLPixelFormatAttribute>(samples > 0 ? 1 : 0),
+		NSOpenGLPFASamples, static_cast<NSOpenGLPixelFormatAttribute>(samples),
 		NSOpenGLPFAStencilSize, 8,
 		NSOpenGLPFADepthSize, 24,
 		NSOpenGLPFAAlphaSize, 8,
@@ -382,8 +382,8 @@ attributedStringInfo getSegments(NSAttributedString *str)
 - (void)mouseMoved:(NSEvent *)theEvent
 {
 	float mouseDeltas[2] = {
-		[theEvent deltaX],
-		[theEvent deltaY]
+		float([theEvent deltaX]),
+		float([theEvent deltaY])
 	};
 	
 	callDeltaUpdate(mouseDeltas, 0);
@@ -403,8 +403,8 @@ attributedStringInfo getSegments(NSAttributedString *str)
 	// The old CoreGraphics APIs we previously relied on are now flagged as obsolete.
 	// NSEvent isn't obsolete, and provides us with the correct deltas.
 	float mouseDeltas[2] = {
-		[theEvent deltaX],
-		[theEvent deltaY]
+		float([theEvent deltaX]),
+		float([theEvent deltaY])
 	};
 	
 	callDeltaUpdate(mouseDeltas, 0);
@@ -604,13 +604,13 @@ attributedStringInfo getSegments(NSAttributedString *str)
     if (mMarkedTextAllowed)
     {
         unsigned int selected[2] = {
-            selectedRange.location,
-            selectedRange.length
+            unsigned(selectedRange.location),
+            unsigned(selectedRange.length)
         };
         
         unsigned int replacement[2] = {
-            replacementRange.location,
-            replacementRange.length
+            unsigned(replacementRange.location),
+            unsigned(replacementRange.length)
         };
         
         int string_length = [aString length];
