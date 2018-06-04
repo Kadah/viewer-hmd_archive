@@ -1109,7 +1109,7 @@ void LLViewerDisplay::render_flush(BOOL to_texture, render_options& options)
 															  gPipeline.mDeferredScreen.getHeight(), 0, 0, 
 															  gPipeline.mDeferredScreen.getWidth(), 
 															  gPipeline.mDeferredScreen.getHeight(), 
-															  GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+															  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);
 				}
 			}
 			else
@@ -1122,9 +1122,11 @@ void LLViewerDisplay::render_flush(BOOL to_texture, render_options& options)
             }
 				else if(LLRenderTarget::sUseFBO)
 				{				
-                    LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
-                                                                                 0, 0, gPipeline.mScreen.getWidth(), gPipeline.mScreen.getHeight(),
-															                     GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+					LLRenderTarget::copyContentsToFramebuffer(gPipeline.mScreen, 0, 0, gPipeline.mScreen.getWidth(), 
+															  gPipeline.mScreen.getHeight(), 0, 0, 
+															  gPipeline.mScreen.getWidth(), 
+															  gPipeline.mScreen.getHeight(), 
+															  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST);;
 				}
 			}
 		}

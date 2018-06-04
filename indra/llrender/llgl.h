@@ -257,6 +257,9 @@ void clear_glerror();
 	if the existing GL state does not match the expected GL state.
 
 */
+
+#include "boost/function.hpp"
+
 class LLGLState
 {
 public:
@@ -296,6 +299,20 @@ class LLGLEnableAlphaReject : public LLGLState
 {
 public:
 	LLGLEnableAlphaReject(bool enable);
+};
+
+// Enable with functor
+class LLGLEnableFunc : LLGLState
+{
+public:
+	LLGLEnableFunc(LLGLenum state, bool enable, boost::function<void()> func)
+		: LLGLState(state, enable)
+	{
+		if (enable)
+		{
+			func();
+		}
+	}
 };
 
 /// TODO: Being deprecated.

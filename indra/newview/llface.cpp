@@ -54,6 +54,7 @@
 #include "llviewertexture.h"
 #include "llvoavatar.h"
 #include "llhmd.h"
+#include "llsculptidsize.h"
 
 #if LL_LINUX
 // Work-around spurious used before init warning on Vector4a
@@ -2642,12 +2643,27 @@ LLViewerTexture* LLFace::getTexture(U32 ch) const
 
 void LLFace::setVertexBuffer(LLVertexBuffer* buffer)
 {
+	if (buffer)
+	{
+		LLSculptIDSize::instance().inc(mDrawablep, buffer->getSize() + buffer->getIndicesSize());
+	}
+
+	if (mVertexBuffer)
+	{
+		LLSculptIDSize::instance().dec(mDrawablep);
+	}
+
 	mVertexBuffer = buffer;
 	llassert(verify());
 }
 
 void LLFace::clearVertexBuffer()
 {
+	if (mVertexBuffer)
+	{
+		LLSculptIDSize::instance().dec(mDrawablep);
+	}
+
 	mVertexBuffer = NULL;
 }
 

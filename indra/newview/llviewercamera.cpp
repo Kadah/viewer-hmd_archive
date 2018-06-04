@@ -121,6 +121,7 @@ LLViewerCamera::LLViewerCamera() : LLCamera()
 {
 	calcProjection(getFar());
 	mCameraFOVDefault = DEFAULT_FIELD_OF_VIEW;
+	mPrevCameraFOVDefault = DEFAULT_FIELD_OF_VIEW;
 	mCosHalfCameraFOV = cosf(mCameraFOVDefault * 0.5f);
 	mPixelMeterRatio = 0.f;
 	mScreenPixelArea = 0;
@@ -950,6 +951,15 @@ void LLViewerCamera::setDefaultFOV(F32 vertical_fov_rads)
 	mCosHalfCameraFOV = cosf(mCameraFOVDefault * 0.5f);
 }
 
+BOOL LLViewerCamera::isDefaultFOVChanged()
+{
+	if(mPrevCameraFOVDefault != mCameraFOVDefault)
+	{
+		mPrevCameraFOVDefault = mCameraFOVDefault;
+		return !gSavedSettings.getBOOL("IgnoreFOVZoomForLODs");
+	}
+	return FALSE;
+}
 
 F32 LLViewerCamera::getDefaultFOV() const
 {
